@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\Api\AuthController; // Import the controller to use it in the routes file
+
 use App\Http\Controllers\Api\UserApiController; // Import the controller to use it in the routes file
 
 Route::get('/user', function (Request $request) { 
@@ -11,4 +13,15 @@ Route::get('/user', function (Request $request) {
 
 
 
-Route::apiResource('users', UserApiController::class); // Add the resource route to the routes file and pass the controller class as the second argument to the apiResource method.
+
+// Public routes that do not require authentication
+Route::post('/login', [AuthController::class, 'login']);
+
+
+
+
+// Protected routes that require authentication using Sanctum middleware
+Route::middleware('auth:sanctum')->group(function () {
+    // User resource route with the controller specified in the second argument
+    Route::apiResource('users', UserApiController::class); 
+});
