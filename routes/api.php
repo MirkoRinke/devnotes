@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\UserApiController; // Import the controller to use 
 use App\Http\Controllers\Api\PostApiController; // Import the controller to use it in the routes file
 
 use App\Http\Middleware\AccessControl; // Import the middleware to use it in the routes file
+use App\Http\Middleware\PostAccessControl; // Import the middleware to use it in the routes file
 
 // Public routes that do not require authentication route to login and get a token
 Route::post('/login', [AuthController::class, 'login']);
@@ -16,8 +17,26 @@ Route::post('/login', [AuthController::class, 'login']);
 // Public routes that do not require authentication route to register a new user
 Route::post('/register', [UserApiController::class, 'store']);
 
-// Protected routes that require authentication
+// Protected routes that require authentication and access control
 Route::middleware(['auth:sanctum', AccessControl::class])->group(function () {
     Route::apiResource('users', UserApiController::class);
-    Route::apiResource('posts', PostApiController::class);
 });
+
+
+// Public routes that do not require authentication
+Route::get('/posts', [PostApiController::class, 'index']);
+Route::get('/posts/{post}', [PostApiController::class, 'show']);
+
+
+// Protected routes that require authentication
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/posts', [PostApiController::class, 'store']);
+});
+
+
+// Protected routes that require authentication and access control
+Route::middleware(['auth:sanctum', PostAccessControl::class])->group(function () {
+    Route::apiResource('posts', PostApiController::class)->except(['index', 'show', 'store']);
+});
+
+
