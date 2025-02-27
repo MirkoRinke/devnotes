@@ -31,7 +31,9 @@ class UserApiController extends Controller {
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
-            ]);
+            ],         
+            $this->getValidationMessages()
+            );
     
             $user = User::create([
                 'name' => $validatedData['name'],
@@ -68,13 +70,16 @@ class UserApiController extends Controller {
             'name' => 'sometimes|string|max:255', 
             'email' => 'sometimes|string|email|unique:users,email,' . $user->id, 
             'password' => 'sometimes|string|min:8|confirmed',
-        ]);
+        ],         
+        $this->getValidationMessages()
+        );
     
         $user->update([ 
             'name' => $validatedData['name'] ?? $user->name, 
             'email' => $validatedData['email'] ?? $user->email, 
             'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
         ]);
+        
         return $this->successResponse($user, 'User update successfully', 200); 
     
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
