@@ -15,6 +15,17 @@ class PostApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
 
+    private $validationRules = [
+        'title' => 'required|string|max:255',
+        'code' => 'required|string',
+        'description' => 'required|string',
+        'resources' => 'nullable|array',
+        'language' => 'required|string|max:50',
+        'category' => 'required|string|max:50',
+        'tags' => 'required|array',
+        'status' => 'required|in:draft,published,archived'
+    ];
+
     /**
      * Display a listing of the resource.
      */
@@ -28,16 +39,10 @@ class PostApiController extends Controller {
      */
     public function store(Request $request): JsonResponse {
         try {
-            $validatedData = $request->validate([
-                'title' => 'required|string|max:255',
-                'code' => 'required|string',
-                'description' => 'required|string',
-                'resources' => 'nullable|array',
-                'language' => 'required|string|max:50',
-                'category' => 'required|string|max:50',
-                'tags' => 'required|array',
-                'status' => 'required|in:draft,published,archived'
-            ]);
+            $validatedData = $request->validate(
+                $this->validationRules,         
+                $this->getValidationMessages()
+            );
 
             $validatedData['tags'] = json_encode($validatedData['tags']);
             $validatedData['resources'] = json_encode($validatedData['resources']);
@@ -71,16 +76,10 @@ class PostApiController extends Controller {
         try {
         $post = Post::findOrFail($id); 
     
-        $validatedData = $request->validate([ 
-            'title' => 'required|string|max:255',
-            'code' => 'required|string',
-            'description' => 'required|string',
-            'resources' => 'nullable|array',
-            'language' => 'required|string|max:50',
-            'category' => 'required|string|max:50',
-            'tags' => 'required|array',
-            'status' => 'required|in:draft,published,archived'
-        ]);
+        $validatedData = $request->validate(
+            $this->validationRules,         
+            $this->getValidationMessages()
+        );
 
         $validatedData['tags'] = json_encode($validatedData['tags']);
         $validatedData['resources'] = json_encode($validatedData['resources']);
