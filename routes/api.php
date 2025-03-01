@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController; // Import the controller to use it in the routes file
+use App\Http\Controllers\Api\RegisterController; // Import the controller to use it in the routes file
 
 use App\Http\Controllers\Api\UserApiController; // Import the controller to use it in the routes file
 use App\Http\Controllers\Api\PostApiController; // Import the controller to use it in the routes file
@@ -14,7 +15,7 @@ use App\Http\Middleware\PostAccessControl; // Import the middleware to use it in
 
 
 // Public routes that do not require authentication route to register a new user
-Route::post('/register', [UserApiController::class, 'store']);
+Route::post('/register', [RegisterController::class, 'register']);
 
 // Public routes that do not require authentication route to login and get a token
 Route::post('/login', [AuthController::class, 'login']);
