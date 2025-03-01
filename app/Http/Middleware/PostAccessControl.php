@@ -23,7 +23,7 @@ class PostAccessControl {
 
         // Check if the user is authenticated before proceeding
         if (!$user) {
-            return $this->errorResponse('Unauthorized. Authentication required.', [], 401);
+            return $this->errorResponse('Unauthorized. Authentication required.', null, 401);
         }
 
         // Allow users with the specified role to access the resource
@@ -41,6 +41,6 @@ class PostAccessControl {
             }
         }  
 
-        return $this->errorResponse('Unauthorized. You do not have permission to perform this action.', [], 403);
+        return $this->errorResponse('Unauthorized. You do not have permission to perform this action.', null, 403);
     }
 }
