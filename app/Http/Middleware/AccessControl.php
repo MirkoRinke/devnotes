@@ -22,7 +22,7 @@ class AccessControl{
         
         // Check if the user is authenticated before proceeding
         if (!$user) {
-            return $this->errorResponse('Unauthorized. Authentication required.', [], 401);
+            return $this->errorResponse('Unauthorized. Authentication required.', null, 401);
         }
         
         // Allow users with the specified role to access the resource
@@ -38,7 +38,7 @@ class AccessControl{
             }
         }
         
-        return $this->errorResponse('Unauthorized. Admin access required.', [], 403);
+        return $this->errorResponse('Unauthorized. Admin access required.', null, 403);
     }
     
 }
