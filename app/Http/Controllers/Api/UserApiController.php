@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\User; // Import the User model to use it in the controller example User::all()
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return response()->json($users);
+use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users);
+use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
+use App\Traits\ApiSorting; // Import the ApiSorting trait to use it in the controller example $this->sort($request, $query, [ 'id','name', 'email']);
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -17,14 +18,19 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 class UserApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
+    use ApiSorting; // Use the ApiSorting trait in the controller
 
     /**
      * Display a listing of the resource.
      */
-    public function index(){
+    public function index(Request $request): JsonResponse {
         try {
-            $users = User::all();
-            return $this->successResponse($users, 'Users retrieved successfully');
+            $query = User::query();
+            $query = $this->sort($request, $query, [ 'id','name', 'email']); // AllowedColumns is an array of columns that can be sorted
+
+            $query = $query->get(); // Get all the users
+
+            return $this->successResponse($query, 'Users retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('Users not found', null, 404);
         }
@@ -36,7 +42,7 @@ class UserApiController extends Controller {
     public function show(string $id): JsonResponse {
         try {
         $user = User::findOrFail($id); 
-        return $this->successResponse($user, 'User retrieved successfully');
+        return $this->successResponse($user, 'User retrieved successfully', 200);
     } catch (ModelNotFoundException $e) {
         return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
     }
