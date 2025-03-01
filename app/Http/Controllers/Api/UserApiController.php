@@ -10,6 +10,10 @@ use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in 
 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users);
 
+use Exception; // Import the Exception class
+use Illuminate\Validation\ValidationException; // Import the ValidationException class
+use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotFoundException class
+
 class UserApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
@@ -18,8 +22,12 @@ class UserApiController extends Controller {
      * Display a listing of the resource.
      */
     public function index(){
-        $users = User::all();
-        return response()->json($users);
+        try {
+            $users = User::all();
+            return $this->successResponse($users, 'Users retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Users not found', [], 404);
+        }
     }
 
     /**
@@ -42,7 +50,7 @@ class UserApiController extends Controller {
             ]);
     
             return $this->successResponse($user, 'User created successfully', 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         }
     }
@@ -54,7 +62,7 @@ class UserApiController extends Controller {
         try {
         $user = User::findOrFail($id); 
         return $this->successResponse($user, 'User retrieved successfully');
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+    } catch (ModelNotFoundException $e) {
         return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
     }
     }
@@ -82,9 +90,9 @@ class UserApiController extends Controller {
         
         return $this->successResponse($user, 'User update successfully', 200); 
     
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         }
     }
@@ -96,8 +104,8 @@ class UserApiController extends Controller {
         try {
             $user = User::findOrFail($id);
             $user->delete();
-            return $this->successResponse(null, 'User deleted successfully', 204);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->successResponse(null, 'User deleted successfully', 200);
+        } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
         }
     }
