@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return response()->json($users);
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,7 @@ use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the c
 class AuthController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
+ 
 
     /**
      * Register a new user
@@ -23,7 +25,7 @@ class AuthController extends Controller {
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request) {
+    public function login(Request $request): JsonResponse {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -50,7 +52,7 @@ class AuthController extends Controller {
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function logout(Request $request) {
+    public function logout(Request $request): JsonResponse {
         $request->user()->currentAccessToken()->delete();
 
         return $this->successResponse(null, 'Logout successful', 200);
