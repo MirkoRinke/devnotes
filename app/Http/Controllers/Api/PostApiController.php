@@ -20,6 +20,7 @@ class PostApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
 
+    // Validation rules for the post data
     private $validationRules = [
         'title' => 'required|string|max:255',
         'code' => 'required|string',
@@ -31,12 +32,23 @@ class PostApiController extends Controller {
         'status' => 'required|in:draft,published,archived'
     ];
 
+    // Decode the JSON data from the database to an array
+    private function jsonDecode($posts) {
+        foreach ($posts as $post) {
+            $post->tags = json_decode($post->tags);
+            $post->resources = json_decode($post->resources);
+        }        
+        return $posts;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(){
         try {
             $posts = Post::all();
+            $posts = $this->jsonDecode($posts);
+
             return $this->successResponse($posts, 'Posts retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse('Posts not found', null, 404);
@@ -71,7 +83,9 @@ class PostApiController extends Controller {
      */
     public function show(string $id): JsonResponse {
         try {
-        $post = Post::findOrFail($id); 
+        $post = Post::findOrFail($id);
+        $post = $this->jsonDecode([$post])[0];
+
         return $this->successResponse($post, 'Post retrieved successfully');
     } catch (ModelNotFoundException $e) {
         return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
