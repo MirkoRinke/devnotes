@@ -10,7 +10,13 @@ use Illuminate\Validation\ValidationException;
 
 use Carbon\Carbon;
 
+use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($post, 'Post created successfully', 201);
+
+
 class AuthController extends Controller {
+
+    use ApiResponses; // Use the ApiResponses trait in the controller
+
     public function login(Request $request)
     {
         $request->validate([
@@ -22,21 +28,14 @@ class AuthController extends Controller {
         $user = User::where('email', $request->email)->first();
     
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+            return $this->errorResponse('The provided credentials are incorrect.', null, 401);
         }
     
         $token = $user->createToken($request->device_name);
         $token->accessToken->expires_at = Carbon::now()->addDays(7);
         $token->accessToken->save();
     
-        return response()->json([
-            'data' => [
-                'accessToken' => $token->plainTextToken,
-                'type' => 'Bearer'
-            ]
-        ]);
+        return $this->successResponse(['accessToken' => $token->plainTextToken,'type' => 'Bearer' ],'Login successful', 200);
     }
 }
 
