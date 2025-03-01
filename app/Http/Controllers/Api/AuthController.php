@@ -17,8 +17,13 @@ class AuthController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
 
-    public function login(Request $request)
-    {
+    /**
+     * Register a new user
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function login(Request $request) {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -36,6 +41,19 @@ class AuthController extends Controller {
         $token->accessToken->save();
     
         return $this->successResponse(['accessToken' => $token->plainTextToken,'type' => 'Bearer' ],'Login successful', 200);
+    }
+
+
+    /**
+     * Logout a user and revoke the token
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request) {
+        $request->user()->currentAccessToken()->delete();
+
+        return $this->successResponse(null, 'Logout successful', 200);
     }
 }
 
