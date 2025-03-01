@@ -11,6 +11,11 @@ use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($post, 'Post created successfully', 201);
 
 
+use Exception; // Import the Exception class
+use Illuminate\Validation\ValidationException; // Import the ValidationException class
+use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotFoundException class
+
+
 class PostApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
@@ -30,8 +35,12 @@ class PostApiController extends Controller {
      * Display a listing of the resource.
      */
     public function index(){
-        $posts = Post::all();
-        return response()->json($posts);
+        try {
+            $posts = Post::all();
+            return $this->successResponse($posts, 'Posts retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Posts not found', null, 404);
+        }
     }
 
     /**
@@ -52,7 +61,7 @@ class PostApiController extends Controller {
             $post = Post::create($validatedData);
     
             return $this->successResponse($post, 'Post created successfully', 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         }
     }
@@ -64,7 +73,7 @@ class PostApiController extends Controller {
         try {
         $post = Post::findOrFail($id); 
         return $this->successResponse($post, 'Post retrieved successfully');
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+    } catch (ModelNotFoundException $e) {
         return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
     }
     }
@@ -88,9 +97,9 @@ class PostApiController extends Controller {
 
         return $this->successResponse($post, 'Post update successfully', 200); 
     
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         }
     }
@@ -102,13 +111,9 @@ class PostApiController extends Controller {
         try {
             $post = Post::findOrFail($id);
             $post->delete();
-            return $this->successResponse(null, 'Post deleted successfully', 204);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->successResponse(null, 'Post deleted successfully', 200);
+        } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
         }
     }
 }
-
-
-
-
