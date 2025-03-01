@@ -31,31 +31,6 @@ class UserApiController extends Controller {
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): JsonResponse {
-        try {
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|string|email|unique:users,email',
-                'password' => 'required|string|min:8|confirmed',
-            ],         
-            $this->getValidationMessages()
-            );
-    
-            $user = User::create([
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-                'password' => bcrypt($validatedData['password']),
-            ]);
-    
-            return $this->successResponse($user, 'User created successfully', 201);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
-        }
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(string $id): JsonResponse {
