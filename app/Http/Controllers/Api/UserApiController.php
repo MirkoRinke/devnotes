@@ -26,7 +26,7 @@ class UserApiController extends Controller {
             $users = User::all();
             return $this->successResponse($users, 'Users retrieved successfully');
         } catch (Exception $e) {
-            return $this->errorResponse('Users not found', [], 404);
+            return $this->errorResponse('Users not found', null, 404);
         }
     }
 
