@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\Post; // Import the Post model to use it in the controller example $posts = Post::all();
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return response()->json($posts);
+use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return response()->json(['message' => 'Posts retrieved successfully', 'data' => $posts], 200);
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($post, 'Post created successfully', 201);
-
+use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
+use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 class PostApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
+    use ApiSorting; // Use the ApiSorting trait in the controller
 
     // Validation rules for the post data
     private $validationRules = [
@@ -46,10 +47,13 @@ class PostApiController extends Controller {
      */
     public function index(){
         try {
-            $posts = Post::all();
-            $posts = $this->jsonDecode($posts);
+            $query = Post::query();
+            $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']); // AllowedColumns is an array of columns that can be sorted
 
-            return $this->successResponse($posts, 'Posts retrieved successfully');
+            $query = $query->get();
+            $query = $this->jsonDecode($query);
+
+            return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse('Posts not found', null, 404);
         }
