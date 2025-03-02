@@ -28,6 +28,11 @@ class UserApiController extends Controller {
             $query = User::query();
             $query = $this->sort($request, $query, [ 'id','name', 'email']); // AllowedColumns is an array of columns that can be sorted
 
+            // Check return value of the sort method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }            
+
             $query = $query->get(); // Get all the users
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
