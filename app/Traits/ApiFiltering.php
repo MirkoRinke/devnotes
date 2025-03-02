@@ -3,9 +3,8 @@
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
-
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
@@ -25,16 +24,20 @@ trait ApiFiltering {
      */
     public function filter(Request $request,Builder $query, $allowedFilterColumns = []): JsonResponse|Builder{
 
+        // Get the filter array from the request
         $filterArray = $request->query('filter', []);
    
+        // For each filter column, add a where clause to the query
         foreach ($filterArray as $key => $values) {
+
+            // Check if the filter column is allowed
             if (!in_array($key, $allowedFilterColumns)) {
                 return $this->errorResponse('Invalid filter column: ' . $key, ['filter' => 'INVALID_FILTER_COLUMN'], 400);
             }
 
             // If the value is not an array, convert it to an array
             if (!is_array($values)) {
-                $values = explode(',', $values); // Convert comma separated string to array
+                $values = explode(',', $values); 
             }
    
             // For each value, add a where clause to the query to filter the results
