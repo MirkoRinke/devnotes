@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Models\User; // Import the User model to use it in the controller example User::all()
+use App\Models\User; // Import the User model to use it in the controller example User::all() or User::findOrFail($id) or User::create($data) or User::update($data) or User::delete() or User::query()
 use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
@@ -18,9 +18,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class UserApiController extends Controller {
 
-    use ApiResponses; // Use the ApiResponses trait in the controller
-    use ApiSorting; // Use the ApiSorting trait in the controller
-    use ApiFiltering; // Use the ApiFiltering trait in the controller
+    // Use the ApiResponses, ApiSorting, ApiFiltering traits in the controller
+    use ApiResponses, ApiSorting, ApiFiltering;
 
     /**
      * Display a listing of the resource.
@@ -29,22 +28,24 @@ class UserApiController extends Controller {
         try {
             $query = User::query(); 
 
-            $query = $this->sort($request, $query, [ 'id','name', 'email']); // AllowedColumns is an array of columns that can be sorted
+            // Sort the query results based on the request sort array
+            $query = $this->sort($request, $query, [ 'id','name', 'email']);
             
             // Check return value of the sort method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
             
-            // Filter the query results based on the request
-            $query = $this->filter($request, $query, [ 'name', 'email']); // AllowedColumns is an array of columns that can be filtered
+            // Filter the query results based on the request filters array 
+            $query = $this->filter($request, $query, [ 'name', 'email']); 
 
             // Check return value of the filter method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
 
-            $query = $query->get(); // Get all the users
+            // Get the query results
+            $query = $query->get();
 
             // Check if the query is empty and return a response message
             if ($query->isEmpty()) {
