@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in 
 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
+use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -20,6 +21,7 @@ class PostApiController extends Controller {
 
     use ApiResponses; // Use the ApiResponses trait in the controller
     use ApiSorting; // Use the ApiSorting trait in the controller
+    use ApiFiltering; // Use the ApiFiltering trait in the controller
 
     // Validation rules for the post data
     private $validationRules = [
@@ -48,6 +50,7 @@ class PostApiController extends Controller {
     public function index(Request $request){
         try {
             $query = Post::query();
+
             $query = $this->sort($request, $query, ['id', 'title', 'language', 'category', 'status']); // AllowedColumns is an array of columns that can be sorted
 
             // Check return value of the sort method and return the response if status code is 400
@@ -55,7 +58,21 @@ class PostApiController extends Controller {
                 return $query;
             }
 
+            // Filter the query results based on the request
+            $query = $this->filter($request, $query, ['title', 'language', 'category', 'status']); // AllowedColumns is an array of columns that can be filtered
+
+            // Check return value of the filter method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
+
             $query = $query->get();
+
+            // Check if the query is empty and return a response message
+            if ($query->isEmpty()) {
+                return $this->successResponse($query, 'No posts found with the given filters', 200);
+            }
+
             $query = $this->jsonDecode($query);
 
             return $this->successResponse($query, 'Posts retrieved successfully');
