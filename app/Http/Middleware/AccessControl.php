@@ -6,11 +6,12 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users);
+use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->errorResponse('Unauthorized. Admin access required.', null, 403);
 
 class AccessControl{
 
-    use ApiResponses; // Use the ApiResponses trait in the controller
+    // Import the ApiResponses trait to use it in the controller 
+    use ApiResponses;
 
     /**
      * Handle an incoming request.
@@ -20,7 +21,7 @@ class AccessControl{
     public function handle(Request $request, Closure $next) {
         $user = $request->user();
         
-        // Check if the user is authenticated before proceeding
+        // Check if the user is authenticated or not
         if (!$user) {
             return $this->errorResponse('Unauthorized. Authentication required.', null, 401);
         }
