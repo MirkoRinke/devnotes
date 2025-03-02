@@ -4,8 +4,9 @@ namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
 
-trait ApiResponses
-{
+trait ApiResponses {
+
+    // Success response method for returning data with a message and status code
     protected function successResponse($data, $message = null, $code = 200): JsonResponse {
         return response()->json([
             'status' => 'success',
@@ -15,6 +16,7 @@ trait ApiResponses
         ], $code);
     }
 
+    // Error response method for returning an error message and status code
     protected function errorResponse($message, $errors = [], $code): JsonResponse {
         return response()->json([
             'status' => 'error',
@@ -24,6 +26,7 @@ trait ApiResponses
         ], $code);
     }
 
+    // Validation error response method for returning validation errors and status code
     protected function getValidationMessages(): array {
         return [
             // User validation messages
