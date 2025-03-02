@@ -6,12 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\User;
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return response()->json($users);
-
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return new JsonResponse(['message' => 'User created successfully'], 201);
 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($post, 'Post created successfully', 201);
 
+use Illuminate\Validation\ValidationException; // Import the ValidationException class
 
 class RegisterController extends Controller{
 
