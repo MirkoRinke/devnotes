@@ -42,7 +42,6 @@ trait ApiFiltering {
                 $query->orWhere($key, 'LIKE', '%' . $value . '%');
             }
 
-            // dd($query->toSql()); // This will show the query being executed
         }
 
         return $query;
