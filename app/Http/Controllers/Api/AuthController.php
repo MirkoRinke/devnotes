@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return response()->json($users);
+use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return $this->successResponse($post, 'Post created successfully', 201);
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -16,8 +16,8 @@ use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the c
 
 class AuthController extends Controller {
 
-    use ApiResponses; // Use the ApiResponses trait in the controller
- 
+    // Use the ApiResponses trait in the controller
+    use ApiResponses;  
 
     /**
      * Register a new user
