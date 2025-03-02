@@ -35,7 +35,7 @@ class AuthController extends Controller {
         $user = User::where('email', $request->email)->first();
     
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            return $this->errorResponse('The provided credentials are incorrect.', null, 401);
+            return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
         }
     
         $token = $user->createToken($request->device_name);
