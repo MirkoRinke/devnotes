@@ -45,10 +45,15 @@ class PostApiController extends Controller {
     /**
      * Display a listing of the resource.
      */
-    public function index(){
+    public function index(Request $request){
         try {
             $query = Post::query();
-            $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']); // AllowedColumns is an array of columns that can be sorted
+            $query = $this->sort($request, $query, ['id', 'title', 'language', 'category', 'status']); // AllowedColumns is an array of columns that can be sorted
+
+            // Check return value of the sort method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
 
             $query = $query->get();
             $query = $this->jsonDecode($query);
