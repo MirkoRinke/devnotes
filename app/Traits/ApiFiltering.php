@@ -26,13 +26,25 @@ trait ApiFiltering {
     public function filter(Request $request,Builder $query, $allowedFilterColumns = []): JsonResponse|Builder{
 
         $filterArray = $request->query('filter', []);
-
-        foreach ($filterArray as $key => $value) {
+   
+        foreach ($filterArray as $key => $values) {
             if (!in_array($key, $allowedFilterColumns)) {
                 return $this->errorResponse('Invalid filter column: ' . $key, ['filter' => 'INVALID_FILTER_COLUMN'], 400);
             }
-            $query->where($key, 'LIKE' , '%'.$value.'%');
+
+            // If the value is not an array, convert it to an array
+            if (!is_array($values)) {
+                $values = explode(',', $values); // Convert comma separated string to array
+            }
+   
+            // For each value, add a where clause to the query to filter the results
+            foreach ($values as $value) {
+                $query->orWhere($key, 'LIKE', '%' . $value . '%');
+            }
+
+            // dd($query->toSql()); // This will show the query being executed
         }
+
         return $query;
     }
     
