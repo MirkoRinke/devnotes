@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
+use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -19,8 +20,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class PostApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, and ApiFiltering traits in the controller
-    use ApiResponses , ApiSorting, ApiFiltering;
+    // Use the ApiResponses, ApiSorting, ApiFiltering and SelectableAttributes traits in the controller
+    use ApiResponses , ApiSorting, ApiFiltering , SelectableAttributes;
 
     // Validation rules for the post data
     private $validationRules = [
@@ -37,8 +38,12 @@ class PostApiController extends Controller {
     // Decode the JSON data from the database to an array
     private function jsonDecode($posts) {
         foreach ($posts as $post) {
-            $post->tags = json_decode($post->tags);
-            $post->resources = json_decode($post->resources);
+            if (isset($post->tags)) {
+                $post->tags = json_decode($post->tags);
+            }
+            if (isset($post->resources)) {
+                $post->resources = json_decode($post->resources);
+            }
         }        
         return $posts;
     }
@@ -62,6 +67,14 @@ class PostApiController extends Controller {
             $query = $this->filter($request, $query, ['title', 'language', 'category', 'status']); 
 
             // Check return value of the filter method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
+
+            // Select the query results based on the request select array
+            $query = $this->selectAttributes($request, $query, ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
+
+            // Check return value of the selectAttributes method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
@@ -108,9 +121,21 @@ class PostApiController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(string $id): JsonResponse {
+    public function show(string $id, Request $request): JsonResponse {
         try {
-        $post = Post::findOrFail($id);
+
+        $query = Post::query()->where('id', $id);
+
+        // Select the user attributes based on the request select array
+        $query = $this->selectAttributes($request, $query, ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
+
+        // Check return value of the selectAttributes method and return the response if status code is 400
+        if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            return $query;
+        }
+
+        $post = $query->firstOrFail();
+
         $post = $this->jsonDecode([$post])[0];
 
         return $this->successResponse($post, 'Post retrieved successfully');
