@@ -11,6 +11,8 @@ use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in 
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
 use App\Traits\ApiSorting; // Import the ApiSorting trait to use it in the controller example $this->sort($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $this->filter($request, $query, [ 'name', 'email']);
+use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -18,15 +20,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class UserApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering traits in the controller
-    use ApiResponses, ApiSorting, ApiFiltering;
+    // Use the ApiResponses, ApiSorting, ApiFiltering and SelectableAttributes traits in the controller
+    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes;
 
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse {
         try {
-            $query = User::query(); 
+            $query = User::query();
 
             // Sort the query results based on the request sort array
             $query = $this->sort($request, $query, [ 'id','name', 'email']);
@@ -40,6 +42,14 @@ class UserApiController extends Controller {
             $query = $this->filter($request, $query, [ 'name', 'email']); 
 
             // Check return value of the filter method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
+
+            // Select the query results based on the request select array
+            $query = $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+
+            // Check return value of the selectAttributes method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
@@ -61,9 +71,20 @@ class UserApiController extends Controller {
     /**
      * Display the specified resource.
      */
-    public function show(string $id): JsonResponse {
+    public function show(string $id, Request $request): JsonResponse {
         try {
-        $user = User::findOrFail($id); 
+        $query = User::query()->where('id', $id);
+
+        // Select the user attributes based on the request select array
+        $query = $this->selectAttributes($request, $query, ['id', 'name', 'email']);
+
+        // Check return value of the selectAttributes method and return the response if status code is 400
+        if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            return $query;
+        }
+
+        $user = $query->firstOrFail();
+
         return $this->successResponse($user, 'User retrieved successfully', 200);
     } catch (ModelNotFoundException $e) {
         return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
