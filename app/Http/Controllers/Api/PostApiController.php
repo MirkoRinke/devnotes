@@ -12,6 +12,8 @@ use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the c
 use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
 use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
+
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -20,8 +22,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class PostApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering and SelectableAttributes traits in the controller
-    use ApiResponses , ApiSorting, ApiFiltering , SelectableAttributes;
+    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes and ApiPagination traits in the controller
+    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination;
 
     // Validation rules for the post data
     private $validationRules = [
@@ -79,11 +81,13 @@ class PostApiController extends Controller {
                 return $query;
             }
 
-            // Set the number of items to be returned based on the request per_page array or default to 10
-            $perPage = $request->input('per_page') ?? 10;
-
-            // Get the query results
-            $query = $query->paginate($perPage);
+            // Paginate the query results based on the request per_page parameter
+            $query = $this->getPerPage($request, $query, 10);
+ 
+            // Check return value of the getPerPage method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
           
             // Check if the query is empty and return a response message
             if ($query->isEmpty()) {
