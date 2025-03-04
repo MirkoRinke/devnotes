@@ -6,7 +6,14 @@ use Illuminate\Http\JsonResponse;
 
 trait ApiResponses {
 
-    // Success response method for returning data with a message and status code
+    /**
+     * Success response method for returning data, message and status code
+     *
+     * @param mixed $data
+     * @param string|null $message
+     * @param int $code
+     * @return JsonResponse
+     */
     protected function successResponse($data, $message = null, $code = 200): JsonResponse {
         return response()->json([
             'status' => 'success',
@@ -16,7 +23,14 @@ trait ApiResponses {
         ], $code);
     }
 
-    // Error response method for returning an error message and status code
+    /**
+     * Error response method for returning error message, errors and status code
+     *
+     * @param string $message
+     * @param array $errors
+     * @param int $code
+     * @return JsonResponse
+     */
     protected function errorResponse($message, $errors = [], $code): JsonResponse {
         return response()->json([
             'status' => 'error',
@@ -26,7 +40,12 @@ trait ApiResponses {
         ], $code);
     }
 
-    // Validation error response method for returning validation errors and status code
+    /**
+     * Validation error response method for returning validation errors
+     *
+     * @param array $errors
+     * @return JsonResponse
+     */
     protected function getValidationMessages(): array {
         return [
             // User validation messages
