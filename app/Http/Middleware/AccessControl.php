@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->errorResponse('Unauthorized. Admin access required.', null, 403);
 
 class AccessControl{
-
     // Import the ApiResponses trait to use it in the controller 
     use ApiResponses;
 
@@ -19,27 +18,22 @@ class AccessControl{
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next) {
-        $user = $request->user();
-        
+        $user = $request->user();        
         // Check if the user is authenticated or not
         if (!$user) {
             return $this->errorResponse('Unauthorized. Authentication required.', null, 401);
-        }
-        
+        }        
         // Allow users with the specified role to access the resource
         if ($user->role === 'admin') {
             return $next($request);
-        }
-        
+        }        
         // Allow users to access their own resources only
         if ($user->role === 'user') {
             $requestedUserId = $request->route('user');
             if ($requestedUserId && $requestedUserId == $user->id) {
                 return $next($request);
             }
-        }
-        
+        }        
         return $this->errorResponse('Unauthorized. Admin access required.', null, 403);
-    }
-    
+    }    
 }
