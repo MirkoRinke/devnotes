@@ -10,7 +10,6 @@ use App\Models\Post;
 use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->errorResponse('Unauthorized. You do not have permission to perform this action.', null, 403);
 
 class PostAccessControl {
-
     // Import the ApiResponses trait to use it in the controller
     use ApiResponses;
 
@@ -21,17 +20,14 @@ class PostAccessControl {
      */
     public function handle(Request $request, Closure $next) {  
         $user = $request->user();
-
         // Check if the user is authenticated
         if (!$user) {
             return $this->errorResponse('Unauthorized. Authentication required.', null, 401);
         }
-
         // Allow users with the specified role to access the resource
         if ($user->role === 'admin') {
             return $next($request);
         }
-
         // Allow users to access their own resources only
         if ($request->isMethod('put') || $request->isMethod('patch') || $request->isMethod('delete')) {
             $postId = $request->route('post');
@@ -40,8 +36,7 @@ class PostAccessControl {
             if ($post->user_id === $user->id) {
                 return $next($request);
             }
-        }  
-
+        }
         return $this->errorResponse('Unauthorized. You do not have permission to perform this action.', null, 403);
     }
 }
