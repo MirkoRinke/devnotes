@@ -79,8 +79,12 @@ class PostApiController extends Controller {
                 return $query;
             }
 
-            $query = $query->get();
+            // Set the number of items to be returned based on the request per_page array or default to 10
+            $perPage = $request->input('per_page') ?? 10;
 
+            // Get the query results
+            $query = $query->paginate($perPage);
+          
             // Check if the query is empty and return a response message
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
