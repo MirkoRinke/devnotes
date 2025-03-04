@@ -13,6 +13,7 @@ use App\Traits\ApiSorting; // Import the ApiSorting trait to use it in the contr
 use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $this->filter($request, $query, [ 'name', 'email']);
 use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
+use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the controller example $this->buildQuery($request, $query, $methods);
 
 use Exception; // Import the Exception class
 use Illuminate\Validation\ValidationException; // Import the ValidationException class
@@ -20,8 +21,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class UserApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes and ApiPagination traits in the controller
-    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination;
+    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
+    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination , QueryBuilder;   
 
     /**
      * Display a listing of the resource.
@@ -29,36 +30,17 @@ class UserApiController extends Controller {
     public function index(Request $request): JsonResponse {
         try {
             $query = User::query();
+            $methods = [
+                'sort' => ['id', 'name', 'email'],
+                'filter' => ['name', 'email'],
+                'select' => ['id', 'name', 'email'],
+                'getPerPage' => 10
+            ];
 
-            // Sort the query results based on the request sort array
-            $query = $this->sort($request, $query, [ 'id','name', 'email']);
-            
-            // Check return value of the sort method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
-            }
-            
-            // Filter the query results based on the request filters array 
-            $query = $this->filter($request, $query, [ 'name', 'email']); 
+            $query = $this->buildQuery($request, $query, $methods);
 
-            // Check return value of the filter method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
-            }
-
-            // Select the query results based on the request select array
-            $query = $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-
-            // Check return value of the selectAttributes method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
-            }
- 
-            // Paginate the query results based on the request per_page parameter
-            $query = $this->getPerPage($request, $query, 10);
- 
-            // Check return value of the getPerPage method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            // Check if the query is an instance of JsonResponse and return the response
+            if ($query instanceof JsonResponse) {
                 return $query;
             }
 
@@ -81,7 +63,7 @@ class UserApiController extends Controller {
         $query = User::query()->where('id', $id);
 
         // Select the user attributes based on the request select array
-        $query = $this->selectAttributes($request, $query, ['id', 'name', 'email']);
+        $query = $this->select($request, $query, ['id', 'name', 'email']);
 
         // Check return value of the selectAttributes method and return the response if status code is 400
         if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
