@@ -13,6 +13,7 @@ use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the cont
 use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
 use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
+use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the controller example $this->buildQuery($request, $query, $methods);
 
 
 use Exception; // Import the Exception class
@@ -22,8 +23,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class PostApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes and ApiPagination traits in the controller
-    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination;
+    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
+    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination , QueryBuilder;   
 
     // Validation rules for the post data
     private $validationRules = [
@@ -56,36 +57,17 @@ class PostApiController extends Controller {
     public function index(Request $request){
         try {
             $query = Post::query();
+            $methods = [
+                'sort' => ['id', 'title', 'language', 'category', 'status'],
+                'filter' => ['title', 'language', 'category', 'status'],
+                'select' => ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status'],
+                'getPerPage' => 10
+            ];
 
-            // Sort the query results based on the request
-            $query = $this->sort($request, $query, ['id', 'title', 'language', 'category', 'status']);
+            $query = $this->buildQuery($request, $query, $methods);
 
-            // Check return value of the sort method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
-            }
-
-            // Filter the query results based on the request
-            $query = $this->filter($request, $query, ['title', 'language', 'category', 'status']); 
-
-            // Check return value of the filter method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
-            }
-
-            // Select the query results based on the request select array
-            $query = $this->selectAttributes($request, $query, ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
-
-            // Check return value of the selectAttributes method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
-            }
-
-            // Paginate the query results based on the request per_page parameter
-            $query = $this->getPerPage($request, $query, 10);
- 
-            // Check return value of the getPerPage method and return the response if status code is 400
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            // Check if the query is an instance of JsonResponse and return the response
+            if ($query instanceof JsonResponse) {
                 return $query;
             }
           
@@ -135,7 +117,7 @@ class PostApiController extends Controller {
         $query = Post::query()->where('id', $id);
 
         // Select the user attributes based on the request select array
-        $query = $this->selectAttributes($request, $query, ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
+        $query = $this->select($request, $query, ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
 
         // Check return value of the selectAttributes method and return the response if status code is 400
         if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
