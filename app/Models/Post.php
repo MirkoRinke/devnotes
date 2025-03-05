@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Post extends Model
-{
+use App\Models\User;
+
+class Post extends Model {
     use HasFactory;
 
     protected $fillable = [
@@ -20,4 +21,11 @@ class Post extends Model
         'tags',
         'status'
     ];
+
+    /**
+     * Get the user that owns the post.
+     */
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }
