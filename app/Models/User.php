@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 
 use Laravel\Sanctum\HasApiTokens;
 
+use App\Models\Post;
+
 
 class User extends Authenticatable
 {
@@ -48,4 +50,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the posts for the user.
+     */
+    public function posts() {
+        return $this->hasMany(Post::class);
+    }
+
 }
