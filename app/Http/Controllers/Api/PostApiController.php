@@ -58,9 +58,9 @@ class PostApiController extends Controller {
         try {
             $query = Post::query();
             $methods = [
-                'sort' => ['id', 'title', 'language', 'category', 'status'],
-                'filter' => ['title', 'language', 'category', 'status'],
-                'select' => ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status'],
+                'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
+                'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
+                'select' => ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status'],
                 'getPerPage' => 10
             ];
 
@@ -117,7 +117,7 @@ class PostApiController extends Controller {
         $query = Post::query()->where('id', $id);
 
         // Select the user attributes based on the request select array
-        $query = $this->select($request, $query, ['id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
+        $query = $this->select($request, $query, ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
 
         // Check return value of the selectAttributes method and return the response if status code is 400
         if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
