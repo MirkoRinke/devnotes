@@ -14,10 +14,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users', 'id')->onDelete('set null');
             $table->string('title');
-            $table->text('code');
+            $table->text('code')->nullable();
             $table->text('description');
             $table->json('resources')->nullable();
-            $table->string('language');
+            $table->string('language')->nullable();
             $table->string('category')->nullable();
             $table->json('tags');
             $table->timestamps();
