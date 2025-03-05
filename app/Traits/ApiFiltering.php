@@ -37,9 +37,15 @@ trait ApiFiltering {
                 if (!is_array($values)) {
                     $values = explode(',', $values); 
                 }    
-                // For each value, add a where clause to the query to filter the results
+                // Add a where clause to the query for each value in the array
                 foreach ($values as $value) {
-                    $query->orWhere($key, 'LIKE', '%' . $value . '%');
+                    if ($value === 'is:null') {
+                        $query->orWhereNull($key);
+                    } else if ($value === 'is:not_null') {
+                        $query->orWhereNotNull($key);
+                    } else {
+                        $query->orWhere($key, 'LIKE', '%' . $value . '%');
+                    }
                 }
             }
         }
