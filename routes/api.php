@@ -14,6 +14,8 @@ use App\Http\Middleware\PostAccessControl; // Import the middleware to use it in
 
 
 
+Route::middleware('throttle:api')->group(function () {
+
 // Public routes that do not require authentication route to register a new user
 Route::post('/register', [RegisterController::class, 'register']);
 
@@ -46,4 +48,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Protected routes that require authentication and access control
 Route::middleware(['auth:sanctum', PostAccessControl::class])->group(function () {
     Route::apiResource('posts', PostApiController::class)->except(['index', 'show', 'store']);
+});
+
+
 });
