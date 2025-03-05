@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Database\Eloquent\Collection;
 
 trait ApiResponses {
 
@@ -15,11 +16,17 @@ trait ApiResponses {
      * @return JsonResponse
      */
     protected function successResponse($data, $message = null, $code = 200): JsonResponse { 
+        if ($data instanceof Collection) {
+            $count = $data->count();
+        } else {
+            $count = 1;
+        }
+        
         return response()->json([
             'status' => 'success',
             'message' => $message,
             'code' => $code,
-            'count' => count($data),
+            'count' => $count,
             'data' => $data            
         ], $code);
     }
