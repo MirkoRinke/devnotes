@@ -14,14 +14,16 @@ trait ApiResponses {
      * @param int $code
      * @return JsonResponse
      */
-    protected function successResponse($data, $message = null, $code = 200): JsonResponse {
+    protected function successResponse($data, $message = null, $code = 200): JsonResponse { 
         return response()->json([
             'status' => 'success',
             'message' => $message,
             'code' => $code,
+            'count' => count($data),
             'data' => $data            
         ], $code);
     }
+    
 
     /**
      * Error response method for returning error message, errors and status code
