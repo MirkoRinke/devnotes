@@ -60,7 +60,7 @@ class PostApiController extends Controller {
 
             $query = Post::query();
             $methods = [
-                'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
+                'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count'],
                 'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
                 'select' => ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count'],
                 'getPerPage' => 10
