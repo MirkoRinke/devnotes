@@ -29,7 +29,13 @@ class UserApiController extends Controller {
      */
     public function index(Request $request): JsonResponse {
         try {
+            // Check if there are no users in the database and return a response message
+            if (User::count() === 0) {
+                return $this->successResponse([], 'No users exist in the database', 200);
+            }
+
             $query = User::query();
+
             $methods = [
                 'sort' => ['id', 'name', 'email'],
                 'filter' => ['name', 'email'],
@@ -37,6 +43,7 @@ class UserApiController extends Controller {
                 'getPerPage' => 10
             ];
 
+            // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
             $query = $this->buildQuery($request, $query, $methods);
 
             // Check if the query is an instance of JsonResponse and return the response
