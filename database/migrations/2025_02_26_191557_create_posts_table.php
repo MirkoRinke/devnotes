@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('language')->nullable();
             $table->string('category')->nullable();
             $table->json('tags');
+            $table->integer('favorite_count')->default(0);
             $table->timestamps();
             $table->string('status')->default('draft'); // draft, published, archived
         });
