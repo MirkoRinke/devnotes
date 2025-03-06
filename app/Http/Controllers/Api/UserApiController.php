@@ -24,6 +24,14 @@ class UserApiController extends Controller {
     // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
     use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination , QueryBuilder;   
 
+    // Query building methods configuration
+    private $methods = [
+        'sort' => ['id', 'name', 'email'],
+        'filter' => ['name', 'email'],
+        'select' => ['id', 'name', 'email'],
+        'getPerPage' => 10
+    ];
+
     /**
      * Display a listing of the resource.
      */
@@ -36,15 +44,9 @@ class UserApiController extends Controller {
 
             $query = User::query();
 
-            $methods = [
-                'sort' => ['id', 'name', 'email'],
-                'filter' => ['name', 'email'],
-                'select' => ['id', 'name', 'email'],
-                'getPerPage' => 10
-            ];
 
             // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
-            $query = $this->buildQuery($request, $query, $methods);
+            $query = $this->buildQuery($request, $query, $this->methods);
 
             // Check if the query is an instance of JsonResponse and return the response
             if ($query instanceof JsonResponse) {
@@ -70,7 +72,7 @@ class UserApiController extends Controller {
         $query = User::query()->where('id', $id);
 
         // Select the user attributes based on the request select array
-        $query = $this->select($request, $query, ['id', 'name', 'email']);
+        $query = $this->select($request, $query, $this->methods['select']);
 
         // Check return value of the selectAttributes method and return the response if status code is 400
         if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
