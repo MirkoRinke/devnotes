@@ -18,55 +18,55 @@ use App\Http\Controllers\Api\FavoriteController; // Import the controller to use
 
 Route::middleware('throttle:api')->group(function () {
 
-//! Route to register a new user
+    //! Route to register a new user
 
-// Public routes that do not require authentication route to register a new user
-Route::post('/register', [RegisterController::class, 'register']);
+    // Public routes that do not require authentication route to register a new user
+    Route::post('/register', [RegisterController::class, 'register']);
 
-// Public routes that do not require authentication route to login and get a token
-Route::post('/login', [AuthController::class, 'login']);
+    // Public routes that do not require authentication route to login and get a token
+    Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes that require authentication
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-});
-
-
-//! Route to get all users
+    // Protected routes that require authentication
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
 
 
-// Protected routes that require authentication and access control
-Route::middleware(['auth:sanctum', AccessControl::class])->group(function () {
-    Route::apiResource('users', UserApiController::class);  
-});
+    //! Route to get all users
 
 
-//! Route to get all posts
-
-// Public routes that do not require authentication
-Route::get('/posts', [PostApiController::class, 'index']);
-Route::get('/posts/{post}', [PostApiController::class, 'show']);
-
-// Protected routes that require authentication
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/posts', [PostApiController::class, 'store']);
-});
-
-// Protected routes that require authentication and access control
-Route::middleware(['auth:sanctum', PostAccessControl::class])->group(function () {
-    Route::apiResource('posts', PostApiController::class)->except(['index', 'show', 'store']);
-});
+    // Protected routes that require authentication and access control
+    Route::middleware(['auth:sanctum', AccessControl::class])->group(function () {
+        Route::apiResource('users', UserApiController::class);  
+    });
 
 
+    //! Route to get all posts
 
-//! Route to get all favorites
+    // Public routes that do not require authentication
+    Route::get('/posts', [PostApiController::class, 'index']);
+    Route::get('/posts/{post}', [PostApiController::class, 'show']);
 
-// Protected routes that require authentication and access control
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
-    Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
-    Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
-});
+    // Protected routes that require authentication
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/posts', [PostApiController::class, 'store']);
+    });
 
+    // Protected routes that require authentication and access control
+    Route::middleware(['auth:sanctum', PostAccessControl::class])->group(function () {
+        Route::apiResource('posts', PostApiController::class)->except(['index', 'show', 'store']);
+    });
+
+
+
+    //! Route to get all favorites
+
+    // Protected routes that require authentication and access control
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
+        Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
+        Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
+    
+    });
 
 });
