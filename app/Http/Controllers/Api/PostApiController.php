@@ -56,11 +56,13 @@ class PostApiController extends Controller {
      */
     public function index(Request $request){
         try {
+            $queryCheck = Post::firstOrFail(); //! Temporary check to determine if the posts table is empty
+
             $query = Post::query();
             $methods = [
                 'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
                 'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
-                'select' => ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status'],
+                'select' => ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count'],
                 'getPerPage' => 10
             ];
 
@@ -113,25 +115,24 @@ class PostApiController extends Controller {
      */
     public function show(string $id, Request $request): JsonResponse {
         try {
+            $query = Post::query()->where('id', $id);
 
-        $query = Post::query()->where('id', $id);
+            // Select the user attributes based on the request select array
+            $query = $this->select($request, $query, ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count']);
 
-        // Select the user attributes based on the request select array
-        $query = $this->select($request, $query, ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status']);
+            // Check return value of the selectAttributes method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
 
-        // Check return value of the selectAttributes method and return the response if status code is 400
-        if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-            return $query;
+            $post = $query->firstOrFail();
+
+            $post = $this->jsonDecode([$post])[0];
+
+            return $this->successResponse($post, 'Post retrieved successfully');
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
         }
-
-        $post = $query->firstOrFail();
-
-        $post = $this->jsonDecode([$post])[0];
-
-        return $this->successResponse($post, 'Post retrieved successfully');
-    } catch (ModelNotFoundException $e) {
-        return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
-    }
     }
 
     /**
@@ -139,19 +140,19 @@ class PostApiController extends Controller {
      */
     public function update(Request $request, string $id): JsonResponse {
         try {
-        $post = Post::findOrFail($id); 
-    
-        $validatedData = $request->validate(
-            $this->validationRules,         
-            $this->getValidationMessages()
-        );
+            $post = Post::findOrFail($id); 
+        
+            $validatedData = $request->validate(
+                $this->validationRules,         
+                $this->getValidationMessages()
+            );
 
-        $validatedData['tags'] = json_encode($validatedData['tags']);
-        $validatedData['resources'] = json_encode($validatedData['resources']);
-    
-        $post->update($validatedData);
+            $validatedData['tags'] = json_encode($validatedData['tags']);
+            $validatedData['resources'] = json_encode($validatedData['resources']);
+        
+            $post->update($validatedData);
 
-        return $this->successResponse($post, 'Post update successfully', 200); 
+            return $this->successResponse($post, 'Post update successfully', 200); 
     
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
