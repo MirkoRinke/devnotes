@@ -13,8 +13,12 @@ use App\Http\Middleware\AccessControl; // Import the middleware to use it in the
 use App\Http\Middleware\PostAccessControl; // Import the middleware to use it in the routes file
 
 
+use App\Http\Controllers\Api\FavoriteController; // Import the controller to use it in the routes file
+
 
 Route::middleware('throttle:api')->group(function () {
+
+//! Route to register a new user
 
 // Public routes that do not require authentication route to register a new user
 Route::post('/register', [RegisterController::class, 'register']);
@@ -28,13 +32,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 
+//! Route to get all users
+
+
 // Protected routes that require authentication and access control
 Route::middleware(['auth:sanctum', AccessControl::class])->group(function () {
     Route::apiResource('users', UserApiController::class);  
 });
 
 
-
+//! Route to get all posts
 
 // Public routes that do not require authentication
 Route::get('/posts', [PostApiController::class, 'index']);
@@ -48,6 +55,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Protected routes that require authentication and access control
 Route::middleware(['auth:sanctum', PostAccessControl::class])->group(function () {
     Route::apiResource('posts', PostApiController::class)->except(['index', 'show', 'store']);
+});
+
+
+
+//! Route to get all favorites
+
+// Protected routes that require authentication and access control
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
+    Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
+    Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
 });
 
 
