@@ -56,9 +56,13 @@ class PostApiController extends Controller {
      */
     public function index(Request $request){
         try {
-            $queryCheck = Post::firstOrFail(); //! Temporary check to determine if the posts table is empty
+            // Check if the posts table is empty and return a response message            
+            if (Post::count() === 0) {
+                return $this->successResponse([], 'No posts exist in the database', 200);
+            }
 
             $query = Post::query();
+            
             $methods = [
                 'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count'],
                 'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
@@ -66,6 +70,7 @@ class PostApiController extends Controller {
                 'getPerPage' => 10
             ];
 
+            // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
             $query = $this->buildQuery($request, $query, $methods);
 
             // Check if the query is an instance of JsonResponse and return the response
@@ -83,7 +88,7 @@ class PostApiController extends Controller {
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
-            return $this->errorResponse('Posts not found', null, 404);
+            return $this->errorResponse('Posts not found', $e->getMessage(), 404);
         }
     }
 
