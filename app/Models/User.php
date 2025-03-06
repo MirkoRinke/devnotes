@@ -10,10 +10,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 use App\Models\Post;
+use App\Models\UserFavorite;
 
 
-class User extends Authenticatable
-{
+
+class User extends Authenticatable {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable , HasApiTokens;
 
@@ -53,9 +54,19 @@ class User extends Authenticatable
 
     /**
      * Get the posts for the user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function posts() {
         return $this->hasMany(Post::class);
     }
 
+    /**
+     * Get the favorites for the user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function favorites() {
+        return $this->hasMany(UserFavorite::class);
+    }
 }
