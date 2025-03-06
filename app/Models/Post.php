@@ -27,7 +27,8 @@ class Post extends Model {
         'language', 
         'category', 
         'tags',
-        'status'
+        'status',
+        'favorite_count'
     ];
 
     /**
@@ -47,5 +48,4 @@ class Post extends Model {
     public function favorites() {
         return $this->hasMany(UserFavorite::class);
     }
-
 }
