@@ -38,6 +38,14 @@ class PostApiController extends Controller {
         'status' => 'required|in:draft,published,archived'
     ];
 
+    // Query building methods configuration
+    private $methods = [
+        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count'],
+        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
+        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count'],
+        'getPerPage' => 10
+    ];
+
     // Decode the JSON data from the database to an array
     private function jsonDecode($posts) {
         foreach ($posts as $post) {
@@ -61,17 +69,11 @@ class PostApiController extends Controller {
                 return $this->successResponse([], 'No posts exist in the database', 200);
             }
 
+            // Get all the posts from the database
             $query = Post::query();
-            
-            $methods = [
-                'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count'],
-                'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
-                'select' => ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count'],
-                'getPerPage' => 10
-            ];
-
+ 
             // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
-            $query = $this->buildQuery($request, $query, $methods);
+            $query = $this->buildQuery($request, $query, $this->methods);
 
             // Check if the query is an instance of JsonResponse and return the response
             if ($query instanceof JsonResponse) {
@@ -123,7 +125,7 @@ class PostApiController extends Controller {
             $query = Post::query()->where('id', $id);
 
             // Select the user attributes based on the request select array
-            $query = $this->select($request, $query, ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count']);
+            $query = $this->select($request, $query, $this->methods['select']);
 
             // Check return value of the selectAttributes method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
