@@ -15,6 +15,7 @@ use App\Http\Middleware\PostAccessControl; // Import the middleware to use it in
 
 use App\Http\Controllers\Api\FavoriteController; // Import the controller to use it in the routes file
 
+use App\Http\Controllers\API\UserProfileController; // Import the controller to use it in the routes file
 
 Route::middleware('throttle:api')->group(function () {
 
@@ -37,7 +38,7 @@ Route::middleware('throttle:api')->group(function () {
 
     // Protected routes that require authentication and access control
     Route::middleware(['auth:sanctum', AccessControl::class])->group(function () {
-        Route::apiResource('users', UserApiController::class);  
+        Route::apiResource('users', UserApiController::class);
     });
 
 
@@ -66,7 +67,11 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
         Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
         Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
-    
     });
 
+
+    //! Route to get all user profiles - Temporary route to test the UserProfileController
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::apiResource('user_profiles', UserProfileController::class);
+    });
 });
