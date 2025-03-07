@@ -15,22 +15,22 @@ trait ApiResponses {
      * @param int $code
      * @return JsonResponse
      */
-    protected function successResponse($data, $message = null, $code = 200): JsonResponse { 
+    protected function successResponse($data, $message = null, $code = 200): JsonResponse {
         if ($data instanceof Collection) {
             $count = $data->count();
         } else {
             $count = 1;
         }
-        
+
         return response()->json([
             'status' => 'success',
             'message' => $message,
             'code' => $code,
             'count' => $count,
-            'data' => $data            
+            'data' => $data
         ], $code);
     }
-    
+
 
     /**
      * Error response method for returning error message, errors and status code
@@ -45,7 +45,7 @@ trait ApiResponses {
             'status' => 'error',
             'message' => $message,
             'code' => $code,
-            'errors' => $errors           
+            'errors' => $errors
         ], $code);
     }
 
@@ -88,7 +88,26 @@ trait ApiResponses {
             'tags.required' => 'TAGS_FIELD_REQUIRED',
             'tags.array' => 'TAGS_MUST_BE_ARRAY',
             'status.required' => 'STATUS_FIELD_REQUIRED',
-            'status.in' => 'STATUS_INVALID_OPTION'
+            'status.in' => 'STATUS_INVALID_OPTION',
+
+            // User Profile validation messages  
+            'user_id.required' => 'USER_ID_FIELD_REQUIRED',
+            'user_id.integer' => 'USER_ID_MUST_BE_INTEGER',
+            'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
+            'display_name.string' => 'DISPLAY_NAME_MUST_BE_STRING',
+            'display_name.max' => 'DISPLAY_NAME_FIELD_MAX_LENGTH',
+            'location.string' => 'LOCATION_MUST_BE_STRING',
+            'location.max' => 'LOCATION_FIELD_MAX_LENGTH',
+            'skills.array' => 'SKILLS_MUST_BE_ARRAY',
+            'biography.string' => 'BIOGRAPHY_MUST_BE_STRING',
+            'social_links.array' => 'SOCIAL_LINKS_MUST_BE_ARRAY',
+            'website.string' => 'WEBSITE_MUST_BE_STRING',
+            'website.max' => 'WEBSITE_FIELD_MAX_LENGTH',
+            'avatar_path.string' => 'AVATAR_PATH_MUST_BE_STRING',
+            'avatar_path.max' => 'AVATAR_PATH_FIELD_MAX_LENGTH',
+            'is_public.required' => 'IS_PUBLIC_FIELD_REQUIRED',
+            'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN'
+
         ];
     }
 }
