@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Observers\UserObserver;
 use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Cache\RateLimiting\Limit;
@@ -17,8 +19,7 @@ class AppServiceProvider extends ServiceProvider {
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
+    public function register(): void {
         //
     }
 
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider {
      * Bootstrap any application services.
      */
     public function boot(): void {
+
+        /**
+         * Register the UserObserver to create a user profile when a user is created.
+         */
+        User::observe(UserObserver::class);
 
         /**
          * Rate limiting for the API requests.
@@ -36,16 +42,16 @@ class AppServiceProvider extends ServiceProvider {
             $key = 'api:' . ($request->user()?->id ?: $request->ip());
             // The maximum number of attempts allowed in a minute
             $maxAttempts = 120;
-    
+
             // $beforeAttempts = RateLimiter::attempts($key);
             // $beforeRemaining = RateLimiter::remaining($key, $maxAttempts);
-    
+
             // The hit method increments the number of attempts by 1
             RateLimiter::hit($key);
-    
+
             // $afterAttempts = RateLimiter::attempts($key);
             // $afterRemaining = RateLimiter::remaining($key, $maxAttempts);
-    
+
             // dd([
             //     'key' => $key,
             //     'before_attempts' => $beforeAttempts,
@@ -55,12 +61,12 @@ class AppServiceProvider extends ServiceProvider {
             //     'endpoint' => $request->path(),
             //     'method' => $request->method()
             // ]);
-    
+
             // If the number of attempts exceeds the maximum allowed attempts
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
                 return $this->errorResponse('Too many requests', 'TOO_MANY_REQUESTS', 429);
             }
-    
+
             // The perMinute method is used to limit the number of requests per minute
             return Limit::perMinute($maxAttempts)->by($key);
         });
