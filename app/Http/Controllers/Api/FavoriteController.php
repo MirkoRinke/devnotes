@@ -20,11 +20,12 @@ use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the c
 
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\JsonResponse;
 
 class FavoriteController extends Controller {
 
     // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
-    use AuthorizesRequests , ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination , QueryBuilder;   
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
 
 
     // Decode the JSON data from the database to an array
@@ -38,7 +39,7 @@ class FavoriteController extends Controller {
             if (isset($post->resources)) {
                 $post->resources = json_decode($post->resources);
             }
-        }        
+        }
         return $favorites;
     }
 
@@ -53,7 +54,7 @@ class FavoriteController extends Controller {
         $methods = [
             'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
             'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
-            'select' => ['id', 'user_id', 'title', 'code' , 'description', 'resources', 'language', 'category', 'tags', 'status'],
+            'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
             'getPerPage' => 10
         ];
 
@@ -81,17 +82,17 @@ class FavoriteController extends Controller {
         try {
             $user = $request->user();
             $post = Post::findOrFail($postId);
-            
+
             // Check if the post is already in favorites
             $exists = UserFavorite::where('user_id', $user->id)->where('post_id', $post->id)->exists();
-                                  
+
             if (!$exists) {
                 // Add the post to favorites
-                $favorite = UserFavorite::create(['user_id' => $user->id,'post_id' => $post->id]);
-                
+                $favorite = UserFavorite::create(['user_id' => $user->id, 'post_id' => $post->id]);
+
                 // Increment the favorite count for the post
                 $post->increment('favorite_count');
-                
+
                 return $this->successResponse($favorite, 'Post successfully added to favorites', 201);
             } else {
                 // Return the favorite if the post is already in favorites
@@ -103,31 +104,30 @@ class FavoriteController extends Controller {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         }
     }
-    
+
     /**
      * Remove a post from favorites
      */
     public function removeFavorite(Request $request, $postId) {
         try {
-            $user = $request->user();            
+            $user = $request->user();
             $post = Post::findOrFail($postId);
-            
+
             $favorite = UserFavorite::where('user_id', $user->id)->where('post_id', $postId)->first();
-    
+
             if (!$favorite) {
                 return $this->errorResponse('Post is not in favorites', 'POST_NOT_IN_FAVORITES', 404);
             }
-    
+
             $this->authorize('delete', $favorite);
-    
+
             // Decrement the favorite count for the post and then delete the favorite
             $post->decrement('favorite_count');
-    
+
             $favorite->delete();
             return $this->successResponse(null, 'Post successfully removed from favorites', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         }
     }
-        
 }
