@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 class PostApiController extends Controller {
 
     // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
-    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination , QueryBuilder;   
+    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
 
     // Validation rules for the post data
     private $validationRules = [
@@ -55,14 +55,14 @@ class PostApiController extends Controller {
             if (isset($post->resources)) {
                 $post->resources = json_decode($post->resources);
             }
-        }        
+        }
         return $posts;
     }
 
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request){
+    public function index(Request $request) {
         try {
             // Check if the posts table is empty and return a response message            
             if (Post::count() === 0) {
@@ -71,7 +71,7 @@ class PostApiController extends Controller {
 
             // Get all the posts from the database
             $query = Post::query();
- 
+
             // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
             $query = $this->buildQuery($request, $query, $this->methods);
 
@@ -79,7 +79,7 @@ class PostApiController extends Controller {
             if ($query instanceof JsonResponse) {
                 return $query;
             }
-          
+
             // Check if the query is empty and return a response message
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
@@ -100,17 +100,17 @@ class PostApiController extends Controller {
     public function store(Request $request): JsonResponse {
         try {
             $validatedData = $request->validate(
-                $this->validationRules,         
+                $this->validationRules,
                 $this->getValidationMessages()
             );
 
             $validatedData['tags'] = json_encode($validatedData['tags']);
             $validatedData['resources'] = json_encode($validatedData['resources']);
 
-            $validatedData['user_id'] = auth()->id();
-    
+            $validatedData['user_id'] = request()->user()->id();
+
             $post = Post::create($validatedData);
-    
+
             return $this->successResponse($post, 'Post created successfully', 201);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
@@ -147,20 +147,19 @@ class PostApiController extends Controller {
      */
     public function update(Request $request, string $id): JsonResponse {
         try {
-            $post = Post::findOrFail($id); 
-        
+            $post = Post::findOrFail($id);
+
             $validatedData = $request->validate(
-                $this->validationRules,         
+                $this->validationRules,
                 $this->getValidationMessages()
             );
 
             $validatedData['tags'] = json_encode($validatedData['tags']);
             $validatedData['resources'] = json_encode($validatedData['resources']);
-        
+
             $post->update($validatedData);
 
-            return $this->successResponse($post, 'Post update successfully', 200); 
-    
+            return $this->successResponse($post, 'Post update successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
         } catch (ValidationException $e) {
@@ -171,7 +170,7 @@ class PostApiController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id): JsonResponse{
+    public function destroy(string $id): JsonResponse {
         try {
             $post = Post::findOrFail($id);
             $post->delete();
