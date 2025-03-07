@@ -16,7 +16,7 @@ use App\Models\UserFavorite;
 
 class User extends Authenticatable {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable , HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -44,8 +44,7 @@ class User extends Authenticatable {
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
+    protected function casts(): array {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
@@ -68,5 +67,14 @@ class User extends Authenticatable {
      */
     public function favorites() {
         return $this->hasMany(UserFavorite::class);
+    }
+
+    /**
+     * Get the profile for the user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function profile() {
+        return $this->hasOne(UserProfile::class);
     }
 }
