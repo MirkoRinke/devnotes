@@ -5,8 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserFavorite extends Model
-{
+class UserFavorite extends Model {
     use HasFactory;
 
     /**
@@ -15,6 +14,16 @@ class UserFavorite extends Model
      * @var array
      */
     protected $fillable = ['user_id', 'post_id'];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'resources' => 'array',
+        'tags' => 'array',
+    ];
 
     /**
      * Get the user that owns the UserFavorite
