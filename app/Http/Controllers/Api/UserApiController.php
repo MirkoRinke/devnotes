@@ -21,10 +21,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class UserApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
-    use ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination , QueryBuilder;   
 
-    // Query building methods configuration
+    /**
+     *  The traits used in the controller
+     */
+    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
+
+    /**
+     * The methods array contains the methods that are used in the buildQuery method
+     */
     private $methods = [
         'sort' => ['id', 'name', 'email'],
         'filter' => ['name', 'email'],
@@ -53,14 +58,14 @@ class UserApiController extends Controller {
                 return $query;
             }
 
-            // Check if the query is empty and return a response message
+            // Check if the query is empty after filtering and return the response
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No users found with the given filters', 200);
             }
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('Users not found', null, 404);
+            return $this->errorResponse('Users not found', 'USER_NOT_FOUND', 404);
         }
     }
 
@@ -69,22 +74,23 @@ class UserApiController extends Controller {
      */
     public function show(string $id, Request $request): JsonResponse {
         try {
-        $query = User::query()->where('id', $id);
+            $query = User::query()->where('id', $id);
 
-        // Select the user attributes based on the request select array
-        $query = $this->select($request, $query, $this->methods['select']);
+            // Select the user attributes based on the request select array
+            $query = $this->select($request, $query, $this->methods['select']);
 
-        // Check return value of the selectAttributes method and return the response if status code is 400
-        if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-            return $query;
+            // Check return value of the selectAttributes method and return the response if status code is 400
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
+
+            // Need this because the select method returns only the query object
+            $user = $query->firstOrFail();
+
+            return $this->successResponse($user, 'User retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
         }
-
-        $user = $query->firstOrFail();
-
-        return $this->successResponse($user, 'User retrieved successfully', 200);
-    } catch (ModelNotFoundException $e) {
-        return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
-    }
     }
 
     /**
@@ -92,26 +98,26 @@ class UserApiController extends Controller {
      */
     public function update(Request $request, string $id): JsonResponse {
         try {
-        $user = User::findOrFail($id); 
-    
-        $validatedData = $request->validate([ 
-            'name' => 'sometimes|string|max:255', 
-            'email' => 'sometimes|string|email|unique:users,email,' . $user->id, 
-            'password' => 'sometimes|string|min:8|confirmed',
-        ],         
-        $this->getValidationMessages()
-        );
-    
-        $user->update([ 
-            'name' => $validatedData['name'] ?? $user->name, 
-            'email' => $validatedData['email'] ?? $user->email, 
-            'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
-        ]);
-        
-        return $this->successResponse($user, 'User update successfully', 200); 
-    
+            $user = User::findOrFail($id);
+
+            $validatedData = $request->validate(
+                [
+                    'name' => 'sometimes|string|max:255',
+                    'email' => 'sometimes|string|email|unique:users,email,' . $user->id,
+                    'password' => 'sometimes|string|min:8|confirmed',
+                ],
+                $this->getValidationMessages()
+            );
+
+            $user->update([
+                'name' => $validatedData['name'] ?? $user->name,
+                'email' => $validatedData['email'] ?? $user->email,
+                'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
+            ]);
+
+            return $this->successResponse($user, 'User update successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
+            return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         }
@@ -120,13 +126,13 @@ class UserApiController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id): JsonResponse{
+    public function destroy(string $id): JsonResponse {
         try {
             $user = User::findOrFail($id);
             $user->delete();
             return $this->successResponse(null, 'User deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('User not found', ['id' => 'User with the given ID does not exist'], 404);
+            return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
         }
     }
 }
