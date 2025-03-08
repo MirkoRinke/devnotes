@@ -5,28 +5,29 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Models\Post; // Import the Post model to use it in the controller example $posts = Post::all() or Post::findOrFail($id); or Post::create($validatedData); or $post->update($validatedData); or $post->delete(); or Post::query();
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
+use App\Models\Post;
+use Illuminate\Http\JsonResponse;
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
-use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
-use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the controller example $this->buildQuery($request, $query, $methods);
+use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
+use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
+use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
+use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+
+use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 
-use Exception; // Import the Exception class
-use Illuminate\Validation\ValidationException; // Import the ValidationException class
-use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotFoundException class
-
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PostApiController extends Controller {
-
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
+    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, AuthorizesRequests;
 
     /**
      * The validation rules for the user profile data
@@ -138,6 +139,9 @@ class PostApiController extends Controller {
         try {
             $post = Post::findOrFail($id);
 
+            // Check if the user can update the post and return a response message
+            $this->authorize('update', $post);
+
             $validatedData = $request->validate(
                 $this->validationRules,
                 $this->getValidationMessages()
@@ -153,6 +157,8 @@ class PostApiController extends Controller {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to update this post', 'UNAUTHORIZED_ACTION', 403);
         }
     }
 
@@ -162,10 +168,16 @@ class PostApiController extends Controller {
     public function destroy(string $id): JsonResponse {
         try {
             $post = Post::findOrFail($id);
+
+            // Check if the user can delete the post and return a response message
+            $this->authorize('delete', $post);
+
             $post->delete();
             return $this->successResponse(null, 'Post deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to delete this post', 'UNAUTHORIZED_ACTION', 403);
         }
     }
 }
