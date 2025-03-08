@@ -52,19 +52,6 @@ class PostApiController extends Controller {
         'getPerPage' => 10
     ];
 
-    // Decode the JSON data from the database to an array
-    private function jsonDecode($posts) {
-        foreach ($posts as $post) {
-            if (isset($post->tags)) {
-                $post->tags = json_decode($post->tags);
-            }
-            if (isset($post->resources)) {
-                $post->resources = json_decode($post->resources);
-            }
-        }
-        return $posts;
-    }
-
     /**
      * Display a listing of the resource.
      */
@@ -90,9 +77,6 @@ class PostApiController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
-
-            // Decode the JSON data from the database to an array
-            $query = $this->jsonDecode($query);
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -140,8 +124,6 @@ class PostApiController extends Controller {
 
             // Need this because the select method returns only the query object
             $post = $query->firstOrFail();
-
-            $post = $this->jsonDecode([$post])[0];
 
             return $this->successResponse($post, 'Post retrieved successfully');
         } catch (ModelNotFoundException $e) {
