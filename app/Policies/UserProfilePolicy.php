@@ -9,19 +9,19 @@ use Illuminate\Auth\Access\Response;
 class UserProfilePolicy {
 
     /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool {
-        // Profiles are automatically created with users, so manual creation is not allowed
-        return false;
-    }
-
-    /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool {
         // Everyone can view all profiles
         return true;
+    }
+
+    /**
+     * Determine whether the user can create models.
+     */
+    public function create(User $user): bool {
+        // Profiles are automatically created with users, so manual creation is not allowed
+        return false;
     }
 
     /**
