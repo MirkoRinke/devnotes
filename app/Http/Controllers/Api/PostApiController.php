@@ -23,10 +23,14 @@ use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotF
 
 class PostApiController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
+    /**
+     *  The traits used in the controller
+     */
     use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
 
-    // Validation rules for the post data
+    /**
+     * The validation rules for the user profile data
+     */
     private $validationRules = [
         'title' => 'required|string|max:255',
         'code' => 'required|string',
@@ -38,7 +42,9 @@ class PostApiController extends Controller {
         'status' => 'required|in:draft,published,archived'
     ];
 
-    // Query building methods configuration
+    /**
+     * The methods array contains the methods that are used in the buildQuery method
+     */
     private $methods = [
         'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count'],
         'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
@@ -80,7 +86,7 @@ class PostApiController extends Controller {
                 return $query;
             }
 
-            // Check if the query is empty and return a response message
+            // Check if the query is empty after filtering and return the response
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
@@ -90,7 +96,7 @@ class PostApiController extends Controller {
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
-            return $this->errorResponse('Posts not found', $e->getMessage(), 404);
+            return $this->errorResponse('Posts not found', 'POSTS_NOT_FOUND', 404);
         }
     }
 
@@ -107,7 +113,7 @@ class PostApiController extends Controller {
             $validatedData['tags'] = json_encode($validatedData['tags']);
             $validatedData['resources'] = json_encode($validatedData['resources']);
 
-            $validatedData['user_id'] = request()->user()->id();
+            $validatedData['user_id'] = $request->user()->id;
 
             $post = Post::create($validatedData);
 
@@ -132,13 +138,14 @@ class PostApiController extends Controller {
                 return $query;
             }
 
+            // Need this because the select method returns only the query object
             $post = $query->firstOrFail();
 
             $post = $this->jsonDecode([$post])[0];
 
             return $this->successResponse($post, 'Post retrieved successfully');
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
+            return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         }
     }
 
@@ -161,7 +168,7 @@ class PostApiController extends Controller {
 
             return $this->successResponse($post, 'Post update successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
+            return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         }
@@ -176,7 +183,7 @@ class PostApiController extends Controller {
             $post->delete();
             return $this->successResponse(null, 'Post deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post not found', ['id' => 'Post with the given ID does not exist'], 404);
+            return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         }
     }
 }
