@@ -24,13 +24,23 @@ use Illuminate\Http\JsonResponse;
 
 class FavoriteController extends Controller {
 
-    // Use the ApiResponses, ApiSorting, ApiFiltering , SelectableAttributes , ApiPagination and QueryBuilder traits
+    /**
+     *  The traits used in the controller
+     */
     use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
 
+    /**
+     * The methods array contains the methods that are used in the buildQuery method
+     */
+    private $methods = [
+        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
+        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
+        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
+        'getPerPage' => 10
+    ];
 
     // Decode the JSON data from the database to an array
     private function jsonDecode($favorites) {
-        // Entfernen Sie dd($favorites); 
         foreach ($favorites as $favorite) {
             $post = $favorite->post;
             if (isset($post->tags)) {
@@ -51,20 +61,14 @@ class FavoriteController extends Controller {
 
         $query = UserFavorite::where('user_id', $user->id)->with('post');
 
-        $methods = [
-            'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
-            'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
-            'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
-            'getPerPage' => 10
-        ];
-
-        $query = $this->buildQuery($request, $query, $methods);
+        $query = $this->buildQuery($request, $query, $this->methods);
 
         // Check if the query is an instance of JsonResponse and return the response
         if ($query instanceof JsonResponse) {
             return $query;
         }
 
+        // Check if the query is empty and return a response
         if ($query->isEmpty()) {
             return $this->successResponse($query, 'No favorites found', 200);
         }
