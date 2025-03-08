@@ -39,20 +39,6 @@ class FavoriteController extends Controller {
         'getPerPage' => 10
     ];
 
-    // Decode the JSON data from the database to an array
-    private function jsonDecode($favorites) {
-        foreach ($favorites as $favorite) {
-            $post = $favorite->post;
-            if (isset($post->tags)) {
-                $post->tags = json_decode($post->tags);
-            }
-            if (isset($post->resources)) {
-                $post->resources = json_decode($post->resources);
-            }
-        }
-        return $favorites;
-    }
-
     /**
      * Get all favorites
      */
@@ -72,9 +58,6 @@ class FavoriteController extends Controller {
         if ($query->isEmpty()) {
             return $this->successResponse($query, 'No favorites found', 200);
         }
-
-        // Decode the JSON data from the database to an array
-        $query = $this->jsonDecode($query);
 
         return $this->successResponse($query, 'Favorites retrieved successfully', 200);
     }
