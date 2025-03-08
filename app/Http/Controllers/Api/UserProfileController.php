@@ -7,16 +7,16 @@ use Illuminate\Http\Request;
 
 use App\Models\UserProfile;
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
-use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
-use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the controller example $this->buildQuery($request, $query, $methods);
+use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
+use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
+use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
+use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests; // Import the AuthorizesRequests trait
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-use Exception; // Import the Exception class
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -61,9 +61,6 @@ class UserProfileController extends Controller {
      */
     public function index(Request $request) {
         try {
-            // Check if the user is authorized to view the user profiles
-            $this->authorize('viewAny', UserProfile::class);
-
             // Check if the user profiles exist in the database           
             if (UserProfile::count() === 0) {
                 return $this->successResponse([], 'No User Profiles exist in the database', 200);
@@ -97,8 +94,6 @@ class UserProfileController extends Controller {
             return $this->successResponse($query, 'User Profiles retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('User Profiles not found', 'PROFILE_NOT_FOUND', 404);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Permission denied', 'PERMISSION_DENIED', 403);
         }
     }
 
@@ -106,7 +101,7 @@ class UserProfileController extends Controller {
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse {
+    public function store(): JsonResponse {
         return $this->errorResponse('Profiles are automatically created with users, so manual creation is not allowed', 'PROFILE_CREATION_DISABLED', 403);
     }
 
