@@ -10,7 +10,7 @@ use App\Models\UserFavorite;
 
 
 class Post extends Model {
-    
+
     use HasFactory;
 
     /**
@@ -22,14 +22,25 @@ class Post extends Model {
         'user_id',
         'title',
         'code',
-        'description', 
-        'resources', 
-        'language', 
-        'category', 
+        'description',
+        'resources',
+        'language',
+        'category',
         'tags',
         'status',
         'favorite_count'
     ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'resources' => 'array',
+        'tags' => 'array',
+    ];
+
 
     /**
      * Get the user that owns the post.
