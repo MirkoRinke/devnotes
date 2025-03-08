@@ -5,27 +5,29 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-use App\Models\User; // Import the User model to use it in the controller example User::all() or User::findOrFail($id) or User::create($data) or User::update($data) or User::delete() or User::query()
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($users, 'Users retrieved successfully', 200);
-use App\Traits\ApiSorting; // Import the ApiSorting trait to use it in the controller example $this->sort($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $this->filter($request, $query, [ 'name', 'email']);
-use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
-use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the controller example $this->buildQuery($request, $query, $methods);
+use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
+use App\Traits\ApiSorting; // example $this->sort($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiFiltering; // example $this->filter($request, $query, [ 'name', 'email']);
+use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
-use Exception; // Import the Exception class
-use Illuminate\Validation\ValidationException; // Import the ValidationException class
-use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotFoundException class
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserApiController extends Controller {
-
 
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
+    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, AuthorizesRequests;
 
     /**
      * The methods array contains the methods that are used in the buildQuery method
@@ -42,6 +44,8 @@ class UserApiController extends Controller {
      */
     public function index(Request $request): JsonResponse {
         try {
+            $this->authorize('viewAny', User::class);
+
             // Check if there are no users in the database and return a response message
             if (User::count() === 0) {
                 return $this->successResponse([], 'No users exist in the database', 200);
@@ -64,6 +68,8 @@ class UserApiController extends Controller {
             }
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to update this post', 'UNAUTHORIZED_ACTION', 403);
         } catch (Exception $e) {
             return $this->errorResponse('Users not found', 'USER_NOT_FOUND', 404);
         }
@@ -87,9 +93,14 @@ class UserApiController extends Controller {
             // Need this because the select method returns only the query object
             $user = $query->firstOrFail();
 
+            // Check if the user can view the user and return the response
+            $this->authorize('view', $user);
+
             return $this->successResponse($user, 'User retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to view this user', 'UNAUTHORIZED_ACTION', 403);
         }
     }
 
@@ -99,6 +110,9 @@ class UserApiController extends Controller {
     public function update(Request $request, string $id): JsonResponse {
         try {
             $user = User::findOrFail($id);
+
+            // Check if the user can update the user and return the response
+            $this->authorize('update', $user);
 
             $validatedData = $request->validate(
                 [
@@ -120,6 +134,8 @@ class UserApiController extends Controller {
             return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to update this user', 'UNAUTHORIZED_ACTION', 403);
         }
     }
 
@@ -129,10 +145,16 @@ class UserApiController extends Controller {
     public function destroy(string $id): JsonResponse {
         try {
             $user = User::findOrFail($id);
+
+            // Check if the user can delete the user and return the response
+            $this->authorize('delete', $user);
+
             $user->delete();
             return $this->successResponse(null, 'User deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to delete this user', 'UNAUTHORIZED_ACTION', 403);
         }
     }
 }
