@@ -4,20 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\JsonResponse; // Import the JsonResponse class to use it in the controller example return $this->successResponse($post, 'Post created successfully', 201);
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+
 
 use Carbon\Carbon;
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example $this->successResponse($post, 'Post created successfully', 201);
+use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
 
 
 class AuthController extends Controller {
 
-    // Use the ApiResponses trait in the controller
-    use ApiResponses;  
+    /**
+     *  The traits used in the controller
+     */
+    use ApiResponses;
 
     /**
      * Register a new user
@@ -31,18 +33,18 @@ class AuthController extends Controller {
             'password' => 'required',
             'device_name' => 'required',
         ]);
-    
+
         $user = User::where('email', $request->email)->first();
-    
+
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
         }
-    
+
         $token = $user->createToken($request->device_name);
         $token->accessToken->expires_at = Carbon::now()->addDays(7);
         $token->accessToken->save();
-    
-        return $this->successResponse(['accessToken' => $token->plainTextToken,'type' => 'Bearer' ],'Login successful', 200);
+
+        return $this->successResponse(['accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
     }
 
 
@@ -58,7 +60,3 @@ class AuthController extends Controller {
         return $this->successResponse(null, 'Logout successful', 200);
     }
 }
-
-
-
-
