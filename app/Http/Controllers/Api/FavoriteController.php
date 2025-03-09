@@ -7,16 +7,16 @@ use Illuminate\Http\Request;
 use App\Models\UserFavorite;
 use App\Models\Post;
 
-use Exception; // Import the Exception class
-use Illuminate\Database\Eloquent\ModelNotFoundException; // Import the ModelNotFoundException class
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 
-use App\Traits\ApiResponses; // Import the ApiResponses trait to use it in the controller example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiSorting;  // Import the ApiSorting trait to use it in the controller example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
-use App\Traits\ApiFiltering; // Import the ApiFiltering trait to use it in the controller example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\SelectableAttributes; // Import the SelectableAttributes trait to use it in the controller example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // Import the ApiPagination trait to use it in the controller example $this->getPerPage($request, $query, 10);
-use App\Traits\QueryBuilder; // Import the QueryBuilder trait to use it in the controller example $this->buildQuery($request, $query, $methods);
+use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
+use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
+use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
+use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -33,9 +33,9 @@ class FavoriteController extends Controller {
      * The methods array contains the methods that are used in the buildQuery method
      */
     private $methods = [
-        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status'],
-        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
-        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
+        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
+        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
+        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
         'getPerPage' => 10
     ];
 
