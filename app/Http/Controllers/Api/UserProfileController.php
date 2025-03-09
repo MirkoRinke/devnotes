@@ -155,7 +155,7 @@ class UserProfileController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
         } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', 'VALIDATION_FAILED', 422);
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Permission denied', 'PERMISSION_DENIED', 403);
         }
@@ -171,7 +171,7 @@ class UserProfileController extends Controller {
             $this->authorize('delete', $userProfile);
 
             // Profiles are automatically created with the user and should not be deleted manually
-            return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', ['profile_id' => $id, 'user_id' => $request->user()->id], 405);
+            return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', 'PROFILE_DELETE_DENIED', 405);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
