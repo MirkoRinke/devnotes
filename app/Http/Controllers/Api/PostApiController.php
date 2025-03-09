@@ -47,9 +47,9 @@ class PostApiController extends Controller {
      * The methods array contains the methods that are used in the buildQuery method
      */
     private $methods = [
-        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count'],
-        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status'],
-        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count'],
+        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
+        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
+        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
         'getPerPage' => 10
     ];
 
@@ -126,7 +126,7 @@ class PostApiController extends Controller {
             // Need this because the select method returns only the query object
             $post = $query->firstOrFail();
 
-            return $this->successResponse($post, 'Post retrieved successfully');
+            return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         }
