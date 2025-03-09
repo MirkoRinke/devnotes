@@ -33,9 +33,9 @@ class UserApiController extends Controller {
      * The methods array contains the methods that are used in the buildQuery method
      */
     private $methods = [
-        'sort' => ['id', 'name', 'email'],
-        'filter' => ['name', 'email'],
-        'select' => ['id', 'name', 'email'],
+        'sort' => ['id', 'name', 'email', 'created_at', 'updated_at'],
+        'filter' => ['name', 'email', 'created_at', 'updated_at'],
+        'select' => ['id', 'name', 'email', 'created_at', 'updated_at'],
         'getPerPage' => 10
     ];
 
@@ -98,7 +98,7 @@ class UserApiController extends Controller {
 
             return $this->successResponse($user, 'User retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
+            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('You are not authorized to view this user', 'UNAUTHORIZED_ACTION', 403);
         }
@@ -131,7 +131,7 @@ class UserApiController extends Controller {
 
             return $this->successResponse($user, 'User update successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
+            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
@@ -152,7 +152,7 @@ class UserApiController extends Controller {
             $user->delete();
             return $this->successResponse(null, 'User deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse("User with ID $id does not exist", ['id' => 'USER_NOT_FOUND'], 404);
+            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('You are not authorized to delete this user', 'UNAUTHORIZED_ACTION', 403);
         }
