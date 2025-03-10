@@ -8,11 +8,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-
 use Carbon\Carbon;
 
 use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
-
 
 class AuthController extends Controller {
 
@@ -36,7 +34,7 @@ class AuthController extends Controller {
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
         }
 
@@ -56,7 +54,73 @@ class AuthController extends Controller {
      */
     public function logout(Request $request): JsonResponse {
         $request->user()->currentAccessToken()->delete();
-
         return $this->successResponse(null, 'Logout successful', 200);
+    }
+
+    /**
+     * Logout a user from all devices
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getUserTokens(Request $request): JsonResponse {
+        $tokensCollection = $request->user()->tokens()->orderBy('created_at', 'desc')->get();
+
+        $formattedTokens = $tokensCollection->map(function ($token) use ($request) {
+            return [
+                'id' => $token->id,
+                'device_name' => $token->name,
+                'last_used' => $token->last_used_at,
+                'created_at' => $token->created_at,
+                'is_current' => $token->id === $request->user()->currentAccessToken()->id
+            ];
+        });
+
+        return $this->successResponse($formattedTokens, 'Token list retrieved', 200);
+    }
+
+    /**
+     * Revoke a device token
+     *
+     * @param Request $request
+     * @param $tokenId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function revokeToken(Request $request, $tokenId): JsonResponse {
+        if (!is_numeric($tokenId)) {
+            return $this->errorResponse('Invalid token ID.', 'INVALID_TOKEN_ID', 400);
+        }
+
+        $token = $request->user()->tokens()->where('id', $tokenId)->first();
+
+        if (!$token) {
+            return $this->errorResponse('Token not found or does not belong to you.', 'TOKEN_NOT_FOUND', 404);
+        }
+
+        if ($token->id === $request->user()->currentAccessToken()->id) {
+            return $this->errorResponse('Cannot revoke the current session.', 'CURRENT_TOKEN_REVOKE_FORBIDDEN', 403);
+        }
+
+        $token->delete();
+
+        return $this->successResponse(null, 'Device logged out successfully', 200);
+    }
+
+    /**
+     * Revoke all tokens except the current one
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function revokeAllTokens(Request $request): JsonResponse {
+        $tokens = $request->user()->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->get();
+
+        if ($tokens->isEmpty()) {
+            return $this->errorResponse('No other devices to logout from.', 'NO_OTHER_DEVICES', 400);
+        }
+
+        $tokens->each->delete();
+
+        return $this->successResponse(null, 'All other devices logged out successfully', 200);
     }
 }
