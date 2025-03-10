@@ -32,6 +32,7 @@ class UserProfile extends Model {
         'skills' => 'array',
         'social_links' => 'array',
         'is_public' => 'boolean',
+        'user_id' => 'integer',
     ];
 
 
