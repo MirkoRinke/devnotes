@@ -39,6 +39,8 @@ class Post extends Model {
     protected $casts = [
         'resources' => 'array',
         'tags' => 'array',
+        'favorite_count' => 'integer',
+        'user_id' => 'integer',
     ];
 
 
