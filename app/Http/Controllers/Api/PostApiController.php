@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class PostApiController extends Controller {
     /**
@@ -52,6 +53,47 @@ class PostApiController extends Controller {
         'getPerPage' => 10
     ];
 
+
+    /**
+     * 
+     * Extract user from the authorization bearer token
+     * 
+     * @param Request $request The HTTP request containing the bearer token
+     * @return mixed|null Returns the authenticated user model instance if 
+     *                    a valid token exists, null otherwise
+     */
+    private function getUserFromToken(Request $request) {
+        $bearerToken = $request->bearerToken();
+
+        if (!$bearerToken) {
+            return null;
+        }
+
+        $token = PersonalAccessToken::findToken($bearerToken);
+        return $token ? $token->tokenable : null;
+    }
+
+    /**
+     * Apply access filters to query based on user role
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyAccessFilters(Request $request, $query) {
+        $user = $this->getUserFromToken($request);
+        if (!$user) {
+            $query->where('status', 'published');
+        } elseif ($user->role !== 'admin') {
+            $query->where(function ($subQuery) use ($user) {
+                $subQuery->where('status', 'published')
+                    ->orWhere('user_id', $user->id);
+            });
+        }
+
+        return $query;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -62,6 +104,8 @@ class PostApiController extends Controller {
             }
 
             $query = Post::query();
+
+            $query = $this->applyAccessFilters($request, $query);
 
             $query = $this->buildQuery($request, $query, $this->methods);
 
@@ -108,6 +152,8 @@ class PostApiController extends Controller {
     public function show(string $id, Request $request): JsonResponse {
         try {
             $query = Post::query()->where('id', $id);
+
+            $query = $this->applyAccessFilters($request, $query);
 
             $query = $this->select($request, $query, $this->methods['select']);
 

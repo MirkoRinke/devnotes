@@ -48,7 +48,7 @@ Route::middleware('throttle:api')->group(function () {
 
     //! Route for favorites
 
-    // Route to add, remove a favorite and get all favorites you need to be authenticated protected by sanctum and Policies
+    // Route to add, remove a favorite and get all favorites you need to be authenticated 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
         Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
