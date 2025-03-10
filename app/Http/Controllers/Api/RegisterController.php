@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 
 use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
 
@@ -20,6 +20,15 @@ class RegisterController extends Controller {
     use ApiResponses;
 
     /**
+     * The validation rules for the user profile data
+     */
+    private $validationRules = [
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|unique:users,email',
+        'password' => 'required|string|min:8|confirmed',
+    ];
+
+    /**
      * Register a new user
      *
      * @param Request $request
@@ -28,11 +37,7 @@ class RegisterController extends Controller {
     public function register(Request $request): JsonResponse {
         try {
             $validatedData = $request->validate(
-                [
-                    'name' => 'required|string|max:255',
-                    'email' => 'required|string|email|unique:users,email',
-                    'password' => 'required|string|min:8|confirmed',
-                ],
+                $this->validationRules,
                 $this->getValidationMessages()
             );
 
