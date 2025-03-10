@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
 use App\Models\UserFavorite;
 use App\Models\Post;
 
@@ -16,7 +18,6 @@ use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $met
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\JsonResponse;
 
 class FavoriteController extends Controller {
 
