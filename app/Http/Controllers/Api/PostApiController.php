@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Models\Post;
-use Illuminate\Http\JsonResponse;
 
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
@@ -16,12 +16,11 @@ use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10)
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
-
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+use Illuminate\Auth\Access\AuthorizationException;
 
 class PostApiController extends Controller {
     /**
@@ -58,23 +57,18 @@ class PostApiController extends Controller {
      */
     public function index(Request $request) {
         try {
-            // Check if the posts table is empty and return a response message            
             if (Post::count() === 0) {
                 return $this->successResponse([], 'No posts exist in the database', 200);
             }
 
-            // Get all the posts from the database
             $query = Post::query();
 
-            // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
             $query = $this->buildQuery($request, $query, $this->methods);
 
-            // Check if the query is an instance of JsonResponse and return the response
             if ($query instanceof JsonResponse) {
                 return $query;
             }
 
-            // Check if the query is empty after filtering and return the response
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
@@ -115,15 +109,12 @@ class PostApiController extends Controller {
         try {
             $query = Post::query()->where('id', $id);
 
-            // Select the user attributes based on the request select array
             $query = $this->select($request, $query, $this->methods['select']);
 
-            // Check return value of the selectAttributes method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
 
-            // Need this because the select method returns only the query object
             $post = $query->firstOrFail();
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
@@ -139,7 +130,6 @@ class PostApiController extends Controller {
         try {
             $post = Post::findOrFail($id);
 
-            // Check if the user can update the post and return a response message
             $this->authorize('update', $post);
 
             $validatedData = $request->validate(
@@ -169,7 +159,6 @@ class PostApiController extends Controller {
         try {
             $post = Post::findOrFail($id);
 
-            // Check if the user can delete the post and return a response message
             $this->authorize('delete', $post);
 
             $post->delete();
