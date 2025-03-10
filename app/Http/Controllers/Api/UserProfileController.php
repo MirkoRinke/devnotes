@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Models\UserProfile;
@@ -14,13 +15,12 @@ use App\Traits\SelectableAttributes; // example $this->selectAttributes($request
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
+use Exception;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 
 class UserProfileController extends Controller {
 
@@ -61,15 +61,16 @@ class UserProfileController extends Controller {
      */
     public function index(Request $request) {
         try {
-            // Check if the user profiles exist in the database           
             if (UserProfile::count() === 0) {
                 return $this->successResponse([], 'No User Profiles exist in the database', 200);
             }
 
-            // Get all the user profiles from the database
             $query = UserProfile::query();
 
-            // Filter based on user role and profile visibility
+            /**
+             * Check if the user is an admin and return all user profiles
+             * If the user is not an admin, return only public user profiles and the user's own profile
+             */
             $user = $request->user();
             if ($user->role !== 'admin') {
                 $query->where(function ($subQuery) use ($user) {
@@ -78,15 +79,12 @@ class UserProfileController extends Controller {
                 });
             }
 
-            // Build the query based on the request and return JsonResponse|Collection|LengthAwarePaginator
             $query = $this->buildQuery($request, $query, $this->methods);
 
-            // Check if the query is an instance of JsonResponse and return the response
             if ($query instanceof JsonResponse) {
                 return $query;
             }
 
-            // Check if the query is empty after filtering and return the response
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No User Profiles exist in the database', 200);
             }
@@ -113,10 +111,8 @@ class UserProfileController extends Controller {
         try {
             $query = UserProfile::query()->where('id', $id);
 
-            // Select the user attributes based on the request select array
             $query = $this->select($request, $query, $this->methods['select']);
 
-            // Check return value of the selectAttributes method and return the response if status code is 400
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
@@ -124,7 +120,6 @@ class UserProfileController extends Controller {
             // Need this because the select method returns only the query object
             $query = $query->firstOrFail();
 
-            // Check if the user is authorized to view the user profile
             $this->authorize('view', $query);
 
             return $this->successResponse($query, 'User Profile retrieved successfully');
@@ -141,7 +136,7 @@ class UserProfileController extends Controller {
     public function update(Request $request, string $id): JsonResponse {
         try {
             $userProfile = UserProfile::findOrFail($id);
-            // Check if the user is authorized to update the user profile
+
             $this->authorize('update', $userProfile);
 
             $validatedData = $request->validate(
@@ -167,10 +162,9 @@ class UserProfileController extends Controller {
     public function destroy(Request $request, string $id): JsonResponse {
         try {
             $userProfile = UserProfile::findOrFail($id);
-            // Check if the user is authorized to delete the user profile
+
             $this->authorize('delete', $userProfile);
 
-            // Profiles are automatically created with the user and should not be deleted manually
             return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', 'PROFILE_DELETE_DENIED', 405);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
