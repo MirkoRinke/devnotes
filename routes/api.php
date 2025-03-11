@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\API\UserProfileController;
+use App\Http\Controllers\Api\UserReportController;
 
 Route::middleware('throttle:api')->group(function () {
 
@@ -60,5 +61,14 @@ Route::middleware('throttle:api')->group(function () {
     // Route to get all user profiles you need to be authenticated protected by sanctum and Policies
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('user_profiles', UserProfileController::class);
+    });
+
+    //! Route for reports
+
+    // Route to add, remove a report and get all reports you need to be authenticated 
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/posts/{post}/reports', [UserReportController::class, 'addReport']);
+        Route::delete('/posts/{post}/reports', [UserReportController::class, 'removeReport']);
+        Route::get('/user/reports', [UserReportController::class, 'getReports']);
     });
 });
