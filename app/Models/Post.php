@@ -28,7 +28,8 @@ class Post extends Model {
         'category',
         'tags',
         'status',
-        'favorite_count'
+        'favorite_count',
+        'reports_count',
     ];
 
     /**
@@ -40,6 +41,7 @@ class Post extends Model {
         'resources' => 'array',
         'tags' => 'array',
         'favorite_count' => 'integer',
+        'reports_count' => 'integer',
         'user_id' => 'integer',
     ];
 
