@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class UserFavorite extends Model {
+
+    /**
+     *  The traits used in the controller
+     */
     use HasFactory;
 
     /**
@@ -21,10 +25,8 @@ class UserFavorite extends Model {
      * @var array
      */
     protected $casts = [
-        'resources' => 'array',
-        'tags' => 'array',
-        'favorite_count' => 'integer',
         'user_id' => 'integer',
+        'post_id' => 'integer',
     ];
 
     /**
