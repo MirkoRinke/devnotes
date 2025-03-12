@@ -16,6 +16,8 @@ use App\Traits\SelectableAttributes; // example $this->selectAttributes($request
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
+use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -42,7 +44,7 @@ class FavoriteController extends Controller {
     public function getFavorites(Request $request) {
         $user = $request->user();
 
-        $query = UserFavorite::where('user_id', $user->id)->with('post');
+        $query = UserFavorite::query();
 
         $query = $this->buildQuery($request, $query, $this->methods);
 
@@ -80,6 +82,8 @@ class FavoriteController extends Controller {
             }
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -105,6 +109,10 @@ class FavoriteController extends Controller {
             return $this->successResponse(null, 'Post successfully removed from favorites', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 }
