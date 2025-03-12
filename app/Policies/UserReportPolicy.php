@@ -22,14 +22,13 @@ class UserReportPolicy {
     }
 
     /**
-     * Determine if the user can create a report.
+     * Determine if the user can view all reports (admin function).
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\Post  $post
      * @return mixed
      */
-    public function create(User $user, Post $post) {
-        // Users shouldn't report their own posts
-        return $user->id !== $post->user_id;
+    public function viewAny(User $user) {
+        // Only admins can view all reports
+        return $user->role === 'admin';
     }
 }
