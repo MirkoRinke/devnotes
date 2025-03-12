@@ -12,7 +12,7 @@ return new class extends Migration {
         Schema::create('user_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
-            $table->string('display_name')->nullable();
+            $table->string('display_name')->unique()->nullable();
             $table->string('location')->nullable();
             $table->json('skills')->nullable();
             $table->text('biography')->nullable();
@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->string('website')->nullable();
             $table->string('avatar_path')->nullable();
             $table->boolean('is_public')->default(true);
+            $table->integer('reports_count')->default(0);
             $table->timestamps();
         });
     }
