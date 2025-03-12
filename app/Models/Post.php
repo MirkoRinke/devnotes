@@ -63,4 +63,13 @@ class Post extends Model {
     public function favorites() {
         return $this->hasMany(UserFavorite::class);
     }
+
+    /**
+     * Get all reports for this post
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function reports() {
+        return $this->morphMany(UserReport::class, 'reportable');
+    }
 }
