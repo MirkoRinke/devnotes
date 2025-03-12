@@ -69,10 +69,12 @@ class UserApiController extends Controller {
             }
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('You are not authorized to update this post', 'UNAUTHORIZED_ACTION', 403);
         } catch (Exception $e) {
-            return $this->errorResponse('Users not found', 'USER_NOT_FOUND', 404);
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -98,7 +100,9 @@ class UserApiController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to view this user', 'UNAUTHORIZED_ACTION', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -128,7 +132,9 @@ class UserApiController extends Controller {
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to update this user', 'UNAUTHORIZED_ACTION', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -146,7 +152,9 @@ class UserApiController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to delete this user', 'UNAUTHORIZED_ACTION', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 }
