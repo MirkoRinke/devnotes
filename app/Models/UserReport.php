@@ -4,12 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserReport extends Model {
-
-    /**
-     *  The traits used in the controller
-     */
     use HasFactory;
 
     /**
@@ -17,7 +15,13 @@ class UserReport extends Model {
      *
      * @var array
      */
-    protected $fillable = ['user_id', 'post_id'];
+    protected $fillable = [
+        'user_id',
+        'reportable_type',
+        'reportable_id',
+        'type',
+        'reason'
+    ];
 
     /**
      * The attributes that should be cast to native types.
@@ -26,11 +30,11 @@ class UserReport extends Model {
      */
     protected $casts = [
         'user_id' => 'integer',
-        'post_id' => 'integer',
+        'reportable_id' => 'integer',
     ];
 
     /**
-     * Get the user that owns the UserReport
+     * Get the user who created the report
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -39,11 +43,11 @@ class UserReport extends Model {
     }
 
     /**
-     * Get the post that owns the UserReport
+     * Get the entity that was reported (Post or User)
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
-    public function post() {
-        return $this->belongsTo(Post::class);
+    public function reportable() {
+        return $this->morphTo();
     }
 }
