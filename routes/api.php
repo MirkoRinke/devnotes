@@ -65,10 +65,14 @@ Route::middleware('throttle:api')->group(function () {
 
     //! Route for reports
 
-    // Route to add, remove a report and get all reports you need to be authenticated 
+    // Route to add, remove a report and get all reports you need to be authenticated
+    // Minimal data: GET /api/reports
+    // With user data: GET /api/reports?include=user
+    // With reportable data: GET /api/reports?include=reportable
+    // With all data: GET /api/reports?include=user,reportable
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/posts/{post}/reports', [UserReportController::class, 'addReport']);
-        Route::delete('/posts/{post}/reports', [UserReportController::class, 'removeReport']);
-        Route::get('/user/reports', [UserReportController::class, 'getReports']);
+        Route::post('/reports', [UserReportController::class, 'addReport']);
+        Route::delete('/reports', [UserReportController::class, 'removeReport']);
+        Route::get('/reports', [UserReportController::class, 'getReports']);
     });
 });
