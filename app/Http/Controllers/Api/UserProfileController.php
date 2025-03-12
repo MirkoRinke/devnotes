@@ -34,7 +34,7 @@ class UserProfileController extends Controller {
      * The validation rules for the user profile data
      */
     private $validationRules = [
-        'display_name' => 'required|string|max:255',
+        'display_name' => 'required|unique:user_profiles|string|max:255',
         'location' => 'nullable|string|max:255',
         'skills' => 'nullable|array',
         'biography' => 'nullable|string',
@@ -90,8 +90,10 @@ class UserProfileController extends Controller {
             }
 
             return $this->successResponse($query, 'User Profiles retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('No User Profiles exist in the database', 'PROFILE_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('User Profiles not found', 'PROFILE_NOT_FOUND', 404);
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -126,7 +128,9 @@ class UserProfileController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('Permission denied', 'PERMISSION_DENIED', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -152,7 +156,9 @@ class UserProfileController extends Controller {
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('Permission denied', 'PERMISSION_DENIED', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -169,7 +175,9 @@ class UserProfileController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('Permission denied', 'PERMISSION_DENIED', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 }
