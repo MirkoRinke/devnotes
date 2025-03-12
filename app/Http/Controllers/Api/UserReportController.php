@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 use App\Models\UserReport;
 use App\Models\Post;
+use App\Models\User;
 
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
@@ -15,9 +16,12 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+
+use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\ValidationException;
 
 class UserReportController extends Controller {
 
@@ -27,90 +31,184 @@ class UserReportController extends Controller {
     use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
 
     /**
+     * The validation rule for the user report data
+     */
+    private $validationRules = [
+        'reportable_type' => 'required|in:post,user',
+        'reportable_id' => 'required|integer',
+        'reason' => 'nullable|string|max:500'
+    ];
+
+    /**
      * The methods array contains the methods that are used in the buildQuery method
      */
     private $methods = [
-        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
-        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
-        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'created_at', 'updated_at'],
+        'sort' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
+        'filter' => ['user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
+        'select' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'created_at', 'updated_at'],
         'getPerPage' => 10
     ];
 
     /**
-     * Get all reports
+     * Update the reports_count for a reportable entity
+     *
+     * @param mixed $reportable The reportable entity (Post or User)
+     * @param string $reportableType The fully qualified class name of the reportable
+     * @param bool $increment Whether to increment or decrement the counter
+     * @return void
+     */
+    private function updateReportsCount($reportable, $reportableType, $increment = true) {
+        $method = $increment ? 'increment' : 'decrement';
+
+        if ($reportableType === Post::class) {
+            $reportable->$method('reports_count');
+        } else if ($reportableType === User::class && $reportable->profile) {
+            $reportable->profile->$method('reports_count');
+        }
+    }
+
+    /**
+     * Get all reports (for admin panel)
      */
     public function getReports(Request $request) {
-        $user = $request->user();
-
-        $query = UserReport::where('user_id', $user->id)->with('post');
-
-        $query = $this->buildQuery($request, $query, $this->methods);
-
-        if ($query instanceof JsonResponse) {
-            return $query;
-        }
-
-        if ($query->isEmpty()) {
-            return $this->successResponse($query, 'No reports found', 200);
-        }
-
-        return $this->successResponse($query, 'Reports retrieved successfully', 200);
-    }
-
-    /**
-     * Add a post to reports
-     */
-    public function addReport(Request $request, $postId) {
         try {
-            $user = $request->user();
-            $post = Post::findOrFail($postId);
 
-            $this->authorize('create', [UserReport::class, $post]);
+            $this->authorize('viewAny', UserReport::class);
 
-            $exists = UserReport::where('user_id', $user->id)->where('post_id', $post->id)->exists();
+            $query = UserReport::query();
 
-            if (!$exists) {
-                $report = UserReport::create(['user_id' => $user->id, 'post_id' => $post->id]);
+            /**
+             *  Include the user and reportable entity in the response
+             */
+            if ($request->has('include')) {
+                $includes = explode(',', $request->input('include'));
+                $allowedIncludes = ['user', 'reportable'];
+                $validIncludes = array_intersect($allowedIncludes, $includes);
 
-                $post->increment('reports_count');
-
-                return $this->successResponse($report, 'Post successfully added to reports', 201);
-            } else {
-                $report = UserReport::where('user_id', $user->id)->where('post_id', $post->id)->first();
-
-                return $this->successResponse($report, 'Post already in reports', 200);
+                if (!empty($validIncludes)) {
+                    $query->with($validIncludes);
+                }
             }
+
+            $query = $this->buildQuery($request, $query, $this->methods);
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse([], 'No reports exist in the database', 200);
+            }
+
+            return $this->successResponse($query, 'Reports retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
+            return $this->errorResponse('Reports not found', 'REPORTS_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
     /**
-     * Remove a post from reports
+     * Add a report for any reportable entity (Post or User)
      */
-    public function removeReport(Request $request, $postId) {
+    public function addReport(Request $request) {
         try {
             $user = $request->user();
-            $post = Post::findOrFail($postId);
+            $validatedData = $request->validate(
+                $this->validationRules,
+                $this->getValidationMessages()
+            );
 
-            $report = UserReport::where('user_id', $user->id)->where('post_id', $postId)->first();
+            $typeMap = [
+                'post' => Post::class,
+                'user' => User::class,
+            ];
 
-            if (!$report) {
-                return $this->errorResponse('Post is not in reports', 'POST_NOT_IN_REPORTS', 404);
+            $reportableType = $typeMap[$validatedData['reportable_type']];
+            $reportableId = $validatedData['reportable_id'];
+
+            $simpleType = $validatedData['reportable_type'];
+
+            $reportable = $reportableType::findOrFail($reportableId);
+
+            if ($reportableType === User::class && $reportableId == $user->id) {
+                return $this->errorResponse('You cannot report yourself', 'CANNOT_REPORT_SELF', 403);
+            } else if ($reportableType === Post::class && $reportable->user_id == $user->id) {
+                return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403);
             }
+
+            $existingReport = UserReport::where([
+                'user_id' => $user->id,
+                'reportable_id' => $reportableId,
+                'reportable_type' => $reportableType
+            ])->first();
+
+            if ($existingReport) {
+                return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409);
+            }
+
+            $report = UserReport::create([
+                'user_id' => $user->id,
+                'reportable_id' => $reportableId,
+                'reportable_type' => $reportableType,
+                'type' => $simpleType,
+                'reason' => $validatedData['reason'] ?? null
+            ]);
+
+            $this->updateReportsCount($reportable, $reportableType, true);
+
+            return $this->successResponse($report, 'Report submitted successfully', 201);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Remove a report
+     */
+    public function removeReport(Request $request) {
+        try {
+            $user = $request->user();
+            $validatedData = $request->validate(
+                $this->validationRules,
+                $this->getValidationMessages()
+            );
+
+            $typeMap = [
+                'post' => Post::class,
+                'user' => User::class,
+            ];
+
+            $reportableType = $typeMap[$validatedData['reportable_type']];
+            $reportableId = $validatedData['reportable_id'];
+
+            $report = UserReport::where([
+                'user_id' => $user->id,
+                'reportable_id' => $reportableId,
+                'reportable_type' => $reportableType
+            ])->firstOrFail();
 
             $this->authorize('delete', $report);
 
-            $post->decrement('reports_count');
-            $report->delete();
+            $reportable = $report->reportable;
+            $this->updateReportsCount($reportable, $reportableType, false);
 
-            return $this->successResponse(null, 'Post successfully removed from reports', 200);
+            $report->delete();
+            return $this->successResponse(null, 'Report removed successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
+            return $this->errorResponse('Report not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You cannot remove this post from reports', 'CANNOT_REMOVE_POST_FROM_REPORTS', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 }
