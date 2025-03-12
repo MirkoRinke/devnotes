@@ -94,6 +94,7 @@ trait ApiResponses {
             'user_id.required' => 'USER_ID_FIELD_REQUIRED',
             'user_id.integer' => 'USER_ID_MUST_BE_INTEGER',
             'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
+            'display_name.unique' => 'DISPLAY_NAME_ALREADY_IN_USE',
             'display_name.string' => 'DISPLAY_NAME_MUST_BE_STRING',
             'display_name.max' => 'DISPLAY_NAME_FIELD_MAX_LENGTH',
             'location.string' => 'LOCATION_MUST_BE_STRING',
@@ -106,7 +107,15 @@ trait ApiResponses {
             'avatar_path.string' => 'AVATAR_PATH_MUST_BE_STRING',
             'avatar_path.max' => 'AVATAR_PATH_FIELD_MAX_LENGTH',
             'is_public.required' => 'IS_PUBLIC_FIELD_REQUIRED',
-            'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN'
+            'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN',
+
+            // User Report validation messages
+            'reportable_type.required' => 'REPORTABLE_TYPE_FIELD_REQUIRED',
+            'reportable_type.in' => 'REPORTABLE_TYPE_INVALID_OPTION',
+            'reportable_id.required' => 'REPORTABLE_ID_FIELD_REQUIRED',
+            'reportable_id.integer' => 'REPORTABLE_ID_MUST_BE_INTEGER',
+            'reason.string' => 'REASON_MUST_BE_STRING',
+            'reason.max' => 'REASON_FIELD_MAX_LENGTH'
 
         ];
     }
