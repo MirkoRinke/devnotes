@@ -77,4 +77,22 @@ class User extends Authenticatable {
     public function profile() {
         return $this->hasOne(UserProfile::class);
     }
+
+    /**
+     * Get all reports received by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function reportsReceived() {
+        return $this->morphMany(UserReport::class, 'reportable');
+    }
+
+    /**
+     * Get all reports created by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function reportsSent() {
+        return $this->hasMany(UserReport::class, 'user_id');
+    }
 }
