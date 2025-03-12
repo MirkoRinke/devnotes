@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 
 use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
-
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller {
@@ -48,8 +49,12 @@ class RegisterController extends Controller {
             ]);
 
             return $this->successResponse($user, 'User created successfully', 201);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 }
