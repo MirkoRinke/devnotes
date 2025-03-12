@@ -70,6 +70,7 @@ class PostApiController extends Controller {
         }
 
         $token = PersonalAccessToken::findToken($bearerToken);
+
         return $token ? $token->tokenable : null;
     }
 
@@ -118,8 +119,10 @@ class PostApiController extends Controller {
             }
 
             return $this->successResponse($query, 'Posts retrieved successfully');
-        } catch (Exception $e) {
+        } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Posts not found', 'POSTS_NOT_FOUND', 404);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -138,8 +141,12 @@ class PostApiController extends Controller {
             $post = Post::create($validatedData);
 
             return $this->successResponse($post, 'Post created successfully', 201);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -163,6 +170,10 @@ class PostApiController extends Controller {
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -185,10 +196,12 @@ class PostApiController extends Controller {
             return $this->successResponse($post, 'Post update successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to update this post', 'UNAUTHORIZED_ACTION', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -206,7 +219,9 @@ class PostApiController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to delete this post', 'UNAUTHORIZED_ACTION', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 }
