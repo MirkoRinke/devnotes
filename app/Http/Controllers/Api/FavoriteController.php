@@ -44,7 +44,20 @@ class FavoriteController extends Controller {
     public function getFavorites(Request $request) {
         $user = $request->user();
 
-        $query = UserFavorite::query();
+        $query = UserFavorite::where('user_id', $user->id);
+
+        /**
+         *  Include the user and post entity in the response
+         */
+        if ($request->has('include')) {
+            $includes = explode(',', $request->include);
+            $allowedIncludes = ['post'];
+            $validIncludes = array_intersect($includes, $allowedIncludes);
+
+            if (!empty($validIncludes)) {
+                $query->with($validIncludes);
+            }
+        }
 
         $query = $this->buildQuery($request, $query, $this->methods);
 
