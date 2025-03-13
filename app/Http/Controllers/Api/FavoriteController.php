@@ -31,7 +31,14 @@ class FavoriteController extends Controller {
     /**
      * The methods array contains the methods that are used in the buildQuery method
      */
-    private $methods = [
+    private $methodsFavorites = [
+        'sort' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
+        'filter' => ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
+        'select' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
+        'getPerPage' => 10
+    ];
+
+    private $methodsPosts = [
         'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
         'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
         'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'created_at', 'updated_at'],
@@ -41,7 +48,7 @@ class FavoriteController extends Controller {
     /**
      * Get all favorites
      */
-    public function getFavorites(Request $request) {
+    public function getFavorites(Request $request): JsonResponse {
         $user = $request->user();
 
         $query = UserFavorite::where('user_id', $user->id);
@@ -59,7 +66,7 @@ class FavoriteController extends Controller {
             }
         }
 
-        $query = $this->buildQuery($request, $query, $this->methods);
+        $query = $this->buildQuery($request, $query, $this->methodsFavorites);
 
         if ($query instanceof JsonResponse) {
             return $query;
@@ -75,7 +82,7 @@ class FavoriteController extends Controller {
     /**
      * Add a post to favorites
      */
-    public function addFavorite(Request $request, $postId) {
+    public function addFavorite(Request $request, $postId): JsonResponse {
         try {
             $user = $request->user();
             $post = Post::findOrFail($postId);
@@ -103,7 +110,7 @@ class FavoriteController extends Controller {
     /**
      * Remove a post from favorites
      */
-    public function removeFavorite(Request $request, $postId) {
+    public function removeFavorite(Request $request, $postId): JsonResponse {
         try {
             $user = $request->user();
             $post = Post::findOrFail($postId);
@@ -124,6 +131,35 @@ class FavoriteController extends Controller {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Display a listing of posts that are favorited by the authenticated user.
+     * Supports the same query parameters as the post index endpoint.
+     */
+    public function getFavoritePosts(Request $request): JsonResponse {
+        try {
+            $userId = $request->user()->id;
+
+            // Get posts that have been favorited by this user
+            $query = Post::query()->whereHas('favorites', function ($subQuery) use ($userId) {
+                $subQuery->where('user_id', $userId);
+            });
+
+            $query = $this->buildQuery($request, $query, $this->methodsPosts);
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse([], 'No favorited posts found', 200);
+            }
+
+            return $this->successResponse($query, 'Favorited posts retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
