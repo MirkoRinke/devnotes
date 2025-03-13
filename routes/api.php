@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ApiKeyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,9 +12,9 @@ use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\API\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
+use App\Http\Middleware\ValidateApiKey;
 
-Route::middleware('throttle:api')->group(function () {
-
+Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
 
     //! Route for registration
 
@@ -295,5 +296,51 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/reports', [UserReportController::class, 'addReport']);
         Route::delete('/reports', [UserReportController::class, 'removeReport']);
         Route::get('/reports', [UserReportController::class, 'getReports']);
+    });
+
+
+    //! Route for API keys
+    // Protected routes - authentication required and admin only
+    // 
+    // POST /api/api-keys - Generate a new API key
+    // - Authorization: Only administrators can generate API keys
+    // - Request body:
+    //  {
+    //    "name": "My API Key"  // required, string, max 255 chars
+    //  }
+    // - Returns:
+    //  {
+    //    "api_key": "generated_key_string",
+    //    "name": "My API Key",
+    //    "created_at": "2025-03-13T20:55:56Z"
+    //  }
+    //
+    // GET /api/api-keys - List all API keys
+    // - Authorization: Only administrators can view API keys
+    // - Returns array of API keys (key field is not included):
+    //  [
+    //    {
+    //      "id": 1,
+    //      "name": "My API Key",
+    //      "active": true,
+    //      "created_at": "2025-03-13T20:55:56Z",
+    //      "last_used_at": "2025-03-13T21:00:00Z"
+    //    }
+    //  ]
+    //
+    // PATCH /api/api-keys/{apiKey}/toggle - Toggle API key status
+    // - Authorization: Only administrators can toggle API key status
+    // - No request body needed
+    // - Returns updated API key status
+    //
+    // DELETE /api/api-keys/{apiKey} - Delete an API key
+    // - Authorization: Only administrators can delete API keys
+    // - No request body needed
+    // - Returns success message
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/api-keys', [ApiKeyController::class, 'generate']);
+        Route::get('/api-keys', [ApiKeyController::class, 'index']);
+        Route::patch('/api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggleStatus']);
+        Route::delete('/api-keys/{apiKey}', [ApiKeyController::class, 'destroy']);
     });
 });
