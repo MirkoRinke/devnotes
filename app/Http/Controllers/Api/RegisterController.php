@@ -49,8 +49,6 @@ class RegisterController extends Controller {
             ]);
 
             return $this->successResponse($user, 'User created successfully', 201);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
