@@ -119,8 +119,6 @@ class PostApiController extends Controller {
             }
 
             return $this->successResponse($query, 'Posts retrieved successfully');
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Posts not found', 'POSTS_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -141,8 +139,6 @@ class PostApiController extends Controller {
             $post = Post::create($validatedData);
 
             return $this->successResponse($post, 'Post created successfully', 201);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
