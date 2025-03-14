@@ -69,8 +69,6 @@ class UserApiController extends Controller {
             }
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('You are not authorized to update this post', 'UNAUTHORIZED_ACTION', 403);
         } catch (Exception $e) {
