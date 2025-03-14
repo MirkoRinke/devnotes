@@ -13,9 +13,41 @@ use App\Traits\ApiResponses;
 use Exception;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+use Illuminate\Auth\Access\AuthorizationException;
 
 class ApiKeyController extends Controller {
-    use ApiResponses;
+
+    /**
+     *  The traits used in the controller
+     */
+    use ApiResponses, AuthorizesRequests;
+
+    /**
+     * Retrieve all API keys
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request) {
+        try {
+            // Check if the authenticated user is authorized to view API keys
+            $this->authorize('viewAny', ApiKey::class);
+
+            // Retrieve all API keys from the database 
+            $keys = ApiKey::select('id', 'name', 'active', 'created_at', 'last_used_at')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Return a success response with the retrieved API keys
+            return $this->successResponse($keys, 'API-Keys has been retrieved successfully', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
 
     /**
      * Generate a new API key
@@ -25,12 +57,8 @@ class ApiKeyController extends Controller {
      */
     public function generate(Request $request) {
         try {
-            // Get the authenticated user from the request object (the user who is making the request)
-            $user = $request->user();
-            // Check if the user is an admin user 
-            if ($user->role !== 'admin') {
-                return $this->errorResponse('Only administrators can generate API keys', 'INSUFFICIENT_PERMISSIONS', 403);
-            }
+            // Check if the authenticated user is authorized to create API keys
+            $this->authorize('create', ApiKey::class);
 
             // Validate the incoming request data
             $validated = $request->validate([
@@ -51,41 +79,13 @@ class ApiKeyController extends Controller {
             return $this->successResponse(['api_key' => $key, 'name' => $apiKey->name, 'created_at' => $apiKey->created_at,], 'API key generated successfully', 201);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
-
-
-
-    /**
-     * Retrieve all API keys
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index(Request $request) {
-        try {
-            // Get the authenticated user from the request object (the user who is making the request)
-            $user = $request->user();
-
-            // Check if the user is an admin user
-            if ($user->role !== 'admin') {
-                return $this->errorResponse('Only administrators can view API keys', 'INSUFFICIENT_PERMISSIONS', 403);
-            }
-
-            // Retrieve all API keys from the database 
-            $keys = ApiKey::select('id', 'name', 'active', 'created_at', 'last_used_at')
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            // Return a success response with the retrieved API keys
-            return $this->successResponse($keys, 'API-Keys has been retrieved successfully', 200);
-        } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-        }
-    }
 
     /**
      * Toggle the status of an API key
@@ -96,16 +96,11 @@ class ApiKeyController extends Controller {
      */
     public function toggleStatus(Request $request, $id) {
         try {
+            // Check if the authenticated user is authorized to toggle the status of API keys
+            $this->authorize('toggleStatus', ApiKey::class);
+
             // Find the API key in the database using the ID
             $apiKey = ApiKey::findOrFail($id);
-
-            // Get the authenticated user from the request object (the user who is making the request)
-            $user = $request->user();
-
-            // Check if the user is an admin user
-            if ($user->role !== 'admin') {
-                return $this->errorResponse('Only administrators can toggle API key status', 'INSUFFICIENT_PERMISSIONS', 403);
-            }
 
             // Toggle the status of the API key (active/inactive) and save the changes to the database
             $apiKey->active = !$apiKey->active;
@@ -115,6 +110,8 @@ class ApiKeyController extends Controller {
             return $this->successResponse(['key_id' => $apiKey->id, 'name' => $apiKey->name, 'active' => $apiKey->active], 'API key status has been toggled successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('API key not found', 'API_KEY_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -130,16 +127,11 @@ class ApiKeyController extends Controller {
      */
     public function destroy(Request $request, $id) {
         try {
+            // Check if the authenticated user is authorized to delete API keys
+            $this->authorize('delete', ApiKey::class);
+
             // Find the API key in the database using the ID
             $apiKey = ApiKey::findOrFail($id);
-
-            // Get the authenticated user from the request object (the user who is making the request)
-            $user = $request->user();
-
-            // Check if the user is an admin user
-            if ($user->role !== 'admin') {
-                return $this->errorResponse('Only administrators can delete API keys', 'INSUFFICIENT_PERMISSIONS', 403);
-            }
 
             // Delete the API key from the database
             $name = $apiKey->name;
@@ -149,6 +141,8 @@ class ApiKeyController extends Controller {
             return $this->successResponse([], "API-Key '$name' has been deleted successfully", 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('API key not found', 'API_KEY_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
