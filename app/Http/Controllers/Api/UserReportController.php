@@ -101,8 +101,6 @@ class UserReportController extends Controller {
             }
 
             return $this->successResponse($query, 'Reports retrieved successfully', 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Reports not found', 'REPORTS_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
