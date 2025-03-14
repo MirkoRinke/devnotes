@@ -90,8 +90,6 @@ class UserProfileController extends Controller {
             }
 
             return $this->successResponse($query, 'User Profiles retrieved successfully', 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('No User Profiles exist in the database', 'PROFILE_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
