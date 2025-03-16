@@ -48,9 +48,9 @@ class UserApiController extends Controller {
      * The methods array contains the methods that are used in the buildQuery method
      */
     private $methods = [
-        'sort' => ['id', 'name', 'email', 'created_at', 'updated_at'],
-        'filter' => ['name', 'email', 'created_at', 'updated_at'],
-        'select' => ['id', 'name', 'email', 'created_at', 'updated_at'],
+        'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at'],
+        'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at'],
+        'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at'],
         'getPerPage' => 10
     ];
 
