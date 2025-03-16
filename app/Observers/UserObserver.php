@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Services\ModerationService;
 
 class UserObserver {
     /**
@@ -11,8 +12,12 @@ class UserObserver {
      */
     public function created(User $user): void {
         UserProfile::create([
-            'user_id' => $user->id
+            'user_id' => $user->id,
+            'display_name' => $user->display_name,
         ]);
+
+        // Check name for partially forbidden words
+        app(ModerationService::class)->checkAndReportUsername($user);
     }
 
     /**
