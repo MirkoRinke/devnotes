@@ -37,9 +37,9 @@ class UserProfileController extends Controller {
      *
      * @return array
      */
-    public function getValidationRules(): array {
+    public function getValidationRules($userProfile): array {
         $validationRules = [
-            'display_name' => ['required', 'unique:user_profiles', 'string', 'max:255', new NotForbiddenName()],
+            'display_name' => ['required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'max:255', new NotForbiddenName()],
             'location' => 'nullable|string|max:255',
             'skills' => 'nullable|array',
             'biography' => 'nullable|string',
@@ -149,7 +149,7 @@ class UserProfileController extends Controller {
             $this->authorize('update', $userProfile);
 
             $validatedData = $request->validate(
-                $this->getValidationRules(),
+                $this->getValidationRules($userProfile),
                 $this->getValidationMessages()
             );
 
