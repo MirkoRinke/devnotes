@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 
 use App\Models\UserProfile;
 
+use App\Rules\NotForbiddenName;
+
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
@@ -43,6 +45,17 @@ class UserProfileController extends Controller {
         'avatar_path' => 'nullable|string|max:255',
         'is_public' => 'required|boolean'
     ];
+
+    /**
+     * The validation messages for the user profile data plus the forbidden name validation
+     *
+     * @return array
+     */
+    public function getValidationRules(): array {
+        $rules = $this->validationRules;
+        $rules['name'][] = new NotForbiddenName();
+        return $rules;
+    }
 
 
     /**
@@ -142,7 +155,7 @@ class UserProfileController extends Controller {
             $this->authorize('update', $userProfile);
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->getValidationRules(),
                 $this->getValidationMessages()
             );
 
