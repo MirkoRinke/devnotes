@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ForbiddenName;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Models\User;
+
+use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
 use App\Traits\ApiSorting; // example $this->sort($request, $query, [ 'id','name', 'email']);
@@ -29,11 +32,25 @@ class UserApiController extends Controller {
      */
     use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, AuthorizesRequests;
 
+    /**
+     * The validation rules for the user data
+     */
     private $validationRules = [
-        'name' => 'required|string|max:255',
+        'name' => ['required', 'string', 'max:255'],
         'email' => 'required|string|email|unique:users,email',
         'password' => 'required|string|min:8|confirmed',
     ];
+
+    /**
+     * The validation messages for the user data plus the forbidden name validation
+     *
+     * @return array
+     */
+    public function getValidationRules(): array {
+        $rules = $this->validationRules;
+        $rules['name'][] = new NotForbiddenName();
+        return $rules;
+    }
 
     /**
      * The methods array contains the methods that are used in the buildQuery method
@@ -114,7 +131,7 @@ class UserApiController extends Controller {
             $this->authorize('update', $user);
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->getValidationRules(),
                 $this->getValidationMessages()
             );
 
