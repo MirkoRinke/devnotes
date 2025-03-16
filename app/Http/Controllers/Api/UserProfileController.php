@@ -33,28 +33,22 @@ class UserProfileController extends Controller {
 
 
     /**
-     * The validation rules for the user profile data
-     */
-    private $validationRules = [
-        'display_name' => 'required|unique:user_profiles|string|max:255',
-        'location' => 'nullable|string|max:255',
-        'skills' => 'nullable|array',
-        'biography' => 'nullable|string',
-        'social_links' => 'nullable|array',
-        'website' => 'nullable|string|max:255',
-        'avatar_path' => 'nullable|string|max:255',
-        'is_public' => 'required|boolean'
-    ];
-
-    /**
      * The validation messages for the user profile data plus the forbidden name validation
      *
      * @return array
      */
     public function getValidationRules(): array {
-        $rules = $this->validationRules;
-        $rules['name'][] = new NotForbiddenName();
-        return $rules;
+        $validationRules = [
+            'display_name' => ['required', 'unique:user_profiles', 'string', 'max:255', new NotForbiddenName()],
+            'location' => 'nullable|string|max:255',
+            'skills' => 'nullable|array',
+            'biography' => 'nullable|string',
+            'social_links' => 'nullable|array',
+            'website' => 'nullable|string|max:255',
+            'avatar_path' => 'nullable|string|max:255',
+            'is_public' => 'required|boolean'
+        ];
+        return $validationRules;
     }
 
 
