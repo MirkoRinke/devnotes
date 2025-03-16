@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Models\UserProfile;
 use App\Observers\UserObserver;
+use App\Observers\UserProfileObserver;
+use App\Services\ModerationService;
 use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,7 +23,8 @@ class AppServiceProvider extends ServiceProvider {
      * Register any application services.
      */
     public function register(): void {
-        //
+        // Register the ModerationService as a singleton
+        $this->app->singleton(ModerationService::class);
     }
 
     /**
@@ -32,6 +36,11 @@ class AppServiceProvider extends ServiceProvider {
          * Register the UserObserver to create a user profile when a user is created.
          */
         User::observe(UserObserver::class);
+
+        /**
+         * Register the UserProfileObserver to update the user's display name when the user profile is updated.
+         */
+        UserProfile::observe(UserProfileObserver::class);
 
         /**
          * Rate limiting for the API requests.
