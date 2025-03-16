@@ -9,14 +9,21 @@ use Illuminate\Contracts\Validation\ValidationRule;
 class NotForbiddenName implements ValidationRule {
     /**
      * Run the validation rule.
-     *
-     * @param string $attribute
-     * @param mixed $value
-     * @param \Closure $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void {
-        if (ForbiddenName::whereLike('name', $value)->exists()) {
+        // Check if the name is forbidden exactly
+        if (ForbiddenName::where('match_type', 'exact')->whereLike('name', $value)->exists()) {
             $fail('NAME_IS_FORBIDDEN');
+            return;
+        }
+
+        // Check if the name contains a forbidden word
+        $partialMatches = ForbiddenName::where('match_type', 'partial')->get(['name']);
+        foreach ($partialMatches as $forbidden) {
+            if (stripos($value, $forbidden->name) !== false) {
+                $fail('NAME_CONTAINS_FORBIDDEN_WORD');
+                return;
+            }
         }
     }
 }
