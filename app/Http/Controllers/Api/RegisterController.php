@@ -26,21 +26,13 @@ class RegisterController extends Controller {
     /**
      * The validation rules for the user data
      */
-    private $validationRules = [
-        'name' => ['required', 'string', 'max:255'],
-        'email' => 'required|string|email|unique:users,email',
-        'password' => 'required|string|min:8|confirmed',
-    ];
-
-    /**
-     * The validation messages for the user data plus the forbidden name validation
-     *
-     * @return array
-     */
     public function getValidationRules(): array {
-        $rules = $this->validationRules;
-        $rules['name'][] = new NotForbiddenName();
-        return $rules;
+        $validationRules = [
+            'name' => ['required', 'string', 'max:255', new NotForbiddenName()],
+            'email' => 'required|string|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+        ];
+        return $validationRules;
     }
 
     /**
