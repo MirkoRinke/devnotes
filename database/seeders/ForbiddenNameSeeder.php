@@ -10,8 +10,9 @@ class ForbiddenNameSeeder extends Seeder {
      * Files to import names from with matching type
      */
     private $files = [
-        'app/partial_matches.txt' => 'partial',
+        'app/reserved_words.txt' => 'exact',
         'app/exact_matches.txt' => 'exact',
+        'app/partial_matches.txt' => 'partial',
     ];
 
     /**
