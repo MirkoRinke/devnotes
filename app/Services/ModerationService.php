@@ -9,17 +9,22 @@ use App\Models\UserProfile;
 
 class ModerationService {
     /**
-     * Check username for partially forbidden words and create a report if needed
+     * Check both username and name for partially forbidden words
      * 
      * @param User $user The user to check
      * @return UserReport|null The created report or null if no report was created
      */
     public function checkAndReportUsername(User $user): ?UserReport {
-        $displayName = $user->display_name;
-        $matchedWord = $this->findForbiddenPartialMatch($displayName);
+        // Check display_name
+        $displayMatchedWord = $this->findForbiddenPartialMatch($user->display_name);
+        if ($displayMatchedWord) {
+            return $this->createAutoReport($user, $displayMatchedWord, "display_name '{$user->display_name}'");
+        }
 
-        if ($matchedWord) {
-            return $this->createAutoReport($user, $matchedWord);
+        // Check name
+        $nameMatchedWord = $this->findForbiddenPartialMatch($user->name);
+        if ($nameMatchedWord) {
+            return $this->createAutoReport($user, $nameMatchedWord, "name '{$user->name}'");
         }
 
         return null;
@@ -48,16 +53,17 @@ class ModerationService {
      * 
      * @param User $user The user to report
      * @param string $matchedWord The found forbidden word
+     * @param string $fieldInfo Information about which field contained the word
      * @return UserReport The created report
      */
-    private function createAutoReport(User $user, string $matchedWord): UserReport {
+    private function createAutoReport(User $user, string $matchedWord, string $fieldInfo): UserReport {
         // Check if a report already exists for this user
-        $existingReport = UserReport::where(['user_id' => 1, 'reportable_type' => User::class])->first();
+        $existingReport = UserReport::where(['user_id' => 1, 'reportable_id' => $user->id, 'reportable_type' => User::class])->first();
 
         if ($existingReport) {
             // Update the existing report instead of creating a new one
             $existingReport->update([
-                'reason' => "Automatic moderation: Display name '{$user->display_name}' contains potentially inappropriate word '{$matchedWord}'. (Updated)"
+                'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'. (Updated)"
             ]);
             $report = $existingReport;
         } else {
@@ -67,7 +73,7 @@ class ModerationService {
                 'reportable_id' => $user->id,
                 'reportable_type' => User::class,
                 'type' => 'user',
-                'reason' => "Automatic moderation: Display name '{$user->display_name}' contains potentially inappropriate word '{$matchedWord}'."
+                'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'."
             ]);
 
             // Only increment reports_count for new reports
