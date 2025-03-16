@@ -28,6 +28,8 @@ class User extends Authenticatable {
         'display_name',
         'email',
         'password',
+        'role',
+        'is_banned',
     ];
 
     /**
