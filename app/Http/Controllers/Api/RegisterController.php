@@ -8,7 +8,10 @@ use Illuminate\Http\Request;
 
 use App\Models\User;
 
+use App\Rules\NotForbiddenName;
+
 use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
+
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
@@ -21,13 +24,24 @@ class RegisterController extends Controller {
     use ApiResponses;
 
     /**
-     * The validation rules for the user profile data
+     * The validation rules for the user data
      */
     private $validationRules = [
-        'name' => 'required|string|max:255',
+        'name' => ['required', 'string', 'max:255'],
         'email' => 'required|string|email|unique:users,email',
         'password' => 'required|string|min:8|confirmed',
     ];
+
+    /**
+     * The validation messages for the user data plus the forbidden name validation
+     *
+     * @return array
+     */
+    public function getValidationRules(): array {
+        $rules = $this->validationRules;
+        $rules['name'][] = new NotForbiddenName();
+        return $rules;
+    }
 
     /**
      * Register a new user
@@ -38,7 +52,7 @@ class RegisterController extends Controller {
     public function register(Request $request): JsonResponse {
         try {
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->getValidationRules(),
                 $this->getValidationMessages()
             );
 
