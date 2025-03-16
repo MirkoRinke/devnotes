@@ -12,6 +12,7 @@ return new class extends Migration {
         Schema::create('forbidden_names', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->enum('match_type', ['exact', 'partial'])->default('exact');
             $table->timestamps();
         });
     }
