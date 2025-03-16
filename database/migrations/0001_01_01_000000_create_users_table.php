@@ -19,6 +19,10 @@ return new class extends Migration {
             $table->rememberToken();
             $table->timestamps();
             $table->string('role')->default('user');
+            $table->boolean('is_banned')->default(false);
+            $table->timestamp('banned_at')->nullable();
+            $table->string('ban_reason')->nullable();
+            $table->foreignId('banned_by')->nullable()->constrained('users');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
