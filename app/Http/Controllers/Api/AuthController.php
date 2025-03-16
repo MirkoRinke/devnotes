@@ -39,6 +39,10 @@ class AuthController extends Controller {
             return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
         }
 
+        if ($user->is_banned) {
+            return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
+        }
+
         $token = $user->createToken($request->device_name);
         $token->accessToken->expires_at = Carbon::now()->addDays(7);
         $token->accessToken->save();
@@ -54,7 +58,9 @@ class AuthController extends Controller {
      * @return \Illuminate\Http\JsonResponse
      */
     public function logout(Request $request): JsonResponse {
-        $request->user()->currentAccessToken()->delete();
+        /** @var \Laravel\Sanctum\PersonalAccessToken $token */
+        $token = $request->user()->currentAccessToken();
+        $token->delete();
         return $this->successResponse(null, 'Logout successful', 200);
     }
 
