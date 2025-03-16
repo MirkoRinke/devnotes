@@ -24,7 +24,10 @@ class UserObserver {
      * Handle the User "updated" event.
      */
     public function updated(User $user): void {
-        //
+        // Check if name was changed (display_name is handled by UserProfileObserver)
+        if ($user->wasChanged('name')) {
+            app(ModerationService::class)->checkAndReportUsername($user);
+        }
     }
 
     /**
