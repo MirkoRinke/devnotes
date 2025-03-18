@@ -30,6 +30,12 @@ class User extends Authenticatable {
         'password',
         'role',
         'is_banned',
+        'banned_at',
+        'unbanned_at',
+        'ban_reason',
+        'unban_reason',
+        'banned_by',
+        'unbanned_by',
     ];
 
     /**
