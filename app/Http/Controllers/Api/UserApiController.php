@@ -101,6 +101,11 @@ class UserApiController extends Controller {
             // Need this because the select method returns only the query object
             $user = $query->firstOrFail();
 
+            // If the user is not an admin, hide the banned user information
+            if ($request->user()->role !== 'admin') {
+                $user = $user->makeHidden(['is_banned', 'banned_at', 'ban_reason', 'banned_by', 'unbanned_at', 'unban_reason', 'unbanned_by']);
+            }
+
             $this->authorize('view', $user);
 
             return $this->successResponse($user, 'User retrieved successfully', 200);
