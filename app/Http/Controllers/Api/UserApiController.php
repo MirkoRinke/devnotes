@@ -48,9 +48,9 @@ class UserApiController extends Controller {
      * The methods array contains the methods that are used in the buildQuery method
      */
     private $methods = [
-        'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at'],
-        'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at'],
-        'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at'],
+        'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+        'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+        'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
         'getPerPage' => 10
     ];
 
@@ -160,6 +160,115 @@ class UserApiController extends Controller {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
+     * banUser the specified user.
+     */
+    public function banUser(string $id, Request $request): JsonResponse {
+        try {
+            $user = User::findOrFail($id);
+
+            $this->authorize('banUser', $user);
+
+            $validatedData = $request->validate([
+                'ban_reason' => 'required|string',
+            ]);
+
+            $user->update([
+                'is_banned' => true,
+                'banned_at' => now(),
+                'ban_reason' => $validatedData['ban_reason'],
+                'banned_by' => $request->user()->id,
+            ]);
+
+            $bannedUserInfo = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'is_banned' => true,
+                'banned_at' => $user->banned_at,
+                'ban_reason' => $user->ban_reason
+            ];
+
+            return $this->successResponse($bannedUserInfo, 'User banned successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
+     * unbanUser the specified user.
+     */
+    public function unbanUser(string $id, Request $request): JsonResponse {
+        try {
+            $user = User::findOrFail($id);
+
+            $this->authorize('unbanUser', $user);
+
+            $validatedData = $request->validate([
+                'unban_reason' => 'required|string',
+            ]);
+
+            $user->update([
+                'is_banned' => false,
+                'unbanned_at' => now(),
+                'unban_reason' => $validatedData['unban_reason'],
+                'unbanned_by' => $request->user()->id,
+            ]);
+
+            $bannedUserInfo = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'is_banned' => false,
+                'unbanned_at' => $user->unbanned_at,
+                'unban_reason' => $user->unban_reason
+            ];
+
+            return $this->successResponse($bannedUserInfo, 'User unbanned successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Get the banned users.
+     */
+    public function getBannedUsers(Request $request): JsonResponse {
+        try {
+            $this->authorize('getBanned', User::class);
+
+            $query = User::query()->where('is_banned', true);
+
+            $query = $this->buildQuery($request, $query, $this->methods);
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse($query, 'No banned users found with the given filters', 200);
+            }
+
+            return $this->successResponse($query, 'Banned users retrieved successfully', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('You are not authorized to view banned users', 'UNAUTHORIZED_ACTION', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
