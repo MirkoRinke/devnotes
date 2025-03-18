@@ -49,4 +49,28 @@ class UserPolicy {
         }
         return $user->id === $model->id;
     }
+
+    /**
+     * Determine whether the user can banUser the model.
+     */
+    public function banUser(User $user, User $model): bool {
+        if ($user->role === 'admin' && $model->role !== 'admin') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determine whether the user can unbanUser the model.
+     */
+    public function unbanUser(User $user): bool {
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can getBanned the model.
+     */
+    public function getBanned(User $user): bool {
+        return $user->role === 'admin';
+    }
 }
