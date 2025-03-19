@@ -17,7 +17,6 @@ use App\Http\Middleware\ValidateApiKey;
 Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
 
     //! Route for registration
-
     // Route to register a new user - no authentication required
     // POST /api/register - Create a new user account
     // - Request body:
@@ -40,6 +39,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Returns 500 Server Error for unexpected issues
     Route::post('/register', [RegisterController::class, 'register']);
 
+    //! Route for login
     // Public routes - no authentication required
     // POST /api/login - Login and get access token
     // - Request body:
@@ -52,6 +52,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Returns 401 Unauthorized on invalid credentials
     Route::post('/login', [AuthController::class, 'login']);
 
+    //! Route for logout and tokens
     // Protected routes - authentication required
     // POST /api/logout - Logout and revoke current token
     // - Authorization: Any authenticated user can logout
@@ -123,16 +124,14 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Returns 403 Unauthorized if non-admin tries to unban user
     // - Returns 404 User not found if user doesn't exist
     // - Returns 422 Validation Error for invalid input
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::get('/users/banned', [UserApiController::class, 'getBannedUsers']);
         Route::post('/users/{id}/ban', [UserApiController::class, 'banUser']);
         Route::post('/users/{id}/unban', [UserApiController::class, 'unbanUser']);
     });
 
 
-
     //! Route for users
-
     // Route to get, view, update and delete users - you need to be authenticated protected by sanctum and Policies
     // 
     // GET /api/users - Get all users
@@ -163,13 +162,12 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Authorization: Users can only delete their own profile, admins can delete any user
     // - No request body needed
     // - Returns 200 OK on success, 404 if user not found, 403 if unauthorized
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('users', UserApiController::class);
     });
 
 
     //! Route for posts
-
     // Public routes - no authentication required
     // GET /api/posts - Get all posts
     // - Public users: Only see published posts
@@ -212,13 +210,12 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Authorization: Users can only delete their own posts, admins can delete any post
     // - No request body needed
     // - Returns 200 OK on success
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('posts', PostApiController::class)->except(['index', 'show']);
     });
 
 
     //! Route for favorites
-
     // Route to add, remove a favorite and get all favorites you need to be authenticated 
     // 
     // GET /api/user/favorites - Get all favorites of the authenticated user
@@ -251,12 +248,13 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - No request body needed, post ID is taken from the URL
     // - Returns 200 OK on success
     // 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
         Route::get('/user/favorite-posts', [FavoriteController::class, 'getFavoritePosts']);
         Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
         Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
     });
+
 
     //! Route for user profiles
     // Route to get, update user profiles - you need to be authenticated protected by sanctum and Policies
@@ -293,13 +291,12 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //
     // POST /api/user_profiles - Create a user profile (disabled, returns 403)
     // DELETE /api/user_profiles/{id} - Delete a user profile (disabled, returns 405)    
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('user_profiles', UserProfileController::class);
     });
 
 
     //! Route for reports
-
     // Route to add, remove a report and get all reports you need to be authenticated
     // 
     // GET /api/reports - Get all reports
@@ -334,7 +331,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //    "reportable_id": 5           // required
     //  }
     // - Returns 200 OK on success
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::post('/reports', [UserReportController::class, 'addReport']);
         Route::delete('/reports', [UserReportController::class, 'removeReport']);
         Route::get('/reports', [UserReportController::class, 'getReports']);
@@ -379,7 +376,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Authorization: Only administrators can delete API keys
     // - No request body needed
     // - Returns success message
-    Route::middleware(['auth:sanctum'])->group(function () {
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::post('/api-keys', [ApiKeyController::class, 'generate']);
         Route::get('/api-keys', [ApiKeyController::class, 'index']);
         Route::patch('/api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggleStatus']);
