@@ -20,6 +20,7 @@ class UserSeeder extends Seeder {
             'email' => 'max@example1.com',
             'password' => Hash::make('sicheresPasswort123'),
             'role' => 'admin',
+            'email_verified_at' => now(),
         ]);
 
         // Create multiple regular users with incrementing names/emails
@@ -30,6 +31,7 @@ class UserSeeder extends Seeder {
                 'email' => "max@example{$i}.com",
                 'password' => Hash::make('sicheresPasswort123'),
                 'role' => 'user',
+                'email_verified_at' => now(),
             ]);
         }
     }
