@@ -38,7 +38,16 @@ class RegisterController extends Controller {
 
     /**
      * Register a new user
-     *
+     * 
+     * Note on Email Verification:
+     * For this portfolio/demo project, emails are automatically verified.
+     * In a production environment, the typical implementation would:
+     * - Set email_verified_at to null initially
+     * - Send a verification email with a token/signed link
+     * - Provide an API endpoint for verification
+     * - Restrict certain functionality for unverified users
+     * - Implement the MustVerifyEmail interface in the User model
+     * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -54,6 +63,7 @@ class RegisterController extends Controller {
                 'display_name' => $validatedData['display_name'],
                 'email' => $validatedData['email'],
                 'password' => bcrypt($validatedData['password']),
+                'email_verified_at' => now(), // Auto-verification for demo purposes only
             ]);
 
             return $this->successResponse($user, 'User created successfully', 201);
