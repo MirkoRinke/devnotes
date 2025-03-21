@@ -119,7 +119,15 @@ trait ApiResponses {
             'reportable_id.required' => 'REPORTABLE_ID_FIELD_REQUIRED',
             'reportable_id.integer' => 'REPORTABLE_ID_MUST_BE_INTEGER',
             'reason.string' => 'REASON_MUST_BE_STRING',
-            'reason.max' => 'REASON_FIELD_MAX_LENGTH'
+            'reason.max' => 'REASON_FIELD_MAX_LENGTH',
+
+            // Comment validation messages
+            'content.required' => 'CONTENT_FIELD_REQUIRED',
+            'content.string' => 'CONTENT_MUST_BE_STRING',
+            'content.max' => 'CONTENT_FIELD_MAX_LENGTH',
+            'post_id.required' => 'POST_ID_FIELD_REQUIRED',
+            'post_id.exists' => 'POST_ID_NOT_FOUND',
+            'parent_id.exists' => 'PARENT_ID_NOT_FOUND',
 
         ];
     }
