@@ -8,51 +8,48 @@ use Illuminate\Auth\Access\Response;
 
 class CommentPolicy {
     /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Comment $comment): bool {
-        return false;
-    }
-
-    /**
      * Determine whether the user can create models.
      */
     public function create(User $user): bool {
+        if ($user) {
+            return true;
+        }
         return false;
     }
 
     /**
      * Determine whether the user can update the model.
+     * 
+     * Admins can update any comment.
+     * Users can only update their own comments within 15 minutes after creation.
      */
     public function update(User $user, Comment $comment): bool {
-        return false;
+        // Check if user is an admin
+        if ($user->role === 'admin') {
+            return true;
+        }
+        // Check if user is the owner of the comment
+        if ($user->id !== $comment->user_id) {
+            return false;
+        }
+        // Check if the comment was created within the last 15 minutes
+        return now()->diffInMinutes($comment->created_at) <= 15;
     }
 
     /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Comment $comment): bool {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Comment $comment): bool {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Comment $comment): bool {
-        return false;
+    public function toggleDeleteStatus(User $user, Comment $comment): bool {
+        if ($user->role === 'admin') {
+            return true;
+        }
+        return $user->id === $comment->user_id;
     }
 }
