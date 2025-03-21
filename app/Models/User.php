@@ -103,4 +103,13 @@ class User extends Authenticatable {
     public function reportsSent() {
         return $this->hasMany(UserReport::class, 'user_id');
     }
+
+    /**
+     * Get all comments created by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments() {
+        return $this->hasMany(Comment::class);
+    }
 }
