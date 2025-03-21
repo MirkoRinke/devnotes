@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->timestamp('edited_at')->nullable();
             $table->integer('likes_count')->default(0);
             $table->integer('reports_count')->default(0);
+            $table->unsignedInteger('depth')->default(0);
             $table->timestamps();
         });
     }
