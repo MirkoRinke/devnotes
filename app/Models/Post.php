@@ -72,4 +72,13 @@ class Post extends Model {
     public function reports() {
         return $this->morphMany(UserReport::class, 'reportable');
     }
+
+    /**
+     * Get all comments for this post
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments() {
+        return $this->hasMany(Comment::class);
+    }
 }
