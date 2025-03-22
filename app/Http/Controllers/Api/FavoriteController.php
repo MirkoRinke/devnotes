@@ -54,7 +54,7 @@ class FavoriteController extends Controller {
         $query = UserFavorite::where('user_id', $user->id);
 
         /**
-         *  Include the user and post entity in the response
+         *  Include the post entity in the response
          */
         if ($request->has('include')) {
             $includes = explode(',', $request->include);
