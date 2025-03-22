@@ -4,12 +4,9 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\UserFavorite;
-use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Auth\Access\Response;
 
-// Laravel find the policy by the name of the model and the word "Policy" at the end.
 class UserFavoritePolicy {
-    use HandlesAuthorization;
-
     /**
      * The user can only delete their own favorite.
      *
