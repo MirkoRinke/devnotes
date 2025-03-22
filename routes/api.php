@@ -317,7 +317,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Restrictions: Cannot report yourself or your own posts
     // - Request body:
     //  {
-    //    "reportable_type": "post",      // required (post|user)
+    //    "reportable_type": "post",      // required (post|user|comment)
     //    "reportable_id": 5,             // required
     //    "reason": "Dieser Post enthält unangemessenen Inhalt"  // optional
     //  }
@@ -327,7 +327,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Authorization: Users can only delete their own reports (enforced by Policy)
     // - Request body:
     //  {
-    //    "reportable_type": "post",    // required (post|user)
+    //    "reportable_type": "post",    // required (post|user|comment)
     //    "reportable_id": 5           // required
     //  }
     // - Returns 200 OK on success
