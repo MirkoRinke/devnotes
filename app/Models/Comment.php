@@ -70,4 +70,13 @@ class Comment extends Model {
     public function children() {
         return $this->hasMany(Comment::class, 'parent_id');
     }
+
+    /**
+     * Get the likes for the comment
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function likes() {
+        return $this->hasMany(CommentLike::class);
+    }
 }
