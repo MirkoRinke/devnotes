@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommentApiController;
+use App\Http\Controllers\Api\CommentLikeController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
@@ -429,5 +430,46 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('comments', CommentApiController::class);
         Route::patch('comments/{id}/toggleDeleteStatus', [CommentApiController::class, 'toggleDeleteStatus']);
+    });
+
+
+    //! Route for comment likes
+    // Route to add, remove a like and get all liked comments - you need to be authenticated
+    // 
+    // GET /api/comment-likes - Get all comment likes of the authenticated user
+    // - Authorization: Users can only access their own likes
+    //
+    // - Minimal data: GET /api/comment-likes
+    // - With comment data: GET /api/comment-likes?include=comment
+    // 
+    // - Select specific fields: GET /api/comment-likes?select=id,user_id,comment_id (supports: id, user_id, comment_id, created_at, updated_at)
+    // - Sort options: GET /api/comment-likes?sort=created_at (supports: id, user_id, comment_id, created_at, updated_at)
+    // - Filter options: GET /api/comment-likes?filter[comment_id]=5 (supports: id, user_id, comment_id, created_at, updated_at)
+    // - Pagination: GET /api/comment-likes?page=1&per_page=10
+    //
+    // GET /api/comment-likes/comments - Get comments liked by the authenticated user
+    // - Authorization: Users can only access their own liked comments
+    // - Returns the actual comment objects rather than like relationship objects
+    // 
+    // - Select specific fields: GET /api/comment-likes/comments?select=id,content,user_id (supports: id, post_id, user_id, content, parent_id, is_deleted, is_edited, likes_count, reports_count, created_at, updated_at)
+    // - Sort options: GET /api/comment-likes/comments?sort=created_at (supports: id, post_id, user_id, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
+    // - Filter options: GET /api/comment-likes/comments?filter[user_id]=3 (supports: post_id, user_id, parent_id, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
+    // - Pagination: GET /api/comment-likes/comments?page=1&per_page=10
+    //
+    // POST /api/comment-likes/{commentId} - Add a like to a comment
+    // - Authorization: Any authenticated user can like comments
+    // - No request body needed, comment ID is taken from the URL
+    // - Returns 201 Created on success, or 200 OK if already liked
+    //
+    // DELETE /api/comment-likes/{commentId} - Remove a like from a comment
+    // - Authorization: Users can only delete their own likes (enforced by Policy)
+    // - No request body needed, comment ID is taken from the URL
+    // - Returns 200 OK on success
+    // 
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::get('/comment-likes', [CommentLikeController::class, 'getLikes']);
+        Route::post('/comment-likes/{commentId}', [CommentLikeController::class, 'addLike']);
+        Route::delete('/comment-likes/{commentId}', [CommentLikeController::class, 'removeLike']);
+        Route::get('/comment-likes-comments', [CommentLikeController::class, 'getLikedComments']);
     });
 });
