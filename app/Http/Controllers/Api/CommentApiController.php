@@ -39,17 +39,6 @@ class CommentApiController extends Controller {
         'parent_id' => 'nullable|exists:comments,id',
     ];
 
-
-    /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methods = [
-        'sort' => ['id', 'post_id', 'user_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
-        'filter' => ['post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
-        'select' => ['post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
     /**
      * The maximum depth of comments
      * 
@@ -60,11 +49,11 @@ class CommentApiController extends Controller {
     /**
      * Display a listing of the resource.
      */
-    public function index() {
+    public function index(Request $request) {
         try {
             $query = Comment::whereNull('parent_id')->with(['user:id,name', 'children.user:id,name']);
 
-            $query = $this->buildQuery(request(), $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'comment');
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -125,7 +114,7 @@ class CommentApiController extends Controller {
         try {
             $query = Comment::where('id', $id)->with(['user:id,name', 'children.user:id,name']);
 
-            $query = $this->select($request, $query, $this->methods['select']);
+            $query = $this->buildQuerySelect($request, $query, 'comment');
 
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
