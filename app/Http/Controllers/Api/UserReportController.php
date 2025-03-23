@@ -42,16 +42,6 @@ class UserReportController extends Controller {
     ];
 
     /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methods = [
-        'sort' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
-        'filter' => ['user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
-        'select' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
-    /**
      * Update the reports_count for a reportable entity
      *
      * @param mixed $reportable The reportable entity (Post or User)
@@ -92,7 +82,7 @@ class UserReportController extends Controller {
                 }
             }
 
-            $query = $this->buildQuery($request, $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'report');
 
             if ($query instanceof JsonResponse) {
                 return $query;
