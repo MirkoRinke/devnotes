@@ -12,8 +12,8 @@ return new class extends Migration {
         Schema::create('user_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // User who created the report
-            $table->morphs('reportable');  // Polymorphic relationship (for Post or User)
-            $table->string('type')->nullable(); // Simple type (post, user)
+            $table->morphs('reportable');  // Polymorphic relationship (for Post|User|Comment)
+            $table->string('type')->nullable(); // Simple type (post, user, comment)
             $table->text('reason')->nullable(); // Reason for the report
             $table->unique(['user_id', 'reportable_id', 'reportable_type']); // A user can only report an entity once
             $table->timestamps();
