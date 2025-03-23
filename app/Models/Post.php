@@ -29,6 +29,7 @@ class Post extends Model {
         'tags',
         'status',
         'favorite_count',
+        'likes_count',
         'reports_count',
     ];
 
@@ -80,5 +81,14 @@ class Post extends Model {
      */
     public function comments() {
         return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Get all likes for this post
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function likes() {
+        return $this->morphMany(Like::class, 'likeable');
     }
 }
