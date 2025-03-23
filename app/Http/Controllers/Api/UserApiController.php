@@ -45,16 +45,6 @@ class UserApiController extends Controller {
     }
 
     /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methods = [
-        'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
-        'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
-        'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
-        'getPerPage' => 10
-    ];
-
-    /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse {
@@ -67,7 +57,7 @@ class UserApiController extends Controller {
 
             $query = User::query();
 
-            $query = $this->buildQuery($request, $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'user');
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -92,7 +82,7 @@ class UserApiController extends Controller {
         try {
             $query = User::query()->where('id', $id);
 
-            $query = $this->select($request, $query, $this->methods['select']);
+            $query = $this->buildQuerySelect($request, $query, 'user');
 
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
@@ -261,7 +251,7 @@ class UserApiController extends Controller {
 
             $query = User::query()->where('is_banned', true);
 
-            $query = $this->buildQuery($request, $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'user');
 
             if ($query instanceof JsonResponse) {
                 return $query;
