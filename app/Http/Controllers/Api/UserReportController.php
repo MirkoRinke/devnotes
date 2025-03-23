@@ -22,6 +22,7 @@ use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class UserReportController extends Controller {
@@ -61,11 +62,9 @@ class UserReportController extends Controller {
     private function updateReportsCount($reportable, $reportableType, $increment = true) {
         $method = $increment ? 'increment' : 'decrement';
 
-        if ($reportableType === Post::class) {
-            $reportable->$method('reports_count');
-        } else if ($reportableType === User::class && $reportable->profile) {
+        if ($reportableType === User::class && $reportable->profile) {
             $reportable->profile->$method('reports_count');
-        } else if ($reportableType === Comment::class) {
+        } else {
             $reportable->$method('reports_count');
         }
     }
@@ -153,15 +152,19 @@ class UserReportController extends Controller {
                 return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409);
             }
 
-            $report = UserReport::create([
-                'user_id' => $user->id,
-                'reportable_id' => $reportableId,
-                'reportable_type' => $reportableType,
-                'type' => $simpleType,
-                'reason' => $validatedData['reason'] ?? null
-            ]);
+            $report = DB::transaction(function () use ($user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData) {
+                $report = UserReport::create([
+                    'user_id' => $user->id,
+                    'reportable_id' => $reportableId,
+                    'reportable_type' => $reportableType,
+                    'type' => $simpleType,
+                    'reason' => $validatedData['reason'] ?? null
+                ]);
 
-            $this->updateReportsCount($reportable, $reportableType, true);
+                $this->updateReportsCount($reportable, $reportableType, true);
+
+                return $report;
+            });
 
             return $this->successResponse($report, 'Report submitted successfully', 201);
         } catch (ModelNotFoundException $e) {
@@ -202,9 +205,12 @@ class UserReportController extends Controller {
             $this->authorize('delete', $report);
 
             $reportable = $report->reportable;
-            $this->updateReportsCount($reportable, $reportableType, false);
 
-            $report->delete();
+            DB::transaction(function () use ($report, $reportable, $reportableType) {
+                $this->updateReportsCount($reportable, $reportableType, false);
+                $report->delete();
+            });
+
             return $this->successResponse(null, 'Report removed successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Report not found', 'NOT_FOUND', 404);
