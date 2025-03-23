@@ -51,18 +51,6 @@ class UserProfileController extends Controller {
         return $validationRules;
     }
 
-
-    /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methods = [
-        'sort' => ['id', 'user_id', 'display_name', 'location', 'created_at', 'updated_at', 'is_public'],
-        'filter' => ['user_id', 'display_name', 'location', 'skills', 'is_public'],
-        'select' => ['id', 'user_id', 'display_name', 'location', 'skills', 'biography', 'social_links', 'website', 'avatar_path', 'is_public', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
-
     /**
      * Display a listing of the resource.
      */
@@ -86,7 +74,7 @@ class UserProfileController extends Controller {
                 });
             }
 
-            $query = $this->buildQuery($request, $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'user_profile');
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -118,7 +106,7 @@ class UserProfileController extends Controller {
         try {
             $query = UserProfile::query()->where('id', $id);
 
-            $query = $this->select($request, $query, $this->methods['select']);
+            $query = $this->buildQuerySelect($request, $query, 'user_profile');
 
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
