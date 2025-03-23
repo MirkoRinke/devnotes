@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommentApiController;
-use App\Http\Controllers\Api\CommentLikeController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\LikeController;
 use App\Http\Controllers\API\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
 use App\Http\Middleware\ValidateApiKey;
@@ -216,64 +216,23 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     });
 
 
-    //! Route for favorites
-    // Route to add, remove a favorite and get all favorites you need to be authenticated 
-    // 
-    // GET /api/user/favorites - Get all favorites of the authenticated user
-    // - Authorization: Users can only access their own favorites
-    //
-    // - Minimal data: GET /api/user/favorites
-    // - With post data: GET /api/user/favorites?include=post
-    // 
-    // - Select specific fields: GET /api/user/favorites?select=id,user_id,title (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
-    // - Sort options: GET /api/user/favorites?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
-    // - Filter options: GET /api/user/favorites?filter[title]=example (supports: title, user_id, language, category, tags, status, created_at, updated_at)
-    // - Pagination: GET /api/user/favorites?page=1&per_page=10
-    //
-    // GET /api/user/favorite-posts - Get posts favorited by the authenticated user
-    // - Authorization: Users can only access their own favorite posts
-    // - Returns the actual post objects rather than favorite relationship objects
-    // 
-    // - Select specific fields: GET /api/user/favorite-posts?select=id,title,language (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
-    // - Sort options: GET /api/user/favorite-posts?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
-    // - Filter options: GET /api/user/favorite-posts?filter[language]=php (supports: title, user_id, language, category, tags, status, created_at, updated_at)
-    // - Pagination: GET /api/user/favorite-posts?page=1&per_page=10
-    //
-    // POST /api/posts/{post}/favorites - Add a post to favorites
-    // - Authorization: Any authenticated user can add posts to their favorites
-    // - No request body needed, post ID is taken from the URL
-    // - Returns 201 Created on success, or 200 OK if already in favorites
-    //
-    // DELETE /api/posts/{post}/favorites - Remove a post from favorites
-    // - Authorization: Users can only delete their own favorites (enforced by Policy)
-    // - No request body needed, post ID is taken from the URL
-    // - Returns 200 OK on success
-    // 
-    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
-        Route::get('/user/favorite-posts', [FavoriteController::class, 'getFavoritePosts']);
-        Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
-        Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
-    });
-
-
     //! Route for user profiles
     // Route to get, update user profiles - you need to be authenticated protected by sanctum and Policies
     // 
-    // GET /api/user_profiles - Get all user profiles
+    // GET /api/user-profiles - Get all user profiles
     // - For admins: Returns all profiles
     // - For regular users: Returns only public profiles and the user's own profile
     // 
-    // - Select specific fields: GET /api/user_profiles?select=id,user_id,display_name (supports: id, user_id, display_name, location, skills, biography, social_links, website, avatar_path, is_public, created_at, updated_at)
-    // - Sort options: GET /api/user_profiles?sort=display_name (supports: id, user_id, display_name, location, created_at, updated_at, is_public)
-    // - Filter options: GET /api/user_profiles?filter[display_name]=john (supports: user_id, display_name, location, skills, is_public)
-    // - Pagination: GET /api/user_profiles?page=1&per_page=10
+    // - Select specific fields: GET /api/user-profiles?select=id,user_id,display_name (supports: id, user_id, display_name, location, skills, biography, social_links, website, avatar_path, is_public, created_at, updated_at)
+    // - Sort options: GET /api/user-profiles?sort=display_name (supports: id, user_id, display_name, location, created_at, updated_at, is_public)
+    // - Filter options: GET /api/user-profiles?filter[display_name]=john (supports: user_id, display_name, location, skills, is_public)
+    // - Pagination: GET /api/user-profiles?page=1&per_page=10
     //
-    // GET /api/user_profiles/{id} - Get a specific user profile
+    // GET /api/user-profiles/{id} - Get a specific user profile
     // - Authorization: Users can only view public profiles or their own profile, admins can view any profile
-    // - Select fields: GET /api/user_profiles/{id}?select=id,display_name,location
+    // - Select fields: GET /api/user-profiles/{id}?select=id,display_name,location
     //
-    // PUT/PATCH /api/user_profiles/{id} - Update a user profile
+    // PUT/PATCH /api/user-profiles/{id} - Update a user profile
     // - Authorization: Users can only update their own profile, admins can update any profile
     // - Request body:
     //  {
@@ -290,52 +249,10 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //    "is_public": true                      // required, boolean
     //  }
     //
-    // POST /api/user_profiles - Create a user profile (disabled, returns 403)
-    // DELETE /api/user_profiles/{id} - Delete a user profile (disabled, returns 405)    
+    // POST /api/user-profiles - Create a user profile (disabled, returns 403)
+    // DELETE /api/user-profiles/{id} - Delete a user profile (disabled, returns 405)    
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::apiResource('user_profiles', UserProfileController::class);
-    });
-
-
-    //! Route for reports
-    // Route to add, remove a report and get all reports you need to be authenticated
-    // 
-    // GET /api/reports - Get all reports
-    // - Authorization: Only administrators can access this endpoint (enforced by Policy)
-    // 
-    // - Minimal data: GET /api/reports
-    // - With user data: GET /api/reports?include=user
-    // - With reportable data: GET /api/reports?include=reportable
-    // - With all data: GET /api/reports?include=user,reportable
-    //
-    // - Select specific fields: GET /api/reports?select=id,user_id,reason (supports: id, user_id, reportable_id, reportable_type, type, reason, created_at, updated_at)
-    // - Sort options: GET /api/reports?sort=created_at (supports: id, user_id, reportable_id, reportable_type, type, created_at, updated_at)
-    // - Filter options: GET /api/reports?filter[type]=post (supports: user_id, reportable_id, reportable_type, type, created_at, updated_at)
-    // - Pagination: GET /api/reports?page=1&per_page=10
-    //
-    // POST /api/reports - Add a new report
-    // - Authorization: Any authenticated user can report posts or other users (with restrictions)
-    // - Restrictions: Cannot report yourself or your own posts
-    // - Request body:
-    //  {
-    //    "reportable_type": "post",      // required (post|user|comment)
-    //    "reportable_id": 5,             // required
-    //    "reason": "Dieser Post enthält unangemessenen Inhalt"  // optional
-    //  }
-    // - Returns 201 Created on success, 409 Conflict if already reported
-    //
-    // DELETE /api/reports - Remove a report
-    // - Authorization: Users can only delete their own reports (enforced by Policy)
-    // - Request body:
-    //  {
-    //    "reportable_type": "post",    // required (post|user|comment)
-    //    "reportable_id": 5           // required
-    //  }
-    // - Returns 200 OK on success
-    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::post('/reports', [UserReportController::class, 'addReport']);
-        Route::delete('/reports', [UserReportController::class, 'removeReport']);
-        Route::get('/reports', [UserReportController::class, 'getReports']);
+        Route::apiResource('user-profiles', UserProfileController::class);
     });
 
 
@@ -433,43 +350,126 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     });
 
 
-    //! Route for comment likes
-    // Route to add, remove a like and get all liked comments - you need to be authenticated
+    //! Route for favorites
+    // Route to add, remove a favorite and get all favorites you need to be authenticated 
     // 
-    // GET /api/comment-likes - Get all comment likes of the authenticated user
-    // - Authorization: Users can only access their own likes
+    // GET /api/user/favorites - Get all favorites of the authenticated user
+    // - Authorization: Users can only access their own favorites
     //
-    // - Minimal data: GET /api/comment-likes
-    // - With comment data: GET /api/comment-likes?include=comment
+    // - Minimal data: GET /api/user/favorites
+    // - With post data: GET /api/user/favorites?include=post
     // 
-    // - Select specific fields: GET /api/comment-likes?select=id,user_id,comment_id (supports: id, user_id, comment_id, created_at, updated_at)
-    // - Sort options: GET /api/comment-likes?sort=created_at (supports: id, user_id, comment_id, created_at, updated_at)
-    // - Filter options: GET /api/comment-likes?filter[comment_id]=5 (supports: id, user_id, comment_id, created_at, updated_at)
-    // - Pagination: GET /api/comment-likes?page=1&per_page=10
+    // - Select specific fields: GET /api/user/favorites?select=id,user_id,title (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
+    // - Sort options: GET /api/user/favorites?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
+    // - Filter options: GET /api/user/favorites?filter[title]=example (supports: title, user_id, language, category, tags, status, created_at, updated_at)
+    // - Pagination: GET /api/user/favorites?page=1&per_page=10
     //
-    // GET /api/comment-likes/comments - Get comments liked by the authenticated user
-    // - Authorization: Users can only access their own liked comments
-    // - Returns the actual comment objects rather than like relationship objects
+    // GET /api/user/favorite-posts - Get posts favorited by the authenticated user
+    // - Authorization: Users can only access their own favorite posts
+    // - Returns the actual post objects rather than favorite relationship objects
     // 
-    // - Select specific fields: GET /api/comment-likes/comments?select=id,content,user_id (supports: id, post_id, user_id, content, parent_id, is_deleted, is_edited, likes_count, reports_count, created_at, updated_at)
-    // - Sort options: GET /api/comment-likes/comments?sort=created_at (supports: id, post_id, user_id, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
-    // - Filter options: GET /api/comment-likes/comments?filter[user_id]=3 (supports: post_id, user_id, parent_id, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
-    // - Pagination: GET /api/comment-likes/comments?page=1&per_page=10
+    // - Select specific fields: GET /api/user/favorite-posts?select=id,title,language (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
+    // - Sort options: GET /api/user/favorite-posts?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
+    // - Filter options: GET /api/user/favorite-posts?filter[language]=php (supports: title, user_id, language, category, tags, status, created_at, updated_at)
+    // - Pagination: GET /api/user/favorite-posts?page=1&per_page=10
     //
-    // POST /api/comment-likes/{commentId} - Add a like to a comment
-    // - Authorization: Any authenticated user can like comments
-    // - No request body needed, comment ID is taken from the URL
-    // - Returns 201 Created on success, or 200 OK if already liked
+    // POST /api/posts/{post}/favorites - Add a post to favorites
+    // - Authorization: Any authenticated user can add posts to their favorites
+    // - No request body needed, post ID is taken from the URL
+    // - Returns 201 Created on success, or 200 OK if already in favorites
     //
-    // DELETE /api/comment-likes/{commentId} - Remove a like from a comment
-    // - Authorization: Users can only delete their own likes (enforced by Policy)
-    // - No request body needed, comment ID is taken from the URL
+    // DELETE /api/posts/{post}/favorites - Remove a post from favorites
+    // - Authorization: Users can only delete their own favorites (enforced by Policy)
+    // - No request body needed, post ID is taken from the URL
     // - Returns 200 OK on success
     // 
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/comment-likes', [CommentLikeController::class, 'getLikes']);
-        Route::post('/comment-likes/{commentId}', [CommentLikeController::class, 'addLike']);
-        Route::delete('/comment-likes/{commentId}', [CommentLikeController::class, 'removeLike']);
-        Route::get('/comment-likes-comments', [CommentLikeController::class, 'getLikedComments']);
+        Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
+        Route::get('/user/favorite-posts', [FavoriteController::class, 'getFavoritePosts']);
+        Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
+        Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
+    });
+
+
+    //! Route for reports
+    // Route to add, remove a report and get all reports you need to be authenticated
+    // 
+    // GET /api/reports - Get all reports
+    // - Authorization: Only administrators can access this endpoint (enforced by Policy)
+    // 
+    // - Minimal data: GET /api/reports
+    // - With user data: GET /api/reports?include=user
+    // - With reportable data: GET /api/reports?include=reportable
+    // - With all data: GET /api/reports?include=user,reportable
+    //
+    // - Select specific fields: GET /api/reports?select=id,user_id,reason (supports: id, user_id, reportable_id, reportable_type, type, reason, created_at, updated_at)
+    // - Sort options: GET /api/reports?sort=created_at (supports: id, user_id, reportable_id, reportable_type, type, created_at, updated_at)
+    // - Filter options: GET /api/reports?filter[type]=post (supports: user_id, reportable_id, reportable_type, type, created_at, updated_at)
+    // - Pagination: GET /api/reports?page=1&per_page=10
+    //
+    // POST /api/report - Add a new report
+    // - Authorization: Any authenticated user can report posts or other users (with restrictions)
+    // - Restrictions: Cannot report yourself or your own posts
+    // - Request body:
+    //  {
+    //    "reportable_type": "post",      // required (post|user|comment)
+    //    "reportable_id": 5,             // required
+    //    "reason": "Dieser Post enthält unangemessenen Inhalt"  // optional
+    //  }
+    // - Returns 201 Created on success, 409 Conflict if already reported
+    //
+    // DELETE /api/report - Remove a report
+    // - Authorization: Users can only delete their own report (enforced by Policy)
+    // - Request body:
+    //  {
+    //    "reportable_type": "post",    // required (post|user|comment)
+    //    "reportable_id": 5           // required
+    //  }
+    // - Returns 200 OK on success
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::get('/reports', [UserReportController::class, 'getReports']);
+        Route::post('/report', [UserReportController::class, 'addReport']);
+        Route::delete('/report', [UserReportController::class, 'removeReport']);
+    });
+
+
+    //! Route for likes
+    // Route to add, remove and get likes - you need to be authenticated protected by sanctum and Policies
+    // 
+    // GET /api/likes - Get all likes
+    // - Authorization: Only administrators can access this endpoint (enforced by Policy)
+    // 
+    // - Minimal data: GET /api/likes
+    // - With user data: GET /api/likes?include=user
+    // - With likeable data: GET /api/likes?include=likeable
+    // - With all data: GET /api/likes?include=user,likeable
+    //
+    // - Select specific fields: GET /api/likes?select=id,user_id (supports: id, user_id, likeable_id, likeable_type, type, created_at, updated_at)
+    // - Sort options: GET /api/likes?sort=created_at (supports: id, user_id, likeable_id, likeable_type, type, created_at, updated_at)
+    // - Filter options: GET /api/likes?filter[type]=post (supports: user_id, likeable_id, likeable_type, type, created_at, updated_at)
+    // - Pagination: GET /api/likes?page=1&per_page=10
+    //
+    // POST /api/like - Add a new like
+    // - Authorization: Any authenticated user can like posts or comments (with restrictions)
+    // - Restrictions: Cannot like your own posts or comments
+    // - Request body:
+    //  {
+    //    "likeable_type": "post",      // required (post|comment)
+    //    "likeable_id": 5              // required
+    //  }
+    // - Returns 201 Created on success, 403 Forbidden if trying to like own content or already liked
+    //
+    // DELETE /api/like - Remove a like
+    // - Authorization: Users can only delete their own likes (enforced by Policy)
+    // - Request body:
+    //  {
+    //    "likeable_type": "post",    // required (post|comment)
+    //    "likeable_id": 5            // required
+    //  }
+    // - Returns 200 OK on success, 404 Not Found if like doesn't exist
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::get('/likes', [LikeController::class, 'getAllLikes']);
+        Route::post('/like', [LikeController::class, 'addLike']);
+        Route::delete('/like', [LikeController::class, 'removeLike']);
     });
 });
