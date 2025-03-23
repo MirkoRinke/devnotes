@@ -72,11 +72,11 @@ class Comment extends Model {
     }
 
     /**
-     * Get the likes for the comment
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * Get all likes for this comment
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function likes() {
-        return $this->hasMany(CommentLike::class);
+        return $this->morphMany(Like::class, 'likeable');
     }
 }
