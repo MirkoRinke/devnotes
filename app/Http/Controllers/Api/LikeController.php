@@ -39,22 +39,10 @@ class LikeController extends Controller {
         'likeable_id' => 'required|integer',
     ];
 
-    /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methods = [
-        'sort' => ['id', 'user_id', 'likeable_id', 'likeable_type', 'type', 'created_at', 'updated_at'],
-        'filter' => ['user_id', 'likeable_id', 'likeable_type', 'type', 'created_at', 'updated_at'],
-        'select' => ['id', 'user_id', 'likeable_id', 'likeable_type', 'type', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
-
     private function updateLikesCount($likeable, $increment = true) {
         $method = $increment ? 'increment' : 'decrement';
         $likeable->$method('likes_count');
     }
-
 
     /**
      * Get all likes
@@ -76,7 +64,7 @@ class LikeController extends Controller {
                 }
             }
 
-            $query = $this->buildQuery($request, $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'like');
 
             if ($query instanceof JsonResponse) {
                 return $query;
