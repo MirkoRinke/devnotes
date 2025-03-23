@@ -30,23 +30,6 @@ class FavoriteController extends Controller {
     use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
 
     /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methodsFavorites = [
-        'sort' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
-        'filter' => ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
-        'select' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
-    private $methodsPosts = [
-        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
-        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
-        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
-    /**
      * Get all favorites
      */
     public function getFavorites(Request $request): JsonResponse {
@@ -67,7 +50,7 @@ class FavoriteController extends Controller {
             }
         }
 
-        $query = $this->buildQuery($request, $query, $this->methodsFavorites);
+        $query = $this->buildQuery($request, $query, 'favorite');
 
         if ($query instanceof JsonResponse) {
             return $query;
@@ -158,7 +141,7 @@ class FavoriteController extends Controller {
                 $subQuery->where('user_id', $userId);
             });
 
-            $query = $this->buildQuery($request, $query, $this->methodsPosts);
+            $query = $this->buildQuery($request, $query, 'post');
 
             if ($query instanceof JsonResponse) {
                 return $query;
