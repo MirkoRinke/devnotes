@@ -20,6 +20,7 @@ use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 
 class FavoriteController extends Controller {
 
@@ -90,10 +91,16 @@ class FavoriteController extends Controller {
             $exists = UserFavorite::where('user_id', $user->id)->where('post_id', $post->id)->exists();
 
             if (!$exists) {
-                $favorite = UserFavorite::create(['user_id' => $user->id, 'post_id' => $post->id]);
+                $favorite = DB::transaction(function () use ($user, $post) {
+                    $favorite = UserFavorite::create([
+                        'user_id' => $user->id,
+                        'post_id' => $post->id
+                    ]);
 
-                $post->increment('favorite_count');
+                    $post->increment('favorite_count');
 
+                    return $favorite;
+                });
                 return $this->successResponse($favorite, 'Post successfully added to favorites', 201);
             } else {
                 $favorite = UserFavorite::where('user_id', $user->id)->where('post_id', $post->id)->first();
@@ -123,8 +130,10 @@ class FavoriteController extends Controller {
 
             $this->authorize('delete', $favorite);
 
-            $post->decrement('favorite_count');
-            $favorite->delete();
+            DB::transaction(function () use ($post, $favorite) {
+                $post->decrement('favorite_count');
+                $favorite->delete();
+            });
 
             return $this->successResponse(null, 'Post successfully removed from favorites', 200);
         } catch (ModelNotFoundException $e) {
