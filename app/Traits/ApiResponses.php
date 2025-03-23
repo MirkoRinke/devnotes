@@ -121,6 +121,12 @@ trait ApiResponses {
             'reason.string' => 'REASON_MUST_BE_STRING',
             'reason.max' => 'REASON_FIELD_MAX_LENGTH',
 
+            // Like validation messages
+            'likeable_type.required' => 'LIKEABLE_TYPE_FIELD_REQUIRED',
+            'likeable_type.in' => 'LIKEABLE_TYPE_INVALID_OPTION',
+            'likeable_id.required' => 'LIKEABLE_ID_FIELD_REQUIRED',
+            'likeable_id.integer' => 'LIKEABLE_ID_MUST_BE_INTEGER',
+
             // Comment validation messages
             'content.required' => 'CONTENT_FIELD_REQUIRED',
             'content.string' => 'CONTENT_MUST_BE_STRING',
