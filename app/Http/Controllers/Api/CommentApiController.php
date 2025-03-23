@@ -88,14 +88,15 @@ class CommentApiController extends Controller {
             $depth = 0;
             if (!empty($validatedData['parent_id'])) {
                 $parentComment = Comment::findOrFail($validatedData['parent_id']);
+
+                if ($parentComment->post_id != $validatedData['post_id']) {
+                    return $this->errorResponse("Parent comment must belong to the same post", 'COMMENT_POST_MISMATCH', 422);
+                }
+
                 $depth = $parentComment->depth + 1;
 
                 if ($depth >= $this->maxCommentDepth) {
-                    return $this->errorResponse(
-                        "Comments can only be nested to a maximum depth of {$this->maxCommentDepth}",
-                        'COMMENT_NESTING_LIMIT',
-                        422
-                    );
+                    return $this->errorResponse("Comments can only be nested to a maximum depth of {$this->maxCommentDepth}", 'COMMENT_NESTING_LIMIT', 422);
                 }
             }
 
