@@ -44,17 +44,6 @@ class PostApiController extends Controller {
     ];
 
     /**
-     * The methods array contains the methods that are used in the buildQuery method
-     */
-    private $methods = [
-        'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
-        'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
-        'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'created_at', 'updated_at'],
-        'getPerPage' => 10
-    ];
-
-
-    /**
      * 
      * Extract user from the authorization bearer token
      * 
@@ -108,7 +97,7 @@ class PostApiController extends Controller {
 
             $query = $this->applyAccessFilters($request, $query);
 
-            $query = $this->buildQuery($request, $query, $this->methods);
+            $query = $this->buildQuery($request, $query, 'post');
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -155,7 +144,7 @@ class PostApiController extends Controller {
 
             $query = $this->applyAccessFilters($request, $query);
 
-            $query = $this->select($request, $query, $this->methods['select']);
+            $query = $this->buildQuerySelect($request, $query, 'post');
 
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
