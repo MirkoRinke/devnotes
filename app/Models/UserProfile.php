@@ -14,10 +14,12 @@ class UserProfile extends Model {
     protected $fillable = [
         'user_id',
         'display_name',
+        'public_email',
         'location',
         'skills',
         'biography',
         'social_links',
+        'contact_channels',
         'website',
         'avatar_path',
         'is_public',
@@ -31,6 +33,7 @@ class UserProfile extends Model {
     protected $casts = [
         'skills' => 'array',
         'social_links' => 'array',
+        'contact_channels' => 'array',
         'is_public' => 'boolean',
         'user_id' => 'integer',
     ];
