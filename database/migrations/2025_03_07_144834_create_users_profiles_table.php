@@ -13,10 +13,12 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('display_name')->unique()->nullable();
+            $table->string('public_email')->nullable();
             $table->string('location')->nullable();
             $table->json('skills')->nullable();
             $table->text('biography')->nullable();
             $table->json('social_links')->nullable();
+            $table->json('contact_channels')->nullable();
             $table->string('website')->nullable();
             $table->string('avatar_path')->nullable();
             $table->boolean('is_public')->default(true);
