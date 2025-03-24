@@ -7,7 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Models\UserProfile;
-
+use App\Rules\AllowedContactChannels;
+use App\Rules\AllowedSocialLinks;
 use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
@@ -40,10 +41,12 @@ class UserProfileController extends Controller {
     public function getValidationRules($userProfile): array {
         $validationRules = [
             'display_name' => ['required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'max:255', new NotForbiddenName()],
+            'public_email' => 'nullable|email|max:255',
             'location' => 'nullable|string|max:255',
             'skills' => 'nullable|array',
             'biography' => 'nullable|string',
-            'social_links' => 'nullable|array',
+            'contact_channels' => ['nullable', 'array', new AllowedContactChannels()],
+            'social_links' => ['nullable', 'array', new AllowedSocialLinks()],
             'website' => 'nullable|string|max:255',
             'avatar_path' => 'nullable|string|max:255',
             'is_public' => 'required|boolean'
