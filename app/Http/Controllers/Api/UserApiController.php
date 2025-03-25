@@ -14,7 +14,7 @@ use App\Rules\NotForbiddenName;
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
 use App\Traits\ApiSorting; // example $this->sort($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiFiltering; // example $this->filter($request, $query, [ 'name', 'email']);
-use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
@@ -30,7 +30,7 @@ class UserApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, AuthorizesRequests;
+    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests;
 
     /**
      * The validation rules for the user data

@@ -8,7 +8,12 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
-trait SelectableAttributes {
+trait ApiSelectable {
+    /**
+     *  The traits used in the controller
+     */
+    use ApiResponses;
+
     /**
      * Select the columns to return in the response
      *
@@ -25,7 +30,7 @@ trait SelectableAttributes {
             // If the select parameter is a string, convert it to an array
             if (is_string($select)) {
                 $select = explode(',', $select);
-            }            
+            }
             // Check if the select parameter is an array
             $validAttributes = array_intersect($select, $allowedAttributes);
             // Check if there are any invalid attributes
