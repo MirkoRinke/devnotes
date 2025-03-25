@@ -16,6 +16,7 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\RelationLoader; // example $this->loadRelationIfNeeded($request, $query, 'user', 'user_id', ['id', 'name']);
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -29,7 +30,7 @@ class LikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder;
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, RelationLoader;
 
     /**
      * The validation rule for the like entity
@@ -50,8 +51,10 @@ class LikeController extends Controller {
      * @param Request $request
      * @return JsonResponse
      */
-    public function getAllLikes(Request $request) {
+    public function index(Request $request) {
         try {
+            $this->authorize('viewAny', Like::class);
+
             $query = Like::query();
 
             if ($request->has('include')) {
@@ -75,6 +78,8 @@ class LikeController extends Controller {
             }
 
             return $this->successResponse($query, 'Likes retrieved successfully', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -87,7 +92,7 @@ class LikeController extends Controller {
      * @param Request $request
      * @return JsonResponse
      */
-    public function addLike(Request $request) {
+    public function store(Request $request) {
         try {
             $user = $request->user();
             $validatedData = $request->validate(
@@ -154,7 +159,7 @@ class LikeController extends Controller {
      * @param Request $request
      * @return JsonResponse
      */
-    public function removeLike(Request $request) {
+    public function destroy(Request $request) {
         try {
             $user = $request->user();
             $validatedData = $request->validate(
@@ -193,6 +198,75 @@ class LikeController extends Controller {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
+     * Get the liked posts for a user
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getLikedPosts(Request $request) {
+        try {
+            $user = $request->user();
+
+            $likedPostIds = $user->likes()
+                ->where('likeable_type', Post::class)
+                ->pluck('likeable_id');
+
+            $query = Post::whereIn('id', $likedPostIds);
+
+            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
+
+            $query = $this->buildQuery($request, $query, 'post');
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse([], 'No liked posts found', 200);
+            }
+
+            return $this->successResponse($query, 'Liked posts retrieved successfully', 200);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Get the liked comments for a user
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getLikedComments(Request $request) {
+        try {
+            $user = $request->user();
+
+            $likedCommentIds = $user->likes()
+                ->where('likeable_type', Comment::class)
+                ->pluck('likeable_id');
+
+            $query = Comment::whereIn('id', $likedCommentIds);
+
+            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
+
+            $query = $this->buildQuery($request, $query, 'comment');
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse([], 'No liked comments found', 200);
+            }
+
+            return $this->successResponse($query, 'Liked comments retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
