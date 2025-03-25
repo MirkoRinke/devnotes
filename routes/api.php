@@ -449,7 +449,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Filter options: GET /api/likes?filter[type]=post (supports: user_id, likeable_id, likeable_type, type, created_at, updated_at)
     // - Pagination: GET /api/likes?page=1&per_page=10
     //
-    // POST /api/like - Add a new like
+    // POST /api/likes - Add a new like
     // - Authorization: Any authenticated user can like posts or comments (with restrictions)
     // - Restrictions: Cannot like your own posts or comments
     // - Request body:
@@ -459,7 +459,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //  }
     // - Returns 201 Created on success, 403 Forbidden if trying to like own content or already liked
     //
-    // DELETE /api/like - Remove a like
+    // DELETE /api/likes - Remove a like
     // - Authorization: Users can only delete their own likes (enforced by Policy)
     // - Request body:
     //  {
@@ -467,9 +467,29 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //    "likeable_id": 5            // required
     //  }
     // - Returns 200 OK on success, 404 Not Found if like doesn't exist
+    //
+    // GET /api/user-likes/posts - Get posts liked by the authenticated user
+    // - Authorization: Users can only access their own liked posts
+    // - Returns the actual post objects that were liked by the user
+    // 
+    // - Select specific fields: GET /api/user-likes/posts?select=id,title,user_id (supports: all post fields)
+    // - Sort options: GET /api/user-likes/posts?sort=created_at (supports: all post fields)
+    // - Filter options: GET /api/user-likes/posts?filter[title]=example (supports: all post fields)
+    // - Pagination: GET /api/user-likes/posts?page=1&per_page=10
+    //
+    // GET /api/user-likes/comments - Get comments liked by the authenticated user
+    // - Authorization: Users can only access their own liked comments
+    // - Returns the actual comment objects that were liked by the user
+    // 
+    // - Select specific fields: GET /api/user-likes/comments?select=id,content,user_id (supports: all comment fields)
+    // - Sort options: GET /api/user-likes/comments?sort=created_at (supports: all comment fields)
+    // - Filter options: GET /api/user-likes/comments?filter[content]=example (supports: all comment fields)
+    // - Pagination: GET /api/user-likes/comments?page=1&per_page=10
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/likes', [LikeController::class, 'getAllLikes']);
-        Route::post('/like', [LikeController::class, 'addLike']);
-        Route::delete('/like', [LikeController::class, 'removeLike']);
+        Route::apiResource('likes', LikeController::class)->only(['index', 'store']);
+        Route::delete('/likes', [LikeController::class, 'destroy']);
+
+        Route::get('/user-likes/posts', [LikeController::class, 'getLikedPosts']);
+        Route::get('/user-likes/comments', [LikeController::class, 'getLikedComments']);
     });
 });
