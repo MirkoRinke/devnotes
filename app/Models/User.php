@@ -112,4 +112,13 @@ class User extends Authenticatable {
     public function comments() {
         return $this->hasMany(Comment::class);
     }
+
+    /**
+     * Get all likes created by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function likes() {
+        return $this->hasMany(Like::class);
+    }
 }
