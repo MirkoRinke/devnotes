@@ -14,6 +14,7 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\SelectableAttributes; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\RelationLoader; // example $this->loadRelationIfNeeded($request, $query, 'user', 'user_id', ['id', 'name']);
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +28,7 @@ class PostApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, AuthorizesRequests;
+    use ApiResponses, ApiSorting, ApiFiltering, SelectableAttributes, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
 
     /**
      * The validation rules for the user profile data
@@ -80,9 +81,9 @@ class PostApiController extends Controller {
                     ->orWhere('user_id', $user->id);
             });
         }
-
         return $query;
     }
+
 
     /**
      * Display a listing of the resource.
@@ -96,6 +97,8 @@ class PostApiController extends Controller {
             $query = Post::query();
 
             $query = $this->applyAccessFilters($request, $query);
+
+            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
 
             $query = $this->buildQuery($request, $query, 'post');
 
@@ -143,6 +146,8 @@ class PostApiController extends Controller {
             $query = Post::query()->where('id', $id);
 
             $query = $this->applyAccessFilters($request, $query);
+
+            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
 
             $query = $this->buildQuerySelect($request, $query, 'post');
 
