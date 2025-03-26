@@ -14,7 +14,12 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\RelationLoader; // example $this->loadRelationIfNeeded($request, $query, 'user', 'user_id', ['id', 'name']);
+use App\Traits\RelationLoader; // examples:
+// - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
+// - Multiple relations: $this->loadRelations($request, $query, [
+//     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+//     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
+// ])
 
 use Exception;
 use Illuminate\Validation\ValidationException;
