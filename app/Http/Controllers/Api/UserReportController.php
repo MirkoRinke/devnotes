@@ -83,7 +83,7 @@ class UserReportController extends Controller {
                 }
             }
 
-            $query = $this->buildQuery($request, $query, 'report');
+            $query = $this->buildQuery($request, $query, 'user_reports');
 
             if ($query instanceof JsonResponse) {
                 return $query;
