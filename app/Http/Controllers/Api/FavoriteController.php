@@ -15,6 +15,12 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\RelationLoader; // examples:
+// - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
+// - Multiple relations: $this->loadRelations($request, $query, [
+//     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+//     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
+// ])
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -27,7 +33,7 @@ class FavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder;
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, RelationLoader;
 
     /**
      * Get all favorites
@@ -36,19 +42,6 @@ class FavoriteController extends Controller {
         $user = $request->user();
 
         $query = UserFavorite::where('user_id', $user->id);
-
-        /**
-         *  Include the post entity in the response
-         */
-        if ($request->has('include')) {
-            $includes = explode(',', $request->include);
-            $allowedIncludes = ['post'];
-            $validIncludes = array_intersect($includes, $allowedIncludes);
-
-            if (!empty($validIncludes)) {
-                $query->with($validIncludes);
-            }
-        }
 
         $query = $this->buildQuery($request, $query, 'favorite');
 
@@ -140,6 +133,8 @@ class FavoriteController extends Controller {
             $query = Post::query()->whereHas('favorites', function ($subQuery) use ($userId) {
                 $subQuery->where('user_id', $userId);
             });
+
+            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
 
             $query = $this->buildQuery($request, $query, 'post');
 
