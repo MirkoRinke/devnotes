@@ -36,6 +36,7 @@ class UserReportController extends Controller {
      * The validation rule for the user report data
      */
     private $validationRules = [
+        'user_id' => 'integer',
         'reportable_type' => 'required|in:post,user,comment',
         'reportable_id' => 'required|integer',
         'reason' => 'nullable|string|max:500'
@@ -62,7 +63,7 @@ class UserReportController extends Controller {
     /**
      * Get all reports (for admin panel)
      */
-    public function getReports(Request $request) {
+    public function index(Request $request) {
         try {
 
             $this->authorize('viewAny', UserReport::class);
@@ -103,7 +104,7 @@ class UserReportController extends Controller {
     /**
      * Add a report for any reportable entity (Post or User)
      */
-    public function addReport(Request $request) {
+    public function store(Request $request) {
         try {
             $user = $request->user();
             $validatedData = $request->validate(
@@ -169,7 +170,7 @@ class UserReportController extends Controller {
     /**
      * Remove a report
      */
-    public function removeReport(Request $request) {
+    public function destroy(Request $request) {
         try {
             $user = $request->user();
             $validatedData = $request->validate(
@@ -183,11 +184,17 @@ class UserReportController extends Controller {
                 'comment' => Comment::class,
             ];
 
+            if ($user->role === 'admin') {
+                $userId = $validatedData['user_id'];
+            } else {
+                $userId = null;
+            }
+
             $reportableType = $typeMap[$validatedData['reportable_type']];
             $reportableId = $validatedData['reportable_id'];
 
             $report = UserReport::where([
-                'user_id' => $user->id,
+                'user_id' => $userId ?? $user->id,
                 'reportable_id' => $reportableId,
                 'reportable_type' => $reportableType
             ])->firstOrFail();
