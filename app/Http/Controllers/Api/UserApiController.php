@@ -168,6 +168,10 @@ class UserApiController extends Controller {
         try {
             $user = User::findOrFail($id);
 
+            if ($user->is_banned) {
+                return $this->errorResponse('User is already banned', 'USER_ALREADY_BANNED', 409);
+            }
+
             $this->authorize('banUser', $user);
 
             $validatedData = $request->validate([
@@ -208,6 +212,10 @@ class UserApiController extends Controller {
     public function unbanUser(string $id, Request $request): JsonResponse {
         try {
             $user = User::findOrFail($id);
+
+            if (!$user->is_banned) {
+                return $this->errorResponse('User is not banned', 'USER_NOT_BANNED', 409);
+            }
 
             $this->authorize('unbanUser', $user);
 
