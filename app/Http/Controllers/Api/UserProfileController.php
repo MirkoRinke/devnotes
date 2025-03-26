@@ -162,18 +162,6 @@ class UserProfileController extends Controller {
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request, string $id): JsonResponse {
-        try {
-            $userProfile = UserProfile::findOrFail($id);
-
-            $this->authorize('delete', $userProfile);
-
-            return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', 'PROFILE_DELETE_DENIED', 405);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
-        } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-        }
+        return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', 'PROFILE_DELETE_DISABLED', 405);
     }
 }
