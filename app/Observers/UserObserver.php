@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Models\UserReport;
 use App\Services\ModerationService;
 
 class UserObserver {
@@ -34,7 +35,10 @@ class UserObserver {
      * Handle the User "deleted" event.
      */
     public function deleted(User $user): void {
-        //
+        // Delete all reports where this user is the reportable entity
+        UserReport::where('reportable_type', User::class)
+            ->where('reportable_id', $user->id)
+            ->delete();
     }
 
     /**
