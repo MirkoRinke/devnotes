@@ -41,7 +41,7 @@ trait QueryBuilder {
         'comment' => [
             'sort' => ['id', 'post_id', 'user_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
             'filter' => ['post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
-            'select' => ['post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
+            'select' => ['id', 'post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
             'getPerPage' => 10
         ],
         'favorite' => [
