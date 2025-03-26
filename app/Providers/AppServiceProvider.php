@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Comment;
+use App\Models\Post;
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Observers\CommentObserver;
+use App\Observers\PostObserver;
 use App\Observers\UserObserver;
 use App\Observers\UserProfileObserver;
 use App\Services\ModerationService;
@@ -36,6 +40,16 @@ class AppServiceProvider extends ServiceProvider {
          * Register the UserObserver to create a user profile when a user is created.
          */
         User::observe(UserObserver::class);
+
+        /**
+         * Register the UserProfileObserver to update the user's display name when the user profile is updated.
+         */
+        Post::observe(PostObserver::class);
+
+        /**
+         * Register the UserProfileObserver to update the user's display name when the user profile is updated.
+         */
+        Comment::observe(CommentObserver::class);
 
         /**
          * Register the UserProfileObserver to update the user's display name when the user profile is updated.
