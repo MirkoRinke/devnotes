@@ -21,32 +21,32 @@ trait QueryBuilder {
      */
     protected $queryConfigurations = [
         'user' => [
-            'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
-            'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
-            'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+            'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by', 'role', 'email_verified_at', 'ban_reason', 'unban_reason'],
+            'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by', 'role', 'email_verified_at'],
+            'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by', 'role', 'email_verified_at', 'ban_reason', 'unban_reason'],
             'getPerPage' => 10
         ],
         'user_profile' => [
-            'sort' => ['id', 'user_id', 'display_name', 'location', 'created_at', 'updated_at', 'is_public'],
-            'filter' => ['user_id', 'display_name', 'location', 'skills', 'is_public'],
-            'select' => ['id', 'user_id', 'display_name', 'location', 'skills', 'biography', 'social_links', 'website', 'avatar_path', 'is_public', 'created_at', 'updated_at'],
+            'sort' => ['id', 'user_id', 'display_name', 'location', 'created_at', 'updated_at', 'is_public', 'reports_count'],
+            'filter' => ['user_id', 'display_name', 'location', 'created_at', 'updated_at', 'is_public', 'reports_count'],
+            'select' => ['id', 'user_id', 'display_name', 'location', 'skills', 'biography', 'social_links', 'contact_channels', 'website', 'avatar_path', 'is_public', 'created_at', 'updated_at', 'public_email', 'reports_count'],
             'getPerPage' => 10
         ],
         'post' => [
-            'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'created_at', 'updated_at'],
-            'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'created_at', 'updated_at'],
-            'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'created_at', 'updated_at'],
+            'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'likes_count', 'created_at', 'updated_at'],
+            'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'likes_count', 'created_at', 'updated_at'],
+            'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'likes_count', 'created_at', 'updated_at'],
             'getPerPage' => 10
         ],
         'comment' => [
-            'sort' => ['id', 'post_id', 'user_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
-            'filter' => ['post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
-            'select' => ['id', 'post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at'],
+            'sort' => ['id', 'post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at', 'depth'],
+            'filter' => ['post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at', 'depth'],
+            'select' => ['id', 'post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at', 'depth'],
             'getPerPage' => 10
         ],
-        'favorite' => [
+        'user_favorites' => [
             'sort' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
-            'filter' => ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
+            'filter' => ['user_id', 'post_id', 'created_at', 'updated_at'],
             'select' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
             'getPerPage' => 10
         ],
@@ -56,7 +56,7 @@ trait QueryBuilder {
             'select' => ['id', 'user_id', 'likeable_id', 'likeable_type', 'type', 'created_at', 'updated_at'],
             'getPerPage' => 10
         ],
-        'report' => [
+        'user_reports' => [
             'sort' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
             'filter' => ['user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
             'select' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'created_at', 'updated_at'],
