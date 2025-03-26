@@ -43,7 +43,7 @@ class FavoriteController extends Controller {
 
         $query = UserFavorite::where('user_id', $user->id);
 
-        $query = $this->buildQuery($request, $query, 'favorite');
+        $query = $this->buildQuery($request, $query, 'user_favorites');
 
         if ($query instanceof JsonResponse) {
             return $query;
