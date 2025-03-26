@@ -11,9 +11,15 @@ use App\Models\Comment;
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
+use App\Traits\ApiSelectable; // example $this->select($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\RelationLoader;  // examples:
+// - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
+// - Multiple relations: $this->loadRelations($request, $query, [
+//     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+//     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
+// ])
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +34,7 @@ class CommentApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests;
+    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
 
     /**
      * The validation rules for the user profile data
@@ -46,14 +52,67 @@ class CommentApiController extends Controller {
      */
     private $maxCommentDepth = 2;
 
+
+    /**
+     * Apply the query logic for the comment resource
+     *
+     * @param Request $request
+     * @param $query
+     * @param string $methods
+     * @return mixed
+     */
+    public function applyCommentQueryLogic(Request $request, $query, $methods) {
+        $selectParam = $request->input('select');
+        $hasUserId = false;
+
+        if (is_string($selectParam)) {
+            $hasUserId = str_contains($selectParam, 'user_id');
+        } elseif (is_array($selectParam)) {
+            $hasUserId = in_array('user_id', $selectParam);
+        }
+
+        if (!$request->has('select') || $hasUserId) {
+            $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+                ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']]
+            ]);
+
+            $query = $this->$methods($request, $query, 'comment');
+
+            if ($request->has('select')) {
+                $selectedFields = is_string($request->input('select'))
+                    ? explode(',', $request->input('select'))
+                    : $request->input('select');
+
+                $visibleFields = array_merge($selectedFields, ['id', 'user_id', 'parent_id', 'user', 'children']);
+
+                foreach ($query as $comment) {
+                    if ($methods === 'buildQuery') {
+                        if ($comment->children) {
+                            foreach ($comment->children as $child) {
+                                $child->setVisible($visibleFields);
+                            }
+                        }
+                    } else if ($methods === 'buildQuerySelect') {
+                        $query->visibleFields = $visibleFields;
+                    }
+                }
+            }
+        } else {
+            $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
+            $query = $this->$methods($request, $query, 'comment');
+        }
+        return $query;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request) {
         try {
-            $query = Comment::whereNull('parent_id')->with(['user:id,name', 'children.user:id,name']);
+            $query = Comment::whereNull('parent_id');
 
-            $query = $this->buildQuery($request, $query, 'comment');
+            $query = $this->applyCommentQueryLogic($request, $query, 'buildQuery');
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -112,15 +171,21 @@ class CommentApiController extends Controller {
      */
     public function show(string $id, Request $request) {
         try {
-            $query = Comment::where('id', $id)->with(['user:id,name', 'children.user:id,name']);
+            $query = Comment::where('id', $id);
 
-            $query = $this->buildQuerySelect($request, $query, 'comment');
+            $query = $this->applyCommentQueryLogic($request, $query, 'buildQuerySelect');
 
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
 
             $comment = $query->firstOrFail();
+
+            if (isset($query->visibleFields) && $comment->children) {
+                foreach ($comment->children as $child) {
+                    $child->setVisible($query->visibleFields);
+                }
+            }
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
