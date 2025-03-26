@@ -185,7 +185,7 @@ class UserReportController extends Controller {
             ];
 
             if ($user->role === 'admin') {
-                $userId = $validatedData['user_id'];
+                $userId = $validatedData['user_id'] ?? null;
             } else {
                 $userId = null;
             }
