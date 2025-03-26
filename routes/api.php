@@ -407,29 +407,33 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Filter options: GET /api/reports?filter[type]=post (supports: user_id, reportable_id, reportable_type, type, created_at, updated_at)
     // - Pagination: GET /api/reports?page=1&per_page=10
     //
-    // POST /api/report - Add a new report
-    // - Authorization: Any authenticated user can report posts or other users (with restrictions)
-    // - Restrictions: Cannot report yourself or your own posts
+    // POST /api/reports - Add a new report
+    // - Authorization: Any authenticated user can report posts, users or comments (with restrictions)
+    // - Restrictions: Cannot report yourself, your own posts, or your own comments
     // - Request body:
     //  {
     //    "reportable_type": "post",      // required (post|user|comment)
     //    "reportable_id": 5,             // required
     //    "reason": "Dieser Post enthält unangemessenen Inhalt"  // optional
     //  }
-    // - Returns 201 Created on success, 409 Conflict if already reported
+    // - Returns 201 Created on success with report data
+    // - Returns 403 Forbidden if trying to report own content
+    // - Returns 409 Conflict if already reported
+    // - Returns 404 Not Found if entity doesn't exist
     //
-    // DELETE /api/report - Remove a report
-    // - Authorization: Users can only delete their own report (enforced by Policy)
+    // DELETE /api/reports - Remove a report
+    // - Authorization: Users can only delete their own report, admins can delete any report
     // - Request body:
     //  {
     //    "reportable_type": "post",    // required (post|user|comment)
-    //    "reportable_id": 5           // required
+    //    "reportable_id": 5,           // required
+    //    "user_id": 1                  // optional, admin only - specify which user's report to remove
     //  }
     // - Returns 200 OK on success
+    // - Returns 404 Not Found if report doesn't exist
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/reports', [UserReportController::class, 'getReports']);
-        Route::post('/report', [UserReportController::class, 'addReport']);
-        Route::delete('/report', [UserReportController::class, 'removeReport']);
+        Route::apiResource('reports', UserReportController::class)->only(['index', 'store']);
+        Route::delete('/reports', [UserReportController::class, 'destroy']);
     });
 
 
