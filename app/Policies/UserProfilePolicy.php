@@ -36,12 +36,4 @@ class UserProfilePolicy {
         // Only the owner can update the profile
         return $user->id === $userProfile->user_id;
     }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, UserProfile $userProfile): bool {
-        // Nobody can delete profiles
-        return false;
-    }
 }
