@@ -19,6 +19,7 @@ class Post extends Model {
      * @var array
      */
     protected $fillable = [
+        // Basic
         'user_id',
         'title',
         'code',
@@ -28,9 +29,16 @@ class Post extends Model {
         'category',
         'tags',
         'status',
+
+        // Counts
         'favorite_count',
         'likes_count',
         'reports_count',
+
+        // Update info
+        'is_edited',
+        'updated_by',
+        'updated_by_role',
     ];
 
     /**
@@ -39,11 +47,19 @@ class Post extends Model {
      * @var array
      */
     protected $casts = [
+        // Basic
         'resources' => 'array',
         'tags' => 'array',
+
+        // Counts
         'favorite_count' => 'integer',
+        'likes_count' => 'integer',
         'reports_count' => 'integer',
-        'user_id' => 'integer',
+
+        // Update info
+        'is_edited' => 'boolean',
+        'updated_by' => 'integer',
+        'updated_by_role' => 'string',
     ];
 
 
