@@ -45,18 +45,18 @@ class UserReportController extends Controller {
     /**
      * Update the reports_count for a reportable entity
      *
-     * @param mixed $reportable The reportable entity (Post or User)
+     * @param mixed $reportable The reportable entity (Post, User, Comment)
      * @param string $reportableType The fully qualified class name of the reportable
      * @param bool $increment Whether to increment or decrement the counter
      * @return void
      */
-    private function updateReportsCount($reportable, $reportableType, $increment = true) {
-        $method = $increment ? 'increment' : 'decrement';
+    private function updateReportsCount($reportable, $reportableType, $method = 'increment', User $user) {
+        $value = ($user->role === 'admin' || $user->role === 'moderator') ? 5 : 1;
 
         if ($reportableType === User::class && $reportable->profile) {
-            $reportable->profile->$method('reports_count');
+            $reportable->profile->$method('reports_count', $value);
         } else {
-            $reportable->$method('reports_count');
+            $reportable->$method('reports_count', $value);
         }
     }
 
@@ -102,7 +102,7 @@ class UserReportController extends Controller {
     }
 
     /**
-     * Add a report for any reportable entity (Post or User)
+     * Add a report for any reportable entity (Post, User, Comment)
      */
     public function store(Request $request) {
         try {
@@ -152,7 +152,7 @@ class UserReportController extends Controller {
                     'reason' => $validatedData['reason'] ?? null
                 ]);
 
-                $this->updateReportsCount($reportable, $reportableType, true);
+                $this->updateReportsCount($reportable, $reportableType, 'increment', $user);
 
                 return $report;
             });
@@ -203,8 +203,8 @@ class UserReportController extends Controller {
 
             $reportable = $report->reportable;
 
-            DB::transaction(function () use ($report, $reportable, $reportableType) {
-                $this->updateReportsCount($reportable, $reportableType, false);
+            DB::transaction(function () use ($report, $reportable, $reportableType, $user) {
+                $this->updateReportsCount($reportable, $reportableType, 'decrement', $user);
                 $report->delete();
             });
 
