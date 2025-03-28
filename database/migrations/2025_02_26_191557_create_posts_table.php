@@ -10,8 +10,9 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('posts', function (Blueprint $table) {
+            // Basic
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users', 'id')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users', 'id')->nullOnDelete();
             $table->string('title');
             $table->text('code')->nullable();
             $table->text('description');
@@ -19,11 +20,18 @@ return new class extends Migration {
             $table->string('language')->nullable();
             $table->string('category')->nullable();
             $table->json('tags');
+            $table->string('status')->default('draft'); // draft, published, archived
+            $table->timestamps();
+
+            // Counts
             $table->integer('favorite_count')->default(0);
             $table->integer('likes_count')->default(0);
             $table->integer('reports_count')->default(0);
-            $table->timestamps();
-            $table->string('status')->default('draft'); // draft, published, archived
+
+            // Update info
+            $table->boolean('is_edited')->default(false);
+            $table->foreignId('updated_by')->nullable()->constrained('users', 'id')->nullOnDelete();
+            $table->string('updated_by_role')->nullable();
         });
     }
 
