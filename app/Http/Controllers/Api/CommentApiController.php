@@ -204,8 +204,10 @@ class CommentApiController extends Controller {
 
             $this->authorize('update', $comment);
 
+            $updateRules = ['content' => $this->validationRules['content']];
+
             $validatedData = $request->validate(
-                $this->validationRules,
+                $updateRules,
                 $this->getValidationMessages()
             );
 
