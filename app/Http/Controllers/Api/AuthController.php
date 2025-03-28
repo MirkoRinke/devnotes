@@ -71,13 +71,13 @@ class AuthController extends Controller {
      * @return \Illuminate\Http\JsonResponse
      */
     public function getUserTokens(Request $request): JsonResponse {
-        $tokensCollection = $request->user()->tokens()->orderBy('created_at', 'desc')->get();
+        $tokensCollection = $request->user()->tokens()->orderBy('last_used_at', 'desc')->get();
 
         $formattedTokens = $tokensCollection->map(function ($token) use ($request) {
             return [
                 'id' => $token->id,
                 'device_name' => $token->name,
-                'last_used' => $token->last_used_at,
+                'last_used_at' => $token->last_used_at,
                 'created_at' => $token->created_at,
                 'is_current' => $token->id === $request->user()->currentAccessToken()->id
             ];
