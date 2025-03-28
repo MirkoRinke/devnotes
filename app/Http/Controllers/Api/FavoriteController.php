@@ -35,8 +35,16 @@ class FavoriteController extends Controller {
      */
     use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, RelationLoader;
 
+
     /**
-     * Get all favorites
+     * Update the favorite_count for a post
+     */
+    private function updateFavoriteCount($favorite, $method = 'increment') {
+        $favorite->$method('favorite_count');
+    }
+
+    /**
+     * Get all favorites for the authenticated user
      */
     public function getFavorites(Request $request): JsonResponse {
         $user = $request->user();
@@ -73,7 +81,7 @@ class FavoriteController extends Controller {
                         'post_id' => $post->id
                     ]);
 
-                    $post->increment('favorite_count');
+                    $this->updateFavoriteCount($post, 'increment');
 
                     return $favorite;
                 });
@@ -107,7 +115,7 @@ class FavoriteController extends Controller {
             $this->authorize('delete', $favorite);
 
             DB::transaction(function () use ($post, $favorite) {
-                $post->decrement('favorite_count');
+                $this->updateFavoriteCount($post, 'decrement');
                 $favorite->delete();
             });
 
