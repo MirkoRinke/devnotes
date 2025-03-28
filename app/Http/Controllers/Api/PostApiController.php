@@ -46,7 +46,7 @@ class PostApiController extends Controller {
         'language' => 'required|string|max:50',
         'category' => 'required|string|max:50',
         'tags' => 'required|array',
-        'status' => 'required|in:draft,published,archived'
+        'status' => 'required|in:draft,published,archived',
     ];
 
     /**
@@ -79,11 +79,12 @@ class PostApiController extends Controller {
     private function applyAccessFilters(Request $request, $query) {
         $user = $this->getUserFromToken($request);
         if (!$user) {
-            $query->where('status', 'published');
-        } elseif ($user->role !== 'admin') {
+            $query->where('status', 'published')->where('reports_count', '<', 5);
+        } elseif ($user->role !== 'admin' && $user->role !== 'moderator') {
             $query->where(function ($subQuery) use ($user) {
-                $subQuery->where('status', 'published')
-                    ->orWhere('user_id', $user->id);
+                $subQuery->where('user_id', $user->id)->orWhere(function ($subsubQuery) {
+                    $subsubQuery->where('status', 'published')->where('reports_count', '<', 5);
+                });
             });
         }
         return $query;
@@ -184,6 +185,13 @@ class PostApiController extends Controller {
             $validatedData = $request->validate(
                 $this->validationRules,
                 $this->getValidationMessages()
+            );
+
+            $validatedData = array_merge(
+                $validatedData,
+                ['updated_by' => $request->user()->id],
+                ['is_edited' => true],
+                ['updated_by_role' => $request->user()->role]
             );
 
             $post->update($validatedData);
