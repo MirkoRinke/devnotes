@@ -24,8 +24,8 @@ class CommentPolicy {
      * Users can only update their own comments within 15 minutes after creation.
      */
     public function update(User $user, Comment $comment): bool {
-        // Check if user is an admin
-        if ($user->role === 'admin') {
+        // Check if user is an admin or moderator
+        if ($user->role === 'admin' || $user->role === 'moderator') {
             return true;
         }
         // Check if user is the owner of the comment
