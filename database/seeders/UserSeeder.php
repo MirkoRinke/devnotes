@@ -23,8 +23,18 @@ class UserSeeder extends Seeder {
             'email_verified_at' => now(),
         ]);
 
+        // Create a moderator user
+        User::create([
+            'name' => 'Max Mustermann2',
+            'display_name' => 'Maxi2',
+            'email' => 'max@example2.com',
+            'password' => Hash::make('sicheresPasswort123'),
+            'role' => 'moderator',
+            'email_verified_at' => now(),
+        ]);
+
         // Create multiple regular users with incrementing names/emails
-        for ($i = 2; $i <= 10; $i++) {
+        for ($i = 3; $i <= 10; $i++) {
             User::create([
                 'name' => "Max Mustermann{$i}",
                 'display_name' => "Maxi{$i}",
