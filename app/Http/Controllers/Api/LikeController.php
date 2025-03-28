@@ -40,8 +40,10 @@ class LikeController extends Controller {
         'likeable_id' => 'required|integer',
     ];
 
-    private function updateLikesCount($likeable, $increment = true) {
-        $method = $increment ? 'increment' : 'decrement';
+    /**
+     * Update the likes_count for a likeable entity
+     */
+    private function updateLikesCount($likeable, $method = 'increment') {
         $likeable->$method('likes_count');
     }
 
@@ -137,7 +139,7 @@ class LikeController extends Controller {
                     'type' => $simpleType,
                 ]);
 
-                $this->updateLikesCount($likeable, true);
+                $this->updateLikesCount($likeable, 'increment');
 
                 return $like;
             });
@@ -187,7 +189,7 @@ class LikeController extends Controller {
 
             // Remove the like and update the likes count for the likeable entity in a transaction
             DB::transaction(function () use ($like, $likeable) {
-                $this->updateLikesCount($likeable, false);
+                $this->updateLikesCount($likeable, 'decrement');
                 $like->delete();
             });
 
