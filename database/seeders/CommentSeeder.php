@@ -140,14 +140,12 @@ class CommentSeeder extends Seeder {
             'depth' => 0,
         ]);
 
-        // Edited comment on Post 4 (React)
+        // Reply to comment 10
         Comment::create([
             'post_id' => 4,
             'user_id' => 3,
             'parent_id' => null,
             'content' => 'Functional Components sind viel übersichtlicher als Class Components.',
-            'is_edited' => true,
-            'edited_at' => now(),
             'depth' => 0,
         ]);
     }
