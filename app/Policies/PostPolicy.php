@@ -11,8 +11,8 @@ class PostPolicy {
      * Determine whether the user can update the model.
      */
     public function update(User $user, Post $post): bool {
-        if ($user->role === 'admin') {
-            // Admin can update any post
+        if ($user->role === 'admin' || $user->role === 'moderator') {
+            // Admin and moderator can update any post
             return true;
         }
 
