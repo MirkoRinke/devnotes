@@ -12,16 +12,22 @@ class Comment extends Model {
      * @var array
      */
     protected $fillable = [
+        // Basic
         'post_id',
         'user_id',
         'parent_id',
         'content',
         'is_deleted',
-        'is_edited',
-        'edited_at',
+        'depth',
+
+        // Counts
         'likes_count',
         'reports_count',
-        'depth',
+
+        // Update info
+        'is_edited',
+        'updated_by',
+        'updated_by_role',
     ];
 
     /**
@@ -30,9 +36,17 @@ class Comment extends Model {
      * @var array
      */
     protected $casts = [
+        // Basic
         'is_deleted' => 'boolean',
+        'depth' => 'integer',
+
+        // Counts
+        'likes_count' => 'integer',
+        'reports_count' => 'integer',
+        // Update info
         'is_edited' => 'boolean',
-        'edited_at' => 'datetime',
+        'updated_by' => 'integer',
+        'updated_by_role' => 'string',
     ];
 
     /**
