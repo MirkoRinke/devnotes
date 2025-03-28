@@ -149,9 +149,9 @@ class CommentApiController extends Controller {
             }
 
             $comment = Comment::create([
+                'user_id' => $request->user()->id,
                 'content' => $validatedData['content'],
                 'post_id' => $validatedData['post_id'],
-                'user_id' => $request->user()->id,
                 'parent_id' => $validatedData['parent_id'] ?? null,
                 'depth' => $depth,
             ]);
@@ -204,14 +204,19 @@ class CommentApiController extends Controller {
 
             $this->authorize('update', $comment);
 
-            $validatedData = $request->validate([
-                'content' => 'required|string|max:255',
-            ]);
+            $validatedData = $request->validate(
+                $this->validationRules,
+                $this->getValidationMessages()
+            );
 
-            $comment->content = $validatedData['content'];
-            $comment->is_edited = true;
-            $comment->edited_at = now();
-            $comment->save();
+            $validatedData = array_merge(
+                $validatedData,
+                ['updated_by' => $request->user()->id],
+                ['is_edited' => true],
+                ['updated_by_role' => $request->user()->role]
+            );
+
+            $comment->update($validatedData);
 
             return $this->successResponse($comment, 'Comment updated successfully', 200);
         } catch (ModelNotFoundException $e) {
