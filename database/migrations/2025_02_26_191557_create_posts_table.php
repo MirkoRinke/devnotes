@@ -32,6 +32,9 @@ return new class extends Migration {
             $table->boolean('is_edited')->default(false);
             $table->foreignId('updated_by')->nullable()->constrained('users', 'id')->nullOnDelete();
             $table->string('updated_by_role')->nullable();
+
+            // Moderation info
+            $table->json('moderation_info')->nullable();
         });
     }
 
