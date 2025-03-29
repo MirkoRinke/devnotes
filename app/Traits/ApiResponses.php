@@ -93,6 +93,10 @@ trait ApiResponses {
             'tags.array' => 'TAGS_MUST_BE_ARRAY',
             'status.required' => 'STATUS_FIELD_REQUIRED',
             'status.in' => 'STATUS_INVALID_OPTION',
+            'moderation_reason.required' => 'MODERATION_REASON_FIELD_REQUIRED',
+            'moderation_reason.string' => 'MODERATION_REASON_MUST_BE_STRING',
+            'moderation_reason.max' => 'MODERATION_REASON_FIELD_MAX_LENGTH',
+
 
             // User Profile validation messages  
             'user_id.required' => 'USER_ID_FIELD_REQUIRED',
