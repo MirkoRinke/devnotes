@@ -28,6 +28,9 @@ class Comment extends Model {
         'is_edited',
         'updated_by',
         'updated_by_role',
+
+        // Moderation info
+        'moderation_info',
     ];
 
     /**
@@ -47,6 +50,9 @@ class Comment extends Model {
         'is_edited' => 'boolean',
         'updated_by' => 'integer',
         'updated_by_role' => 'string',
+
+        // Moderation info
+        'moderation_info' => 'array',
     ];
 
     /**
