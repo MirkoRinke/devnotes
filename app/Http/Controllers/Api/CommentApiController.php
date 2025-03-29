@@ -21,6 +21,8 @@ use App\Traits\RelationLoader;  // examples:
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
 
+use App\Services\ModerationService;
+
 use Exception;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -35,6 +37,13 @@ class CommentApiController extends Controller {
      *  The traits used in the controller
      */
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
+
+
+    protected $moderationService;
+
+    public function __construct(ModerationService $moderationService) {
+        $this->moderationService = $moderationService;
+    }
 
     /**
      * The validation rules for the Create method
@@ -212,10 +221,35 @@ class CommentApiController extends Controller {
 
             $this->authorize('update', $comment);
 
+            /** 
+             * Check if the user is an admin or moderator and if they are not the owner of the comment
+             * If so, add the moderation_reason to the validation rules
+             */
+            if ($request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+                $this->validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
+            }
+
             $validatedData = $request->validate(
                 $this->validationRulesUpdate,
                 $this->getValidationMessages()
             );
+
+
+            /** 
+             * Check if the user is an admin or moderator and if they are not the owner of the comment
+             * If so, handle the moderation update
+             */
+            if ($request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+                $comment = $this->moderationService->handleModerationUpdate(
+                    $comment,
+                    $validatedData,
+                    $request,
+                    ['content']
+                );
+                $comment->save();
+
+                return $this->successResponse($comment, 'Comment updated successfully', 200);
+            }
 
             $validatedData = array_merge(
                 $validatedData,
