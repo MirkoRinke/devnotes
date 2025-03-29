@@ -36,9 +36,9 @@ class PostApiController extends Controller {
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
 
     /**
-     * The validation rules for the user profile data
+     * The validation rules for the Create method
      */
-    private $validationRules = [
+    private $validationRulesCreate = [
         'title' => 'required|string|max:255',
         'code' => 'required|string',
         'description' => 'required|string',
@@ -48,6 +48,22 @@ class PostApiController extends Controller {
         'tags' => 'required|array',
         'status' => 'required|in:draft,published,archived',
     ];
+
+
+    /**
+     * The validation rules for the Update method
+     */
+    private $validationRulesUpdate = [
+        'title' => 'sometimes|required|string|max:255',
+        'code' => 'sometimes|required|string',
+        'description' => 'sometimes|required|string',
+        'resources' => 'sometimes|nullable|array',
+        'language' => 'sometimes|required|string|max:50',
+        'category' => 'sometimes|required|string|max:50',
+        'tags' => 'sometimes|required|array',
+        'status' => 'sometimes|required|in:draft,published,archived',
+    ];
+
 
     /**
      * 
@@ -216,7 +232,7 @@ class PostApiController extends Controller {
     public function store(Request $request): JsonResponse {
         try {
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->validationRulesCreate,
                 $this->getValidationMessages()
             );
 
@@ -277,11 +293,11 @@ class PostApiController extends Controller {
              * If so, add the moderation_reason to the validation rules
              */
             if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
-                $this->validationRules['moderation_reason'] = 'required:string|max:255';
+                $this->validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
             }
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->validationRulesUpdate,
                 $this->getValidationMessages()
             );
 
