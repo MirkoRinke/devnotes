@@ -37,12 +37,20 @@ class CommentApiController extends Controller {
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
 
     /**
-     * The validation rules for the user profile data
+     * The validation rules for the Create method
      */
-    private $validationRules = [
+    private $validationRulesCreate = [
         'content' => 'required|string|max:255',
         'post_id' => 'required|exists:posts,id',
         'parent_id' => 'nullable|exists:comments,id',
+    ];
+
+
+    /**
+     * The validation rules for the Update method
+     */
+    private $validationRulesUpdate = [
+        'content' => 'sometimes|required|string|max:255',
     ];
 
     /**
@@ -129,7 +137,7 @@ class CommentApiController extends Controller {
             $this->authorize('create', Comment::class);
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->validationRulesCreate,
                 $this->getValidationMessages()
             );
 
@@ -204,10 +212,8 @@ class CommentApiController extends Controller {
 
             $this->authorize('update', $comment);
 
-            $updateRules = ['content' => $this->validationRules['content']];
-
             $validatedData = $request->validate(
-                $updateRules,
+                $this->validationRulesUpdate,
                 $this->getValidationMessages()
             );
 
