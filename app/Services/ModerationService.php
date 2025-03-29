@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
+
 use App\Models\User;
 use App\Models\UserReport;
 use App\Models\ForbiddenName;
@@ -84,5 +86,94 @@ class ModerationService {
         }
 
         return $report;
+    }
+
+
+    /**
+     * Handle moderation updates for content
+     * 
+     * @param mixed $model The model being moderated (Post, Comment, etc.)
+     * @param array $validatedData The validated data
+     * @param Request $request The current request
+     * @return mixed The updated model
+     */
+    public function handleModerationUpdate($model, array $validatedData, Request $request, array $trackFields): mixed {
+        // Save original data for comparison
+        $originalData = $this->getOriginalData($model, $trackFields);
+
+        // Apply changes to model
+        foreach ($validatedData as $key => $value) {
+            if ($key !== 'moderation_reason') {
+                $model->$key = $value;
+            }
+        }
+
+        // Set meta information
+        $model->updated_by = $request->user()->id;
+        $model->is_edited = true;
+        $model->updated_by_role = $request->user()->role;
+
+        // Create moderation log entry
+        $this->createModerationLogEntry($model, $originalData, $request);
+
+        return $model;
+    }
+
+    /**
+     * Get the original data of the model for tracking changes
+     * 
+     * @param mixed $model The model being moderated
+     * @param array $fields The fields to track
+     * @return array The original data
+     */
+    private function getOriginalData($model, array $fields): array {
+        $originalData = [];
+
+        foreach ($fields as $field) {
+            if (isset($model->$field)) {
+                $originalData[$field] = $model->$field;
+            }
+        }
+
+        return $originalData;
+    }
+
+    /**
+     * Create a moderation log entry for the model
+     * 
+     * @param mixed $model The model being moderated
+     * @param array $originalData The original data before changes
+     * @param array $validatedData The validated data
+     * @param Request $request The current request
+     */
+    private function createModerationLogEntry($model, array $originalData, Request $request): void {
+        $dirtyFields = $model->getDirty();
+
+        $changes = [];
+        foreach ($dirtyFields as $field => $newValue) {
+            if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info'])) {
+                $changes[$field] = [
+                    'from' => $originalData[$field] ?? null,
+                    'to' => $newValue
+                ];
+            }
+        }
+
+        $moderationLog = $model->moderation_info ?? [];
+        if (!empty($moderationLog) && !isset($moderationLog[0])) {
+            $moderationLog = [$moderationLog];
+        }
+
+        $newEntry = [
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->name,
+            'role' => $request->user()->role,
+            'timestamp' => now()->toIso8601String(),
+            'reason' => $request->moderation_reason,
+            'changes' => $changes
+        ];
+
+        array_unshift($moderationLog, $newEntry);
+        $model->moderation_info = $moderationLog;
     }
 }
