@@ -90,6 +90,92 @@ class PostApiController extends Controller {
         return $query;
     }
 
+    /**
+     * Handle moderation updates to the post
+     * 
+     * @param Post $post The post being updated
+     * @param array $validatedData The validated data from the request
+     * @param Request $request The HTTP request containing the moderation reason
+     * @return Post The updated post with moderation info
+     */
+    private function handleModerationUpdate(Post $post, array $validatedData, Request $request): Post {
+
+        // Save the original data before updating
+        $originalData = [
+            'title' => $post->title,
+            'code' => $post->code,
+            'description' => $post->description,
+            'resources' => $post->resources,
+            'language' => $post->language,
+            'category' => $post->category,
+            'tags' => $post->tags,
+            'status' => $post->status
+        ];
+
+        // Update the post with the validated data
+        foreach ($validatedData as $key => $value) {
+            if ($key !== 'moderation_reason') {
+                $post->$key = $value;
+            }
+        }
+
+        // Set the edited by info
+        $post->updated_by = $request->user()->id;
+        $post->is_edited = true;
+        $post->updated_by_role = $request->user()->role;
+
+        // Get the dirty fields (fields that have changed)
+        $dirtyFields = $post->getDirty();
+
+        $changes = [];
+        foreach ($dirtyFields as $field => $newValue) {
+            if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info'])) {
+                $changes[$field] = [
+                    'from' => $originalData[$field] ?? null,
+                    'to' => $newValue
+                ];
+            }
+        }
+
+
+        $moderationLog = $post->moderation_info ?? [];
+
+        if (!empty($moderationLog) && !isset($moderationLog[0])) {
+            $moderationLog = [$moderationLog];
+        }
+
+        $newEntry = [
+            'post_id' => $post->id,
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->name,
+            'role' => $request->user()->role,
+            'timestamp' => now()->toIso8601String(),
+            'reason' => $request->moderation_reason,
+            'changes' => $changes
+        ];
+
+        $moderationLog = [$newEntry, ...$moderationLog];
+
+        $post->moderation_info = $moderationLog;
+
+        return $post;
+    }
+
+
+    /**
+     * Hide fields based on user role
+     * 
+     * @param Request $request The HTTP request containing the bearer token
+     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
+     */
+    public function hiddenFields(Request $request, $query) {
+        $user = $this->getUserFromToken($request);
+
+        if (!$user || ($user->role !== 'admin' && $user->role !== 'moderator')) {
+            $query->makeHidden('moderation_info');
+        }
+    }
+
 
     /**
      * Display a listing of the resource.
@@ -115,6 +201,8 @@ class PostApiController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
+
+            $this->hiddenFields($request, $query);
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -163,6 +251,8 @@ class PostApiController extends Controller {
 
             $post = $query->firstOrFail();
 
+            $this->hiddenFields($request, $post);
+
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
@@ -182,10 +272,29 @@ class PostApiController extends Controller {
 
             $this->authorize('update', $post);
 
+            /** 
+             * Check if the user is an admin or moderator and if they are not the owner of the post
+             * If so, add the moderation_reason to the validation rules
+             */
+            if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+                $this->validationRules['moderation_reason'] = 'required:string|max:255';
+            }
+
             $validatedData = $request->validate(
                 $this->validationRules,
                 $this->getValidationMessages()
             );
+
+            /** 
+             * Check if the user is an admin or moderator and if they are not the owner of the post
+             * If so, add the moderation_info to the post
+             */
+            if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+                $post = $this->handleModerationUpdate($post, $validatedData, $request);
+                $post->save();
+
+                return $this->successResponse($post, 'Post updated successfully', 200);
+            }
 
             $validatedData = array_merge(
                 $validatedData,
@@ -196,7 +305,9 @@ class PostApiController extends Controller {
 
             $post->update($validatedData);
 
-            return $this->successResponse($post, 'Post update successfully', 200);
+            $this->hiddenFields($request, $post);
+
+            return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
