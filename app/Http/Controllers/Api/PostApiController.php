@@ -21,6 +21,8 @@ use App\Traits\RelationLoader; // examples:
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
 
+use App\Services\ModerationService;
+
 use Exception;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -34,6 +36,13 @@ class PostApiController extends Controller {
      *  The traits used in the controller
      */
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
+
+
+    protected $moderationService;
+
+    public function __construct(ModerationService $moderationService) {
+        $this->moderationService = $moderationService;
+    }
 
     /**
      * The validation rules for the Create method
@@ -114,68 +123,68 @@ class PostApiController extends Controller {
      * @param Request $request The HTTP request containing the moderation reason
      * @return Post The updated post with moderation info
      */
-    private function handleModerationUpdate(Post $post, array $validatedData, Request $request): Post {
+    // private function handleModerationUpdate(Post $post, array $validatedData, Request $request): Post {
 
-        // Save the original data before updating
-        $originalData = [
-            'title' => $post->title,
-            'code' => $post->code,
-            'description' => $post->description,
-            'resources' => $post->resources,
-            'language' => $post->language,
-            'category' => $post->category,
-            'tags' => $post->tags,
-            'status' => $post->status
-        ];
+    //     // Save the original data before updating
+    //     $originalData = [
+    //         'title' => $post->title,
+    //         'code' => $post->code,
+    //         'description' => $post->description,
+    //         'resources' => $post->resources,
+    //         'language' => $post->language,
+    //         'category' => $post->category,
+    //         'tags' => $post->tags,
+    //         'status' => $post->status
+    //     ];
 
-        // Update the post with the validated data
-        foreach ($validatedData as $key => $value) {
-            if ($key !== 'moderation_reason') {
-                $post->$key = $value;
-            }
-        }
+    //     // Update the post with the validated data
+    //     foreach ($validatedData as $key => $value) {
+    //         if ($key !== 'moderation_reason') {
+    //             $post->$key = $value;
+    //         }
+    //     }
 
-        // Set the edited by info
-        $post->updated_by = $request->user()->id;
-        $post->is_edited = true;
-        $post->updated_by_role = $request->user()->role;
+    //     // Set the edited by info
+    //     $post->updated_by = $request->user()->id;
+    //     $post->is_edited = true;
+    //     $post->updated_by_role = $request->user()->role;
 
-        // Get the dirty fields (fields that have changed)
-        $dirtyFields = $post->getDirty();
+    //     // Get the dirty fields (fields that have changed)
+    //     $dirtyFields = $post->getDirty();
 
-        $changes = [];
-        foreach ($dirtyFields as $field => $newValue) {
-            if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info'])) {
-                $changes[$field] = [
-                    'from' => $originalData[$field] ?? null,
-                    'to' => $newValue
-                ];
-            }
-        }
+    //     $changes = [];
+    //     foreach ($dirtyFields as $field => $newValue) {
+    //         if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info'])) {
+    //             $changes[$field] = [
+    //                 'from' => $originalData[$field] ?? null,
+    //                 'to' => $newValue
+    //             ];
+    //         }
+    //     }
 
 
-        $moderationLog = $post->moderation_info ?? [];
+    //     $moderationLog = $post->moderation_info ?? [];
 
-        if (!empty($moderationLog) && !isset($moderationLog[0])) {
-            $moderationLog = [$moderationLog];
-        }
+    //     if (!empty($moderationLog) && !isset($moderationLog[0])) {
+    //         $moderationLog = [$moderationLog];
+    //     }
 
-        $newEntry = [
-            'post_id' => $post->id,
-            'user_id' => $request->user()->id,
-            'username' => $request->user()->name,
-            'role' => $request->user()->role,
-            'timestamp' => now()->toIso8601String(),
-            'reason' => $request->moderation_reason,
-            'changes' => $changes
-        ];
+    //     $newEntry = [
+    //         'post_id' => $post->id,
+    //         'user_id' => $request->user()->id,
+    //         'username' => $request->user()->name,
+    //         'role' => $request->user()->role,
+    //         'timestamp' => now()->toIso8601String(),
+    //         'reason' => $request->moderation_reason,
+    //         'changes' => $changes
+    //     ];
 
-        $moderationLog = [$newEntry, ...$moderationLog];
+    //     $moderationLog = [$newEntry, ...$moderationLog];
 
-        $post->moderation_info = $moderationLog;
+    //     $post->moderation_info = $moderationLog;
 
-        return $post;
-    }
+    //     return $post;
+    // }
 
 
     /**
@@ -303,10 +312,15 @@ class PostApiController extends Controller {
 
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
-             * If so, add the moderation_info to the post
+             * If so, handle the moderation update
              */
             if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
-                $post = $this->handleModerationUpdate($post, $validatedData, $request);
+                $post = $this->moderationService->handleModerationUpdate(
+                    $post,
+                    $validatedData,
+                    $request,
+                    ['title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status']
+                );
                 $post->save();
 
                 return $this->successResponse($post, 'Post updated successfully', 200);
