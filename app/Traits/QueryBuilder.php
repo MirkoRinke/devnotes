@@ -33,9 +33,42 @@ trait QueryBuilder {
             'getPerPage' => 10
         ],
         'post' => [
-            'sort' => ['id', 'user_id', 'title', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'likes_count', 'created_at', 'updated_at'],
-            'filter' => ['title', 'user_id', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'likes_count', 'created_at', 'updated_at'],
-            'select' => ['id', 'user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status', 'favorite_count', 'reports_count', 'likes_count', 'created_at', 'updated_at'],
+            'sort' => [
+                // Default 
+                ...['id', 'created_at'],
+                // Basic
+                ...['user_id', 'title', 'language', 'category', 'tags', 'status'],
+                // Counts
+                ...['favorite_count', 'reports_count', 'likes_count'],
+                // Update info
+                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'filter' => [
+                // Default 
+                ...['created_at'],
+                // Basic
+                ...['user_id', 'title', 'code', 'description', 'language', 'category', 'tags', 'status'],
+                // Counts
+                ...['favorite_count', 'reports_count', 'likes_count'],
+                // Update info
+                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'select' => [
+                // Default 
+                ...['id', 'created_at'],
+                // Basic
+                ...['user_id', 'title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
+                // Counts
+                ...['favorite_count', 'reports_count', 'likes_count'],
+                // Update info
+                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
             'getPerPage' => 10
         ],
         'comment' => [
