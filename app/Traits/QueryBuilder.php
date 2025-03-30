@@ -53,9 +53,30 @@ trait QueryBuilder {
             'getPerPage' => 10
         ],
         'user_profile' => [
-            'sort' => ['id', 'user_id', 'display_name', 'location', 'created_at', 'updated_at', 'is_public', 'reports_count'],
-            'filter' => ['user_id', 'display_name', 'location', 'created_at', 'updated_at', 'is_public', 'reports_count'],
-            'select' => ['id', 'user_id', 'display_name', 'location', 'skills', 'biography', 'social_links', 'contact_channels', 'website', 'avatar_path', 'is_public', 'created_at', 'updated_at', 'public_email', 'reports_count'],
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'display_name', 'is_public', 'location'],
+                // Counts
+                ...['reports_count'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'display_name', 'is_public', 'location',],
+                // Counts
+                ...['reports_count'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                // Counts
+                ...['reports_count'],
+            ],
             'getPerPage' => 10
         ],
         'post' => [
