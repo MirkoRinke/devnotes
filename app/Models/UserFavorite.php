@@ -17,17 +17,23 @@ class UserFavorite extends Model {
      *
      * @var array
      */
-    protected $fillable = ['user_id', 'post_id'];
+    protected $fillable = [
+        // Default
+        'id',
+        'created_at',
+        'updated_at',
+
+        // Basic
+        'user_id',
+        'post_id',
+    ];
 
     /**
      * The attributes that should be cast to native types.
      *
      * @var array
      */
-    protected $casts = [
-        'user_id' => 'integer',
-        'post_id' => 'integer',
-    ];
+    protected $casts = [];
 
     /**
      * Get the user that owns the UserFavorite
