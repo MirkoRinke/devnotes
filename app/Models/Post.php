@@ -19,6 +19,10 @@ class Post extends Model {
      * @var array
      */
     protected $fillable = [
+        // Default
+        'id',
+        'created_at',
+
         // Basic
         'user_id',
         'title',
@@ -36,6 +40,7 @@ class Post extends Model {
         'reports_count',
 
         // Update info
+        'updated_at',
         'is_edited',
         'updated_by',
         'updated_by_role',
@@ -50,6 +55,10 @@ class Post extends Model {
      * @var array
      */
     protected $casts = [
+        // Default
+        'id' => 'integer',
+        'created_at' => 'datetime',
+
         // Basic
         'resources' => 'array',
         'tags' => 'array',
@@ -60,6 +69,7 @@ class Post extends Model {
         'reports_count' => 'integer',
 
         // Update info
+        'updated_at' => 'datetime',
         'is_edited' => 'boolean',
         'updated_by' => 'integer',
         'updated_by_role' => 'string',
