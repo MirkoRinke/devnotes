@@ -72,9 +72,42 @@ trait QueryBuilder {
             'getPerPage' => 10
         ],
         'comment' => [
-            'sort' => ['id', 'post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at', 'depth'],
-            'filter' => ['post_id', 'user_id', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at', 'depth'],
-            'select' => ['id', 'post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'is_edited', 'edited_at', 'likes_count', 'reports_count', 'created_at', 'updated_at', 'depth'],
+            'sort' => [
+                // Default
+                ...['id', 'created_at'],
+                // Basic
+                ...['post_id', 'user_id', 'parent_id', 'is_deleted', 'depth'],
+                // Counts
+                ...['likes_count', 'reports_count'],
+                // Update info
+                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'filter' => [
+                // Default
+                ...['created_at'],
+                // Basic
+                ...['post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'depth'],
+                // Counts
+                ...['likes_count', 'reports_count'],
+                // Update info
+                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at'],
+                // Basic
+                ...['post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'depth'],
+                // Counts
+                ...['likes_count', 'reports_count'],
+                // Update info
+                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
             'getPerPage' => 10
         ],
         'user_favorites' => [
