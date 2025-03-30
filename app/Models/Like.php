@@ -18,6 +18,12 @@ class Like extends Model {
      * @var array
      */
     protected $fillable = [
+        // Default
+        'id',
+        'created_at',
+        'updated_at',
+
+        // Basic
         'user_id',
         'likeable_type',
         'likeable_id',
@@ -29,10 +35,7 @@ class Like extends Model {
      *
      * @var array
      */
-    protected $casts = [
-        'user_id' => 'integer',
-        'likeable_id' => 'integer',
-    ];
+    protected $casts = [];
 
     /**
      * Get the user that owns the like
