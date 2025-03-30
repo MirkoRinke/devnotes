@@ -12,17 +12,26 @@ class UserProfile extends Model {
      * @var array
      */
     protected $fillable = [
+        // Default
+        'id',
+        'created_at',
+        'updated_at',
+
+        // Basic
         'user_id',
         'display_name',
         'public_email',
-        'location',
-        'skills',
-        'biography',
-        'social_links',
-        'contact_channels',
         'website',
         'avatar_path',
         'is_public',
+        'location',
+        'biography',
+        'skills',
+        'social_links',
+        'contact_channels',
+
+        // Counts
+        'reports_count',
     ];
 
     /**
@@ -31,11 +40,14 @@ class UserProfile extends Model {
      * @var array
      */
     protected $casts = [
+        // Default
+        'is_public' => 'boolean',
         'skills' => 'array',
         'social_links' => 'array',
         'contact_channels' => 'array',
-        'is_public' => 'boolean',
-        'user_id' => 'integer',
+
+        // Counts
+        'reports_count' => 'integer',
     ];
 
 
