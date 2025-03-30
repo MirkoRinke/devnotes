@@ -12,6 +12,10 @@ class Comment extends Model {
      * @var array
      */
     protected $fillable = [
+        // Default
+        'id',
+        'created_at',
+
         // Basic
         'post_id',
         'user_id',
@@ -25,6 +29,7 @@ class Comment extends Model {
         'reports_count',
 
         // Update info
+        'updated_at',
         'is_edited',
         'updated_by',
         'updated_by_role',
@@ -46,6 +51,7 @@ class Comment extends Model {
         // Counts
         'likes_count' => 'integer',
         'reports_count' => 'integer',
+
         // Update info
         'is_edited' => 'boolean',
         'updated_by' => 'integer',
