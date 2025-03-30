@@ -10,21 +10,28 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('users', function (Blueprint $table) {
+            // Default
             $table->id();
             $table->string('name');
-            $table->string('display_name')->unique();
-            $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('email')->unique();
             $table->string('password');
             $table->timestamps();
+
+            // Basic
+            $table->string('display_name')->unique();
             $table->string('role')->default('user');
+
+            // Ban info
             $table->boolean('is_banned')->default(false);
             $table->timestamp('banned_at')->nullable();
             $table->timestamp('unbanned_at')->nullable();
-            $table->string('ban_reason')->nullable();
-            $table->string('unban_reason')->nullable();
             $table->foreignId('banned_by')->nullable()->constrained('users');
             $table->foreignId('unbanned_by')->nullable()->constrained('users');
+
+            // Moderation info
+            $table->string('ban_reason')->nullable();
+            $table->string('unban_reason')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
