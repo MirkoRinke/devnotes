@@ -185,12 +185,26 @@ trait QueryBuilder {
             'getPerPage' => 10
         ],
         'user_reports' => [
-            'sort' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
-            'filter' => ['user_id', 'reportable_id', 'reportable_type', 'type', 'created_at', 'updated_at'],
-            'select' => ['id', 'user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'created_at', 'updated_at'],
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason'],
+            ],
             'getPerPage' => 10
         ],
-
     ];
 
     /**
