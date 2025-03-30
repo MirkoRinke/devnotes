@@ -24,18 +24,29 @@ class User extends Authenticatable {
      * @var list<string>
      */
     protected $fillable = [
+        // Default
+        'id',
         'name',
-        'display_name',
         'email',
+        'email_verified_at',
         'password',
+        'created_at',
+        'updated_at',
+
+        // Basic
+        'display_name',
         'role',
+
+        // Ban info
         'is_banned',
         'banned_at',
         'unbanned_at',
-        'ban_reason',
-        'unban_reason',
         'banned_by',
         'unbanned_by',
+
+        // Moderation info
+        'ban_reason',
+        'unban_reason',
     ];
 
     /**
@@ -47,6 +58,7 @@ class User extends Authenticatable {
         'password',
     ];
 
+
     /**
      * Get the attributes that should be cast.
      *
@@ -54,8 +66,14 @@ class User extends Authenticatable {
      */
     protected function casts(): array {
         return [
+            // Default
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+
+            // Ban info
+            'is_banned' => 'boolean',
+            'banned_at' => 'datetime',
+            'unbanned_at' => 'datetime',
         ];
     }
 
