@@ -158,9 +158,24 @@ trait QueryBuilder {
             'getPerPage' => 10
         ],
         'user_favorites' => [
-            'sort' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
-            'filter' => ['user_id', 'post_id', 'created_at', 'updated_at'],
-            'select' =>  ['id', 'user_id', 'post_id', 'created_at', 'updated_at'],
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'post_id'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'post_id'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'post_id'],
+            ],
             'getPerPage' => 10
         ],
         'like' => [
