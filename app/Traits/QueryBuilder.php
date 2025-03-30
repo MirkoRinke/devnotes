@@ -21,9 +21,35 @@ trait QueryBuilder {
      */
     protected $queryConfigurations = [
         'user' => [
-            'sort' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by', 'role', 'email_verified_at', 'ban_reason', 'unban_reason'],
-            'filter' => ['name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by', 'role', 'email_verified_at'],
-            'select' => ['id', 'name', 'display_name', 'email', 'created_at', 'updated_at', 'is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by', 'role', 'email_verified_at', 'ban_reason', 'unban_reason'],
+            'sort' => [
+                // Default
+                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                // Basic
+                ...['display_name', 'role'],
+                // Ban info
+                ...['is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+                // Moderation info
+            ],
+            'filter' => [
+                // Default
+                ...['name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                // Basic
+                ...['display_name', 'role'],
+                // Ban info
+                ...['is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+                // Moderation info
+                ...['ban_reason', 'unban_reason']
+            ],
+            'select' => [
+                // Default
+                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                // Basic
+                ...['display_name', 'role'],
+                // Ban info
+                ...['is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+                // Moderation info
+                ...['ban_reason', 'unban_reason']
+            ],
             'getPerPage' => 10
         ],
         'user_profile' => [
