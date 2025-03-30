@@ -10,8 +10,11 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('posts', function (Blueprint $table) {
-            // Basic
+            // Default
             $table->id();
+            $table->timestamps();
+
+            // Basic
             $table->foreignId('user_id')->nullable()->constrained('users', 'id')->nullOnDelete();
             $table->string('title');
             $table->text('code')->nullable();
@@ -21,7 +24,6 @@ return new class extends Migration {
             $table->string('category')->nullable();
             $table->json('tags');
             $table->string('status')->default('draft'); // draft, published, archived
-            $table->timestamps();
 
             // Counts
             $table->integer('favorite_count')->default(0);
