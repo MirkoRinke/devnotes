@@ -10,15 +10,17 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('comments', function (Blueprint $table) {
-            // Basic
+            // Default
             $table->id();
+            $table->timestamps();
+
+            // Basic
             $table->foreignId('post_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('parent_id')->nullable()->constrained('comments')->cascadeOnDelete();
             $table->text('content');
             $table->boolean('is_deleted')->default(false);
             $table->unsignedInteger('depth')->default(0);
-            $table->timestamps();
 
             // Counts
             $table->integer('likes_count')->default(0);
