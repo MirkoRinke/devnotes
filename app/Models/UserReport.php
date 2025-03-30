@@ -16,6 +16,12 @@ class UserReport extends Model {
      * @var array
      */
     protected $fillable = [
+        // Default
+        'id',
+        'created_at',
+        'updated_at',
+
+        // Basic
         'user_id',
         'reportable_type',
         'reportable_id',
@@ -28,10 +34,7 @@ class UserReport extends Model {
      *
      * @var array
      */
-    protected $casts = [
-        'user_id' => 'integer',
-        'reportable_id' => 'integer',
-    ];
+    protected $casts = [];
 
     /**
      * Get the user who created the report
