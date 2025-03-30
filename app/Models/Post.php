@@ -55,10 +55,6 @@ class Post extends Model {
      * @var array
      */
     protected $casts = [
-        // Default
-        'id' => 'integer',
-        'created_at' => 'datetime',
-
         // Basic
         'resources' => 'array',
         'tags' => 'array',
@@ -69,7 +65,6 @@ class Post extends Model {
         'reports_count' => 'integer',
 
         // Update info
-        'updated_at' => 'datetime',
         'is_edited' => 'boolean',
         'updated_by' => 'integer',
         'updated_by_role' => 'string',
