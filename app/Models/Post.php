@@ -116,6 +116,6 @@ class Post extends Model {
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
     public function likes() {
-        return $this->morphMany(Like::class, 'likeable');
+        return $this->morphMany(UserLike::class, 'likeable');
     }
 }

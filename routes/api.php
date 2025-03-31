@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\CommentApiController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
-use App\Http\Controllers\Api\LikeController;
+use App\Http\Controllers\Api\UserLikeController;
 use App\Http\Controllers\API\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
 use App\Http\Middleware\ValidateApiKey;
@@ -491,10 +491,10 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Filter options: GET /api/user-likes/comments?filter[content]=example (supports: all comment fields)
     // - Pagination: GET /api/user-likes/comments?page=1&per_page=10
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::apiResource('likes', LikeController::class)->only(['index', 'store']);
-        Route::delete('/likes', [LikeController::class, 'destroy']);
+        Route::apiResource('likes', UserLikeController::class)->only(['index', 'store']);
+        Route::delete('/likes', [UserLikeController::class, 'destroy']);
 
-        Route::get('/user-likes/posts', [LikeController::class, 'getLikedPosts']);
-        Route::get('/user-likes/comments', [LikeController::class, 'getLikedComments']);
+        Route::get('/user-likes/posts', [UserLikeController::class, 'getLikedPosts']);
+        Route::get('/user-likes/comments', [UserLikeController::class, 'getLikedComments']);
     });
 });

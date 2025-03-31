@@ -9,7 +9,7 @@ return new class extends Migration {
      * Run the migrations.
      */
     public function up(): void {
-        Schema::create('likes', function (Blueprint $table) {
+        Schema::create('user_likes', function (Blueprint $table) {
             // Default
             $table->id();
             $table->timestamps();
@@ -26,6 +26,6 @@ return new class extends Migration {
      * Reverse the migrations.
      */
     public function down(): void {
-        Schema::dropIfExists('likes');
+        Schema::dropIfExists('user_likes');
     }
 };

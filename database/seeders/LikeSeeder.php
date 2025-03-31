@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-use App\Models\Like;
+use App\Models\UserLike;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Models\User;
@@ -47,7 +47,7 @@ class LikeSeeder extends Seeder {
 
                 foreach ($selectedLikers as $likerId) {
                     // Use firstOrCreate to prevent duplicates efficiently
-                    Like::firstOrCreate(
+                    UserLike::firstOrCreate(
                         [
                             'user_id' => $likerId,
                             'likeable_id' => $post->id,
@@ -89,7 +89,7 @@ class LikeSeeder extends Seeder {
 
                 foreach ($selectedLikers as $likerId) {
                     // Use firstOrCreate to prevent duplicates efficiently
-                    Like::firstOrCreate(
+                    UserLike::firstOrCreate(
                         [
                             'user_id' => $likerId,
                             'likeable_id' => $comment->id,
@@ -111,7 +111,7 @@ class LikeSeeder extends Seeder {
      */
     private function updatePostLikesCounts(): void {
         // Get all likes for posts
-        $postLikesCollection = Like::where('likeable_type', Post::class)->select('likeable_id')->get();
+        $postLikesCollection = UserLike::where('likeable_type', Post::class)->select('likeable_id')->get();
 
         // Group likes by post ID
         $groupedPostLikes = $postLikesCollection->groupBy('likeable_id');
@@ -133,7 +133,7 @@ class LikeSeeder extends Seeder {
      */
     private function updateCommentLikesCounts(): void {
         // Get all likes for comments
-        $commentLikesCollection = Like::where('likeable_type', Comment::class)->select('likeable_id')->get();
+        $commentLikesCollection = UserLike::where('likeable_type', Comment::class)->select('likeable_id')->get();
 
         // Group likes by comment ID
         $groupedCommentLikes = $commentLikesCollection->groupBy('likeable_id');

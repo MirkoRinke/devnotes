@@ -137,6 +137,6 @@ class User extends Authenticatable {
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function likes() {
-        return $this->hasMany(Like::class);
+        return $this->hasMany(UserLike::class);
     }
 }

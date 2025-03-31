@@ -2,11 +2,11 @@
 
 namespace App\Policies;
 
-use App\Models\Like;
+use App\Models\UserLike;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class LikePolicy {
+class UserLikePolicy {
 
     /**
      * Determine whether the user can view any likes.
@@ -23,10 +23,10 @@ class LikePolicy {
      * The user can only delete their own like.
      *
      * @param  \App\Models\User  $user
-     * @param  \App\Models\Like  $commentLike
+     * @param  \App\Models\UserLike  $commentLike
      * @return bool
      */
-    public function delete(User $user, Like $commentLike): bool {
+    public function delete(User $user, UserLike $commentLike): bool {
         return $user->id === $commentLike->user_id;
     }
 }

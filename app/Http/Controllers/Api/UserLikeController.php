@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-use App\Models\Like;
+use App\Models\UserLike;
 use App\Models\Post;
 use App\Models\Comment;
 
@@ -25,7 +25,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class LikeController extends Controller {
+class UserLikeController extends Controller {
 
     /**
      *  The traits used in the controller
@@ -55,9 +55,9 @@ class LikeController extends Controller {
      */
     public function index(Request $request) {
         try {
-            $this->authorize('viewAny', Like::class);
+            $this->authorize('viewAny', UserLike::class);
 
-            $query = Like::query();
+            $query = UserLike::query();
 
             if ($request->has('include')) {
                 $includes = explode(',', $request->input('include'));
@@ -120,7 +120,7 @@ class LikeController extends Controller {
                 return $this->errorResponse('You cannot like your own comment', 'CANNOT_LIKE_OWN_COMMENT', 403);
             }
 
-            $existingLike = Like::where([
+            $existingLike = UserLike::where([
                 'user_id' => $user->id,
                 'likeable_id' => $likeableId,
                 'likeable_type' => $likeableType
@@ -132,7 +132,7 @@ class LikeController extends Controller {
 
             // Add the like and update the likes count for the likeable entity in a transaction
             $like = DB::transaction(function () use ($user, $likeableId, $likeableType, $simpleType, $likeable) {
-                $like = Like::create([
+                $like = UserLike::create([
                     'user_id' => $user->id,
                     'likeable_id' => $likeableId,
                     'likeable_type' => $likeableType,
@@ -177,7 +177,7 @@ class LikeController extends Controller {
             $likeableType = $typeMap[$validatedData['likeable_type']];
             $likeableId = $validatedData['likeable_id'];
 
-            $like = Like::where([
+            $like = UserLike::where([
                 'user_id' => $user->id,
                 'likeable_id' => $likeableId,
                 'likeable_type' => $likeableType
