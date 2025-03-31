@@ -27,8 +27,9 @@ trait QueryBuilder {
                 // Basic
                 ...['display_name', 'role'],
                 // Ban info
-                ...['is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+                ...['is_banned'],
                 // Moderation info
+                ...['moderation_info'],
             ],
             'filter' => [
                 // Default
@@ -36,9 +37,9 @@ trait QueryBuilder {
                 // Basic
                 ...['display_name', 'role'],
                 // Ban info
-                ...['is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+                ...['is_banned'],
                 // Moderation info
-                ...['ban_reason', 'unban_reason']
+                ...['moderation_info'],
             ],
             'select' => [
                 // Default
@@ -46,9 +47,9 @@ trait QueryBuilder {
                 // Basic
                 ...['display_name', 'role'],
                 // Ban info
-                ...['is_banned', 'banned_at', 'unbanned_at', 'banned_by', 'unbanned_by'],
+                ...['is_banned'],
                 // Moderation info
-                ...['ban_reason', 'unban_reason']
+                ...['moderation_info'],
             ],
             'getPerPage' => 10
         ],
@@ -88,7 +89,7 @@ trait QueryBuilder {
                 // Counts
                 ...['favorite_count', 'reports_count', 'likes_count'],
                 // Update info
-                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -100,7 +101,7 @@ trait QueryBuilder {
                 // Counts
                 ...['favorite_count', 'reports_count', 'likes_count'],
                 // Update info
-                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -112,7 +113,7 @@ trait QueryBuilder {
                 // Counts
                 ...['favorite_count', 'reports_count', 'likes_count'],
                 // Update info
-                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -127,7 +128,7 @@ trait QueryBuilder {
                 // Counts
                 ...['likes_count', 'reports_count'],
                 // Update info
-                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -139,7 +140,7 @@ trait QueryBuilder {
                 // Counts
                 ...['likes_count', 'reports_count'],
                 // Update info
-                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -151,7 +152,7 @@ trait QueryBuilder {
                 // Counts
                 ...['likes_count', 'reports_count'],
                 // Update info
-                ...['updated_at', 'is_edited', 'updated_by', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role'],
                 // Moderation info
                 ...['moderation_info']
             ],
