@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\Like;
 use App\Models\Post;
 use App\Models\UserReport;
 
@@ -27,6 +28,11 @@ class PostObserver {
         // Delete all reports where this post is the reportable entity
         UserReport::where('reportable_type', Post::class)
             ->where('reportable_id', $post->id)
+            ->delete();
+
+        // Delete all likes where this post is the likeable entity
+        Like::where('likeable_type', Post::class)
+            ->where('likeable_id', $post->id)
             ->delete();
     }
 
