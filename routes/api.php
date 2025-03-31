@@ -94,37 +94,6 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
 
 
     //! Route for ban and unban users
-    // Routes for managing user ban status - authentication required and admin only
-    // 
-    // GET /api/users/banned - Get all banned users
-    // - Authorization: Only administrators can access this endpoint (enforced by Policy)
-    // 
-    // - Select specific fields: GET /api/users/banned?select=id,name,email (supports: id, name, email, banned_at, ban_reason, banned_by)
-    // - Sort options: GET /api/users/banned?sort=banned_at (supports: id, name, email, banned_at, banned_by)
-    // - Filter options: GET /api/users/banned?filter[ban_reason]=spam (supports: name, email, banned_at, ban_reason, banned_by)
-    // - Pagination: GET /api/users/banned?page=1&per_page=10
-    //
-    // POST /api/users/{id}/ban - Ban a specific user
-    // - Authorization: Only administrators can ban users (enforced by Policy)
-    // - Request body:
-    //  {
-    //    "ban_reason": "Violation of terms of service"  // required, string
-    //  }
-    // - Returns 200 OK on success with updated user data
-    // - Returns 403 Unauthorized if non-admin tries to ban user
-    // - Returns 404 User not found if user doesn't exist
-    // - Returns 422 Validation Error for invalid input
-    //
-    // POST /api/users/{id}/unban - Unban a specific user
-    // - Authorization: Only administrators can unban users (enforced by Policy)
-    // - Request body:
-    //  {
-    //    "unban_reason": "User appealed successfully"  // required, string
-    //  }
-    // - Returns 200 OK on success with updated user data
-    // - Returns 403 Unauthorized if non-admin tries to unban user
-    // - Returns 404 User not found if user doesn't exist
-    // - Returns 422 Validation Error for invalid input
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::get('/users/banned', [UserApiController::class, 'getBannedUsers']);
         Route::post('/users/{id}/ban', [UserApiController::class, 'banUser']);
