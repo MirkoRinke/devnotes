@@ -364,14 +364,14 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Filter options: GET /api/user/favorites?filter[title]=example (supports: title, user_id, language, category, tags, status, created_at, updated_at)
     // - Pagination: GET /api/user/favorites?page=1&per_page=10
     //
-    // GET /api/user/favorite-posts - Get posts favorited by the authenticated user
+    // GET /api/user/favorites/posts - Get posts favorited by the authenticated user
     // - Authorization: Users can only access their own favorite posts
     // - Returns the actual post objects rather than favorite relationship objects
     // 
-    // - Select specific fields: GET /api/user/favorite-posts?select=id,title,language (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
-    // - Sort options: GET /api/user/favorite-posts?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
-    // - Filter options: GET /api/user/favorite-posts?filter[language]=php (supports: title, user_id, language, category, tags, status, created_at, updated_at)
-    // - Pagination: GET /api/user/favorite-posts?page=1&per_page=10
+    // - Select specific fields: GET /api/user/favorites/posts?select=id,title,language (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
+    // - Sort options: GET /api/user/favorites/posts?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
+    // - Filter options: GET /api/user/favorites/posts?filter[language]=php (supports: title, user_id, language, category, tags, status, created_at, updated_at)
+    // - Pagination: GET /api/user/favorites/posts?page=1&per_page=10
     //
     // POST /api/posts/{post}/favorites - Add a post to favorites
     // - Authorization: Any authenticated user can add posts to their favorites
@@ -384,10 +384,11 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Returns 200 OK on success
     // 
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/user/favorites', [FavoriteController::class, 'getFavorites']);
-        Route::get('/user/favorite-posts', [FavoriteController::class, 'getFavoritePosts']);
-        Route::post('/posts/{post}/favorites', [FavoriteController::class, 'addFavorite']);
-        Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'removeFavorite']);
+        Route::get('/user/favorites', [FavoriteController::class, 'index']);
+        Route::post('/posts/{post}/favorites', [FavoriteController::class, 'store']);
+        Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'destroy']);
+
+        Route::get('/user/favorites/posts', [FavoriteController::class, 'getFavoritePosts']);
     });
 
 
