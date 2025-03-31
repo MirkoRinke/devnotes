@@ -27,8 +27,7 @@ return new class extends Migration {
             $table->integer('reports_count')->default(0);
 
             // Update info
-            $table->boolean('is_edited')->default(false);
-            $table->foreignId('updated_by')->nullable()->constrained('users', 'id')->nullOnDelete();
+            $table->boolean('is_updated')->default(false);
             $table->string('updated_by_role')->nullable();
 
             // Moderation info
