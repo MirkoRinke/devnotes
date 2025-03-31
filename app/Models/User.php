@@ -39,14 +39,9 @@ class User extends Authenticatable {
 
         // Ban info
         'is_banned',
-        'banned_at',
-        'unbanned_at',
-        'banned_by',
-        'unbanned_by',
 
         // Moderation info
-        'ban_reason',
-        'unban_reason',
+        'moderation_info',
     ];
 
     /**
@@ -72,8 +67,9 @@ class User extends Authenticatable {
 
             // Ban info
             'is_banned' => 'boolean',
-            'banned_at' => 'datetime',
-            'unbanned_at' => 'datetime',
+
+            // Moderation info
+            'moderation_info' => 'json',
         ];
     }
 
