@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserReport;
 use App\Models\ForbiddenName;
+use App\Models\Post;
+use App\Models\Comment;
 use App\Models\UserProfile;
 
 class ModerationService {
@@ -101,6 +103,8 @@ class ModerationService {
         // Save original data for comparison
         $originalData = $this->getOriginalData($model, $trackFields);
 
+        $newEntry = $this->createModerationEntry($model, $request);
+
         // Apply changes to model
         foreach ($validatedData as $key => $value) {
             if ($key !== 'moderation_reason') {
@@ -114,7 +118,7 @@ class ModerationService {
         $model->updated_by_role = $request->user()->role;
 
         // Create moderation log entry
-        $this->createModerationLogEntry($model, $originalData, $request);
+        $this->createModerationLogEntry($model, $originalData, $newEntry, $request);
 
         return $model;
     }
@@ -139,6 +143,28 @@ class ModerationService {
     }
 
     /**
+     * Create a moderation entry for the model
+     * 
+     * @param mixed $model The model being moderated
+     * @param Request $request The current request
+     * @return array The created moderation entry
+     */
+    private function createModerationEntry($model, Request $request): array {
+        if (($model instanceof Post || $model instanceof Comment)) {
+            $newEntry = [
+                'user_id' => $request->user()->id,
+                'username' => $request->user()->name,
+                'role' => $request->user()->role,
+                'timestamp' => now()->toIso8601String(),
+                'reason' => $request->moderation_reason,
+            ];
+            return $newEntry;
+        }
+        return [];
+    }
+
+
+    /**
      * Create a moderation log entry for the model
      * 
      * @param mixed $model The model being moderated
@@ -146,7 +172,29 @@ class ModerationService {
      * @param array $validatedData The validated data
      * @param Request $request The current request
      */
-    private function createModerationLogEntry($model, array $originalData, Request $request): void {
+    private function createModerationLogEntry($model, array $originalData, array $newEntry, Request $request): void {
+        if (($model instanceof Post || $model instanceof Comment)) {
+            $newEntry = $this->getModelChanges($model, $originalData, $newEntry);
+        }
+
+        $moderationLog = $model->moderation_info ?? [];
+
+        if (!empty($moderationLog) && !isset($moderationLog[0])) {
+            $moderationLog = [$moderationLog];
+        }
+
+        array_unshift($moderationLog, $newEntry);
+        $model->moderation_info = $moderationLog;
+    }
+
+    /**
+     * Get the changes made to the model
+     * 
+     * @param mixed $model The model being moderated
+     * @param array $originalData The original data before changes
+     * @return array|null The changes made to the model or null
+     */
+    private function getModelChanges($model, array $originalData, array  $newEntry): array {
         $dirtyFields = $model->getDirty();
 
         $changes = [];
@@ -159,21 +207,9 @@ class ModerationService {
             }
         }
 
-        $moderationLog = $model->moderation_info ?? [];
-        if (!empty($moderationLog) && !isset($moderationLog[0])) {
-            $moderationLog = [$moderationLog];
-        }
-
-        $newEntry = [
-            'user_id' => $request->user()->id,
-            'username' => $request->user()->name,
-            'role' => $request->user()->role,
-            'timestamp' => now()->toIso8601String(),
-            'reason' => $request->moderation_reason,
+        $newEntry = array_merge($newEntry, [
             'changes' => $changes
-        ];
-
-        array_unshift($moderationLog, $newEntry);
-        $model->moderation_info = $moderationLog;
+        ]);
+        return $newEntry;
     }
 }
