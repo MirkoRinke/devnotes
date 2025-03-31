@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Comment;
+use App\Models\Like;
 use App\Models\UserReport;
 
 class CommentObserver {
@@ -38,6 +39,11 @@ class CommentObserver {
         // Delete all reports where this comment is the reportable entity
         UserReport::where('reportable_type', Comment::class)
             ->where('reportable_id', $comment->id)
+            ->delete();
+
+        // Delete all likes where this comment is the likeable entity
+        Like::where('likeable_type', Comment::class)
+            ->where('likeable_id', $comment->id)
             ->delete();
     }
 
