@@ -24,14 +24,9 @@ return new class extends Migration {
 
             // Ban info
             $table->boolean('is_banned')->default(false);
-            $table->timestamp('banned_at')->nullable();
-            $table->timestamp('unbanned_at')->nullable();
-            $table->foreignId('banned_by')->nullable()->constrained('users');
-            $table->foreignId('unbanned_by')->nullable()->constrained('users');
 
             // Moderation info
-            $table->string('ban_reason')->nullable();
-            $table->string('unban_reason')->nullable();
+            $table->json('moderation_info')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
