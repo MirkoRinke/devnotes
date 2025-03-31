@@ -18,6 +18,8 @@ use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $quer
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
+use App\Services\ModerationService;
+
 use Exception;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -31,6 +33,13 @@ class UserApiController extends Controller {
      *  The traits used in the controller
      */
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests;
+
+
+    protected $moderationService;
+
+    public function __construct(ModerationService $moderationService) {
+        $this->moderationService = $moderationService;
+    }
 
     /**
      * The validation rules for the user data
@@ -93,7 +102,7 @@ class UserApiController extends Controller {
 
             // If the user is not an admin, hide the banned user information
             if ($request->user()->role !== 'admin') {
-                $user = $user->makeHidden(['is_banned', 'banned_at', 'ban_reason', 'banned_by', 'unbanned_at', 'unban_reason', 'unbanned_by']);
+                $user = $user->makeHidden(['is_banned', 'moderation_info']);
             }
 
             $this->authorize('view', $user);
@@ -175,22 +184,24 @@ class UserApiController extends Controller {
             $this->authorize('banUser', $user);
 
             $validatedData = $request->validate([
-                'ban_reason' => 'required|string',
+                'moderation_reason' => 'required|string|max:255',
             ]);
 
-            $user->update([
-                'is_banned' => true,
-                'banned_at' => now(),
-                'ban_reason' => $validatedData['ban_reason'],
-                'banned_by' => $request->user()->id,
-            ]);
+            $user = $this->moderationService->handleModerationUpdate(
+                $user,
+                array_merge($validatedData, ['is_banned' => true]),
+                $request,
+                [],
+                'banUser'
+            );
+
+            $user->save();
 
             $bannedUserInfo = [
                 'id' => $user->id,
                 'name' => $user->name,
-                'is_banned' => true,
-                'banned_at' => $user->banned_at,
-                'ban_reason' => $user->ban_reason
+                'is_banned' => $user->is_banned,
+                'moderation_info' => $user->moderation_info,
             ];
 
             return $this->successResponse($bannedUserInfo, 'User banned successfully', 200);
@@ -201,7 +212,8 @@ class UserApiController extends Controller {
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
         }
     }
 
@@ -219,23 +231,25 @@ class UserApiController extends Controller {
 
             $this->authorize('unbanUser', $user);
 
+
             $validatedData = $request->validate([
-                'unban_reason' => 'required|string',
+                'moderation_reason' => 'required|string|max:255',
             ]);
 
-            $user->update([
-                'is_banned' => false,
-                'unbanned_at' => now(),
-                'unban_reason' => $validatedData['unban_reason'],
-                'unbanned_by' => $request->user()->id,
-            ]);
+            $user = $this->moderationService->handleModerationUpdate(
+                $user,
+                array_merge($validatedData, ['is_banned' => false]),
+                $request,
+                [],
+                'unbanUser'
+            );
+            $user->save();
 
             $bannedUserInfo = [
                 'id' => $user->id,
                 'name' => $user->name,
-                'is_banned' => false,
-                'unbanned_at' => $user->unbanned_at,
-                'unban_reason' => $user->unban_reason
+                'is_banned' => $user->is_banned,
+                'moderation_info' => $user->moderation_info,
             ];
 
             return $this->successResponse($bannedUserInfo, 'User unbanned successfully', 200);
