@@ -46,7 +46,7 @@ class FavoriteController extends Controller {
     /**
      * Get all favorites for the authenticated user
      */
-    public function getFavorites(Request $request): JsonResponse {
+    public function index(Request $request): JsonResponse {
         $user = $request->user();
 
         $query = UserFavorite::where('user_id', $user->id);
@@ -67,7 +67,7 @@ class FavoriteController extends Controller {
     /**
      * Add a post to favorites
      */
-    public function addFavorite(Request $request, $postId): JsonResponse {
+    public function store(Request $request, $postId): JsonResponse {
         try {
             $user = $request->user();
             $post = Post::findOrFail($postId);
@@ -101,7 +101,7 @@ class FavoriteController extends Controller {
     /**
      * Remove a post from favorites
      */
-    public function removeFavorite(Request $request, $postId): JsonResponse {
+    public function destroy(Request $request, $postId): JsonResponse {
         try {
             $user = $request->user();
             $post = Post::findOrFail($postId);
