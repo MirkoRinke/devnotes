@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\Like;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\UserReport;
@@ -38,6 +39,11 @@ class UserObserver {
         // Delete all reports where this user is the reportable entity
         UserReport::where('reportable_type', User::class)
             ->where('reportable_id', $user->id)
+            ->delete();
+
+        // Delete all likes where this user is the likeable entity
+        Like::where('likeable_type', User::class)
+            ->where('likeable_id', $user->id)
             ->delete();
     }
 
