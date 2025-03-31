@@ -30,8 +30,7 @@ class Comment extends Model {
 
         // Update info
         'updated_at',
-        'is_edited',
-        'updated_by',
+        'is_updated',
         'updated_by_role',
 
         // Moderation info
@@ -53,8 +52,7 @@ class Comment extends Model {
         'reports_count' => 'integer',
 
         // Update info
-        'is_edited' => 'boolean',
-        'updated_by' => 'integer',
+        'is_updated' => 'boolean',
         'updated_by_role' => 'string',
 
         // Moderation info
