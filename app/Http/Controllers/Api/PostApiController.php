@@ -246,9 +246,16 @@ class PostApiController extends Controller {
             if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
                 $post = $this->moderationService->handleModerationUpdate(
                     $post,
-                    $validatedData,
+                    array_merge(
+                        $validatedData,
+                        [
+                            'is_updated' => true,
+                            'updated_by_role' => $request->user()->role // For show the user who updated the post for the user
+                        ]
+                    ),
                     $request,
-                    ['title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status']
+                    ['title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
+                    'post'
                 );
                 $post->save();
 
@@ -257,8 +264,7 @@ class PostApiController extends Controller {
 
             $validatedData = array_merge(
                 $validatedData,
-                ['updated_by' => $request->user()->id],
-                ['is_edited' => true],
+                ['is_updated' => true],
                 ['updated_by_role' => $request->user()->role]
             );
 
