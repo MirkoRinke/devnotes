@@ -242,9 +242,16 @@ class CommentApiController extends Controller {
             if ($request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
                 $comment = $this->moderationService->handleModerationUpdate(
                     $comment,
-                    $validatedData,
+                    array_merge(
+                        $validatedData,
+                        [
+                            'is_updated' => true,
+                            'updated_by_role' => $request->user()->role // For show the user who updated the post for the user
+                        ]
+                    ),
                     $request,
-                    ['content']
+                    ['content'],
+                    'comment'
                 );
                 $comment->save();
 
@@ -253,8 +260,7 @@ class CommentApiController extends Controller {
 
             $validatedData = array_merge(
                 $validatedData,
-                ['updated_by' => $request->user()->id],
-                ['is_edited' => true],
+                ['is_updated' => true],
                 ['updated_by_role' => $request->user()->role]
             );
 
