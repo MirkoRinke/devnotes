@@ -99,11 +99,11 @@ class ModerationService {
      * @param Request $request The current request
      * @return mixed The updated model
      */
-    public function handleModerationUpdate($model, array $validatedData, Request $request, array $trackFields): mixed {
+    public function handleModerationUpdate($model, array $validatedData, Request $request, array $trackFields, $moderationEntry): mixed {
         // Save original data for comparison
         $originalData = $this->getOriginalData($model, $trackFields);
 
-        $newEntry = $this->createModerationEntry($model, $request);
+        $newEntry = $this->createModerationEntry($request, $moderationEntry, $validatedData);
 
         // Apply changes to model
         foreach ($validatedData as $key => $value) {
@@ -111,11 +111,6 @@ class ModerationService {
                 $model->$key = $value;
             }
         }
-
-        // Set meta information
-        $model->updated_by = $request->user()->id;
-        $model->is_edited = true;
-        $model->updated_by_role = $request->user()->role;
 
         // Create moderation log entry
         $this->createModerationLogEntry($model, $originalData, $newEntry, $request);
@@ -149,17 +144,31 @@ class ModerationService {
      * @param Request $request The current request
      * @return array The created moderation entry
      */
-    private function createModerationEntry($model, Request $request): array {
-        if (($model instanceof Post || $model instanceof Comment)) {
-            $newEntry = [
-                'user_id' => $request->user()->id,
-                'username' => $request->user()->name,
-                'role' => $request->user()->role,
-                'timestamp' => now()->toIso8601String(),
+    private function createModerationEntry(Request $request, $moderationEntry, $validatedData): array {
+        $baseEntry = [
+            'user_id' => $request->user()->id,
+            'username' => $request->user()->name,
+            'role' => $request->user()->role,
+            'timestamp' => now()->toIso8601String(),
+        ];
+
+        if ($moderationEntry === 'post' || $moderationEntry === 'comment') {
+            return array_merge($baseEntry, [
                 'reason' => $request->moderation_reason,
-            ];
-            return $newEntry;
+                'action' => 'updated',
+            ]);
+        } else if ($moderationEntry === 'banUser') {
+            return array_merge($baseEntry, [
+                'reason' => $request->moderation_reason,
+                'action' => 'ban'
+            ]);
+        } else if ($moderationEntry === 'unbanUser') {
+            return array_merge($baseEntry, [
+                'reason' => $request->moderation_reason,
+                'action' => 'unban'
+            ]);
         }
+
         return [];
     }
 
