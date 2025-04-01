@@ -189,7 +189,7 @@ class UserApiController extends Controller {
 
             $user = $this->moderationService->handleModerationUpdate(
                 $user,
-                array_merge($validatedData, ['is_banned' => true]),
+                array_merge($validatedData, ['is_banned' => true, 'was_ever_banned' => true]),
                 $request,
                 [],
                 'banUser'
@@ -201,6 +201,7 @@ class UserApiController extends Controller {
                 'id' => $user->id,
                 'name' => $user->name,
                 'is_banned' => $user->is_banned,
+                'was_ever_banned' => $user->was_ever_banned,
                 'moderation_info' => $user->moderation_info,
             ];
 
@@ -249,6 +250,7 @@ class UserApiController extends Controller {
                 'id' => $user->id,
                 'name' => $user->name,
                 'is_banned' => $user->is_banned,
+                'was_ever_banned' => $user->was_ever_banned,
                 'moderation_info' => $user->moderation_info,
             ];
 
@@ -271,7 +273,7 @@ class UserApiController extends Controller {
         try {
             $this->authorize('getBanned', User::class);
 
-            $query = User::query()->where('is_banned', true);
+            $query = User::query()->where('was_ever_banned', true);
 
             $query = $this->buildQuery($request, $query, 'user');
 
@@ -280,12 +282,12 @@ class UserApiController extends Controller {
             }
 
             if ($query->isEmpty()) {
-                return $this->successResponse($query, 'No banned users found with the given filters', 200);
+                return $this->successResponse($query, 'No users found with the given filters', 200);
             }
 
-            return $this->successResponse($query, 'Banned users retrieved successfully', 200);
+            return $this->successResponse($query, 'Users retrieved successfully', 200);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to view banned users', 'UNAUTHORIZED_ACTION', 403);
+            return $this->errorResponse('You are not authorized to view users', 'UNAUTHORIZED_ACTION', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
