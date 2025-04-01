@@ -95,7 +95,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
 
     //! Route for ban and unban users
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/users/banned', [UserApiController::class, 'getBannedUsers']);
+        Route::get('/users/banned', [UserApiController::class, 'getUsersWithBanHistory']);
         Route::post('/users/{id}/ban', [UserApiController::class, 'banUser']);
         Route::post('/users/{id}/unban', [UserApiController::class, 'unbanUser']);
     });

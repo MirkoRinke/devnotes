@@ -267,9 +267,9 @@ class UserApiController extends Controller {
     }
 
     /**
-     * Get the banned users.
+     * Get users with ban history.
      */
-    public function getBannedUsers(Request $request): JsonResponse {
+    public function getUsersWithBanHistory(Request $request): JsonResponse {
         try {
             $this->authorize('getBanned', User::class);
 
