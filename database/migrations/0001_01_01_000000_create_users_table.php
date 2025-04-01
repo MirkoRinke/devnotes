@@ -24,6 +24,7 @@ return new class extends Migration {
 
             // Ban info
             $table->boolean('is_banned')->default(false);
+            $table->boolean('was_ever_banned')->default(false);
 
             // Moderation info
             $table->json('moderation_info')->nullable();
