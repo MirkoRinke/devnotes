@@ -26,10 +26,6 @@ trait QueryBuilder {
                 ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                 // Basic
                 ...['display_name', 'role'],
-                // Ban info
-                ...['is_banned'],
-                // Moderation info
-                ...['moderation_info'],
             ],
             'filter' => [
                 // Default
@@ -37,7 +33,7 @@ trait QueryBuilder {
                 // Basic
                 ...['display_name', 'role'],
                 // Ban info
-                ...['is_banned'],
+                ...['is_banned', 'was_ever_banned'],
                 // Moderation info
                 ...['moderation_info'],
             ],
@@ -47,7 +43,7 @@ trait QueryBuilder {
                 // Basic
                 ...['display_name', 'role'],
                 // Ban info
-                ...['is_banned'],
+                ...['is_banned', 'was_ever_banned'],
                 // Moderation info
                 ...['moderation_info'],
             ],
