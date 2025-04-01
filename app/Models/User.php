@@ -39,6 +39,7 @@ class User extends Authenticatable {
 
         // Ban info
         'is_banned',
+        'was_ever_banned',
 
         // Moderation info
         'moderation_info',
@@ -67,6 +68,7 @@ class User extends Authenticatable {
 
             // Ban info
             'is_banned' => 'boolean',
+            'was_ever_banned' => 'boolean',
 
             // Moderation info
             'moderation_info' => 'json',
