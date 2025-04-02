@@ -27,6 +27,10 @@ return new class extends Migration {
             $table->json('social_links')->nullable();
             $table->json('contact_channels')->nullable();
 
+            // Settings
+            $table->boolean('auto_load_external_images')->default(false);
+            $table->timestamp('external_images_temp_until')->nullable();
+
             // Counts
             $table->integer('reports_count')->default(0);
         });
