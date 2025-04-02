@@ -82,7 +82,11 @@ trait ApiResponses {
             'code.string' => 'CODE_MUST_BE_STRING',
             'description.required' => 'DESCRIPTION_FIELD_REQUIRED',
             'description.string' => 'DESCRIPTION_MUST_BE_STRING',
+            'images.array' => 'IMAGES_MUST_BE_ARRAY',
+            'images.*.url' => 'IMAGES_MUST_BE_VALID_URLS',
+            'images.*.max' => 'IMAGES_URL_TOO_LONG',
             'resources.array' => 'RESOURCES_MUST_BE_ARRAY',
+            'resources.*.string' => 'RESOURCES_MUST_BE_STRING',
             'language.required' => 'LANGUAGE_FIELD_REQUIRED',
             'language.string' => 'LANGUAGE_MUST_BE_STRING',
             'language.max' => 'LANGUAGE_FIELD_MAX_LENGTH',
@@ -119,6 +123,16 @@ trait ApiResponses {
             'avatar_path.max' => 'AVATAR_PATH_FIELD_MAX_LENGTH',
             'is_public.required' => 'IS_PUBLIC_FIELD_REQUIRED',
             'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN',
+            'auto_load_external_images.required' => 'AUTO_LOAD_EXTERNAL_IMAGES_FIELD_REQUIRED',
+            'auto_load_external_images.boolean' => 'AUTO_LOAD_EXTERNAL_IMAGES_MUST_BE_BOOLEAN',
+            'external_images_temp_until.date' => 'EXTERNAL_IMAGES_TEMP_UNTIL_MUST_BE_DATE',
+            'hours.required' => 'HOURS_FIELD_REQUIRED',
+            'hours.integer' => 'HOURS_MUST_BE_INTEGER',
+            'hours.min' => 'HOURS_MUST_BE_AT_LEAST_0',
+            'hours.max' => 'HOURS_CANNOT_EXCEED_72',
+
+
+
 
             // User Report validation messages
             'reportable_type.required' => 'REPORTABLE_TYPE_FIELD_REQUIRED',
