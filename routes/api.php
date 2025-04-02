@@ -144,13 +144,17 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Authenticated non-admin users: See published posts and their own drafts/archived posts
     // - Admins: See all posts
     //
-    // - Select specific fields: GET /api/posts?select=id,title,language (supports: id, user_id, title, code, description, resources, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
+    // - Header for external images: Include 'X-Show-External-Images: true' to display external images for non-logged in users
+    //   This header is only required for anonymous users. Logged-in users use their profile settings instead.
+    //
+    // - Select specific fields: GET /api/posts?select=id,title,language (supports: id, user_id, title, code, description, resources, images, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
     // - Sort options: GET /api/posts?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
     // - Filter options: GET /api/posts?filter[language]=php (supports: title, user_id, language, category, tags, status, created_at, updated_at)
     // - Pagination: GET /api/posts?page=1&per_page=10
     //
     // GET /api/posts/{post} - Get a specific post
     // - Access restrictions follow the same rules as for listing (published posts visible to all)
+    // - Supports 'X-Show-External-Images' header for anonymous users
     // - Select specific fields: GET /api/posts/{post}?select=id,title,code
     Route::get('/posts', [PostApiController::class, 'index']);
     Route::get('/posts/{post}', [PostApiController::class, 'show']);
