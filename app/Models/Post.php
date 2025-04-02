@@ -30,6 +30,7 @@ class Post extends Model {
         'description',
         'resources',
         'language',
+        'images',
         'category',
         'tags',
         'status',
@@ -56,6 +57,7 @@ class Post extends Model {
     protected $casts = [
         // Basic
         'resources' => 'array',
+        'images' => 'array',
         'tags' => 'array',
 
         // Counts
