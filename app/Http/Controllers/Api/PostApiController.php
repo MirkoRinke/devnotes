@@ -51,7 +51,10 @@ class PostApiController extends Controller {
         'title' => 'required|string|max:255',
         'code' => 'required|string',
         'description' => 'required|string',
+        'images' => 'nullable|array',
+        'images.*' => 'url|max:2048',
         'resources' => 'nullable|array',
+        'resources.*' => 'url|max:2048',
         'language' => 'required|string|max:50',
         'category' => 'required|string|max:50',
         'tags' => 'required|array',
@@ -66,7 +69,10 @@ class PostApiController extends Controller {
         'title' => 'sometimes|required|string|max:255',
         'code' => 'sometimes|required|string',
         'description' => 'sometimes|required|string',
+        'images' => 'sometimes|nullable|array',
+        'images.*' => 'sometimes|url|max:2048',
         'resources' => 'sometimes|nullable|array',
+        'resources.*' => 'sometimes|url|max:2048',
         'language' => 'sometimes|required|string|max:50',
         'category' => 'sometimes|required|string|max:50',
         'tags' => 'sometimes|required|array',
@@ -91,7 +97,7 @@ class PostApiController extends Controller {
 
         $token = PersonalAccessToken::findToken($bearerToken);
 
-        return $token ? $token->tokenable : null;
+        return $token ? $token->tokenable->load('profile') : null;
     }
 
     /**
@@ -115,6 +121,31 @@ class PostApiController extends Controller {
         return $query;
     }
 
+    /**
+     * Check if external images should be displayed for a user
+     * 
+     * @param mixed $user The user to check permissions for
+     * @return bool True if images should be displayed, false otherwise
+     */
+    private function shouldDisplayExternalImages($user) {
+        // If no user is logged in 
+        if (!$user) {
+            return false;  //! This is only temporary, we will change this in the future
+        }
+
+        // Check permanent setting
+        if ($user->profile->auto_load_external_images) {
+            return true;
+        }
+
+        // Check temporary setting
+        if ($user->profile->external_images_temp_until && now()->lt($user->profile->external_images_temp_until)) {
+            return true;
+        }
+
+        return false;
+    }
+
 
     /**
      * Hide fields based on user role
@@ -127,6 +158,10 @@ class PostApiController extends Controller {
 
         if (!$user || ($user->role !== 'admin' && $user->role !== 'moderator')) {
             $query->makeHidden('moderation_info');
+        }
+
+        if (!$this->shouldDisplayExternalImages($user)) {
+            $query->makeHidden('images');
         }
     }
 
