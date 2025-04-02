@@ -38,18 +38,20 @@ class UserProfileController extends Controller {
      *
      * @return array
      */
-    public function getValidationRules($userProfile): array {
+    public function getValidationRulesUpdate($userProfile): array {
         $validationRules = [
-            'display_name' => ['required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'max:255', new NotForbiddenName()],
-            'public_email' => 'nullable|email|max:255',
-            'location' => 'nullable|string|max:255',
-            'skills' => 'nullable|array',
-            'biography' => 'nullable|string',
-            'contact_channels' => ['nullable', 'array', new AllowedContactChannels()],
-            'social_links' => ['nullable', 'array', new AllowedSocialLinks()],
-            'website' => 'nullable|string|max:255',
-            'avatar_path' => 'nullable|string|max:255',
-            'is_public' => 'required|boolean'
+            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'max:255', new NotForbiddenName()],
+            'public_email' => 'sometimes|nullable|email|max:255',
+            'location' => 'sometimes|nullable|string|max:255',
+            'skills' => 'sometimes|nullable|array',
+            'biography' => 'sometimes|nullable|string',
+            'contact_channels' => ['sometimes', 'nullable', 'array', new AllowedContactChannels()],
+            'social_links' => ['sometimes', 'nullable', 'array', new AllowedSocialLinks()],
+            'website' => 'sometimes|nullable|string|max:255',
+            'avatar_path' => 'sometimes|nullable|string|max:255',
+            'is_public' => 'sometimes|required|boolean',
+            'auto_load_external_images' => 'sometimes|required|boolean',
+            'external_images_temp_until' => 'sometimes|nullable|date',
         ];
         return $validationRules;
     }
@@ -140,7 +142,7 @@ class UserProfileController extends Controller {
             $this->authorize('update', $userProfile);
 
             $validatedData = $request->validate(
-                $this->getValidationRules($userProfile),
+                $this->getValidationRulesUpdate($userProfile),
                 $this->getValidationMessages()
             );
 
@@ -163,5 +165,42 @@ class UserProfileController extends Controller {
      */
     public function destroy(Request $request, string $id): JsonResponse {
         return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', 'PROFILE_DELETE_DISABLED', 405);
+    }
+
+
+    /**
+     * Enable temporary external images.
+     */
+    public function enableTemporaryExternalImages(Request $request, string $id): JsonResponse {
+        try {
+            $userProfile = UserProfile::findOrFail($id);
+            $this->authorize('update', $userProfile);
+
+            $validatedData = $request->validate(
+                ['hours' => 'required|integer|min:0|max:72'],
+                $this->getValidationMessages()
+            );
+
+            $hours = $validatedData['hours'];
+
+            if ($hours === 0) {
+                $userProfile->external_images_temp_until = null;
+                $userProfile->save();
+                return $this->successResponse($userProfile, "Temporary images deactivated.", 200);
+            }
+
+            $userProfile->external_images_temp_until = now()->addHours($hours);
+            $userProfile->save();
+
+            return $this->successResponse($userProfile, "Temporary images successfully activated for the next $hours hours.", 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
     }
 }
