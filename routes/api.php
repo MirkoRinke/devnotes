@@ -185,43 +185,58 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     });
 
 
-    //! Route for user profiles
+    //! Routes for user profiles
     // Route to get, update user profiles - you need to be authenticated protected by sanctum and Policies
     // 
     // GET /api/user-profiles - Get all user profiles
     // - For admins: Returns all profiles
     // - For regular users: Returns only public profiles and the user's own profile
     // 
-    // - Select specific fields: GET /api/user-profiles?select=id,user_id,display_name (supports: id, user_id, display_name, location, skills, biography, social_links, website, avatar_path, is_public, created_at, updated_at)
-    // - Sort options: GET /api/user-profiles?sort=display_name (supports: id, user_id, display_name, location, created_at, updated_at, is_public)
-    // - Filter options: GET /api/user-profiles?filter[display_name]=john (supports: user_id, display_name, location, skills, is_public)
+    // - Select specific fields: GET /api/user-profiles?select=id,user_id,display_name
+    // - Sort options: GET /api/user-profiles?sort=display_name
+    // - Filter options: GET /api/user-profiles?filter[display_name]=john
     // - Pagination: GET /api/user-profiles?page=1&per_page=10
     //
     // GET /api/user-profiles/{id} - Get a specific user profile
     // - Authorization: Users can only view public profiles or their own profile, admins can view any profile
-    // - Select fields: GET /api/user-profiles/{id}?select=id,display_name,location
     //
     // PUT/PATCH /api/user-profiles/{id} - Update a user profile
     // - Authorization: Users can only update their own profile, admins can update any profile
+    // - Request body includes (all fields are optional due to 'sometimes' validation):
+    //  {
+    //    "display_name": "NewUsername",         // string, unique
+    //    "public_email": "contact@example.com", // email address 
+    //    "location": "Berlin, Germany",         // string
+    //    "skills": ["PHP", "JavaScript"],       // array of skills
+    //    "biography": "Full-stack developer",   // string
+    //    "contact_channels": {                  // object with allowed channels
+    //      "discord": "user#1234"
+    //    },
+    //    "social_links": {                      // object with allowed social platforms
+    //      "github": "https://github.com/",
+    //      "linkedin": "https://linkedin.com/in/"
+    //    },
+    //    "website": "https://example.com",      // string, URL
+    //    "avatar_path": "/storage/avatars/1.jpg", // string
+    //    "is_public": true,                     // boolean
+    //    "auto_load_external_images": true,     // boolean (permanent setting)
+    //    "external_images_temp_until": "2025-04-03T20:00:00Z" // date (temporary access)
+    //  }
+    //
+    // POST /api/user-profiles/{id}/enable-temporary-images - Convenience endpoint for temporary image settings
+    // - Authorization: Users can only modify their own profile settings
     // - Request body:
     //  {
-    //    "display_name": "NewUsername",         // required, unique
-    //    "location": "Berlin, Germany",         // optional
-    //    "skills": ["PHP", "JavaScript"],       // optional, array
-    //    "biography": "Full-stack developer",   // optional
-    //    "social_links": {                      // optional, object
-    //      "github": "https://github.com/user",
-    //      "twitter": "https://twitter.com/user"
-    //    },
-    //    "website": "https://example.com",      // optional
-    //    "avatar_path": "/storage/avatars/1.jpg", // optional
-    //    "is_public": true                      // required, boolean
+    //    "hours": 24  // Integer between 0-72 (0 = disable temporary access)
     //  }
+    // - Response: User profile with confirmation message
     //
     // POST /api/user-profiles - Create a user profile (disabled, returns 403)
     // DELETE /api/user-profiles/{id} - Delete a user profile (disabled, returns 405)    
+    //
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('user-profiles', UserProfileController::class);
+        Route::post('user-profiles/{id}/enable-temporary-images', [UserProfileController::class, 'enableTemporaryExternalImages']);
     });
 
 
