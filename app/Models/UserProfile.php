@@ -30,6 +30,10 @@ class UserProfile extends Model {
         'social_links',
         'contact_channels',
 
+        // Settings
+        'auto_load_external_images',
+        'external_images_temp_until',
+
         // Counts
         'reports_count',
     ];
@@ -45,6 +49,10 @@ class UserProfile extends Model {
         'skills' => 'array',
         'social_links' => 'array',
         'contact_channels' => 'array',
+
+        // Settings
+        'auto_load_external_images' => 'boolean',
+        'external_images_temp_until' => 'datetime',
 
         // Counts
         'reports_count' => 'integer',
