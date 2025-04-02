@@ -127,10 +127,10 @@ class PostApiController extends Controller {
      * @param mixed $user The user to check permissions for
      * @return bool True if images should be displayed, false otherwise
      */
-    private function shouldDisplayExternalImages($user) {
+    private function shouldDisplayExternalImages($request, $user) {
         // If no user is logged in 
         if (!$user) {
-            return false;  //! This is only temporary, we will change this in the future
+            return $request->header('X-Show-External-Images') === 'true';
         }
 
         // Check permanent setting
@@ -160,7 +160,7 @@ class PostApiController extends Controller {
             $query->makeHidden('moderation_info');
         }
 
-        if (!$this->shouldDisplayExternalImages($user)) {
+        if (!$this->shouldDisplayExternalImages($request, $user)) {
             $query->makeHidden('images');
         }
     }
