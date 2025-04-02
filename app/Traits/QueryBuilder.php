@@ -71,6 +71,8 @@ trait QueryBuilder {
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                // Settings
+                ...['auto_load_external_images', 'external_images_temp_until'],
                 // Counts
                 ...['reports_count'],
             ],
