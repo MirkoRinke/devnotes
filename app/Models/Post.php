@@ -31,6 +31,7 @@ class Post extends Model {
         'resources',
         'language',
         'images',
+        'external_source_previews',
         'category',
         'tags',
         'status',
@@ -58,6 +59,7 @@ class Post extends Model {
         // Basic
         'resources' => 'array',
         'images' => 'array',
+        'external_source_previews' => 'array',
         'tags' => 'array',
 
         // Counts
