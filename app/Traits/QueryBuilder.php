@@ -107,7 +107,7 @@ trait QueryBuilder {
                 // Default 
                 ...['id', 'created_at'],
                 // Basic
-                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'language', 'category', 'tags', 'status'],
+                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'tags', 'status'],
                 // Counts
                 ...['favorite_count', 'reports_count', 'likes_count'],
                 // Update info
