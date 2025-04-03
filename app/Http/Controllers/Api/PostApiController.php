@@ -22,6 +22,7 @@ use App\Traits\RelationLoader; // examples:
 // ])
 
 use App\Services\ModerationService;
+use App\Services\ExternalSourcePreviewsService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -39,9 +40,11 @@ class PostApiController extends Controller {
 
 
     protected $moderationService;
+    protected $externalSourcePreviewsService;
 
-    public function __construct(ModerationService $moderationService) {
+    public function __construct(ModerationService $moderationService, ExternalSourcePreviewsService $externalSourcePreviewsService) {
         $this->moderationService = $moderationService;
+        $this->externalSourcePreviewsService = $externalSourcePreviewsService;
     }
 
     /**
@@ -147,8 +150,6 @@ class PostApiController extends Controller {
     }
 
 
-
-
     /**
      * Hide fields based on user role
      * 
@@ -167,32 +168,6 @@ class PostApiController extends Controller {
         }
     }
 
-
-    /**
-     * Process external source previews
-     * 
-     * @param array $fields The fields containing URLs to process
-     * @return array|null The processed preview data or null if no valid URLs are found
-     */
-    private function processExternalSourcePreviews(array $fields): ?array {
-        $previewData = [];
-
-        foreach ($fields as $fieldName => $urls) {
-            if (!is_array($urls)) {
-                continue;
-            }
-
-            foreach ($urls as $url) {
-                $previewData[] = [
-                    'type' => $fieldName,
-                    'url' => $url,
-                    'domain' => parse_url($url, PHP_URL_HOST)
-                ];
-            }
-        }
-
-        return !empty($previewData) ? $previewData : null;
-    }
 
     /**
      * Display a listing of the resource.
@@ -240,10 +215,12 @@ class PostApiController extends Controller {
             $validatedData['user_id'] = $request->user()->id;
 
             // Create the external_source_previews field
-            $validatedData['external_source_previews'] = $this->processExternalSourcePreviews([
-                'images' => $validatedData['images'] ?? [],
-                'resources' => $validatedData['resources'] ?? []
-            ]);
+            if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
+                $validatedData['external_source_previews'] = $this->externalSourcePreviewsService->generatePreviews([
+                    'images' => $validatedData['images'] ?? [],
+                    'resources' => $validatedData['resources'] ?? []
+                ]);
+            }
 
             $post = Post::create($validatedData);
 
@@ -309,10 +286,12 @@ class PostApiController extends Controller {
             );
 
             // Create the external_source_previews field
-            $validatedData['external_source_previews'] = $this->processExternalSourcePreviews([
-                'images' => $validatedData['images'] ?? [],
-                'resources' => $validatedData['resources'] ?? []
-            ]);
+            if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
+                $validatedData['external_source_previews'] = $this->externalSourcePreviewsService->generatePreviews([
+                    'images' => $validatedData['images'] ?? $post->images ?? [],
+                    'resources' => $validatedData['resources'] ?? $post->resources ?? []
+                ]);
+            }
 
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
