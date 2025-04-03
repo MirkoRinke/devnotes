@@ -328,13 +328,13 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - No request body needed
     // - Returns 200 OK on success
     //
-    // PATCH /api/comments/{id}/toggle-status - Toggle comment status
-    // - Authorization: Users can toggle status for their own comments, admins can toggle any comment
+    // PATCH /api/comments/{id}/toggle-status - deleteComment
+    // - Authorization: Users can only delete their own comments, admins can delete any comment
     // - No request body needed
     // - Returns updated comment status
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('comments', CommentApiController::class);
-        Route::patch('comments/{id}/toggleDeleteStatus', [CommentApiController::class, 'toggleDeleteStatus']);
+        Route::patch('comments/{id}/deleteComment', [CommentApiController::class, 'deleteComment']);
     });
 
 
