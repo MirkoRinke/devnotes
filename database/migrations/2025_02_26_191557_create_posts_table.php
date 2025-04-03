@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->text('description');
             $table->json('resources')->nullable();
             $table->json('images')->nullable();
+            $table->json('external_source_previews')->nullable();
             $table->string('language')->nullable();
             $table->string('category')->nullable();
             $table->json('tags');
