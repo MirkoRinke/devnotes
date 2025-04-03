@@ -209,6 +209,11 @@ class ModerationService {
         $changes = [];
         foreach ($dirtyFields as $field => $newValue) {
             if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info', 'external_source_previews'])) {
+
+                if (is_string($newValue) && $this->isValidJson($newValue)) {
+                    $newValue = json_decode($newValue, true);
+                }
+
                 $changes[$field] = [
                     'from' => $originalData[$field] ?? null,
                     'to' => $newValue
@@ -217,8 +222,19 @@ class ModerationService {
         }
 
         $newEntry = array_merge($newEntry, [
-            'changes' => $changes
+            'changes' => !empty($changes) ? $changes : null
         ]);
         return $newEntry;
+    }
+
+    /**
+     * Check if a string is valid JSON
+     */
+    private function isValidJson($string): bool {
+        if (!is_string($string)) {
+            return false;
+        }
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
     }
 }
