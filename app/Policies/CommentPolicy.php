@@ -37,16 +37,16 @@ class CommentPolicy {
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine whether the user can view the comment.
      */
     public function delete(User $user, Comment $comment): bool {
         return $user->role === 'admin';
     }
 
     /**
-     * Determine whether the user can permanently delete the model.
+     * Determine whether the user can delete the comment.
      */
-    public function toggleDeleteStatus(User $user, Comment $comment): bool {
+    public function deleteComment(User $user, Comment $comment): bool {
         if ($user->role === 'admin') {
             return true;
         }
