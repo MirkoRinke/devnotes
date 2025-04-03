@@ -163,11 +163,14 @@ class CommentApiController extends Controller {
                 if ($depth >= $this->maxCommentDepth) {
                     return $this->errorResponse("Comments can only be nested to a maximum depth of {$this->maxCommentDepth}", 'COMMENT_NESTING_LIMIT', 422);
                 }
+
+                $validatedData['parent_content'] = $parentComment->content;
             }
 
             $comment = Comment::create([
                 'user_id' => $request->user()->id,
                 'content' => $validatedData['content'],
+                'parent_content' => $validatedData['parent_content'] ?? null,
                 'post_id' => $validatedData['post_id'],
                 'parent_id' => $validatedData['parent_id'] ?? null,
                 'depth' => $depth,
@@ -299,20 +302,28 @@ class CommentApiController extends Controller {
     }
 
     /**
-     * Toggle the delete status of the specified resource.
+     * Handle the deletion of a comment.
+     * If the comment has children, it will be soft deleted.
+     * If the comment has no children, it will be permanently deleted.
      */
-    public function toggleDeleteStatus(string $id) {
+    public function deleteComment(string $id) {
         try {
             $comment = Comment::findOrFail($id);
 
-            $this->authorize('toggleDeleteStatus', $comment);
+            $this->authorize('deleteComment', $comment);
 
-            $comment->is_deleted = !$comment->is_deleted;
-            $comment->save();
+            $hasChildren = $comment->children()->exists();
 
-            $action = $comment->is_deleted ? 'deleted' : 'restored';
+            if ($hasChildren) {
+                $comment->is_deleted = true;
+                $comment->content = "This comment has been deleted";
+                $comment->save();
 
-            return $this->successResponse($comment, "Comment $action successfully", 200);
+                return $this->successResponse($comment, "Comment marked as deleted", 200);
+            } else {
+                $comment->delete();
+                return $this->successResponse(null, "Comment deleted successfully", 200);
+            }
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Comment with ID $id does not exist", 'COMMENT_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
