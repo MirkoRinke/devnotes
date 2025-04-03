@@ -16,9 +16,10 @@ return new class extends Migration {
 
             // Basic
             $table->foreignId('post_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users', 'id');
             $table->foreignId('parent_id')->nullable()->constrained('comments')->cascadeOnDelete();
             $table->text('content');
+            $table->text('parent_content')->nullable();
             $table->boolean('is_deleted')->default(false);
             $table->unsignedInteger('depth')->default(0);
 
