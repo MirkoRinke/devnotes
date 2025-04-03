@@ -208,7 +208,7 @@ class ModerationService {
 
         $changes = [];
         foreach ($dirtyFields as $field => $newValue) {
-            if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info'])) {
+            if (!in_array($field, ['updated_by', 'is_edited', 'updated_by_role', 'moderation_info', 'external_source_previews'])) {
                 $changes[$field] = [
                     'from' => $originalData[$field] ?? null,
                     'to' => $newValue
