@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->string('role')->default('user');
 
             // Ban info
-            $table->boolean('is_banned')->default(false);
+            $table->timestamp('is_banned')->nullable();
             $table->boolean('was_ever_banned')->default(false);
 
             // Moderation info
