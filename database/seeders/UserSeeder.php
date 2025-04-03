@@ -8,6 +8,8 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+use Illuminate\Support\Str;
+
 class UserSeeder extends Seeder {
     /**
      * Run the database seeds.
@@ -22,6 +24,17 @@ class UserSeeder extends Seeder {
             'role' => 'admin',
             'email_verified_at' => now(),
         ]);
+
+        // Create a system user for deleted accounts
+        User::create([
+            'name' => 'System Deleted User',
+            'display_name' => 'Deleted User',
+            'email' => 'deleted@system.local',
+            'password' => Hash::make(Str::random(32)),
+            'role' => 'system',
+            'email_verified_at' => now(),
+        ]);
+
 
         // Create a moderator user
         User::create([
