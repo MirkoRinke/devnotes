@@ -21,6 +21,7 @@ class Comment extends Model {
         'user_id',
         'parent_id',
         'content',
+        'parent_content',
         'is_deleted',
         'depth',
 
