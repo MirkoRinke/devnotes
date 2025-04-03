@@ -329,7 +329,7 @@ class PostApiController extends Controller {
                         ]
                     ),
                     $request,
-                    ['title', 'code', 'description', 'resources', 'language', 'category', 'tags', 'status'],
+                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'tags', 'status'],
                     'post'
                 );
                 $post->save();
