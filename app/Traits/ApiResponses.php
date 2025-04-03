@@ -73,6 +73,10 @@ trait ApiResponses {
             'password.string' => 'PASSWORD_MUST_BE_STRING',
             'password.min' => 'PASSWORD_TOO_SHORT',
             'password.confirmed' => 'PASSWORD_CONFIRMATION_MISMATCH',
+            'days.required' => 'DAYS_FIELD_REQUIRED',
+            'days.integer' => 'DAYS_MUST_BE_INTEGER',
+            'days.min' => 'DAYS_MUST_BE_AT_LEAST_1',
+            'days.max' => 'DAYS_CANNOT_EXCEED_99999',
 
             // Post validation messages
             'title.required' => 'TITLE_FIELD_REQUIRED',
