@@ -177,19 +177,29 @@ class UserApiController extends Controller {
         try {
             $user = User::findOrFail($id);
 
-            if ($user->is_banned) {
+            if ($user->is_banned && now()->lt($user->is_banned)) {
                 return $this->errorResponse('User is already banned', 'USER_ALREADY_BANNED', 409);
             }
 
             $this->authorize('banUser', $user);
 
-            $validatedData = $request->validate([
-                'moderation_reason' => 'required|string|max:255',
-            ]);
+            $validatedData = $request->validate(
+                [
+                    'moderation_reason' => 'required|string|max:255',
+                    'days' => 'required|integer|min:1|max:99999'
+                ],
+                $this->getValidationMessages()
+            );
+
+            $days = $validatedData['days'];
+            unset($validatedData['days']);
+
+            $bannedTime = now()->addDays($days);
+
 
             $user = $this->moderationService->handleModerationUpdate(
                 $user,
-                array_merge($validatedData, ['is_banned' => true, 'was_ever_banned' => true]),
+                array_merge($validatedData, ['is_banned' => $bannedTime, 'was_ever_banned' => true]),
                 $request,
                 [],
                 'banUser'
@@ -226,7 +236,7 @@ class UserApiController extends Controller {
         try {
             $user = User::findOrFail($id);
 
-            if (!$user->is_banned) {
+            if (!$user->is_banned || now()->gt($user->is_banned)) {
                 return $this->errorResponse('User is not banned', 'USER_NOT_BANNED', 409);
             }
 
@@ -239,7 +249,7 @@ class UserApiController extends Controller {
 
             $user = $this->moderationService->handleModerationUpdate(
                 $user,
-                array_merge($validatedData, ['is_banned' => false]),
+                array_merge($validatedData, ['is_banned' => null]),
                 $request,
                 [],
                 'unbanUser'
