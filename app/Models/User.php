@@ -67,7 +67,7 @@ class User extends Authenticatable {
             'password' => 'hashed',
 
             // Ban info
-            'is_banned' => 'boolean',
+            'is_banned' => 'datetime',
             'was_ever_banned' => 'boolean',
 
             // Moderation info
