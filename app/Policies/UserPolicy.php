@@ -43,10 +43,16 @@ class UserPolicy {
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, User $model): bool {
+        // Protect against deleting admin, system, or moderator accounts
+        if ($model->role === 'admin' || $model->role === 'system' || $model->role === 'moderator') {
+            return false;
+        }
+
+        // This user is an admin
         if ($user->role === 'admin') {
-            // This user is an admin
             return true;
         }
+
         return $user->id === $model->id;
     }
 
