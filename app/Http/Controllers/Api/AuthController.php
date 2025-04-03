@@ -39,7 +39,7 @@ class AuthController extends Controller {
             return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
         }
 
-        if ($user->is_banned) {
+        if ($user->is_banned && now()->lt($user->is_banned)) {
             return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
         }
 
