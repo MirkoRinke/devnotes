@@ -2,11 +2,14 @@
 
 namespace App\Observers;
 
+use App\Models\Comment;
+use App\Models\Post;
 use App\Models\UserLike;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\UserReport;
 use App\Services\ModerationService;
+use Illuminate\Support\Facades\DB;
 
 class UserObserver {
     /**
@@ -32,19 +35,55 @@ class UserObserver {
         }
     }
 
+    public function deleting(User $user) {
+        // Check if the user is not the system user
+        if ($user->id !== 2) {
+            // Set the user_id of all posts to the system user (id 2)
+            Post::where('user_id', $user->id)
+                ->chunkById(50, function ($posts) {
+                    DB::transaction(function () use ($posts) {
+                        DB::table('posts')
+                            ->whereIn('id', $posts->pluck('id'))
+                            ->update(['user_id' => 2]);
+                    });
+                });
+
+            Comment::where('user_id', $user->id)
+                ->chunkById(50, function ($comments) {
+                    DB::transaction(function () use ($comments) {
+                        DB::table('comments')
+                            ->whereIn('id', $comments->pluck('id'))
+                            ->update(['user_id' => 2]);
+                    });
+                });
+        }
+    }
+
     /**
      * Handle the User "deleted" event.
      */
     public function deleted(User $user): void {
-        // Delete all reports where this user is the reportable entity
+        // Delete reports in chunks
         UserReport::where('reportable_type', User::class)
             ->where('reportable_id', $user->id)
-            ->delete();
+            ->chunkById(50, function ($reports) {
+                DB::transaction(function () use ($reports) {
+                    DB::table('user_reports')
+                        ->whereIn('id', $reports->pluck('id'))
+                        ->delete();
+                });
+            });
 
-        // Delete all likes where this user is the likeable entity
+        // Delete likes in chunks
         UserLike::where('likeable_type', User::class)
             ->where('likeable_id', $user->id)
-            ->delete();
+            ->chunkById(50, function ($likes) {
+                DB::transaction(function () use ($likes) {
+                    DB::table('user_likes')
+                        ->whereIn('id', $likes->pluck('id'))
+                        ->delete();
+                });
+            });
     }
 
     /**
