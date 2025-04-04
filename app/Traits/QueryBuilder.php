@@ -203,19 +203,19 @@ trait QueryBuilder {
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason'],
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
             ],
             'filter' => [
                 // Default
                 ...['created_at', 'updated_at'],
                 // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason'],
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
             ],
             'select' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason'],
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
             ],
             'getPerPage' => 10
         ],
