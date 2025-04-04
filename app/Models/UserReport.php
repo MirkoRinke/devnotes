@@ -26,7 +26,8 @@ class UserReport extends Model {
         'reportable_type',
         'reportable_id',
         'type',
-        'reason'
+        'reason',
+        'impact_value'
     ];
 
     /**
@@ -34,7 +35,9 @@ class UserReport extends Model {
      *
      * @var array
      */
-    protected $casts = [];
+    protected $casts = [
+        'impact_value' => 'integer',
+    ];
 
     /**
      * Get the user who created the report
