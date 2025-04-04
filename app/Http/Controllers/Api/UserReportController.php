@@ -50,14 +50,33 @@ class UserReportController extends Controller {
      * @param bool $increment Whether to increment or decrement the counter
      * @return void
      */
-    private function updateReportsCount($reportable, $reportableType, $method = 'increment', User $user) {
-        $value = ($user->role === 'admin' || $user->role === 'moderator') ? 5 : 1;
-
+    private function updateReportsCount($reportable, $reportableType, $method = 'increment', User $user, $value = 1) {
         if ($reportableType === User::class && $reportable->profile) {
             $reportable->profile->$method('reports_count', $value);
         } else {
             $reportable->$method('reports_count', $value);
         }
+    }
+
+    /**
+     * Check for critical terms in the reason
+     * 
+     * TODO: Get the critical terms from the database
+     */
+    private function checkCriticalTerms($reason) {
+        $criticalTerms = [
+            // EN
+            ...['scam', 'malware', 'phishing', 'porn', 'nude', 'nudity', 'abuse', 'sexual'],
+            // DE
+            ...['betrug', 'schadsoftware', 'phishing', 'pornografie', 'nackt', 'nacktheit', 'missbrauch', 'sexuell'],
+        ];
+
+        foreach ($criticalTerms as $term) {
+            if (stripos($reason, $term) !== false) {
+                return 5;
+            }
+        }
+        return 1;
     }
 
     /**
@@ -144,15 +163,25 @@ class UserReportController extends Controller {
             }
 
             $report = DB::transaction(function () use ($user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData) {
+
+                $reason = $validatedData['reason'] ?? null;
+
+                if ($reason && $user->role === 'user') {
+                    $value = $this->checkCriticalTerms($reason);
+                } else if ($user->role === 'admin' || $user->role === 'moderator') {
+                    $value = 5;
+                }
+
                 $report = UserReport::create([
                     'user_id' => $user->id,
                     'reportable_id' => $reportableId,
                     'reportable_type' => $reportableType,
                     'type' => $simpleType,
-                    'reason' => $validatedData['reason'] ?? null
+                    'reason' => $validatedData['reason'] ?? null,
+                    'impact_value' => $value
                 ]);
 
-                $this->updateReportsCount($reportable, $reportableType, 'increment', $user);
+                $this->updateReportsCount($reportable, $reportableType, 'increment', $user, $value);
 
                 return $report;
             });
@@ -203,8 +232,11 @@ class UserReportController extends Controller {
 
             $reportable = $report->reportable;
 
-            DB::transaction(function () use ($report, $reportable, $reportableType, $user) {
-                $this->updateReportsCount($reportable, $reportableType, 'decrement', $user);
+            $value = $report->impact_value;
+
+
+            DB::transaction(function () use ($report, $reportable, $reportableType, $user, $value) {
+                $this->updateReportsCount($reportable, $reportableType, 'decrement', $user, $value);
                 $report->delete();
             });
 
