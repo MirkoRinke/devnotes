@@ -11,6 +11,14 @@ use App\Models\UserReport;
 use App\Services\ModerationService;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * TODO: Implement failed_operations table and service to track and manage failed deletions.
+ * TODO: This will:
+ * TODO: - Log parent entity information (ID, type)
+ * TODO: - Provide admin panel interface for retry operations
+ * TODO: - Handle cleanup of orphaned child records
+ */
+
 class UserObserver {
     /**
      * Handle the User "created" event.
@@ -36,26 +44,43 @@ class UserObserver {
     }
 
     public function deleting(User $user) {
-        // Check if the user is not the system user
-        if ($user->id !== 2) {
-            // Set the user_id of all posts to the system user (id 2)
-            Post::where('user_id', $user->id)
-                ->chunkById(50, function ($posts) {
-                    DB::transaction(function () use ($posts) {
-                        DB::table('posts')
-                            ->whereIn('id', $posts->pluck('id'))
-                            ->update(['user_id' => 2]);
-                    });
-                });
 
-            Comment::where('user_id', $user->id)
-                ->chunkById(50, function ($comments) {
-                    DB::transaction(function () use ($comments) {
-                        DB::table('comments')
-                            ->whereIn('id', $comments->pluck('id'))
-                            ->update(['user_id' => 2]);
+        /**
+         * Check if the user is not the system user (id 2)
+         */
+        if ($user->id !== 2) {
+
+            /**
+             * Set the user_id of all posts to the system user (id 2)
+             */
+            retry(3, function () use ($user) {
+                Post::where('user_id', $user->id)
+                    ->chunkById(50, function ($posts) {
+                        DB::transaction(function () use ($posts) {
+                            DB::table('posts')
+                                ->whereIn('id', $posts->pluck('id'))
+                                ->update(['user_id' => 2]);
+                        });
                     });
-                });
+            }, 100, function ($attempt) {
+                return pow(2, $attempt - 1) * 100;
+            });
+
+            /**
+             * Set the user_id of all comments to the system user (id 2)
+             */
+            retry(3, function () use ($user) {
+                Comment::where('user_id', $user->id)
+                    ->chunkById(50, function ($comments) {
+                        DB::transaction(function () use ($comments) {
+                            DB::table('comments')
+                                ->whereIn('id', $comments->pluck('id'))
+                                ->update(['user_id' => 2]);
+                        });
+                    });
+            }, 100, function ($attempt) {
+                return pow(2, $attempt - 1) * 100;
+            });
         }
     }
 
@@ -63,27 +88,39 @@ class UserObserver {
      * Handle the User "deleted" event.
      */
     public function deleted(User $user): void {
-        // Delete reports in chunks
-        UserReport::where('reportable_type', User::class)
-            ->where('reportable_id', $user->id)
-            ->chunkById(50, function ($reports) {
-                DB::transaction(function () use ($reports) {
-                    DB::table('user_reports')
-                        ->whereIn('id', $reports->pluck('id'))
-                        ->delete();
+        /**
+         * This remove all the user reports 
+         */
+        retry(3, function () use ($user) {
+            UserReport::where('reportable_type', User::class)
+                ->where('reportable_id', $user->id)
+                ->chunkById(50, function ($reports) {
+                    DB::transaction(function () use ($reports) {
+                        DB::table('user_reports')
+                            ->whereIn('id', $reports->pluck('id'))
+                            ->delete();
+                    });
                 });
-            });
+        }, 100, function ($attempt) {
+            return pow(2, $attempt - 1) * 100;
+        });
 
-        // Delete likes in chunks
-        UserLike::where('likeable_type', User::class)
-            ->where('likeable_id', $user->id)
-            ->chunkById(50, function ($likes) {
-                DB::transaction(function () use ($likes) {
-                    DB::table('user_likes')
-                        ->whereIn('id', $likes->pluck('id'))
-                        ->delete();
+        /**
+         * This remove all the user likes 
+         */
+        retry(3, function () use ($user) {
+            UserLike::where('likeable_type', User::class)
+                ->where('likeable_id', $user->id)
+                ->chunkById(50, function ($likes) {
+                    DB::transaction(function () use ($likes) {
+                        DB::table('user_likes')
+                            ->whereIn('id', $likes->pluck('id'))
+                            ->delete();
+                    });
                 });
-            });
+        }, 100, function ($attempt) {
+            return pow(2, $attempt - 1) * 100;
+        });
     }
 
     /**
