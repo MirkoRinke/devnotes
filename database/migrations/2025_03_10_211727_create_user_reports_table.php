@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->unique(['user_id', 'reportable_id', 'reportable_type']); // A user can only report an entity once
             $table->string('type')->nullable(); // Simple type (post, user, comment)
             $table->text('reason')->nullable(); // Reason for the report
+            $table->integer('impact_value')->default(0);
         });
     }
 
