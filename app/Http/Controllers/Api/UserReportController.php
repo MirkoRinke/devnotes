@@ -66,14 +66,14 @@ class UserReportController extends Controller {
     private function checkCriticalTerms($reason) {
         $criticalTerms = [
             // EN
-            ...['scam', 'malware', 'phishing', 'porn', 'nude', 'nudity', 'abuse', 'sexual'],
+            ...['scam', 'malware', 'phishing', 'harmful', 'porn', 'nude', 'nudity', 'abuse', 'sexual'],
             // DE
-            ...['betrug', 'schadsoftware', 'phishing', 'pornografie', 'nackt', 'nacktheit', 'missbrauch', 'sexuell'],
+            ...['betrug', 'schadsoftware', 'phishing', 'schädlich', 'pornografie', 'nackt', 'nacktheit', 'missbrauch', 'sexuell'],
         ];
 
         foreach ($criticalTerms as $term) {
             if (stripos($reason, $term) !== false) {
-                return 5;
+                return 4;
             }
         }
         return 1;
