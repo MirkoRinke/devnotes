@@ -31,6 +31,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CommentApiController extends Controller {
 
@@ -202,7 +203,7 @@ class CommentApiController extends Controller {
      * @return Comment|Collection
      */
     function replaceReportedContent($comment) {
-        if ($comment instanceof Collection) {
+        if ($comment instanceof Collection || $comment instanceof LengthAwarePaginator) {
             foreach ($comment as $c) {
                 $this->applyReportModeration($c);
             }
