@@ -98,6 +98,11 @@ class CommentApiController extends Controller {
      * @return \Illuminate\Database\Eloquent\Builder|JsonResponse The configured query or error response
      */
     function setupCommentQuery(Request $request, $query, $methods) {
+        /**
+         * Modify the request to include the 'reports_count' field in the select query
+         */
+        $this->modifyRequestSelect($request);
+
         $this->loadRelations($request, $query, [
             ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
             ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
@@ -125,6 +130,32 @@ class CommentApiController extends Controller {
         return $query;
     }
 
+    /**
+     * Modify the request to include the 'reports_count' field in the select query
+     * This is used to ensure that the reports_count field is always included in the response
+     *
+     * @param Request $request The HTTP request containing query parameters
+     */
+    function modifyRequestSelect(Request $request) {
+        if ($request->has('select')) {
+            $select = $request->query('select');
+
+            if (is_string($select)) {
+                $select = explode(',', $select);
+            }
+
+            if (!in_array('id', $select)) {
+                $select[] = 'id';
+            }
+
+            if (!in_array('reports_count', $select)) {
+                $select[] = 'reports_count';
+            }
+
+            $request->query->set('select', $select);
+        }
+    }
+
 
     /**
      * Apply field selection to the query
@@ -140,10 +171,7 @@ class CommentApiController extends Controller {
             ? explode(',', $request->input('select'))
             : $request->input('select');
 
-        /**
-         * Merge the Default fields with the selected fields
-         */
-        $visibleFields = array_merge($selectedFields, ['id', 'user_id', 'parent_id', 'user', 'children', 'parent']);
+        $visibleFields = $selectedFields;
 
         /**
          * Set the visible fields on the query object
@@ -171,7 +199,6 @@ class CommentApiController extends Controller {
              */
             $query->visibleFields = $visibleFields;
         }
-
         return $query;
     }
 
@@ -191,7 +218,6 @@ class CommentApiController extends Controller {
                 $target->makeVisible($relations);
             }
         }
-        return $target;
     }
 
 
@@ -222,6 +248,14 @@ class CommentApiController extends Controller {
      */
     function applyReportModeration($comment) {
         /**
+         * Check if the comment has report attribute
+         * If not, return the comment
+         */
+        if (!isset($comment->reports_count)) {
+            return $comment;
+        }
+
+        /**
          * Check if the comment has been reported too many times
          */
         if ($comment->reports_count >= 5) {
@@ -244,7 +278,7 @@ class CommentApiController extends Controller {
          */
         if ($comment->children && $comment->children->isNotEmpty()) {
             foreach ($comment->children as $child) {
-                if ($child->parent_id !== null && $comment->reports_count >= 5) {
+                if ($comment->reports_count >= 5) {
                     $child->parent_content = "This comment has been reported too many times and is no longer available";
                 }
             }
@@ -266,13 +300,12 @@ class CommentApiController extends Controller {
             }
 
             $query = $this->replaceReportedContent($query);
-            $query = $this->checkForIncludedRelations($request, $query);
+            $this->checkForIncludedRelations($request, $query);
 
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
-            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
@@ -338,7 +371,7 @@ class CommentApiController extends Controller {
 
             $comment = $query->firstOrFail();
 
-            $comment = $this->checkForIncludedRelations($request, $comment);
+            $this->checkForIncludedRelations($request, $comment);
 
             if (isset($query->visibleFields) && $comment->children) {
                 foreach ($comment->children as $child) {
