@@ -85,15 +85,6 @@ class CommentSeeder extends Seeder {
             'depth' => 1,
         ]);
 
-        // Nested reply to reply1 (depth 2 comment)
-        Comment::create([
-            'post_id' => 5,
-            'user_id' => 9,
-            'parent_id' => $reply1->id,
-            'content' => 'Ich nutze hauptsächlich body-parser, cors und helmet für Sicherheit.',
-            'depth' => 2,
-        ]);
-
         // Main comment on Post 6 (Docker)
         Comment::create([
             'post_id' => 6,
