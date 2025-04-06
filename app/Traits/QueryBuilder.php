@@ -134,7 +134,7 @@ trait QueryBuilder {
                 // Default
                 ...['created_at'],
                 // Basic
-                ...['post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'depth'],
+                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
                 // Counts
                 ...['likes_count', 'reports_count'],
                 // Update info
@@ -146,7 +146,7 @@ trait QueryBuilder {
                 // Default
                 ...['id', 'created_at'],
                 // Basic
-                ...['post_id', 'user_id', 'content', 'parent_id', 'is_deleted', 'depth'],
+                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
                 // Counts
                 ...['likes_count', 'reports_count'],
                 // Update info
