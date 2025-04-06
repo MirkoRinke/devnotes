@@ -29,7 +29,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
-use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class CommentApiController extends Controller {
 
@@ -38,9 +39,17 @@ class CommentApiController extends Controller {
      */
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
 
-
+    /**
+     *  The ModerationService instance
+     */
     protected $moderationService;
 
+    /**
+     *  The constructor for the CommentApiController
+     *  It initializes the ModerationService
+     *
+     * @param ModerationService $moderationService
+     */
     public function __construct(ModerationService $moderationService) {
         $this->moderationService = $moderationService;
     }
@@ -71,56 +80,177 @@ class CommentApiController extends Controller {
 
 
     /**
-     * Apply the query logic for the comment resource
+     * Coordinates and manages the comment query configuration
+     * 
+     * This method serves as a central coordinator that:
+     * 1. Delegates relation loading to loadRelations()
+     * 2. Applies query building through dynamic method calls (buildQuery/buildQuerySelect)
+     * 3. Coordinates field selection processing when requested
+     * 
+     * By centralizing these operations in one method, it ensures consistent query 
+     * configuration across different endpoints (index and show) while delegating
+     * the actual implementation to specialized methods.
      *
-     * @param Request $request
-     * @param $query
-     * @param string $methods
-     * @return mixed
+     * @param Request $request The HTTP request containing query parameters
+     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
+     * @param string $methods The builder method to apply (buildQuery or buildQuerySelect)
+     * @return \Illuminate\Database\Eloquent\Builder|JsonResponse The configured query or error response
      */
-    public function applyCommentQueryLogic(Request $request, $query, $methods) {
-        $selectParam = $request->input('select');
-        $hasUserId = false;
+    function setupCommentQuery(Request $request, $query, $methods) {
+        $this->loadRelations($request, $query, [
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']]
+        ]);
 
-        if (is_string($selectParam)) {
-            $hasUserId = str_contains($selectParam, 'user_id');
-        } elseif (is_array($selectParam)) {
-            $hasUserId = in_array('user_id', $selectParam);
+        /**
+         * Apply sorting, filtering, selecting, and pagination
+         */
+        $query = $this->$methods($request, $query, 'comment');
+        if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            return $query;
         }
 
-        if (!$request->has('select') || $hasUserId) {
-            $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-                ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']]
-            ]);
+        /**
+         * Apply field selection
+         * This will be used to select the fields in the response
+         */
+        if ($request->has('select')) {
+            $query = $this->applyFieldSelection($request, $query, $methods);
+        }
 
-            $query = $this->$methods($request, $query, 'comment');
+        return $query;
+    }
 
-            if ($request->has('select')) {
-                $selectedFields = is_string($request->input('select'))
-                    ? explode(',', $request->input('select'))
-                    : $request->input('select');
 
-                $visibleFields = array_merge($selectedFields, ['id', 'user_id', 'parent_id', 'user', 'children']);
+    /**
+     * Apply field selection to the query
+     * This will be used to select the fields in the response
+     *
+     * @param Request $request The HTTP request containing query parameters
+     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
+     * @param string $methods The builder method to apply (buildQuery or buildQuerySelect)
+     * @return \Illuminate\Database\Eloquent\Builder The configured query
+     */
+    function applyFieldSelection(Request $request, $query, string $methods) {
+        $selectedFields = is_string($request->input('select'))
+            ? explode(',', $request->input('select'))
+            : $request->input('select');
 
-                foreach ($query as $comment) {
-                    if ($methods === 'buildQuery') {
-                        if ($comment->children) {
-                            foreach ($comment->children as $child) {
-                                $child->setVisible($visibleFields);
-                            }
-                        }
-                    } else if ($methods === 'buildQuerySelect') {
-                        $query->visibleFields = $visibleFields;
+        /**
+         * Merge the Default fields with the selected fields
+         */
+        $visibleFields = array_merge($selectedFields, ['id', 'user_id', 'parent_id', 'user', 'children', 'parent']);
+
+        /**
+         * Set the visible fields on the query object
+         * This will be used to select the fields in the response
+         */
+        if ($methods === 'buildQuery') {
+            foreach ($query as $comment) {
+                if ($comment->children) {
+                    foreach ($comment->children as $child) {
+                        $child->setVisible($visibleFields);
                     }
                 }
             }
-        } else {
-            $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
-            $query = $this->$methods($request, $query, 'comment');
         }
+
+        /**
+         * Store visible fields on the query object only in 'buildQuerySelect' mode (used in show method)
+         * This allows us to apply the same field selection to related child objects later
+         * We don't need this in 'buildQuery' mode (used in index method) as the selection is applied differently to collections
+         */
+        if ($methods === 'buildQuerySelect') {
+            /**
+             *  @var \Illuminate\Database\Eloquent\Builder&\stdClass $query 
+             *  Dynamically property for Laravel Query Builder
+             */
+            $query->visibleFields = $visibleFields;
+        }
+
         return $query;
     }
+
+
+    /**
+     * Check if the request has an 'include' parameter
+     * If so, make the relations visible
+     *
+     * @param Request $request The HTTP request containing query parameters
+     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
+     */
+    function checkForIncludedRelations(Request $request, $target) {
+        if ($request->has('include')) {
+            $relations = explode(',', $request->input('include'));
+
+            if (method_exists($target, 'makeVisible')) {
+                $target->makeVisible($relations);
+            }
+        }
+        return $target;
+    }
+
+
+    /**
+     * Apply report moderation to the comment
+     * If the comment has been reported too many times, set the content to "This comment has been reported too many times and is no longer available"
+     *
+     * @param Comment|Collection $comment
+     * @return Comment|Collection
+     */
+    function replaceReportedContent($comment) {
+        if ($comment instanceof Collection) {
+            foreach ($comment as $c) {
+                $this->applyReportModeration($c);
+            }
+        } else {
+            $this->applyReportModeration($comment);
+        }
+        return $comment;
+    }
+
+    /**
+     * Check if the comment has been reported too many times
+     * If so, set the content to "This comment has been reported too many times and is no longer available"
+     *
+     * @param Comment $comment
+     * @return Comment
+     */
+    function applyReportModeration($comment) {
+        /**
+         * Check if the comment has been reported too many times
+         */
+        if ($comment->reports_count >= 5) {
+            $comment->content = "This comment has been reported too many times and is no longer available";
+        }
+
+        /**
+         * Check if the comment has a parent and if the parent has been reported too many times
+         */
+        if ($comment->parent_id !== null) {
+            $parentComment = $comment->parent;
+            if ($parentComment && $parentComment->reports_count >= 5) {
+                $comment->parent_content = "This comment has been reported too many times and is no longer available";
+            }
+        }
+
+        /**
+         * Check if the comment has children and the parent has been reported too many times
+         * If so, set the parent_content in the children to "This comment has been reported too many times and is no longer available"
+         */
+        if ($comment->children && $comment->children->isNotEmpty()) {
+            foreach ($comment->children as $child) {
+                if ($child->parent_id !== null && $comment->reports_count >= 5) {
+                    $child->parent_content = "This comment has been reported too many times and is no longer available";
+                }
+            }
+        }
+        return $comment;
+    }
+
 
     /**
      * Display a listing of the resource.
@@ -129,11 +259,19 @@ class CommentApiController extends Controller {
         try {
             $query = Comment::whereNull('parent_id');
 
-            $query = $this->applyCommentQueryLogic($request, $query, 'buildQuery');
+            $query = $this->setupCommentQuery($request, $query, 'buildQuery');
+            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+                return $query;
+            }
+
+            $query = $this->replaceReportedContent($query);
+            $query = $this->checkForIncludedRelations($request, $query);
+
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
         }
     }
 
@@ -142,7 +280,6 @@ class CommentApiController extends Controller {
      */
     public function store(Request $request) {
         try {
-
             $this->authorize('create', Comment::class);
 
             $validatedData = $request->validate(
@@ -193,19 +330,22 @@ class CommentApiController extends Controller {
         try {
             $query = Comment::where('id', $id);
 
-            $query = $this->applyCommentQueryLogic($request, $query, 'buildQuerySelect');
-
+            $query = $this->setupCommentQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
 
             $comment = $query->firstOrFail();
 
+            $comment = $this->checkForIncludedRelations($request, $comment);
+
             if (isset($query->visibleFields) && $comment->children) {
                 foreach ($comment->children as $child) {
                     $child->setVisible($query->visibleFields);
                 }
             }
+
+            $comment = $this->replaceReportedContent($comment);
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
