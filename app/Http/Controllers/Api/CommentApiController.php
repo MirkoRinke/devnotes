@@ -81,125 +81,77 @@ class CommentApiController extends Controller {
 
 
     /**
-     * Coordinates and manages the comment query configuration
-     * 
-     * This method serves as a central coordinator that:
-     * 1. Delegates relation loading to loadRelations()
-     * 2. Applies query building through dynamic method calls (buildQuery/buildQuerySelect)
-     * 3. Coordinates field selection processing when requested
-     * 
-     * By centralizing these operations in one method, it ensures consistent query 
-     * configuration across different endpoints (index and show) while delegating
-     * the actual implementation to specialized methods.
-     *
-     * @param Request $request The HTTP request containing query parameters
-     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
-     * @param string $methods The builder method to apply (buildQuery or buildQuerySelect)
-     * @return \Illuminate\Database\Eloquent\Builder|JsonResponse The configured query or error response
+     * Setup the comment query
+     * This method is used to set up the query for the comments
+     * It applies sorting, filtering, selecting, and pagination
+     * It also loads the relations for the comments
      */
     function setupCommentQuery(Request $request, $query, $methods) {
-        /**
-         * Modify the request to include the 'reports_count' field in the select query
-         */
+
         $this->modifyRequestSelect($request);
+
+        $select = $this->getSelectFields($request);
 
         $this->loadRelations($request, $query, [
             ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
             ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
-            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+
+            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => $select ?? []],
             ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']]
+            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+
+            ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => $select ?? []],
+            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
+            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
         ]);
 
         /**
-         * Apply sorting, filtering, selecting, and pagination
+         * Use the query builder to apply sorting, filtering, selecting, and pagination
          */
         $query = $this->$methods($request, $query, 'comment');
         if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
             return $query;
         }
-
-        /**
-         * Apply field selection
-         * This will be used to select the fields in the response
-         */
-        if ($request->has('select')) {
-            $query = $this->applyFieldSelection($request, $query, $methods);
-        }
-
         return $query;
     }
 
+
     /**
-     * Modify the request to include the 'reports_count' field in the select query
-     * This is used to ensure that the reports_count field is always included in the response
+     * Modify the request select parameter
+     * This method is used to modify the select parameter in the request
+     * It adds requiredFields to the select parameter if they are not already present
      *
      * @param Request $request The HTTP request containing query parameters
      */
     function modifyRequestSelect(Request $request) {
         if ($request->has('select')) {
-            $select = $request->query('select');
 
-            if (is_string($select)) {
-                $select = explode(',', $select);
+            $select = $this->getSelectFields($request);
+
+            $requiredFields = ['id', 'reports_count'];
+
+            foreach ($requiredFields as $field) {
+                if (!in_array($field, $select)) {
+                    $select[] = $field;
+                }
             }
-
-            if (!in_array('id', $select)) {
-                $select[] = 'id';
-            }
-
-            if (!in_array('reports_count', $select)) {
-                $select[] = 'reports_count';
-            }
-
             $request->query->set('select', $select);
         }
     }
 
 
     /**
-     * Apply field selection to the query
-     * This will be used to select the fields in the response
-     *
-     * @param Request $request The HTTP request containing query parameters
-     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
-     * @param string $methods The builder method to apply (buildQuery or buildQuerySelect)
-     * @return \Illuminate\Database\Eloquent\Builder The configured query
+     * Get select fields from request and parse them into an array
+     * 
+     * @param Request $request
+     * @return array|null
      */
-    function applyFieldSelection(Request $request, $query, string $methods) {
-        $selectedFields = is_string($request->input('select'))
-            ? explode(',', $request->input('select'))
-            : $request->input('select');
-
-        $visibleFields = $selectedFields;
-
-        /**
-         * Set the visible fields on the query object
-         * This will be used to select the fields in the response
-         */
-        if ($methods === 'buildQuery') {
-            foreach ($query as $comment) {
-                if ($comment->children) {
-                    foreach ($comment->children as $child) {
-                        $child->setVisible($visibleFields);
-                    }
-                }
-            }
+    protected function getSelectFields(Request $request) {
+        $select = $request->query('select');
+        if (is_string($select)) {
+            return explode(',', $select);
         }
-
-        /**
-         * Store visible fields on the query object only in 'buildQuerySelect' mode (used in show method)
-         * This allows us to apply the same field selection to related child objects later
-         * We don't need this in 'buildQuery' mode (used in index method) as the selection is applied differently to collections
-         */
-        if ($methods === 'buildQuerySelect') {
-            /**
-             *  @var \Illuminate\Database\Eloquent\Builder&\stdClass $query 
-             *  Dynamically property for Laravel Query Builder
-             */
-            $query->visibleFields = $visibleFields;
-        }
-        return $query;
+        return $select;
     }
 
 
@@ -217,16 +169,31 @@ class CommentApiController extends Controller {
             if (method_exists($target, 'makeVisible')) {
                 $target->makeVisible($relations);
             }
+
+            $select = $this->getSelectFields($request);
+
+            if (in_array('children', $relations) && isset($target->children)) {
+                foreach ($target->children as $child) {
+                    if (method_exists($child, 'setVisible')) {
+                        $child->setVisible($select ?? []);
+                    }
+                    if (method_exists($child, 'makeVisible')) {
+                        $child->makeVisible($relations);
+                    }
+                }
+            }
         }
+        return $target;
     }
 
 
+
     /**
-     * Apply report moderation to the comment
-     * If the comment has been reported too many times, set the content to "This comment has been reported too many times and is no longer available"
+     * Replace the content of the comment with a message if it has been reported too many times
+     * If the comment has children, replace the parent_content in the children with a message
      *
-     * @param Comment|Collection $comment
-     * @return Comment|Collection
+     * @param Comment|Collection|LengthAwarePaginator $comment
+     * @return Comment|Collection|LengthAwarePaginator
      */
     function replaceReportedContent($comment) {
         if ($comment instanceof Collection || $comment instanceof LengthAwarePaginator) {
@@ -240,8 +207,9 @@ class CommentApiController extends Controller {
     }
 
     /**
-     * Check if the comment has been reported too many times
-     * If so, set the content to "This comment has been reported too many times and is no longer available"
+     * Apply report moderation to a comment
+     * This method checks if the comment has been reported too many times
+     * If so, it replaces the content with a message
      *
      * @param Comment $comment
      * @return Comment
@@ -299,9 +267,8 @@ class CommentApiController extends Controller {
                 return $query;
             }
 
+            $query = $this->checkForIncludedRelations($request, $query);
             $query = $this->replaceReportedContent($query);
-            $this->checkForIncludedRelations($request, $query);
-
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -371,14 +338,7 @@ class CommentApiController extends Controller {
 
             $comment = $query->firstOrFail();
 
-            $this->checkForIncludedRelations($request, $comment);
-
-            if (isset($query->visibleFields) && $comment->children) {
-                foreach ($comment->children as $child) {
-                    $child->setVisible($query->visibleFields);
-                }
-            }
-
+            $comment = $this->checkForIncludedRelations($request, $comment);
             $comment = $this->replaceReportedContent($comment);
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
