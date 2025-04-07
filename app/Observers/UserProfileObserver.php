@@ -3,7 +3,7 @@
 namespace App\Observers;
 
 use App\Models\UserProfile;
-use App\Services\ModerationService;
+use App\Services\UserModerationService;
 
 class UserProfileObserver {
     /**
@@ -25,7 +25,7 @@ class UserProfileObserver {
             ]);
 
             // Check name for partially forbidden words
-            app(ModerationService::class)->checkAndReportUsername($profile->user);
+            app(UserModerationService::class)->checkAndReportUsername($profile->user);
         }
     }
 
