@@ -8,7 +8,7 @@ use App\Models\UserLike;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\UserReport;
-use App\Services\ModerationService;
+use App\Services\UserModerationService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -30,7 +30,7 @@ class UserObserver {
         ]);
 
         // Check name for partially forbidden words
-        app(ModerationService::class)->checkAndReportUsername($user);
+        app(UserModerationService::class)->checkAndReportUsername($user);
     }
 
     /**
@@ -39,7 +39,7 @@ class UserObserver {
     public function updated(User $user): void {
         // Check if name was changed (display_name is handled by UserProfileObserver)
         if ($user->wasChanged('name')) {
-            app(ModerationService::class)->checkAndReportUsername($user);
+            app(UserModerationService::class)->checkAndReportUsername($user);
         }
     }
 
