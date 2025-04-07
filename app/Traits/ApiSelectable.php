@@ -48,4 +48,43 @@ trait ApiSelectable {
         }
         return $query;
     }
+
+
+    /**
+     * Modify the request select parameter
+     * This method is used to modify the select parameter in the request
+     * It adds requiredFields to the select parameter if they are not already present
+     *
+     * @param Request $request The HTTP request containing query parameters
+     */
+    function modifyRequestSelect(Request $request) {
+        if ($request->has('select')) {
+
+            $select = $this->getSelectFields($request);
+
+            $requiredFields = ['id', 'reports_count'];
+
+            foreach ($requiredFields as $field) {
+                if (!in_array($field, $select)) {
+                    $select[] = $field;
+                }
+            }
+            $request->query->set('select', $select);
+        }
+    }
+
+
+    /**
+     * Get select fields from request and parse them into an array
+     * 
+     * @param Request $request
+     * @return array|null
+     */
+    protected function getSelectFields(Request $request) {
+        $select = $request->query('select');
+        if (is_string($select)) {
+            return explode(',', $select);
+        }
+        return $select;
+    }
 }
