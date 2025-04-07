@@ -19,6 +19,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 4,
             'parent_id' => null,
             'content' => 'Danke für diesen hilfreichen Beitrag zu Svelte Stores!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -28,6 +29,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 7,
             'parent_id' => $comment1->id,
             'content' => 'Freut mich, dass es dir gefällt! Gibt es noch andere Themen zu Svelte, die dich interessieren?',
+            'parent_content' => $comment1->content,
             'depth' => 1,
         ]);
 
@@ -37,6 +39,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 9,
             'parent_id' => null,
             'content' => 'Eloquent ist wirklich eines der besten ORMs für PHP!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -46,6 +49,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 4,
             'parent_id' => $comment2->id,
             'content' => 'Absolut, ich nutze es in all meinen Laravel-Projekten.',
+            'parent_content' => $comment2->content,
             'depth' => 1,
         ]);
 
@@ -55,6 +59,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 7,
             'parent_id' => $comment2->id,
             'content' => 'Gibt es Verbesserungsvorschläge für diesen Beitrag?',
+            'parent_content' => $comment2->content,
             'depth' => 1,
         ]);
 
@@ -64,6 +69,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 4,
             'parent_id' => null,
             'content' => 'Die Composition API hat Vue wirklich auf ein neues Level gebracht!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -73,6 +79,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 9,
             'parent_id' => null,
             'content' => 'Ich arbeite täglich mit Express.js, super Framework!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -82,6 +89,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 4,
             'parent_id' => $comment3->id,
             'content' => 'Was sind deine Lieblings-Middleware-Pakete für Express?',
+            'parent_content' => $comment3->content,
             'depth' => 1,
         ]);
 
@@ -91,6 +99,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 7,
             'parent_id' => null,
             'content' => 'Docker hat meine Entwicklungsumgebung revolutioniert!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -100,6 +109,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 7,
             'parent_id' => null,
             'content' => 'Python ist meine bevorzugte Sprache für Data Science. Pandas ist unverzichtbar!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -109,6 +119,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 9,
             'parent_id' => $comment4->id,
             'content' => 'Stimme zu! Hast du schon NumPy und Matplotlib ausprobiert?',
+            'parent_content' => $comment4->content,
             'depth' => 1,
         ]);
 
@@ -118,6 +129,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 4,
             'parent_id' => null,
             'content' => 'Content deleted (Seeder)',
+            'parent_content' => null,
             'is_deleted' => true,
             'depth' => 0,
         ]);
@@ -128,6 +140,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 7,
             'parent_id' => null,
             'content' => 'GraphQL ist besonders für Frontend-Entwickler ein Segen!',
+            'parent_content' => null,
             'depth' => 0,
         ]);
 
@@ -137,6 +150,7 @@ class CommentSeeder extends Seeder {
             'user_id' => 9,
             'parent_id' => null,
             'content' => 'Functional Components sind viel übersichtlicher als Class Components.',
+            'parent_content' => null,
             'depth' => 0,
         ]);
     }
