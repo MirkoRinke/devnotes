@@ -13,6 +13,7 @@ use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, [
 use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
 use App\Traits\ApiSelectable; // example $this->select($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader;  // examples:
 // - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
@@ -22,6 +23,7 @@ use App\Traits\RelationLoader;  // examples:
 // ])
 
 use App\Services\ModerationService;
+use App\Services\CommentModerationService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -29,30 +31,31 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class CommentApiController extends Controller {
 
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
+    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude;
 
     /**
-     *  The ModerationService instance
+     *  The Service used in the controller
      */
     protected $moderationService;
+    protected $commentModerationService;
 
     /**
      *  The constructor for the CommentApiController
      *  It initializes the ModerationService
+     *  It also initializes the CommentModerationService
      *
      * @param ModerationService $moderationService
+     * @param CommentModerationService $commentModerationService
      */
-    public function __construct(ModerationService $moderationService) {
+    public function __construct(ModerationService $moderationService, CommentModerationService $commentModerationService) {
         $this->moderationService = $moderationService;
+        $this->commentModerationService = $commentModerationService;
     }
 
     /**
@@ -117,145 +120,6 @@ class CommentApiController extends Controller {
 
 
     /**
-     * Modify the request select parameter
-     * This method is used to modify the select parameter in the request
-     * It adds requiredFields to the select parameter if they are not already present
-     *
-     * @param Request $request The HTTP request containing query parameters
-     */
-    function modifyRequestSelect(Request $request) {
-        if ($request->has('select')) {
-
-            $select = $this->getSelectFields($request);
-
-            $requiredFields = ['id', 'reports_count'];
-
-            foreach ($requiredFields as $field) {
-                if (!in_array($field, $select)) {
-                    $select[] = $field;
-                }
-            }
-            $request->query->set('select', $select);
-        }
-    }
-
-
-    /**
-     * Get select fields from request and parse them into an array
-     * 
-     * @param Request $request
-     * @return array|null
-     */
-    protected function getSelectFields(Request $request) {
-        $select = $request->query('select');
-        if (is_string($select)) {
-            return explode(',', $select);
-        }
-        return $select;
-    }
-
-
-    /**
-     * Check if the request has an 'include' parameter
-     * If so, make the relations visible
-     *
-     * @param Request $request The HTTP request containing query parameters
-     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
-     */
-    function checkForIncludedRelations(Request $request, $target) {
-        if ($request->has('include')) {
-            $relations = explode(',', $request->input('include'));
-
-            if (method_exists($target, 'makeVisible')) {
-                $target->makeVisible($relations);
-            }
-
-            $select = $this->getSelectFields($request);
-
-            if (in_array('children', $relations) && isset($target->children)) {
-                foreach ($target->children as $child) {
-                    if (method_exists($child, 'setVisible')) {
-                        $child->setVisible($select ?? []);
-                    }
-                    if (method_exists($child, 'makeVisible')) {
-                        $child->makeVisible($relations);
-                    }
-                }
-            }
-        }
-        return $target;
-    }
-
-
-
-    /**
-     * Replace the content of the comment with a message if it has been reported too many times
-     * If the comment has children, replace the parent_content in the children with a message
-     *
-     * @param Comment|Collection|LengthAwarePaginator $comment
-     * @return Comment|Collection|LengthAwarePaginator
-     */
-    function replaceReportedContent($comment) {
-        if ($comment instanceof Collection || $comment instanceof LengthAwarePaginator) {
-            foreach ($comment as $c) {
-                $this->applyReportModeration($c);
-            }
-        } else {
-            $this->applyReportModeration($comment);
-        }
-        return $comment;
-    }
-
-    /**
-     * Apply report moderation to a comment
-     * This method checks if the comment has been reported too many times
-     * If so, it replaces the content with a message
-     *
-     * @param Comment $comment
-     * @return Comment
-     */
-    function applyReportModeration($comment) {
-        /**
-         * Check if the comment has report attribute
-         * If not, return the comment
-         */
-        if (!isset($comment->reports_count)) {
-            return $comment;
-        }
-
-        /**
-         * Check if the comment has been reported too many times
-         */
-        if ($comment->reports_count >= 5) {
-            $comment->content = "This comment has been reported too many times and is no longer available";
-        }
-
-        /**
-         * Check if the comment has a parent and if the parent has been reported too many times
-         */
-        if ($comment->parent_id !== null) {
-            $parentComment = $comment->parent;
-            if ($parentComment && $parentComment->reports_count >= 5) {
-                $comment->parent_content = "This comment has been reported too many times and is no longer available";
-            }
-        }
-
-        /**
-         * Check if the comment has children and the parent has been reported too many times
-         * If so, set the parent_content in the children to "This comment has been reported too many times and is no longer available"
-         */
-        if ($comment->children && $comment->children->isNotEmpty()) {
-            foreach ($comment->children as $child) {
-                if ($comment->reports_count >= 5) {
-                    $child->parent_content = "This comment has been reported too many times and is no longer available";
-                }
-            }
-        }
-        return $comment;
-    }
-
-
-    /**
      * Display a listing of the resource.
      */
     public function index(Request $request) {
@@ -268,7 +132,7 @@ class CommentApiController extends Controller {
             }
 
             $query = $this->checkForIncludedRelations($request, $query);
-            $query = $this->replaceReportedContent($query);
+            $query = $this->commentModerationService->replaceReportedContent($query);
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -339,7 +203,7 @@ class CommentApiController extends Controller {
             $comment = $query->firstOrFail();
 
             $comment = $this->checkForIncludedRelations($request, $comment);
-            $comment = $this->replaceReportedContent($comment);
+            $comment = $this->commentModerationService->replaceReportedContent($comment);
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
