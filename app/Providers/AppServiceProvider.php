@@ -10,7 +10,10 @@ use App\Observers\CommentObserver;
 use App\Observers\PostObserver;
 use App\Observers\UserObserver;
 use App\Observers\UserProfileObserver;
+use App\Services\CommentModerationService;
+use App\Services\ExternalSourcePreviewsService;
 use App\Services\ModerationService;
+use App\Services\UserModerationService;
 use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Cache\RateLimiting\Limit;
@@ -27,33 +30,19 @@ class AppServiceProvider extends ServiceProvider {
      * Register any application services.
      */
     public function register(): void {
-        // Register the ModerationService as a singleton
+        $this->app->singleton(UserModerationService::class);
         $this->app->singleton(ModerationService::class);
+        $this->app->singleton(CommentModerationService::class);
+        $this->app->singleton(ExternalSourcePreviewsService::class);
     }
 
     /**
      * Bootstrap any application services.
      */
     public function boot(): void {
-
-        /**
-         * Register the UserObserver to create a user profile when a user is created.
-         */
         User::observe(UserObserver::class);
-
-        /**
-         * Register the UserProfileObserver to update the user's display name when the user profile is updated.
-         */
         Post::observe(PostObserver::class);
-
-        /**
-         * Register the UserProfileObserver to update the user's display name when the user profile is updated.
-         */
         Comment::observe(CommentObserver::class);
-
-        /**
-         * Register the UserProfileObserver to update the user's display name when the user profile is updated.
-         */
         UserProfile::observe(UserProfileObserver::class);
 
         /**
