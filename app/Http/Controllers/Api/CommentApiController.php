@@ -89,7 +89,7 @@ class CommentApiController extends Controller {
      * It applies sorting, filtering, selecting, and pagination
      * It also loads the relations for the comments
      */
-    function setupCommentQuery(Request $request, $query, $methods) {
+    protected function setupCommentQuery(Request $request, $query, $methods) {
 
         $this->modifyRequestSelect($request, ['id', 'reports_count']);
 
@@ -107,6 +107,7 @@ class CommentApiController extends Controller {
             ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
             ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
         ]);
+
 
         /**
          * Use the query builder to apply sorting, filtering, selecting, and pagination
@@ -126,6 +127,8 @@ class CommentApiController extends Controller {
         try {
             $query = Comment::whereNull('parent_id');
 
+            $originalSelectFields = $this->getSelectFields($request);
+
             $query = $this->setupCommentQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
@@ -133,6 +136,8 @@ class CommentApiController extends Controller {
 
             $query = $this->checkForIncludedRelations($request, $query);
             $query = $this->commentModerationService->replaceReportedContent($query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -195,6 +200,8 @@ class CommentApiController extends Controller {
         try {
             $query = Comment::where('id', $id);
 
+            $originalSelectFields = $this->getSelectFields($request);
+
             $query = $this->setupCommentQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
@@ -204,6 +211,8 @@ class CommentApiController extends Controller {
 
             $comment = $this->checkForIncludedRelations($request, $comment);
             $comment = $this->commentModerationService->replaceReportedContent($comment);
+
+            $comment = $this->controlVisibleFields($request, $originalSelectFields, $comment);
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
