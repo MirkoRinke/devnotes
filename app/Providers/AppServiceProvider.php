@@ -11,7 +11,7 @@ use App\Observers\PostObserver;
 use App\Observers\UserObserver;
 use App\Observers\UserProfileObserver;
 use App\Services\CommentModerationService;
-use App\Services\ExternalSourcePreviewsService;
+use App\Services\externalSourceService;
 use App\Services\ModerationService;
 use App\Services\UserModerationService;
 use Illuminate\Support\ServiceProvider;
@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider {
         $this->app->singleton(UserModerationService::class);
         $this->app->singleton(ModerationService::class);
         $this->app->singleton(CommentModerationService::class);
-        $this->app->singleton(ExternalSourcePreviewsService::class);
+        $this->app->singleton(externalSourceService::class);
     }
 
     /**
