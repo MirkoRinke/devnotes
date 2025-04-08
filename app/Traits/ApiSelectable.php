@@ -140,9 +140,9 @@ trait ApiSelectable {
                 $comment->makeHidden($field);
                 if (isset($comment->children) && $comment->children) {
                     foreach ($comment->children as $child) {
-                        if (method_exists($child, 'setVisible')) {
+                        if (method_exists($child, 'makeHidden') && method_exists($child, 'setVisible')) {
                             $child->makeHidden($field);
-                            $child->parent->makeHidden($field);
+                            $child->parent->setVisible($visibleFields ?? []);
                         }
                         if (isset($child->children) && $child->children) {
                             $this->applyVisibleFields($request, $originalSelectFields, $child);
