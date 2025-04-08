@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 trait ApiSelectable {
     /**
@@ -57,7 +59,7 @@ trait ApiSelectable {
      *
      * @param Request $request The HTTP request containing query parameters
      */
-    function modifyRequestSelect(Request $request, $requiredFields = []) {
+    public function modifyRequestSelect(Request $request, $requiredFields = []): void {
         if ($request->has('select')) {
             $select = $this->getSelectFields($request);
 
@@ -77,11 +79,79 @@ trait ApiSelectable {
      * @param Request $request
      * @return array|null
      */
-    protected function getSelectFields(Request $request) {
-        $select = $request->query('select');
-        if (is_string($select)) {
-            return explode(',', $select);
+    public function getSelectFields(Request $request): array|null {
+        if ($request->has('select')) {
+            $select = $request->query('select');
+            if (is_string($select)) {
+                return explode(',', $select);
+            }
+            return $select;
         }
-        return $select;
+        return null;
+    }
+
+
+    /**
+     * Control visible fields across models in response
+     * 
+     * This method handles the visibility of fields in both single models and collections.
+     * It ensures only fields that were originally requested are visible in the final 
+     * response, reverting any fields that were added for internal processing purposes.
+     * 
+     * @param Request $request The HTTP request with select parameter
+     * @param array|null $originalSelectFields The original select fields before modification
+     * @param mixed $comment The model or collection to process
+     * @return mixed The processed model or collection with controlled visibility
+     */
+    public function controlVisibleFields(Request $request, $originalSelectFields, $comment): mixed {
+        if ($comment instanceof Collection || $comment instanceof LengthAwarePaginator) {
+            foreach ($comment as $c) {
+                $this->applyVisibleFields($request, $originalSelectFields, $c);
+            }
+        } else {
+            $this->applyVisibleFields($request, $originalSelectFields, $comment);
+        }
+        return $comment;
+    }
+
+
+    /**
+     * Apply field visibility rules to a single model and its relations
+     * 
+     * This method compares the current select fields with the original requested fields
+     * to determine which fields were added for internal processing. It then hides these
+     * additional fields in the main model and recursively in all children and their
+     * relationships to maintain consistent response structure.
+     * 
+     * The method ensures the ID field is always preserved regardless of selection.
+     * 
+     * @param Request $request The HTTP request containing select parameter
+     * @param array|null $originalSelectFields The original select fields before modification
+     * @param mixed $comment The model to process
+     * @return mixed The processed model with updated field visibility
+     */
+    protected function applyVisibleFields(Request $request, $originalSelectFields, $comment): mixed {
+        if ($request->has('select')) {
+            $select = $this->getSelectFields($request);
+            $visibleFields = array_merge($originalSelectFields, ['id']);
+            $fieldsOnlyInSelect = array_diff($select, $visibleFields);
+
+            foreach ($fieldsOnlyInSelect as $field) {
+                $comment->makeHidden($field);
+                if (isset($comment->children) && $comment->children) {
+                    foreach ($comment->children as $child) {
+                        if (method_exists($child, 'setVisible')) {
+                            $child->makeHidden($field);
+                            $child->parent->makeHidden($field);
+                        }
+                        if (isset($child->children) && $child->children) {
+                            $this->applyVisibleFields($request, $originalSelectFields, $child);
+                        }
+                    }
+                }
+            }
+            return $comment;
+        }
+        return $comment;
     }
 }
