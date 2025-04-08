@@ -22,7 +22,7 @@ use App\Traits\RelationLoader; // examples:
 // ])
 
 use App\Services\ModerationService;
-use App\Services\ExternalSourcePreviewsService;
+use App\Services\ExternalSourceService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -40,11 +40,11 @@ class PostApiController extends Controller {
 
 
     protected $moderationService;
-    protected $externalSourcePreviewsService;
+    protected $externalSourceService;
 
-    public function __construct(ModerationService $moderationService, ExternalSourcePreviewsService $externalSourcePreviewsService) {
+    public function __construct(ModerationService $moderationService, ExternalSourceService $externalSourceService) {
         $this->moderationService = $moderationService;
-        $this->externalSourcePreviewsService = $externalSourcePreviewsService;
+        $this->externalSourceService = $externalSourceService;
     }
 
     /**
@@ -124,31 +124,6 @@ class PostApiController extends Controller {
         return $query;
     }
 
-    /**
-     * Check if external images should be displayed for a user
-     * 
-     * @param mixed $user The user to check permissions for
-     * @return bool True if images should be displayed, false otherwise
-     */
-    private function shouldDisplayExternalImages($request, $user) {
-        // If no user is logged in 
-        if (!$user) {
-            return $request->header('X-Show-External-Images') === 'true';
-        }
-
-        // Check permanent setting
-        if ($user->profile->auto_load_external_images) {
-            return true;
-        }
-
-        // Check temporary setting
-        if ($user->profile->external_images_temp_until && now()->lt($user->profile->external_images_temp_until)) {
-            return true;
-        }
-
-        return false;
-    }
-
 
     /**
      * Hide fields based on user role
@@ -163,7 +138,7 @@ class PostApiController extends Controller {
             $query->makeHidden('moderation_info');
         }
 
-        if (!$this->shouldDisplayExternalImages($request, $user)) {
+        if (!$this->externalSourceService->shouldDisplayExternalImages($request, $user)) {
             $query->makeHidden('images');
         }
     }
@@ -216,7 +191,7 @@ class PostApiController extends Controller {
 
             // Create the external_source_previews field
             if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
-                $validatedData['external_source_previews'] = $this->externalSourcePreviewsService->generatePreviews([
+                $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
                     'images' => $validatedData['images'] ?? [],
                     'resources' => $validatedData['resources'] ?? []
                 ]);
@@ -287,7 +262,7 @@ class PostApiController extends Controller {
 
             // Create the external_source_previews field
             if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
-                $validatedData['external_source_previews'] = $this->externalSourcePreviewsService->generatePreviews([
+                $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
                     'images' => $validatedData['images'] ?? $post->images ?? [],
                     'resources' => $validatedData['resources'] ?? $post->resources ?? []
                 ]);
