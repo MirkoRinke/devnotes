@@ -9,6 +9,33 @@ use Illuminate\Http\Request;
 trait ApiInclude {
 
     /**
+     * Get relation key fields from request
+     * 
+     * This method retrieves the relation key fields based on the 'include' parameter
+     * in the request. It maps the relations to their corresponding keys using the 
+     * provided relationToKeyMap.
+     *
+     * @param Request $request The HTTP request containing the 'include' parameter
+     * @param array $relationToKeyMap An associative array mapping relations to keys
+     * @return array An array of required keys based on the included relations
+     */
+    protected function getRelationKeyFields(Request $request, array $relationToKeyMap = []) {
+        if ($request->has('include')) {
+            $relations = explode(',', $request->input('include'));
+            $requiredKeys = [];
+
+            foreach ($relations as $relation) {
+                if (array_key_exists($relation, $relationToKeyMap)) {
+                    $requiredKeys[] = $relationToKeyMap[$relation];
+                }
+            }
+            return $requiredKeys;
+        }
+        return [];
+    }
+
+
+    /**
      * Make relations visible based on 'include' parameter in request
      * 
      * This method processes the 'include' parameter to make specified relations 
@@ -34,6 +61,7 @@ trait ApiInclude {
         }
         return $target;
     }
+
 
     /**
      * Apply relation visibility settings to a single model
