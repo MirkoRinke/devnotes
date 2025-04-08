@@ -30,6 +30,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class PostApiController extends Controller {
@@ -125,22 +127,31 @@ class PostApiController extends Controller {
     }
 
 
+
     /**
-     * Hide fields based on user role
+     * Manage field visibility.
      * 
-     * @param Request $request The HTTP request containing the bearer token
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
+     * @param Request $request
+     * @param mixed $data
+     * @return mixed
      */
-    public function hiddenFields(Request $request, $query) {
+    public function managedFieldVisibility(Request $request, $data): mixed {
         $user = $this->getUserFromToken($request);
 
         if (!$user || ($user->role !== 'admin' && $user->role !== 'moderator')) {
-            $query->makeHidden('moderation_info');
+            $data->makeHidden('moderation_info');
         }
 
         if (!$this->externalSourceService->shouldDisplayExternalImages($request, $user)) {
-            $query->makeHidden('images');
+            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+                foreach ($data as $post) {
+                    $post->images = [];
+                }
+            } else if ($data instanceof Post) {
+                $data->images = [];
+            }
         }
+        return $data;
     }
 
 
@@ -169,7 +180,7 @@ class PostApiController extends Controller {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
 
-            $this->hiddenFields($request, $query);
+            $query = $this->managedFieldVisibility($request, $query);
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -226,7 +237,7 @@ class PostApiController extends Controller {
 
             $post = $query->firstOrFail();
 
-            $this->hiddenFields($request, $post);
+            $post = $this->managedFieldVisibility($request, $post);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
@@ -299,7 +310,7 @@ class PostApiController extends Controller {
 
             $post->update($validatedData);
 
-            $this->hiddenFields($request, $post);
+            $post = $this->managedFieldVisibility($request, $post);
 
             return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
