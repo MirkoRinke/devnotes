@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-class ExternalSourcePreviewsService {
+class ExternalSourceService {
 
     /**
      * Generates preview data for external sources.
@@ -28,5 +28,30 @@ class ExternalSourcePreviewsService {
         }
 
         return !empty($previewData) ? $previewData : null;
+    }
+
+    /**
+     * Check if external images should be displayed for a user
+     * 
+     * @param mixed $user The user to check permissions for
+     * @return bool True if images should be displayed, false otherwise
+     */
+    public function shouldDisplayExternalImages($request, $user) {
+        // If no user is logged in 
+        if (!$user) {
+            return $request->header('X-Show-External-Images') === 'true';
+        }
+
+        // Check permanent setting
+        if ($user->profile->auto_load_external_images) {
+            return true;
+        }
+
+        // Check temporary setting
+        if ($user->profile->external_images_temp_until && now()->lt($user->profile->external_images_temp_until)) {
+            return true;
+        }
+
+        return false;
     }
 }
