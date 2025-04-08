@@ -20,7 +20,7 @@ class CommentModerationService {
             foreach ($comment as $c) {
                 $this->applyReportModeration($c);
             }
-        } else {
+        } else if ($comment instanceof Comment) {
             $this->applyReportModeration($comment);
         }
         return $comment;
