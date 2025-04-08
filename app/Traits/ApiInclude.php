@@ -2,37 +2,66 @@
 
 namespace App\Traits;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 trait ApiInclude {
+
     /**
-     * Check if the request has an 'include' parameter
-     * If so, make the relations visible
+     * Make relations visible based on 'include' parameter in request
+     * 
+     * This method processes the 'include' parameter to make specified relations 
+     * visible in the model or collection. It supports both single models and 
+     * Collections/LengthAwarePaginator, applying visibility rules recursively.
      *
-     * @param Request $request The HTTP request containing query parameters
-     * @param \Illuminate\Database\Eloquent\Builder $query The base query to configure
+     * @param Request $request The HTTP request containing the 'include' parameter
+     * @param mixed $target The model, collection or lengthAwarePaginator to process
+     * @return mixed The processed target with visible relations
      */
-    function checkForIncludedRelations(Request $request, $target) {
+    public function checkForIncludedRelations(Request $request, $target) {
         if ($request->has('include')) {
             $relations = explode(',', $request->input('include'));
-
-            if (method_exists($target, 'makeVisible')) {
-                $target->makeVisible($relations);
-            }
-
             $select = $this->getSelectFields($request);
 
-            if (in_array('children', $relations) && isset($target->children)) {
-                foreach ($target->children as $child) {
-                    if (method_exists($child, 'setVisible')) {
-                        $child->setVisible($select ?? []);
-                    }
-                    if (method_exists($child, 'makeVisible')) {
-                        $child->makeVisible($relations);
-                    }
+            if ($target instanceof Collection || $target instanceof LengthAwarePaginator) {
+                foreach ($target as $item) {
+                    $this->applyRelationVisibility($item, $relations, $select);
+                }
+                return $target;
+            } else
+                return $this->applyRelationVisibility($target, $relations, $select);
+        }
+        return $target;
+    }
+
+    /**
+     * Apply relation visibility settings to a single model
+     * 
+     * This method handles the visibility settings for a model and its relations.
+     * It makes specified relations visible and processes child relations recursively,
+     * applying select fields and relation visibility to each level.
+     *
+     * @param mixed $model The model to process
+     * @param array $relations Array of relation names to make visible
+     * @param array|null $select Array of fields to make visible in child models
+     * @return mixed The processed model with updated visibility settings
+     */
+    protected function applyRelationVisibility($model, array $relations, $select) {
+        $model->makeVisible($relations);
+
+        if (in_array('children', $relations) && isset($model->children) && $model->children) {
+            foreach ($model->children as $child) {
+
+                $child->setVisible($select ?? []);
+
+                $child->makeVisible($relations);
+
+                if (isset($child->children) && $child->children) {
+                    $this->applyRelationVisibility($child, $relations, $select);
                 }
             }
         }
-        return $target;
+        return $model;
     }
 }
