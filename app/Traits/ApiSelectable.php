@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Comment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -108,7 +109,7 @@ trait ApiSelectable {
             foreach ($comment as $c) {
                 $this->applyVisibleFields($request, $originalSelectFields, $c);
             }
-        } else {
+        } else if ($comment instanceof Comment) {
             $this->applyVisibleFields($request, $originalSelectFields, $comment);
         }
         return $comment;
