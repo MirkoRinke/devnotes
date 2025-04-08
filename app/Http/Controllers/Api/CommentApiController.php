@@ -91,7 +91,9 @@ class CommentApiController extends Controller {
      */
     protected function setupCommentQuery(Request $request, $query, $methods) {
 
-        $this->modifyRequestSelect($request, ['id', 'reports_count']);
+        $relationKeyFields = $this->getRelationKeyFields($request, ['children' => 'id', 'parent' => 'parent_id',  'user' => 'user_id']);
+
+        $this->modifyRequestSelect($request, [...['id', 'reports_count'], ...$relationKeyFields]);
 
         $select = $this->getSelectFields($request);
 
