@@ -57,12 +57,9 @@ trait ApiSelectable {
      *
      * @param Request $request The HTTP request containing query parameters
      */
-    function modifyRequestSelect(Request $request) {
+    function modifyRequestSelect(Request $request, $requiredFields = []) {
         if ($request->has('select')) {
-
             $select = $this->getSelectFields($request);
-
-            $requiredFields = ['id', 'reports_count'];
 
             foreach ($requiredFields as $field) {
                 if (!in_array($field, $select)) {
