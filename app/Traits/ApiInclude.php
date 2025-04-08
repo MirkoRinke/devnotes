@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Comment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ trait ApiInclude {
                     $this->applyRelationVisibility($item, $relations, $select);
                 }
                 return $target;
-            } else
+            } else if ($target instanceof Comment)
                 return $this->applyRelationVisibility($target, $relations, $select);
         }
         return $target;
