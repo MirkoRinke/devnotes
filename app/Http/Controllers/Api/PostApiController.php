@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Post;
 
+use App\Traits\AuthHelper; // example $user = $this->getUserFromToken($request);
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
@@ -20,6 +21,7 @@ use App\Traits\RelationLoader; // examples:
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
+use App\Traits\PostFieldManager;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
@@ -30,20 +32,23 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class PostApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader;
+    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader, AuthHelper, PostFieldManager;
 
 
+    /**
+     * The services used in the controller
+     */
     protected $moderationService;
     protected $externalSourceService;
 
+    /**
+     * Constructor to initialize the services
+     */
     public function __construct(ModerationService $moderationService, ExternalSourceService $externalSourceService) {
         $this->moderationService = $moderationService;
         $this->externalSourceService = $externalSourceService;
@@ -84,77 +89,6 @@ class PostApiController extends Controller {
         'status' => 'sometimes|required|in:draft,published,archived',
     ];
 
-
-    /**
-     * 
-     * Extract user from the authorization bearer token
-     * 
-     * @param Request $request The HTTP request containing the bearer token
-     * @return mixed|null Returns the authenticated user model instance if 
-     *                    a valid token exists, null otherwise
-     */
-    private function getUserFromToken(Request $request) {
-        $bearerToken = $request->bearerToken();
-
-        if (!$bearerToken) {
-            return null;
-        }
-
-        $token = PersonalAccessToken::findToken($bearerToken);
-
-        return $token ? $token->tokenable->load('profile') : null;
-    }
-
-    /**
-     * Apply access filters to query based on user role
-     * 
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param Request $request
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    private function applyAccessFilters(Request $request, $query) {
-        $user = $this->getUserFromToken($request);
-        if (!$user) {
-            $query->where('status', 'published')->where('reports_count', '<', 5);
-        } elseif ($user->role !== 'admin' && $user->role !== 'moderator') {
-            $query->where(function ($subQuery) use ($user) {
-                $subQuery->where('user_id', $user->id)->orWhere(function ($subsubQuery) {
-                    $subsubQuery->where('status', 'published')->where('reports_count', '<', 5);
-                });
-            });
-        }
-        return $query;
-    }
-
-
-
-    /**
-     * Manage field visibility.
-     * 
-     * @param Request $request
-     * @param mixed $data
-     * @return mixed
-     */
-    public function managedFieldVisibility(Request $request, $data): mixed {
-        $user = $this->getUserFromToken($request);
-
-        if (!$user || ($user->role !== 'admin' && $user->role !== 'moderator')) {
-            $data->makeHidden('moderation_info');
-        }
-
-        if (!$this->externalSourceService->shouldDisplayExternalImages($request, $user)) {
-            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
-                foreach ($data as $post) {
-                    $post->images = [];
-                }
-            } else if ($data instanceof Post) {
-                $data->images = [];
-            }
-        }
-        return $data;
-    }
-
-
     /**
      * Display a listing of the resource.
      */
@@ -180,7 +114,7 @@ class PostApiController extends Controller {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
 
-            $query = $this->managedFieldVisibility($request, $query);
+            $query = $this->manageFieldVisibility($request, $query);
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -237,7 +171,7 @@ class PostApiController extends Controller {
 
             $post = $query->firstOrFail();
 
-            $post = $this->managedFieldVisibility($request, $post);
+            $post = $this->manageFieldVisibility($request, $post);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
@@ -310,7 +244,7 @@ class PostApiController extends Controller {
 
             $post->update($validatedData);
 
-            $post = $this->managedFieldVisibility($request, $post);
+            $post = $this->manageFieldVisibility($request, $post);
 
             return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
