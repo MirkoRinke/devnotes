@@ -88,8 +88,13 @@ class CommentApiController extends Controller {
      * This method is used to set up the query for the comments
      * It applies sorting, filtering, selecting, and pagination
      * It also loads the relations for the comments
+     * 
+     * @param Request $request
+     * @param $query
+     * @param $methods
+     * @return mixed
      */
-    protected function setupCommentQuery(Request $request, $query, $methods) {
+    protected function setupCommentQuery(Request $request, $query, $methods): mixed {
 
         $relationKeyFields = $this->getRelationKeyFields($request, ['children' => 'id', 'parent' => 'parent_id',  'user' => 'user_id']);
 

@@ -89,6 +89,36 @@ class PostApiController extends Controller {
         'status' => 'sometimes|required|in:draft,published,archived',
     ];
 
+
+    /**
+     * Setup the post query
+     * This method is used to set up the query for the post
+     * It applies the access filters.
+     * It applies sorting, filtering, selecting, and pagination
+     * It also loads the relations for the post
+     * 
+     * @param Request $request
+     * @param $query
+     * @param $methods
+     * @return mixed
+     */
+    protected function setupPostQuery(Request $request, $query, $methods): mixed {
+
+        $query = $this->applyAccessFilters($request, $query);
+
+        $query = $this->loadRelations($request, $query, [
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']]
+        ]);
+
+        $query = $this->$methods($request, $query, 'post');
+        if ($query instanceof JsonResponse) {
+            return $query;
+        }
+
+        return $query;
+    }
+
+
     /**
      * Display a listing of the resource.
      */
@@ -100,11 +130,7 @@ class PostApiController extends Controller {
 
             $query = Post::query();
 
-            $query = $this->applyAccessFilters($request, $query);
-
-            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
-
-            $query = $this->buildQuery($request, $query, 'post');
+            $query = $this->setupPostQuery($request, $query, 'buildQuery');
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -159,12 +185,7 @@ class PostApiController extends Controller {
         try {
             $query = Post::query()->where('id', $id);
 
-            $query = $this->applyAccessFilters($request, $query);
-
-            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
-
-            $query = $this->buildQuerySelect($request, $query, 'post');
-
+            $query = $this->setupPostQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
