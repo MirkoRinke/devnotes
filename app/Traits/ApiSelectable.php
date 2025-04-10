@@ -93,67 +93,54 @@ trait ApiSelectable {
     }
 
 
+
     /**
-     * Control visible fields across models in response
+     * Control visible fields for models and collections
      * 
-     * This method handles the visibility of fields in both single models and collections.
-     * It ensures only fields that were originally requested are visible in the final 
-     * response, reverting any fields that were added for internal processing purposes.
+     * This method serves as a dispatcher that applies field visibility rules to 
+     * different types of data structures. It handles both individual models (Comment/Post) 
+     * and collections of models (Collection/LengthAwarePaginator).
      * 
-     * @param Request $request The HTTP request with select parameter
-     * @param array|null $originalSelectFields The original select fields before modification
-     * @param mixed $comment The model or collection to process
-     * @return mixed The processed model or collection with controlled visibility
+     * For each applicable model, it delegates the field visibility logic to applyVisibleFields.
+     * 
+     * @param Request $request The HTTP request containing the 'select' parameter
+     * @param array|null $originalSelectFields The original select fields from the request
+     * @param mixed $data The data to process (Collection, LengthAwarePaginator, Comment, or Post)
+     * @return mixed The processed data with visibility rules applied
      */
-    public function controlVisibleFields(Request $request, $originalSelectFields, $comment): mixed {
-        if ($comment instanceof Collection || $comment instanceof LengthAwarePaginator) {
-            foreach ($comment as $c) {
+    public function controlVisibleFields(Request $request, $originalSelectFields, $data): mixed {
+        if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+            foreach ($data as $c) {
                 $this->applyVisibleFields($request, $originalSelectFields, $c);
             }
-        } else if ($comment instanceof Comment || $comment instanceof Post) {
-            $this->applyVisibleFields($request, $originalSelectFields, $comment);
+        } else if ($data instanceof Comment || $data instanceof Post) {
+            $this->applyVisibleFields($request, $originalSelectFields, $data);
         }
-        return $comment;
+        return $data;
     }
 
 
     /**
-     * Apply field visibility rules to a single model and its relations
+     * Apply visible fields to the model
      * 
-     * This method compares the current select fields with the original requested fields
-     * to determine which fields were added for internal processing. It then hides these
-     * additional fields in the main model and recursively in all children and their
-     * relationships to maintain consistent response structure.
-     * 
-     * The method ensures the ID field is always preserved regardless of selection.
-     * 
-     * @param Request $request The HTTP request containing select parameter
-     * @param array|null $originalSelectFields The original select fields before modification
-     * @param mixed $comment The model to process
-     * @return mixed The processed model with updated field visibility
+     * This method applies the visible fields to the model based on the 'select' parameter in the request.
+     * It hides any fields that are not in the 'select' parameter.
+     *
+     * @param Request $request The HTTP request containing the 'select' parameter
+     * @param array|null $originalSelectFields The original select fields from the request
+     * @param mixed $model The model to process
+     * @return mixed The processed model with visible fields
      */
-    protected function applyVisibleFields(Request $request, $originalSelectFields, $comment): mixed {
+    protected function applyVisibleFields(Request $request, $originalSelectFields, $model): mixed {
         if ($request->has('select')) {
             $select = $this->getSelectFields($request);
-            $visibleFields = array_merge($originalSelectFields, ['id']);
+            $visibleFields = array_merge($originalSelectFields ?? [], ['id']);
             $fieldsOnlyInSelect = array_diff($select, $visibleFields);
 
             foreach ($fieldsOnlyInSelect as $field) {
-                $comment->makeHidden($field);
-                if (isset($comment->children) && $comment->children) {
-                    foreach ($comment->children as $child) {
-                        if (method_exists($child, 'makeHidden') && method_exists($child, 'setVisible')) {
-                            $child->makeHidden($field);
-                            $child->parent->setVisible($visibleFields ?? []);
-                        }
-                        if (isset($child->children) && $child->children) {
-                            $this->applyVisibleFields($request, $originalSelectFields, $child);
-                        }
-                    }
-                }
+                $model->makeHidden($field);
             }
-            return $comment;
         }
-        return $comment;
+        return $model;
     }
 }
