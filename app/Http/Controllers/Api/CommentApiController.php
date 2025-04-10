@@ -104,15 +104,15 @@ class CommentApiController extends Controller {
 
         $this->loadRelations($request, $query, [
             ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => array_unique(array_merge($select ?? [], ['id', 'reports_count']))],
+            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'parent', ['id', 'reports_count'])],
 
             ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => $select],
             ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => array_unique(array_merge($select ?? [], ['id', 'reports_count']))],
+            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'parent', ['id', 'reports_count'])],
 
             ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => $select],
             ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => array_unique(array_merge($select ?? [], ['id', 'reports_count']))],
+            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'parent', ['id', 'reports_count'])],
         ]);
 
 
