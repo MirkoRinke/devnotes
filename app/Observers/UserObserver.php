@@ -46,12 +46,12 @@ class UserObserver {
     public function deleting(User $user) {
 
         /**
-         * Check if the user is not the system user (id 2)
+         * Check if the user is not the system user (id 3)
          */
-        if ($user->id !== 2) {
+        if ($user->id !== 3) {
 
             /**
-             * Set the user_id of all posts to the system user (id 2)
+             * Set the user_id of all posts to the system user (id 3)
              */
             retry(3, function () use ($user) {
                 Post::where('user_id', $user->id)
@@ -59,7 +59,7 @@ class UserObserver {
                         DB::transaction(function () use ($posts) {
                             DB::table('posts')
                                 ->whereIn('id', $posts->pluck('id'))
-                                ->update(['user_id' => 2]);
+                                ->update(['user_id' => 3]);
                         });
                     });
             }, 100, function ($attempt) {
@@ -67,7 +67,7 @@ class UserObserver {
             });
 
             /**
-             * Set the user_id of all comments to the system user (id 2)
+             * Set the user_id of all comments to the system user (id 3)
              */
             retry(3, function () use ($user) {
                 Comment::where('user_id', $user->id)
@@ -75,7 +75,7 @@ class UserObserver {
                         DB::transaction(function () use ($comments) {
                             DB::table('comments')
                                 ->whereIn('id', $comments->pluck('id'))
-                                ->update(['user_id' => 2]);
+                                ->update(['user_id' => 3]);
                         });
                     });
             }, 100, function ($attempt) {
