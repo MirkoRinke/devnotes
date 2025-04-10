@@ -58,7 +58,7 @@ class UserModerationService {
      */
     private function createAutoReport(User $user, string $matchedWord, string $fieldInfo): UserReport {
         // Check if a report already exists for this user
-        $existingReport = UserReport::where(['user_id' => 1, 'reportable_id' => $user->id, 'reportable_type' => User::class])->first();
+        $existingReport = UserReport::where(['user_id' => 2, 'reportable_id' => $user->id, 'reportable_type' => User::class])->first();
 
         if ($existingReport) {
             // Update the existing report instead of creating a new one
@@ -69,7 +69,7 @@ class UserModerationService {
         } else {
             // Create a new report if none exists
             $report = UserReport::create([
-                'user_id' => 1, // System user ID
+                'user_id' => 2, // System user ID
                 'reportable_id' => $user->id,
                 'reportable_type' => User::class,
                 'type' => 'user',
