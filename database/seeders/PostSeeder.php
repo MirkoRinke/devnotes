@@ -28,7 +28,7 @@ class PostSeeder extends Seeder {
 
         // Example post 2
         Post::create([
-            'user_id' => 2,
+            'user_id' => 4,
             'title' => "Laravel 8: Eloquent ORM",
             'code' =>  "use App\Models\User;",
             'description' => "Erfahren Sie, wie Sie mit Laravel 8 das Eloquent ORM verwenden.",
@@ -41,7 +41,7 @@ class PostSeeder extends Seeder {
 
         // Example post 3
         Post::create([
-            'user_id' => 1,
+            'user_id' => 8,
             'title' => "Vue 3: Composition API",
             'code' =>  "import { ref } from 'vue';",
             'description' => "Erfahren Sie, wie Sie mit der Composition API in Vue 3 arbeiten.",
@@ -54,7 +54,7 @@ class PostSeeder extends Seeder {
 
         // Example post 4
         Post::create([
-            'user_id' => 1,
+            'user_id' => 9,
             'title' => "React: Functional Components",
             'code' =>  "import React from 'react';",
             'description' => "Erfahren Sie, wie Sie mit React funktionale Komponenten erstellen.",
@@ -67,7 +67,7 @@ class PostSeeder extends Seeder {
 
         // Example post 5
         Post::create([
-            'user_id' => 2,
+            'user_id' => 6,
             'title' => "Node.js: RESTful API",
             'code' =>  "const express = require('express');",
             'description' => "Erfahren Sie, wie Sie mit Node.js eine RESTful API erstellen.",
@@ -81,7 +81,7 @@ class PostSeeder extends Seeder {
 
         // Example post 6
         Post::create([
-            'user_id' => 2,
+            'user_id' => 8,
             'title' => "Docker: Containerisierung",
             'code' =>  "docker run -d -p 80:80 nginx",
             'description' => "Erfahren Sie, wie Sie mit Docker Anwendungen containerisieren.",
@@ -94,7 +94,7 @@ class PostSeeder extends Seeder {
 
         // Example post 7
         Post::create([
-            'user_id' => 3,
+            'user_id' => 1,
             'title' => "Git: Branching",
             'code' =>  "git checkout -b feature-branch",
             'description' => "Erfahren Sie, wie Sie mit Git Branches erstellen und verwalten.",
@@ -107,7 +107,7 @@ class PostSeeder extends Seeder {
 
         // Example post 8
         Post::create([
-            'user_id' => 3,
+            'user_id' => 9,
             'title' => "Python: Data Science",
             'code' =>  "import pandas as pd",
             'description' => "Erfahren Sie, wie Sie mit Python Data Science Projekte umsetzen.",
@@ -120,7 +120,7 @@ class PostSeeder extends Seeder {
 
         // Example post 9
         Post::create([
-            'user_id' => 1,
+            'user_id' => 4,
             'title' => "AWS: S3 Bucket",
             'code' =>  "aws s3 ls",
             'description' => "Erfahren Sie, wie Sie mit AWS S3 Buckets Dateien speichern und verwalten.",
@@ -133,7 +133,7 @@ class PostSeeder extends Seeder {
 
         // Example post 10
         Post::create([
-            'user_id' => 3,
+            'user_id' => 7,
             'title' => "GraphQL: Query Language",
             'code' =>  "query { user { name } }",
             'description' => "Erfahren Sie, wie Sie mit GraphQL Daten abfragen und verwalten.",
