@@ -18,10 +18,20 @@ class UserSeeder extends Seeder {
         // Create an admin user
         User::create([
             'name' => 'Max Mustermann1',
-            'display_name' => 'Maxi1',
+            'display_name' => 'admin',
             'email' => 'max@example1.com',
             'password' => Hash::make('sicheresPasswort123'),
             'role' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        // Create a system user for deleted accounts
+        User::create([
+            'name' => 'System',
+            'display_name' => 'System',
+            'email' => 'system@system.local',
+            'password' => Hash::make(Str::random(32)),
+            'role' => 'system',
             'email_verified_at' => now(),
         ]);
 
@@ -38,16 +48,16 @@ class UserSeeder extends Seeder {
 
         // Create a moderator user
         User::create([
-            'name' => 'Max Mustermann2',
-            'display_name' => 'Maxi2',
-            'email' => 'max@example2.com',
+            'name' => 'Max Mustermann4',
+            'display_name' => 'Maxi4',
+            'email' => 'max@example4.com',
             'password' => Hash::make('sicheresPasswort123'),
             'role' => 'moderator',
             'email_verified_at' => now(),
         ]);
 
         // Create multiple regular users with incrementing names/emails
-        for ($i = 3; $i <= 10; $i++) {
+        for ($i = 5; $i <= 10; $i++) {
             User::create([
                 'name' => "Max Mustermann{$i}",
                 'display_name' => "Maxi{$i}",
