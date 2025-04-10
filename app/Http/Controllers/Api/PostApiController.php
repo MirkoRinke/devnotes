@@ -14,6 +14,7 @@ use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, [
 use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
 use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // examples:
 // - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
@@ -37,7 +38,7 @@ class PostApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader, AuthHelper, PostFieldManager;
+    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, AuthorizesRequests, RelationLoader, AuthHelper, PostFieldManager;
 
 
     /**
@@ -89,7 +90,6 @@ class PostApiController extends Controller {
         'status' => 'sometimes|required|in:draft,published,archived',
     ];
 
-
     /**
      * Setup the post query
      * This method is used to set up the query for the post
@@ -106,8 +106,13 @@ class PostApiController extends Controller {
 
         $query = $this->applyAccessFilters($request, $query);
 
+        $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'user_id']);
+
+        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
+
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']]
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
+
         ]);
 
         $query = $this->$methods($request, $query, 'post');
@@ -130,6 +135,8 @@ class PostApiController extends Controller {
 
             $query = Post::query();
 
+            $originalSelectFields = $this->getSelectFields($request);
+
             $query = $this->setupPostQuery($request, $query, 'buildQuery');
 
             if ($query instanceof JsonResponse) {
@@ -141,6 +148,11 @@ class PostApiController extends Controller {
             }
 
             $query = $this->manageFieldVisibility($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -185,6 +197,8 @@ class PostApiController extends Controller {
         try {
             $query = Post::query()->where('id', $id);
 
+            $originalSelectFields = $this->getSelectFields($request);
+
             $query = $this->setupPostQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
@@ -194,13 +208,18 @@ class PostApiController extends Controller {
 
             $post = $this->manageFieldVisibility($request, $post);
 
+            $post = $this->checkForIncludedRelations($request, $post);
+
+            $post = $this->controlVisibleFields($request, $originalSelectFields, $post);
+
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
         }
     }
 
