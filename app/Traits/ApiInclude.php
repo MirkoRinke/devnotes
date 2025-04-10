@@ -3,6 +3,8 @@
 namespace App\Traits;
 
 use App\Models\Comment;
+use App\Models\Post;
+
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -35,6 +37,32 @@ trait ApiInclude {
         return [];
     }
 
+    /**
+     * Get relation fields from request
+     * 
+     * This method retrieves the relation fields based on the 'include' parameter
+     * in the request. It checks if the relation fields are specified in the request
+     * and merges them with the required fields.
+     * 
+     * @param Request $request The HTTP request containing the 'include' parameter
+     * @param string $relation The name of the relation to check
+     * @param array $requiredFields An array of required fields to include
+     * @return array|null An array of fields to include or null if not specified
+     */
+    protected function getRelationFieldsFromRequest(Request $request, string $relation, array $requiredFields = []): array | null {
+        if ($request->has('include') && $request->has($relation . '_fields')) {
+            $fields = $request->input($relation . '_fields');
+
+            if (is_array($fields)) {
+                return array_unique(array_merge($fields, $requiredFields));
+            } else {
+                $fieldArray = explode(',', $fields);
+                return array_unique(array_merge($fieldArray, $requiredFields));
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Make relations visible based on 'include' parameter in request
@@ -57,7 +85,7 @@ trait ApiInclude {
                     $this->applyRelationVisibility($item, $relations, $select);
                 }
                 return $target;
-            } else if ($target instanceof Comment)
+            } else if ($target instanceof Comment || $target instanceof Post)
                 return $this->applyRelationVisibility($target, $relations, $select);
         }
         return $target;
