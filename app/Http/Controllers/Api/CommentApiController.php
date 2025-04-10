@@ -37,7 +37,7 @@ class CommentApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude;
+    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, AuthorizesRequests, RelationLoader;
 
     /**
      *  The Service used in the controller
@@ -103,16 +103,16 @@ class CommentApiController extends Controller {
         $select = $this->getSelectFields($request);
 
         $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
+            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => array_unique(array_merge($select ?? [], ['id', 'reports_count']))],
 
-            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => $select ?? []],
-            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => $select],
+            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
+            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => array_unique(array_merge($select ?? [], ['id', 'reports_count']))],
 
-            ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => $select ?? []],
-            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['id', 'content', 'reports_count']],
+            ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => $select],
+            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
+            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => array_unique(array_merge($select ?? [], ['id', 'reports_count']))],
         ]);
 
 
