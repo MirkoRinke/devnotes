@@ -15,6 +15,12 @@ class UserModerationService {
      * @return UserReport|null The created report or null if no report was created
      */
     public function checkAndReportUsername(User $user): ?UserReport {
+        // Check if the user is an admin, system, or moderator
+        // If so, skip the moderation check
+        if ($user->role === 'admin' || $user->role === 'system' || $user->role === 'moderator') {
+            return null;
+        }
+
         // Check display_name
         $displayMatchedWord = $this->findForbiddenPartialMatch($user->display_name);
         if ($displayMatchedWord) {
