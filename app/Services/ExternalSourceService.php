@@ -30,25 +30,28 @@ class ExternalSourceService {
         return !empty($previewData) ? $previewData : null;
     }
 
+
     /**
-     * Check if external images should be displayed for a user
-     * 
-     * @param mixed $user The user to check permissions for
-     * @return bool True if images should be displayed, false otherwise
+     * Determines if external sources should be displayed based on user settings and request headers.
+     *
+     * @param \Illuminate\Http\Request $request The HTTP request instance.
+     * @param \App\Models\User $user The user instance.
+     * @param string $type The type of external source (e.g., 'images', 'videos', 'resources').
+     * @return bool True if external sources should be displayed, false otherwise.
      */
-    public function shouldDisplayExternalImages($request, $user) {
+    public function shouldDisplayExternals($request, $user, string $type) {
         // If no user is logged in 
         if (!$user) {
-            return $request->header('X-Show-External-Images') === 'true';
+            return $request->header("X-Show-External-" . ucfirst($type)) === 'true';
         }
 
         // Check permanent setting
-        if ($user->profile->auto_load_external_images) {
+        if ($user->profile->{"auto_load_external_{$type}"} === true) {
             return true;
         }
 
         // Check temporary setting
-        if ($user->profile->external_images_temp_until && now()->lt($user->profile->external_images_temp_until)) {
+        if ($user->profile->{"external_{$type}_temp_until"} && now()->lt($user->profile->{"external_{$type}_temp_until"})) {
             return true;
         }
 
