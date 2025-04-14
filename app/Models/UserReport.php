@@ -27,6 +27,7 @@ class UserReport extends Model {
         'reportable_id',
         'type',
         'reason',
+        'reportable_snapshot',
         'impact_value'
     ];
 
@@ -37,6 +38,7 @@ class UserReport extends Model {
      */
     protected $casts = [
         'impact_value' => 'integer',
+        'reportable_snapshot' => 'array',
     ];
 
     /**
