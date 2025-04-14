@@ -8,9 +8,8 @@ use Illuminate\Http\Request;
 
 use App\Models\UserReport;
 use App\Models\Post;
-use App\Models\User;
 use App\Models\Comment;
-
+use App\Models\UserProfile;
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
 use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
@@ -37,7 +36,7 @@ class UserReportController extends Controller {
      */
     private $validationRules = [
         'user_id' => 'integer',
-        'reportable_type' => 'required|in:post,user,comment',
+        'reportable_type' => 'required|in:post,userProfile,comment',
         'reportable_id' => 'required|integer',
         'reason' => 'nullable|string|max:500'
     ];
@@ -50,12 +49,8 @@ class UserReportController extends Controller {
      * @param bool $increment Whether to increment or decrement the counter
      * @return void
      */
-    private function updateReportsCount($reportable, $reportableType, $method = 'increment', User $user, $value = 1) {
-        if ($reportableType === User::class && $reportable->profile) {
-            $reportable->profile->$method('reports_count', $value);
-        } else {
-            $reportable->$method('reports_count', $value);
-        }
+    private function updateReportsCount($reportable, $method = 'increment', $value = 1) {
+        $reportable->$method('reports_count', $value);
     }
 
     /**
@@ -78,6 +73,7 @@ class UserReportController extends Controller {
         }
         return 1;
     }
+
 
     /**
      * Get all reports (for admin panel)
@@ -132,8 +128,8 @@ class UserReportController extends Controller {
             );
 
             $typeMap = [
+                'userProfile' => UserProfile::class,
                 'post' => Post::class,
-                'user' => User::class,
                 'comment' => Comment::class,
             ];
 
@@ -144,7 +140,7 @@ class UserReportController extends Controller {
 
             $reportable = $reportableType::findOrFail($reportableId);
 
-            if ($reportableType === User::class && $reportableId == $user->id) {
+            if ($reportableType === UserProfile::class && $reportable->user_id == $user->id) {
                 return $this->errorResponse('You cannot report yourself', 'CANNOT_REPORT_SELF', 403);
             } else if ($reportableType === Post::class && $reportable->user_id == $user->id) {
                 return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403);
@@ -181,7 +177,7 @@ class UserReportController extends Controller {
                     'impact_value' => $value
                 ]);
 
-                $this->updateReportsCount($reportable, $reportableType, 'increment', $user, $value);
+                $this->updateReportsCount($reportable, 'increment', $value);
 
                 return $report;
             });
@@ -208,8 +204,8 @@ class UserReportController extends Controller {
             );
 
             $typeMap = [
+                'userProfile' => UserProfile::class,
                 'post' => Post::class,
-                'user' => User::class,
                 'comment' => Comment::class,
             ];
 
@@ -235,8 +231,8 @@ class UserReportController extends Controller {
             $value = $report->impact_value;
 
 
-            DB::transaction(function () use ($report, $reportable, $reportableType, $user, $value) {
-                $this->updateReportsCount($reportable, $reportableType, 'decrement', $user, $value);
+            DB::transaction(function () use ($report, $reportable, $value) {
+                $this->updateReportsCount($reportable, 'decrement', $value);
                 $report->delete();
             });
 
