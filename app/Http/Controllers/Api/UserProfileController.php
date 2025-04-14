@@ -52,6 +52,10 @@ class UserProfileController extends Controller {
             'is_public' => 'sometimes|required|boolean',
             'auto_load_external_images' => 'sometimes|required|boolean',
             'external_images_temp_until' => 'sometimes|nullable|date',
+            'auto_load_external_videos' => 'sometimes|required|boolean',
+            'external_videos_temp_until' => 'sometimes|nullable|date',
+            'auto_load_external_resources' => 'sometimes|required|boolean',
+            'external_resources_temp_until' => 'sometimes|nullable|date',
         ];
         return $validationRules;
     }
@@ -169,30 +173,34 @@ class UserProfileController extends Controller {
 
 
     /**
-     * Enable temporary external images.
+     * Enable or disable temporary external loading for images, videos, or links
      */
-    public function enableTemporaryExternalImages(Request $request, string $id): JsonResponse {
+    public function enableTemporaryExternals(Request $request, string $id): JsonResponse {
         try {
             $userProfile = UserProfile::findOrFail($id);
             $this->authorize('update', $userProfile);
 
             $validatedData = $request->validate(
-                ['hours' => 'required|integer|min:0|max:72'],
+                [
+                    'type' => 'required|in:images,videos,resources',
+                    'hours' => 'required|integer|min:0|max:72'
+                ],
                 $this->getValidationMessages()
             );
 
+            $type = $validatedData['type'];
             $hours = $validatedData['hours'];
 
             if ($hours === 0) {
-                $userProfile->external_images_temp_until = null;
+                $userProfile->{"external_{$type}_temp_until"} = null;
                 $userProfile->save();
-                return $this->successResponse($userProfile, "Temporary images deactivated.", 200);
+                return $this->successResponse($userProfile, "Temporary $type deactivated.", 200);
             }
 
-            $userProfile->external_images_temp_until = now()->addHours($hours);
+            $userProfile->{"external_{$type}_temp_until"} = now()->addHours($hours);
             $userProfile->save();
 
-            return $this->successResponse($userProfile, "Temporary images successfully activated for the next $hours hours.", 200);
+            return $this->successResponse($userProfile, "Temporary $type successfully activated for the next $hours hours.", 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
         } catch (ValidationException $e) {
