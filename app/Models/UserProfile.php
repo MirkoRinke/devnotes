@@ -34,6 +34,12 @@ class UserProfile extends Model {
         'auto_load_external_images',
         'external_images_temp_until',
 
+        'auto_load_external_videos',
+        'external_videos_temp_until',
+
+        'auto_load_external_resources',
+        'external_resources_temp_until',
+
         // Counts
         'reports_count',
     ];
@@ -53,6 +59,12 @@ class UserProfile extends Model {
         // Settings
         'auto_load_external_images' => 'boolean',
         'external_images_temp_until' => 'datetime',
+
+        'auto_load_external_videos' => 'boolean',
+        'external_videos_temp_until' => 'datetime',
+
+        'auto_load_external_resources' => 'boolean',
+        'external_resources_temp_until' => 'datetime',
 
         // Counts
         'reports_count' => 'integer',
