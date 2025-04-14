@@ -31,6 +31,12 @@ return new class extends Migration {
             $table->boolean('auto_load_external_images')->default(false);
             $table->timestamp('external_images_temp_until')->nullable();
 
+            $table->boolean('auto_load_external_videos')->default(false);
+            $table->timestamp('external_videos_temp_until')->nullable();
+
+            $table->boolean('auto_load_external_resources')->default(false);
+            $table->timestamp('external_resources_temp_until')->nullable();
+
             // Counts
             $table->integer('reports_count')->default(0);
         });
