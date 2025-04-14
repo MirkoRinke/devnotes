@@ -31,6 +31,7 @@ class Post extends Model {
         'resources',
         'language',
         'images',
+        'videos',
         'external_source_previews',
         'category',
         'tags',
@@ -69,6 +70,7 @@ class Post extends Model {
         // Basic
         'resources' => 'array',
         'images' => 'array',
+        'videos' => 'array',
         'external_source_previews' => 'array',
         'tags' => 'array',
 
