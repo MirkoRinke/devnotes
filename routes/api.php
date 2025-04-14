@@ -144,8 +144,11 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Authenticated non-admin users: See published posts and their own drafts/archived posts
     // - Admins: See all posts
     //
-    // - Header for external images: Include 'X-Show-External-Images: true' to display external images for non-logged in users
-    //   This header is only required for anonymous users. Logged-in users use their profile settings instead.
+    // - Headers for external content: Include the following headers to display external content for non-logged in users:
+    //   'X-Show-External-Images: true' - Display external images
+    //   'X-Show-External-Videos: true' - Display external videos
+    //   X-Show-External-Resources: true' - Display external links/resources
+    //   These headers are only required for anonymous users. Logged-in users use their profile settings instead.
     //
     // - Select specific fields: GET /api/posts?select=id,title,language (supports: id, user_id, title, code, description, resources, images, language, category, tags, status, favorite_count, reports_count, created_at, updated_at)
     // - Sort options: GET /api/posts?sort=created_at (supports: id, user_id, title, language, category, tags, status, favorite_count, created_at, updated_at)
@@ -154,7 +157,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //
     // GET /api/posts/{post} - Get a specific post
     // - Access restrictions follow the same rules as for listing (published posts visible to all)
-    // - Supports 'X-Show-External-Images' header for anonymous users
+    // - Supports 'X-Show-External-Images', 'X-Show-External-Videos', 'X-Show-External-Resources' headers for anonymous users
     // - Select specific fields: GET /api/posts/{post}?select=id,title,code
     Route::get('/posts', [PostApiController::class, 'index']);
     Route::get('/posts/{post}', [PostApiController::class, 'show']);
@@ -206,7 +209,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //
     // PUT/PATCH /api/user-profiles/{id} - Update a user profile
     // - Authorization: Users can only update their own profile, admins can update any profile
-    // - Request body includes (all fields are optional due to 'sometimes' validation):
+    // Request body für das user-profiles Update:
     //  {
     //    "display_name": "NewUsername",         // string, unique
     //    "public_email": "contact@example.com", // email address 
@@ -223,24 +226,25 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //    "website": "https://example.com",      // string, URL
     //    "avatar_path": "/storage/avatars/1.jpg", // string
     //    "is_public": true,                     // boolean
-    //    "auto_load_external_images": true,     // boolean (permanent setting)
-    //    "external_images_temp_until": "2025-04-03T20:00:00Z" // date (temporary access)
+    //    "auto_load_external_images": true,     // boolean (permanent setting for images)
+    //    "auto_load_external_videos": true,     // boolean (permanent setting for videos)
+    //    "auto_load_external_resources": true,  // boolean (permanent setting for resources)
+    //    "external_images_temp_until": "2025-04-03T20:00:00Z", // date (temporary access for images)
+    //    "external_videos_temp_until": "2025-04-03T20:00:00Z", // date (temporary access for videos)
+    //    "external_resources_temp_until": "2025-04-03T20:00:00Z" // date (temporary access for resources)
     //  }
     //
-    // POST /api/user-profiles/{id}/enable-temporary-images - Convenience endpoint for temporary image settings
+    // POST /api/user-profiles/{id}/enable-temporary-externals - Convenience endpoint for temporary external content settings
     // - Authorization: Users can only modify their own profile settings
     // - Request body:
     //  {
-    //    "hours": 24  // Integer between 0-72 (0 = disable temporary access)
+    //    "type": "images",  // required, string, one of: images, videos, resources
+    //    "hours": 24        // required, integer between 0-72 (0 = disable temporary access)
     //  }
     // - Response: User profile with confirmation message
-    //
-    // POST /api/user-profiles - Create a user profile (disabled, returns 403)
-    // DELETE /api/user-profiles/{id} - Delete a user profile (disabled, returns 405)    
-    //
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('user-profiles', UserProfileController::class);
-        Route::post('user-profiles/{id}/enable-temporary-images', [UserProfileController::class, 'enableTemporaryExternalImages']);
+        Route::post('user-profiles/{id}/enable-temporary-externals', [UserProfileController::class, 'enableTemporaryExternals']);
     });
 
 
