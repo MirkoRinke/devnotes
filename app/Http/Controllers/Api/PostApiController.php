@@ -176,6 +176,7 @@ class PostApiController extends Controller {
             if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
                 $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
                     'images' => $validatedData['images'] ?? [],
+                    'videos' => $validatedData['videos'] ?? [],
                     'resources' => $validatedData['resources'] ?? []
                 ]);
             }
@@ -249,6 +250,7 @@ class PostApiController extends Controller {
             if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
                 $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
                     'images' => $validatedData['images'] ?? $post->images ?? [],
+                    'videos' => $validatedData['videos'] ?? $post->videos ?? [],
                     'resources' => $validatedData['resources'] ?? $post->resources ?? []
                 ]);
             }
