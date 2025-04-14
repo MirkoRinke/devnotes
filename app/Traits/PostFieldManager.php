@@ -45,28 +45,59 @@ trait PostFieldManager {
     }
 
 
-
     /**
-     * Manage field visibility.
-     * 
-     * @param Request $request
-     * @param mixed $data
-     * @return mixed
+     * Manages visibility of fields in post data based on user permissions and settings
+     *
+     * @param Request $request The current HTTP request
+     * @param mixed $data The data to filter (can be Post, Collection, or LengthAwarePaginator)
+     * @return mixed The filtered data with appropriate field visibility
      */
     protected function manageFieldVisibility(Request $request, $data): mixed {
         $user = $this->getUserFromToken($request);
 
+        $data = $this->hideModeratorFields($user, $data);
+        $data = $this->filterExternalContent($request, $user, $data);
+
+        return $data;
+    }
+
+
+    /**
+     * Hide fields only visible to moderators
+     * 
+     * @param mixed $user
+     * @param mixed $data
+     * @return mixed
+     */
+    protected function hideModeratorFields($user, $data): mixed {
         if (!$user || ($user->role !== 'admin' && $user->role !== 'moderator')) {
             $data->makeHidden('moderation_info');
         }
 
-        if (!$this->getExternalSourceService()->shouldDisplayExternalImages($request, $user)) {
-            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
-                foreach ($data as $post) {
-                    $post->images = [];
+        return $data;
+    }
+
+
+    /**
+     * Filter external content based on user settings
+     * 
+     * @param Request $request
+     * @param mixed $user
+     * @param mixed $data
+     * @return mixed
+     */
+    protected function filterExternalContent(Request $request, $user, $data): mixed {
+        $types = ['images', 'videos', 'resources'];
+
+        foreach ($types as $type) {
+            if (!$this->getExternalSourceService()->shouldDisplayExternals($request, $user, $type)) {
+                if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+                    foreach ($data as $post) {
+                        $post->{$type} = [];
+                    }
+                } else if ($data instanceof Post) {
+                    $data->{$type} = [];
                 }
-            } else if ($data instanceof Post) {
-                $data->images = [];
             }
         }
         return $data;
