@@ -8,6 +8,19 @@ use App\Models\ForbiddenName;
 use App\Models\UserProfile;
 
 class UserModerationService {
+
+    /**
+     * The services used in the controller
+     */
+    protected $snapshotService;
+
+    /**
+     * Constructor to initialize the services
+     */
+    public function __construct(SnapshotService $snapshotService) {
+        $this->snapshotService = $snapshotService;
+    }
+
     /**
      * Check both username and name for partially forbidden words
      * 
@@ -66,10 +79,13 @@ class UserModerationService {
         // Check if a report already exists for this user
         $existingReport = UserReport::where(['user_id' => 2, 'reportable_id' => $user->id, 'reportable_type' => User::class])->first();
 
+        $reportableSnapshot = $this->snapshotService->createSnapshot($user, UserProfile::class);
+
         if ($existingReport) {
             // Update the existing report instead of creating a new one
             $existingReport->update([
-                'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'. (Updated)"
+                'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'. (Updated)",
+                'reportable_snapshot' => $reportableSnapshot,
             ]);
             $report = $existingReport;
         } else {
@@ -77,9 +93,10 @@ class UserModerationService {
             $report = UserReport::create([
                 'user_id' => 2, // System user ID
                 'reportable_id' => $user->id,
-                'reportable_type' => User::class,
-                'type' => 'user',
-                'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'."
+                'reportable_type' => UserProfile::class,
+                'type' => 'userProfile',
+                'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'.",
+                'reportable_snapshot' => $reportableSnapshot
             ]);
 
             // Only increment reports_count for new reports

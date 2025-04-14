@@ -33,9 +33,14 @@ class UserReportController extends Controller {
      */
     use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder;
 
-
+    /**
+     * The services used in the controller
+     */
     protected $snapshotService;
 
+    /**
+     * Constructor to initialize the services
+     */
     public function __construct(SnapshotService $snapshotService) {
         $this->snapshotService = $snapshotService;
     }
