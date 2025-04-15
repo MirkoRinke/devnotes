@@ -219,8 +219,7 @@ class PostApiController extends Controller {
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
-            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
