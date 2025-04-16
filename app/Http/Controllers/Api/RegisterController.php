@@ -28,7 +28,7 @@ class RegisterController extends Controller {
      */
     public function getValidationRules(): array {
         $validationRules = [
-            'name' => ['required', 'string', 'max:255', new NotForbiddenName()],
+            'name' => ['required', 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'display_name' => ['required', 'unique:users,display_name', 'string', 'max:255', new NotForbiddenName()],
             'email' => 'required|string|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
