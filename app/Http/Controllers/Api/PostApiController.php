@@ -74,10 +74,12 @@ class PostApiController extends Controller {
      */
     private $validationRulesCreate = [
         'title' => 'required|string|max:255',
-        'code' => 'required|string',
+        'code' => 'nullable|string',
         'description' => 'required|string',
         'images' => 'nullable|array',
         'images.*' => 'url|max:2048',
+        'videos' => 'nullable|array',
+        'videos.*' => 'url|max:2048',
         'resources' => 'nullable|array',
         'resources.*' => 'url|max:2048',
         'language' => 'required|string|max:50',
@@ -92,10 +94,12 @@ class PostApiController extends Controller {
      */
     private $validationRulesUpdate = [
         'title' => 'sometimes|required|string|max:255',
-        'code' => 'sometimes|required|string',
+        'code' => 'sometimes|nullable|string',
         'description' => 'sometimes|required|string',
         'images' => 'sometimes|nullable|array',
         'images.*' => 'sometimes|url|max:2048',
+        'videos' => 'sometimes|nullable|array',
+        'videos.*' => 'sometimes|url|max:2048',
         'resources' => 'sometimes|nullable|array',
         'resources.*' => 'sometimes|url|max:2048',
         'language' => 'sometimes|required|string|max:50',
