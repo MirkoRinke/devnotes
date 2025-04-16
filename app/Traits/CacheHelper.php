@@ -5,6 +5,16 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * Trait CacheHelper
+ * 
+ * NOTE: This trait is currently not in use in the application due to the complexity
+ * of properly handling cache invalidation with the complex authorization system.
+ * It remains as a reference implementation and could be used for simple, 
+ * non-personalized data in the future.
+ * 
+ * Provides methods for caching query results and invalidating cache when models are updated.
+ */
 trait CacheHelper {
 
     /**
