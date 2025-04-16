@@ -40,7 +40,7 @@ class UserProfileController extends Controller {
      */
     public function getValidationRulesUpdate($userProfile): array {
         $validationRules = [
-            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'max:255', new NotForbiddenName()],
+            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'public_email' => 'sometimes|nullable|email|max:255',
             'location' => 'sometimes|nullable|string|max:255',
             'skills' => 'sometimes|nullable|array',
@@ -182,7 +182,7 @@ class UserProfileController extends Controller {
 
             $validatedData = $request->validate(
                 [
-                    'type' => 'required|in:images,videos,resources',
+                    'type' => 'required|string|in:images,videos,resources',
                     'hours' => 'required|integer|min:0|max:72'
                 ],
                 $this->getValidationMessages()
