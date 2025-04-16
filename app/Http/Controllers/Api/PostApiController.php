@@ -334,4 +334,36 @@ class PostApiController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
+
+
+    /**
+     * Get Interactions for a User's Posts
+     * 
+     * This method calculates the total count of likes or favorites
+     * that a user has received across all of their posts.
+     *
+     */
+    public function getUserPostsInteractions(Request $request, string $id) {
+        try {
+
+            $validatedData = $request->validate(
+                [
+                    'type' => 'required|string|in:likes_count,favorite_count',
+                ],
+                $this->getValidationMessages()
+            );
+
+            $total = (int)Post::where('user_id', $id)->sum($validatedData['type']);
+
+            return $this->successResponse($total, 'Total ' . $validatedData['type'] . ' for user with ID ' . $id, 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
 }
