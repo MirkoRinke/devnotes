@@ -46,7 +46,7 @@ class UserApiController extends Controller {
      */
     public function getValidationRules($user): array {
         $validationRules = [
-            'name' => ['required', 'string', 'max:255', new NotForbiddenName()],
+            'name' => ['required', 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'email' => 'required|string|email|unique:users,email,' . $user->id,
             'password' => 'required|string|min:8|confirmed',
         ];
