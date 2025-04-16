@@ -159,8 +159,24 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Access restrictions follow the same rules as for listing (published posts visible to all)
     // - Supports 'X-Show-External-Images', 'X-Show-External-Videos', 'X-Show-External-Resources' headers for anonymous users
     // - Select specific fields: GET /api/posts/{post}?select=id,title,code
+    //
+    // GET /api/posts/{user_id}/received-interactions - Get total interactions for a user's posts
+    // - Returns the total count of likes or favorites that a user has received on all their posts
+    // - Query parameters:
+    // - type: required, string, either 'likes_count' or 'favorite_count'
+    // - Example: GET /api/posts/1/received-interactions?type=favorite_count
+    // - Returns: 
+    // - {
+    // -    "status": "success",
+    // -    "message": "Total favorite_count for user with ID 1",
+    // -    "code": 200,
+    // -    "count": 1,
+    // -    "data": 5
+    // - }
     Route::get('/posts', [PostApiController::class, 'index']);
     Route::get('/posts/{post}', [PostApiController::class, 'show']);
+    Route::get('/posts/{user_id}/received-interactions', [PostApiController::class, 'getUserPostsInteractions']);
+
 
     // Protected routes - authentication required
     // POST /api/posts - Create a new post
