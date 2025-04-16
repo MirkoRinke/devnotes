@@ -110,6 +110,9 @@ trait ApiResponses {
             'moderation_reason.required' => 'MODERATION_REASON_FIELD_REQUIRED',
             'moderation_reason.string' => 'MODERATION_REASON_MUST_BE_STRING',
             'moderation_reason.max' => 'MODERATION_REASON_FIELD_MAX_LENGTH',
+            'type.required' => 'TYPE_FIELD_REQUIRED',
+            'type.in' => 'TYPE_INVALID_OPTION',
+            'type.string' => 'TYPE_MUST_BE_STRING',
 
 
             // User Profile validation messages  
