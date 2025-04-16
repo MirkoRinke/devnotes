@@ -116,6 +116,7 @@ trait ApiResponses {
             'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
             'display_name.unique' => 'DISPLAY_NAME_ALREADY_IN_USE',
             'display_name.string' => 'DISPLAY_NAME_MUST_BE_STRING',
+            'display_name.min' => 'DISPLAY_NAME_FIELD_MIN_LENGTH',
             'display_name.max' => 'DISPLAY_NAME_FIELD_MAX_LENGTH',
             'public_email.email' => 'PUBLIC_EMAIL_MUST_BE_VALID',
             'public_email.max' => 'PUBLIC_EMAIL_FIELD_MAX_LENGTH',
@@ -133,11 +134,20 @@ trait ApiResponses {
             'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN',
             'auto_load_external_images.required' => 'AUTO_LOAD_EXTERNAL_IMAGES_FIELD_REQUIRED',
             'auto_load_external_images.boolean' => 'AUTO_LOAD_EXTERNAL_IMAGES_MUST_BE_BOOLEAN',
+            'auto_load_external_videos.required' => 'AUTO_LOAD_EXTERNAL_VIDEOS_FIELD_REQUIRED',
+            'auto_load_external_videos.boolean' => 'AUTO_LOAD_EXTERNAL_VIDEOS_MUST_BE_BOOLEAN',
+            'auto_load_external_resources.required' => 'AUTO_LOAD_EXTERNAL_RESOURCES_FIELD_REQUIRED',
+            'auto_load_external_resources.boolean' => 'AUTO_LOAD_EXTERNAL_RESOURCES_MUST_BE_BOOLEAN',
             'external_images_temp_until.date' => 'EXTERNAL_IMAGES_TEMP_UNTIL_MUST_BE_DATE',
+            'external_videos_temp_until.date' => 'EXTERNAL_VIDEOS_TEMP_UNTIL_MUST_BE_DATE',
+            'external_resources_temp_until.date' => 'EXTERNAL_RESOURCES_TEMP_UNTIL_MUST_BE_DATE',
             'hours.required' => 'HOURS_FIELD_REQUIRED',
             'hours.integer' => 'HOURS_MUST_BE_INTEGER',
             'hours.min' => 'HOURS_MUST_BE_AT_LEAST_0',
             'hours.max' => 'HOURS_CANNOT_EXCEED_72',
+            'type.required' => 'TYPE_FIELD_REQUIRED',
+            'type.in' => 'TYPE_INVALID_OPTION',
+            'type.string' => 'TYPE_MUST_BE_STRING',
 
 
 
