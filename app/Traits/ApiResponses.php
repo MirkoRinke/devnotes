@@ -60,6 +60,7 @@ trait ApiResponses {
             // User validation messages
             'name.required' => 'NAME_FIELD_REQUIRED',
             'name.string' => 'NAME_MUST_BE_STRING',
+            'name.min' => 'NAME_FIELD_MIN_LENGTH',
             'name.max' => 'NAME_FIELD_MAX_LENGTH',
             'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
             'display_name.unique' => 'DISPLAY_NAME_ALREADY_IN_USE',
@@ -77,6 +78,7 @@ trait ApiResponses {
             'days.integer' => 'DAYS_MUST_BE_INTEGER',
             'days.min' => 'DAYS_MUST_BE_AT_LEAST_1',
             'days.max' => 'DAYS_CANNOT_EXCEED_99999',
+
 
             // Post validation messages
             'title.required' => 'TITLE_FIELD_REQUIRED',
@@ -150,8 +152,6 @@ trait ApiResponses {
             'type.string' => 'TYPE_MUST_BE_STRING',
 
 
-
-
             // User Report validation messages
             'reportable_type.required' => 'REPORTABLE_TYPE_FIELD_REQUIRED',
             'reportable_type.in' => 'REPORTABLE_TYPE_INVALID_OPTION',
@@ -160,11 +160,13 @@ trait ApiResponses {
             'reason.string' => 'REASON_MUST_BE_STRING',
             'reason.max' => 'REASON_FIELD_MAX_LENGTH',
 
+
             // Like validation messages
             'likeable_type.required' => 'LIKEABLE_TYPE_FIELD_REQUIRED',
             'likeable_type.in' => 'LIKEABLE_TYPE_INVALID_OPTION',
             'likeable_id.required' => 'LIKEABLE_ID_FIELD_REQUIRED',
             'likeable_id.integer' => 'LIKEABLE_ID_MUST_BE_INTEGER',
+
 
             // Comment validation messages
             'content.required' => 'CONTENT_FIELD_REQUIRED',
