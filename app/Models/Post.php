@@ -34,6 +34,7 @@ class Post extends Model {
         'videos',
         'external_source_previews',
         'category',
+        'post_type',
         'tags',
         'status',
 
@@ -69,6 +70,7 @@ class Post extends Model {
     protected $casts = [
         // Basic
         'resources' => 'array',
+        'language' => 'array',
         'images' => 'array',
         'videos' => 'array',
         'external_source_previews' => 'array',
