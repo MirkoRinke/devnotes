@@ -56,6 +56,7 @@ class PostSeeder extends Seeder {
             'language' => ["HTML", "JavaScript"],
             'category' => "Frontend",
             'post_type' => "tutorial",
+            'technology' => ["Svelte"],
             'tags' => ["svelte", "store", "state-management"],
             'status' => "published",
         ]);
@@ -99,6 +100,7 @@ class PostSeeder extends Seeder {
             'language' => ["PHP"],
             'category' => "Backend",
             'post_type' => "tutorial",
+            'technology' => ["Laravel"],
             'tags' => ["laravel", "eloquent", "orm"],
             'status' => "published",
         ]);
@@ -142,6 +144,7 @@ class PostSeeder extends Seeder {
             'language' => ["JavaScript"],
             'category' => "Frontend",
             'post_type' => "tutorial",
+            'technology' => ["Vue"],
             'tags' => ["vue", "composition-api"],
             'status' => "published",
         ]);
@@ -185,6 +188,7 @@ class PostSeeder extends Seeder {
             'language' => ["JavaScript"],
             'category' => "Frontend",
             'post_type' => "tutorial",
+            'technology' => ["React"],
             'tags' => ["react", "functional-components"],
             'status' => "draft",
         ]);
@@ -228,6 +232,7 @@ class PostSeeder extends Seeder {
             'language' => ["JavaScript"],
             'category' => "Backend",
             'post_type' => "tutorial",
+            'technology' => ["Node.js"],
             'tags' => ["node.js", "restful-api"],
             'status' => "published",
         ]);
@@ -357,6 +362,7 @@ class PostSeeder extends Seeder {
             'language' => ["Python"],
             'category' => "Data Science",
             'post_type' => "tutorial",
+            'technology' => ["Python"],
             'tags' => ["python", "data-science"],
             'status' => "published",
         ]);
@@ -464,6 +470,7 @@ class PostSeeder extends Seeder {
             'language' => ["HTML", "SCSS", "TypeScript"],
             'category' => "Frontend",
             'post_type' => "feedback",
+            'technology' => ["Angular"],
             'tags' => ["angular", "portfolio"],
             'status' => "published",
         ]);
