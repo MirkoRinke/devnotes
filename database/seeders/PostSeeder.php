@@ -53,8 +53,9 @@ class PostSeeder extends Seeder {
                     "domain" => "svelte-tutorial.net"
                 ]
             ],
-            'language' => "JavaScript",
-            'category' => "Frontend-Entwicklung",
+            'language' => ["HTML", "JavaScript"],
+            'category' => "Frontend",
+            'post_type' => "tutorial",
             'tags' => ["svelte", "store", "state-management"],
             'status' => "published",
         ]);
@@ -95,8 +96,9 @@ class PostSeeder extends Seeder {
                     "domain" => "laravel.com"
                 ]
             ],
-            'language' => "PHP",
-            'category' => "Backend-Entwicklung",
+            'language' => ["PHP"],
+            'category' => "Backend",
+            'post_type' => "tutorial",
             'tags' => ["laravel", "eloquent", "orm"],
             'status' => "published",
         ]);
@@ -137,8 +139,9 @@ class PostSeeder extends Seeder {
                     "domain" => "v3.vuejs.org"
                 ]
             ],
-            'language' => "JavaScript",
-            'category' => "Frontend-Entwicklung",
+            'language' => ["JavaScript"],
+            'category' => "Frontend",
+            'post_type' => "tutorial",
             'tags' => ["vue", "composition-api"],
             'status' => "published",
         ]);
@@ -179,8 +182,9 @@ class PostSeeder extends Seeder {
                     "domain" => "reactjs.org"
                 ]
             ],
-            'language' => "JavaScript",
-            'category' => "Frontend-Entwicklung",
+            'language' => ["JavaScript"],
+            'category' => "Frontend",
+            'post_type' => "tutorial",
             'tags' => ["react", "functional-components"],
             'status' => "draft",
         ]);
@@ -221,8 +225,9 @@ class PostSeeder extends Seeder {
                     "domain" => "expressjs.com"
                 ]
             ],
-            'language' => "JavaScript",
-            'category' => "Backend-Entwicklung",
+            'language' => ["JavaScript"],
+            'category' => "Backend",
+            'post_type' => "tutorial",
             'tags' => ["node.js", "restful-api"],
             'status' => "published",
         ]);
@@ -263,8 +268,9 @@ class PostSeeder extends Seeder {
                     "domain" => "docs.docker.com"
                 ]
             ],
-            'language' => "Shell",
+            'language' => ["Shell"],
             'category' => "DevOps",
+            'post_type' => "tutorial",
             'tags' => ["docker", "containerization"],
             'status' => "published",
         ]);
@@ -305,8 +311,9 @@ class PostSeeder extends Seeder {
                     "domain" => "git-scm.com"
                 ]
             ],
-            'language' => "Shell",
+            'language' => ["Shell"],
             'category' => "DevOps",
+            'post_type' => "tutorial",
             'tags' => ["git", "branching"],
             'status' => "draft",
         ]);
@@ -347,8 +354,9 @@ class PostSeeder extends Seeder {
                     "domain" => "www.python.org"
                 ]
             ],
-            'language' => "Python",
+            'language' => ["Python"],
             'category' => "Data Science",
+            'post_type' => "tutorial",
             'tags' => ["python", "data-science"],
             'status' => "published",
         ]);
@@ -389,8 +397,9 @@ class PostSeeder extends Seeder {
                     "domain" => "docs.aws.amazon.com"
                 ]
             ],
-            'language' => "Shell",
+            'language' => ["Shell"],
             'category' => "Cloud Computing",
+            'post_type' => "tutorial",
             'tags' => ["aws", "s3", "cloud"],
             'status' => "archived",
         ]);
@@ -431,10 +440,32 @@ class PostSeeder extends Seeder {
                     "domain" => "graphql.org"
                 ]
             ],
-            'language' => "GraphQL",
-            'category' => "Backend-Entwicklung",
+            'language' => ["JavaScript"],
+            'category' => "Backend",
+            'post_type' => "tutorial",
             'tags' => ["graphql", "query-language"],
             'status' => "archived",
+        ]);
+
+
+        // Example post 11
+        Post::create([
+            'user_id' => 7,
+            'title' => "Meine Portfolio Website",
+            'description' => "Hier ist mein Portfolio, das ich mit Angular erstellt habe.",
+            'resources' => ["https://mirkorinke.dev/"],
+            'external_source_previews' => [
+                [
+                    "url" => "https://mirkorinke.dev/",
+                    "type" => "resources",
+                    "domain" => "mirkorinke.dev"
+                ]
+            ],
+            'language' => ["HTML", "SCSS", "TypeScript"],
+            'category' => "Frontend",
+            'post_type' => "feedback",
+            'tags' => ["angular", "portfolio"],
+            'status' => "published",
         ]);
     }
 }
