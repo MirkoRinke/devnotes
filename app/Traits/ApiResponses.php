@@ -98,14 +98,19 @@ trait ApiResponses {
             'resources.*.url' => 'RESOURCES_MUST_BE_VALID_URLS',
             'resources.*.string' => 'RESOURCES_MUST_BE_STRING',
             'language.required' => 'LANGUAGE_FIELD_REQUIRED',
-            'language.string' => 'LANGUAGE_MUST_BE_STRING',
-            'language.max' => 'LANGUAGE_FIELD_MAX_LENGTH',
+            'language.array' => 'LANGUAGE_MUST_BE_ARRAY',
+            'language.*' => 'LANGUAGE_MUST_BE_STRING',
+            'language.in' => 'LANGUAGE_INVALID_OPTION',
             'category.required' => 'CATEGORY_FIELD_REQUIRED',
             'category.string' => 'CATEGORY_MUST_BE_STRING',
-            'category.max' => 'CATEGORY_FIELD_MAX_LENGTH',
+            'category.in' => 'CATEGORY_INVALID_OPTION',
+            'post_type.required' => 'POST_TYPE_FIELD_REQUIRED',
+            'post_type.string' => 'POST_TYPE_MUST_BE_STRING',
+            'post_type.in' => 'POST_TYPE_INVALID_OPTION',
             'tags.required' => 'TAGS_FIELD_REQUIRED',
             'tags.array' => 'TAGS_MUST_BE_ARRAY',
             'status.required' => 'STATUS_FIELD_REQUIRED',
+            'status.string' => 'STATUS_MUST_BE_STRING',
             'status.in' => 'STATUS_INVALID_OPTION',
             'moderation_reason.required' => 'MODERATION_REASON_FIELD_REQUIRED',
             'moderation_reason.string' => 'MODERATION_REASON_MUST_BE_STRING',
@@ -179,6 +184,49 @@ trait ApiResponses {
             'post_id.exists' => 'POST_ID_NOT_FOUND',
             'parent_id.exists' => 'PARENT_ID_NOT_FOUND',
 
+        ];
+    }
+
+
+    /**
+     * Get allowed values for post fields
+     * 
+     * @return array
+     */
+    protected function getAllowedPostValues(): array {
+        return [
+            'postLanguage' => [
+                'HTML',
+                'CSS',
+                'SCSS',
+                'JavaScript',
+                'Typescript',
+                'PHP',
+                'Python',
+                'Shell'
+            ],
+            'postCategory' => [
+                'Frontend',
+                'Backend',
+                'Fullstack',
+                'DevOps',
+                'Data Science',
+                'Machine Learning',
+                'Game Development',
+                'Cloud Computing'
+            ],
+            'postType' => [
+                'snippet',
+                'tutorial',
+                'feedback',
+                'showcase',
+                'question'
+            ],
+            'postStatus' => [
+                'draft',
+                'published',
+                'archived'
+            ],
         ];
     }
 }
