@@ -82,11 +82,13 @@ class PostApiController extends Controller {
             'resources' => 'nullable|array',
             'resources.*' => 'url|max:2048',
             'language' => 'required|array|min:1',
-            'language.*' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postLanguage'])],
-            'category' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postCategory'])],
-            'post_type' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postType'])],
+            'language.*' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['language'])],
+            'category' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['category'])],
+            'post_type' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['post_type'])],
+            'technology' => 'required|array|min:1',
+            'technology.*' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['technology'])],
             'tags' => 'required|array',
-            'status' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postStatus'])],
+            'status' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['status'])],
         ];
         return $validationRulesCreate;
     }
@@ -108,11 +110,13 @@ class PostApiController extends Controller {
             'resources' => 'sometimes|nullable|array',
             'resources.*' => 'sometimes|url|max:2048',
             'language' => 'sometimes|required|array|min:1',
-            'language.*' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postLanguage'])],
-            'category' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postCategory'])],
-            'post_type' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postType'])],
+            'language.*' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['language'])],
+            'category' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['category'])],
+            'post_type' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['post_type'])],
+            'technology' => 'sometimes|required|array|min:1',
+            'technology.*' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['technology'])],
             'tags' => 'sometimes|required|array',
-            'status' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postStatus'])],
+            'status' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['status'])],
         ];
         return $validationRulesUpdate;
     }
@@ -299,7 +303,7 @@ class PostApiController extends Controller {
                         ]
                     ),
                     $request,
-                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'tags', 'status'],
+                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
                     'post'
                 );
                 $post->save();
