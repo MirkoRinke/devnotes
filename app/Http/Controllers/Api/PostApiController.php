@@ -68,41 +68,54 @@ class PostApiController extends Controller {
     /**
      * The validation rules for the Create method
      */
-    private $validationRulesCreate = [
-        'title' => 'required|string|max:255',
-        'code' => 'nullable|string',
-        'description' => 'required|string',
-        'images' => 'nullable|array',
-        'images.*' => 'url|max:2048',
-        'videos' => 'nullable|array',
-        'videos.*' => 'url|max:2048',
-        'resources' => 'nullable|array',
-        'resources.*' => 'url|max:2048',
-        'language' => 'required|string|max:50',
-        'category' => 'required|string|max:50',
-        'tags' => 'required|array',
-        'status' => 'required|in:draft,published,archived',
-    ];
+    public function getValidationRulesCreate(): array {
+        $allowedPostValues = $this->getAllowedPostValues();
 
+        $validationRulesCreate = [
+            'title' => 'required|string|max:255',
+            'code' => 'nullable|string',
+            'description' => 'required|string',
+            'images' => 'nullable|array',
+            'images.*' => 'url|max:2048',
+            'videos' => 'nullable|array',
+            'videos.*' => 'url|max:2048',
+            'resources' => 'nullable|array',
+            'resources.*' => 'url|max:2048',
+            'language' => 'required|array|min:1',
+            'language.*' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postLanguage'])],
+            'category' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postCategory'])],
+            'post_type' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postType'])],
+            'tags' => 'required|array',
+            'status' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['postStatus'])],
+        ];
+        return $validationRulesCreate;
+    }
 
     /**
      * The validation rules for the Update method
      */
-    private $validationRulesUpdate = [
-        'title' => 'sometimes|required|string|max:255',
-        'code' => 'sometimes|nullable|string',
-        'description' => 'sometimes|required|string',
-        'images' => 'sometimes|nullable|array',
-        'images.*' => 'sometimes|url|max:2048',
-        'videos' => 'sometimes|nullable|array',
-        'videos.*' => 'sometimes|url|max:2048',
-        'resources' => 'sometimes|nullable|array',
-        'resources.*' => 'sometimes|url|max:2048',
-        'language' => 'sometimes|required|string|max:50',
-        'category' => 'sometimes|required|string|max:50',
-        'tags' => 'sometimes|required|array',
-        'status' => 'sometimes|required|in:draft,published,archived',
-    ];
+    public function getValidationRulesUpdate(): array {
+        $allowedPostValues = $this->getAllowedPostValues();
+
+        $validationRulesUpdate = [
+            'title' => 'sometimes|required|string|max:255',
+            'code' => 'sometimes|nullable|string',
+            'description' => 'sometimes|required|string',
+            'images' => 'sometimes|nullable|array',
+            'images.*' => 'sometimes|url|max:2048',
+            'videos' => 'sometimes|nullable|array',
+            'videos.*' => 'sometimes|url|max:2048',
+            'resources' => 'sometimes|nullable|array',
+            'resources.*' => 'sometimes|url|max:2048',
+            'language' => 'sometimes|required|array|min:1',
+            'language.*' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postLanguage'])],
+            'category' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postCategory'])],
+            'post_type' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postType'])],
+            'tags' => 'sometimes|required|array',
+            'status' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['postStatus'])],
+        ];
+        return $validationRulesUpdate;
+    }
 
 
     /**
@@ -181,7 +194,7 @@ class PostApiController extends Controller {
     public function store(Request $request): JsonResponse {
         try {
             $validatedData = $request->validate(
-                $this->validationRulesCreate,
+                $this->getValidationRulesCreate(),
                 $this->getValidationMessages()
             );
 
@@ -247,16 +260,18 @@ class PostApiController extends Controller {
 
             $this->authorize('update', $post);
 
+            $validationRules = $this->getValidationRulesUpdate();
+
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
              * If so, add the moderation_reason to the validation rules
              */
             if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
-                $this->validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
+                $validationRules['moderation_reason'] = 'required|string|max:255';
             }
 
             $validatedData = $request->validate(
-                $this->validationRulesUpdate,
+                $validationRules,
                 $this->getValidationMessages()
             );
 
@@ -284,7 +299,7 @@ class PostApiController extends Controller {
                         ]
                     ),
                     $request,
-                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'tags', 'status'],
+                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'tags', 'status'],
                     'post'
                 );
                 $post->save();
