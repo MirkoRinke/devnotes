@@ -35,6 +35,7 @@ class Post extends Model {
         'external_source_previews',
         'category',
         'post_type',
+        'technology',
         'tags',
         'status',
 
@@ -71,6 +72,7 @@ class Post extends Model {
         // Basic
         'resources' => 'array',
         'language' => 'array',
+        'technology' => 'array',
         'images' => 'array',
         'videos' => 'array',
         'external_source_previews' => 'array',
