@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->json('language'); // programming language
             $table->string('category');
             $table->string('post_type')->default('snippet'); // snippet, tutorial, feedback, showcase, question, etc.
+            $table->json('technology')->nullable();; // technology used (e.g., Angular, React, etc.)
             $table->json('tags');
             $table->string('status')->default('draft'); // draft, published, archived
 
