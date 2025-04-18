@@ -23,8 +23,9 @@ return new class extends Migration {
             $table->json('videos')->nullable();
             $table->json('resources')->nullable();
             $table->json('external_source_previews')->nullable();
-            $table->string('language');
+            $table->json('language'); // programming language
             $table->string('category');
+            $table->string('post_type')->default('snippet'); // snippet, tutorial, feedback, showcase, question, etc.
             $table->json('tags');
             $table->string('status')->default('draft'); // draft, published, archived
 
