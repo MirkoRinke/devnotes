@@ -107,6 +107,9 @@ trait ApiResponses {
             'post_type.required' => 'POST_TYPE_FIELD_REQUIRED',
             'post_type.string' => 'POST_TYPE_MUST_BE_STRING',
             'post_type.in' => 'POST_TYPE_INVALID_OPTION',
+            'technology.array' => 'TECHNOLOGY_MUST_BE_ARRAY',
+            'technology.*' => 'TECHNOLOGY_MUST_BE_STRING',
+            'technology.in' => 'TECHNOLOGY_INVALID_OPTION',
             'tags.required' => 'TAGS_FIELD_REQUIRED',
             'tags.array' => 'TAGS_MUST_BE_ARRAY',
             'status.required' => 'STATUS_FIELD_REQUIRED',
@@ -195,7 +198,7 @@ trait ApiResponses {
      */
     protected function getAllowedPostValues(): array {
         return [
-            'postLanguage' => [
+            'language' => [
                 'HTML',
                 'CSS',
                 'SCSS',
@@ -205,7 +208,7 @@ trait ApiResponses {
                 'Python',
                 'Shell'
             ],
-            'postCategory' => [
+            'category' => [
                 'Frontend',
                 'Backend',
                 'Fullstack',
@@ -215,14 +218,35 @@ trait ApiResponses {
                 'Game Development',
                 'Cloud Computing'
             ],
-            'postType' => [
+            'post_type' => [
                 'snippet',
                 'tutorial',
                 'feedback',
                 'showcase',
                 'question'
             ],
-            'postStatus' => [
+            'technology' => [
+                'Angular',
+                'Laravel',
+                'Django',
+                'Spring',
+                'Express',
+                'React',
+                'Vue',
+                'Svelte',
+                'jQuery',
+                'Pandas',
+                'Bootstrap',
+                'TailwindCSS',
+                'Redux',
+                'Next.js',
+                'Vite',
+                'Webpack',
+                'Flask',
+                'Node.js'
+
+            ],
+            'status' => [
                 'draft',
                 'published',
                 'archived'
