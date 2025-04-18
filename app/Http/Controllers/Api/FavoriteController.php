@@ -23,7 +23,6 @@ use App\Traits\RelationLoader; // examples:
 // ])
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
@@ -112,8 +111,6 @@ class FavoriteController extends Controller {
                 return $this->errorResponse('Post is not in favorites', 'POST_NOT_IN_FAVORITES', 404);
             }
 
-            $this->authorize('delete', $favorite);
-
             DB::transaction(function () use ($post, $favorite) {
                 $this->updateFavoriteCount($post, 'decrement');
                 $favorite->delete();
@@ -122,8 +119,6 @@ class FavoriteController extends Controller {
             return $this->successResponse(null, 'Post successfully removed from favorites', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
