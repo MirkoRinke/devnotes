@@ -85,9 +85,9 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'title', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
                 // Counts
-                ...['favorite_count', 'reports_count', 'likes_count'],
+                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -97,9 +97,9 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'title', 'code', 'description', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
                 // Counts
-                ...['favorite_count', 'reports_count', 'likes_count'],
+                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -109,9 +109,9 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
                 // Counts
-                ...['favorite_count', 'reports_count', 'likes_count'],
+                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
+                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
                 // Moderation info
                 ...['moderation_info']
             ],
