@@ -43,11 +43,13 @@ class Post extends Model {
         'favorite_count',
         'likes_count',
         'reports_count',
+        'comments_count',
 
         // Update info
         'updated_at',
         'is_updated',
         'updated_by_role',
+        'last_comment_at',
 
         // Moderation info
         'moderation_info',
@@ -82,10 +84,12 @@ class Post extends Model {
         'favorite_count' => 'integer',
         'likes_count' => 'integer',
         'reports_count' => 'integer',
+        'comments_count' => 'integer',
 
         // Update info
         'is_updated' => 'boolean',
         'updated_by_role' => 'string',
+        'last_comment_at' => 'datetime',
 
         // Moderation info
         'moderation_info' => 'array',
