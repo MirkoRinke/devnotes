@@ -7,14 +7,34 @@ use Illuminate\Database\Seeder;
 
 use App\Models\Comment;
 
+use App\Services\CommentRelationService;
+use Illuminate\Support\Facades\DB;
+
 class CommentSeeder extends Seeder {
+
+    protected $commentRelationService;
+
+    public function __construct(CommentRelationService $commentRelationService) {
+        $this->commentRelationService = $commentRelationService;
+    }
+
+    private function createCommentWithMetadata(array $data) {
+        return DB::transaction(function () use ($data) {
+            $comment = Comment::create($data);
+
+            $this->commentRelationService->updateLastCommentAt($comment);
+            $this->commentRelationService->updateCommentsCount($comment, 'increment');
+
+            return $comment;
+        });
+    }
+
     /**
      * Run the database seeds.
      */
     public function run(): void {
-
         // Main comment on Post 1 (Svelte Store)
-        $comment1 = Comment::create([
+        $comment1 = $this->createCommentWithMetadata([
             'post_id' => 1,
             'user_id' => 4,
             'parent_id' => null,
@@ -24,7 +44,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Reply to comment 1 by post author
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 1,
             'user_id' => 7,
             'parent_id' => $comment1->id,
@@ -34,7 +54,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Main comment on Post 2 (Eloquent)
-        $comment2 = Comment::create([
+        $comment2 = $this->createCommentWithMetadata([
             'post_id' => 2,
             'user_id' => 9,
             'parent_id' => null,
@@ -44,7 +64,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // First reply to comment 2
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 2,
             'user_id' => 4,
             'parent_id' => $comment2->id,
@@ -54,7 +74,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Second reply to comment 2 from post author
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 2,
             'user_id' => 7,
             'parent_id' => $comment2->id,
@@ -64,7 +84,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Main comment on Post 3 (Vue)
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 3,
             'user_id' => 4,
             'parent_id' => null,
@@ -74,7 +94,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Main comment on Post 5 (Express.js)
-        $comment3 = Comment::create([
+        $comment3 = $this->createCommentWithMetadata([
             'post_id' => 5,
             'user_id' => 9,
             'parent_id' => null,
@@ -84,7 +104,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // First reply to comment 3
-        $reply1 = Comment::create([
+        $reply1 = $this->createCommentWithMetadata([
             'post_id' => 5,
             'user_id' => 4,
             'parent_id' => $comment3->id,
@@ -94,7 +114,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Main comment on Post 6 (Docker)
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 6,
             'user_id' => 7,
             'parent_id' => null,
@@ -104,7 +124,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Main comment on Post 8 (Python Data Science)
-        $comment4 = Comment::create([
+        $comment4 = $this->createCommentWithMetadata([
             'post_id' => 8,
             'user_id' => 7,
             'parent_id' => null,
@@ -114,7 +134,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Reply to comment 4
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 8,
             'user_id' => 9,
             'parent_id' => $comment4->id,
@@ -124,7 +144,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Deleted comment on Post 9 (AWS)
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 9,
             'user_id' => 4,
             'parent_id' => null,
@@ -135,7 +155,7 @@ class CommentSeeder extends Seeder {
         ]);
 
         // Main comment on Post 10 (GraphQL)
-        Comment::create([
+        $this->createCommentWithMetadata([
             'post_id' => 10,
             'user_id' => 7,
             'parent_id' => null,
@@ -144,8 +164,8 @@ class CommentSeeder extends Seeder {
             'depth' => 0,
         ]);
 
-        // Reply to comment 10
-        Comment::create([
+        // Comment on Post 4 (React)
+        $this->createCommentWithMetadata([
             'post_id' => 4,
             'user_id' => 9,
             'parent_id' => null,
