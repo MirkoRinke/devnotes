@@ -137,4 +137,22 @@ class User extends Authenticatable {
     public function likes() {
         return $this->hasMany(UserLike::class);
     }
+
+    /**
+     * Get the follower relations for this user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function followerRelations() {
+        return $this->hasMany(UserFollower::class, 'user_id');
+    }
+
+    /**
+     * Get the following relations for this user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function followingRelations() {
+        return $this->hasMany(UserFollower::class, 'follower_id');
+    }
 }
