@@ -69,6 +69,13 @@ class PostObserver {
         }, 100, function ($attempt) {
             return pow(2, $attempt - 1) * 100;
         });
+
+
+        /**
+         * Note: Favorites are automatically deleted through 
+         * database foreign key constraints (onDelete('cascade')) 
+         * and don't require explicit deletion here.
+         */
     }
 
     /**
