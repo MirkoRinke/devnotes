@@ -28,16 +28,18 @@ return new class extends Migration {
             $table->string('post_type')->default('snippet'); // snippet, tutorial, feedback, showcase, question, etc.
             $table->json('technology')->nullable();; // technology used (e.g., Angular, React, etc.)
             $table->json('tags');
-            $table->string('status')->default('draft'); // draft, published, archived
+            $table->string('status')->default('draft'); // draft, published, archived            
 
             // Counts
             $table->integer('favorite_count')->default(0);
             $table->integer('likes_count')->default(0);
             $table->integer('reports_count')->default(0);
+            $table->integer('comments_count')->default(0); // number of comments
 
             // Update info
             $table->boolean('is_updated')->default(false);
             $table->string('updated_by_role')->nullable();
+            $table->timestamp('last_comment_at')->nullable(); // last comment add, update, delete
 
             // Moderation info
             $table->json('moderation_info')->nullable();
