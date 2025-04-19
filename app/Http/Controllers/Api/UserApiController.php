@@ -19,6 +19,7 @@ use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10)
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
 use App\Services\ModerationService;
+use App\Services\UserRelationService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 
 class UserApiController extends Controller {
 
@@ -36,9 +38,11 @@ class UserApiController extends Controller {
 
 
     protected $moderationService;
+    protected $userRelationService;
 
-    public function __construct(ModerationService $moderationService) {
+    public function __construct(ModerationService $moderationService, UserRelationService $userRelationService) {
         $this->moderationService = $moderationService;
+        $this->userRelationService = $userRelationService;
     }
 
     /**
@@ -158,7 +162,18 @@ class UserApiController extends Controller {
 
             $this->authorize('delete', $user);
 
-            $user->delete();
+            $user = DB::transaction(function () use ($user) {
+                // Transfer all posts and comments to the system user (ID 3)
+                $this->userRelationService->transferPosts($user);
+                $this->userRelationService->transferComments($user);
+
+                // Delete all reports and likes associated with the user
+                $this->userRelationService->deleteReports($user);
+                $this->userRelationService->deleteLikes($user);
+
+                $user->delete();
+            });
+
             return $this->successResponse(null, 'User deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
