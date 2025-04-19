@@ -6,7 +6,6 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\UserProfile;
-use App\Observers\PostObserver;
 use App\Observers\UserObserver;
 use App\Observers\UserProfileObserver;
 use App\Services\CommentModerationService;
@@ -40,7 +39,6 @@ class AppServiceProvider extends ServiceProvider {
      */
     public function boot(): void {
         User::observe(UserObserver::class);
-        Post::observe(PostObserver::class);
         UserProfile::observe(UserProfileObserver::class);
 
         /**
