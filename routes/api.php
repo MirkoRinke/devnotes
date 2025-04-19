@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CommentApiController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\UserFollowerController;
 use App\Http\Controllers\Api\UserLikeController;
 use App\Http\Controllers\API\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
@@ -504,5 +505,45 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
 
         Route::get('/user-likes/posts', [UserLikeController::class, 'getLikedPosts']);
         Route::get('/user-likes/comments', [UserLikeController::class, 'getLikedComments']);
+    });
+
+    //! Route for followers
+    // Route to get followers, following users, follow and unfollow - you need to be authenticated protected by sanctum
+    // 
+    // GET /api/followers - Get all followers for the authenticated user
+    // - Authorization: Users can only access their own followers
+    // - Returns user objects with is_followed flag indicating if you follow them back
+    // 
+    // - Select specific fields: GET /api/followers?select=id,user_id,follower_id (supports: id, user_id, follower_id, created_at, updated_at)
+    // - Sort options: GET /api/followers?sort=created_at (supports: id, user_id, follower_id, created_at, updated_at)
+    // - Filter options: GET /api/followers?filter[created_at]=2025-04-01 (supports: user_id, follower_id, created_at, updated_at)
+    // - Pagination: GET /api/followers?page=1&per_page=10
+    //
+    // GET /api/following - Get all users the authenticated user is following
+    // - Authorization: Users can only access their own following list
+    // - Returns user objects with is_following flag indicating if they follow you back
+    // 
+    // - Select specific fields: GET /api/following?select=id,user_id,follower_id (supports: id, user_id, follower_id, created_at, updated_at)
+    // - Sort options: GET /api/following?sort=created_at (supports: id, user_id, follower_id, created_at, updated_at)
+    // - Filter options: GET /api/following?filter[created_at]=2025-04-01 (supports: user_id, follower_id, created_at, updated_at)
+    // - Pagination: GET /api/following?page=1&per_page=10
+    //
+    // POST /api/follow/{userId} - Follow a user
+    // - Authorization: Any authenticated user can follow other users (cannot follow self)
+    // - No request body needed, user ID is taken from the URL
+    // - Returns 201 Created on success, 200 OK if already following
+    // - Returns 400 Bad Request if trying to follow yourself
+    // - Returns 404 Not Found if user doesn't exist
+    //
+    // DELETE /api/unfollow/{userId} - Unfollow a user
+    // - Authorization: Users can only unfollow users they are currently following
+    // - No request body needed, user ID is taken from the URL
+    // - Returns 200 OK on success
+    // - Returns 404 Not Found if not following or user doesn't exist
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::get('followers', [UserFollowerController::class, 'getFollowers']);
+        Route::get('following', [UserFollowerController::class, 'getFollowing']);
+        Route::post('follow/{userId}', [UserFollowerController::class, 'follow']);
+        Route::delete('unfollow/{userId}', [UserFollowerController::class, 'unfollow']);
     });
 });
