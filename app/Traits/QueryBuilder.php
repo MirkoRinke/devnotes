@@ -219,6 +219,27 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
+        'user_followers' => [
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'follower_id'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'follower_id'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'follower_id'],
+            ],
+            'getPerPage' => 10
+        ],
     ];
 
     /**
