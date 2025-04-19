@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Comment;
 
@@ -24,6 +25,7 @@ use App\Traits\RelationLoader;  // examples:
 
 use App\Services\ModerationService;
 use App\Services\CommentModerationService;
+use App\Services\CommentRelationService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -44,6 +46,7 @@ class CommentApiController extends Controller {
      */
     protected $moderationService;
     protected $commentModerationService;
+    protected $commentRelationService;
 
     /**
      *  The constructor for the CommentApiController
@@ -53,9 +56,14 @@ class CommentApiController extends Controller {
      * @param ModerationService $moderationService
      * @param CommentModerationService $commentModerationService
      */
-    public function __construct(ModerationService $moderationService, CommentModerationService $commentModerationService) {
+    public function __construct(
+        ModerationService $moderationService,
+        CommentModerationService $commentModerationService,
+        CommentRelationService $commentRelationService
+    ) {
         $this->moderationService = $moderationService;
         $this->commentModerationService = $commentModerationService;
+        $this->commentRelationService = $commentRelationService;
     }
 
     /**
@@ -181,14 +189,24 @@ class CommentApiController extends Controller {
                 $validatedData['parent_content'] = $parentComment->content;
             }
 
-            $comment = Comment::create([
-                'user_id' => $request->user()->id,
-                'content' => $validatedData['content'],
-                'parent_content' => $validatedData['parent_content'] ?? null,
-                'post_id' => $validatedData['post_id'],
-                'parent_id' => $validatedData['parent_id'] ?? null,
-                'depth' => $depth,
-            ]);
+            $comment = DB::transaction(function () use ($request, $validatedData, $depth) {
+                $comment = Comment::create([
+                    'user_id' => $request->user()->id,
+                    'content' => $validatedData['content'],
+                    'parent_content' => $validatedData['parent_content'] ?? null,
+                    'post_id' => $validatedData['post_id'],
+                    'parent_id' => $validatedData['parent_id'] ?? null,
+                    'depth' => $depth,
+                ]);
+
+                // Update last_comment_at
+                $this->commentRelationService->updateLastCommentAt($comment);
+
+                // Update comments_count
+                $this->commentRelationService->updateCommentsCount($comment, 'increment');
+
+                return $comment;
+            });
 
             return $this->successResponse($comment, 'Comment created successfully', 201);
         } catch (ValidationException $e) {
@@ -238,6 +256,10 @@ class CommentApiController extends Controller {
 
             $this->authorize('update', $comment);
 
+            if ($comment->is_deleted && $request->user()->role === 'user') {
+                return $this->errorResponse('Comment is deleted', 'COMMENT_DELETED', 422);
+            }
+
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the comment
              * If so, add the moderation_reason to the validation rules
@@ -281,7 +303,15 @@ class CommentApiController extends Controller {
                 ['updated_by_role' => $request->user()->role]
             );
 
-            $comment->update($validatedData);
+            $comment = DB::transaction(function () use ($comment, $validatedData) {
+                // Update the comment
+                $comment->update($validatedData);
+
+                // Update last_comment_at
+                $this->commentRelationService->updateLastCommentAt($comment);
+                return $comment;
+            });
+
 
             return $this->successResponse($comment, 'Comment updated successfully', 200);
         } catch (ModelNotFoundException $e) {
@@ -304,7 +334,24 @@ class CommentApiController extends Controller {
 
             $this->authorize('delete', $comment);
 
-            $comment->delete();
+            $comment = DB::transaction(function () use ($comment) {
+                // Delete all reports and likes associated with the comment
+                $this->commentRelationService->deleteReports($comment);
+                $this->commentRelationService->deleteLikes($comment);
+
+                // Delete all child comments
+                $this->commentRelationService->deleteChildren($comment);
+
+                // Delete the comment
+                $comment->delete();
+
+                // Update last_comment_at and comments_count
+                $this->commentRelationService->updateLastCommentAt($comment);
+                $this->commentRelationService->updateCommentsCount($comment, 'decrement');
+
+                return $comment;
+            });
+
             return $this->successResponse(null, 'Comment deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Comment with ID $id does not exist", 'COMMENT_NOT_FOUND', 404);
@@ -329,13 +376,28 @@ class CommentApiController extends Controller {
             $hasChildren = $comment->children()->exists();
 
             if ($hasChildren) {
-                $comment->is_deleted = true;
-                $comment->content = "This comment has been deleted";
-                $comment->save();
+                $comment = DB::transaction(function () use ($comment) {
+                    $comment->is_deleted = true;
+                    $comment->content = "This comment has been deleted";
+                    $comment->save();
+                    // Update last_comment_at
+                    $this->commentRelationService->updateLastCommentAt($comment);
 
+                    return $comment;
+                });
                 return $this->successResponse($comment, "Comment marked as deleted", 200);
             } else {
-                $comment->delete();
+                $comment = DB::transaction(function () use ($comment) {
+                    $comment->delete();
+
+                    // Update last_comment_at
+                    $this->commentRelationService->updateLastCommentAt($comment);
+
+                    // Update comments_count
+                    $this->commentRelationService->updateCommentsCount($comment, 'decrement');
+
+                    return $comment;
+                });
                 return $this->successResponse(null, "Comment deleted successfully", 200);
             }
         } catch (ModelNotFoundException $e) {
