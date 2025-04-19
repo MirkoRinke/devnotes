@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Models\Post;
 
 use App\Traits\AuthHelper; // example $user = $this->getUserFromToken($request);
@@ -26,6 +28,7 @@ use App\Traits\PostFieldManager;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
+use App\Services\PostRelationService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -33,6 +36,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
+
 
 class PostApiController extends Controller {
     /**
@@ -56,13 +60,19 @@ class PostApiController extends Controller {
      */
     protected $moderationService;
     protected $externalSourceService;
+    protected $postRelationService;
 
     /**
      * Constructor to initialize the services
      */
-    public function __construct(ModerationService $moderationService, ExternalSourceService $externalSourceService) {
+    public function __construct(
+        ModerationService $moderationService,
+        ExternalSourceService $externalSourceService,
+        PostRelationService $postRelationService
+    ) {
         $this->moderationService = $moderationService;
         $this->externalSourceService = $externalSourceService;
+        $this->postRelationService = $postRelationService;
     }
 
     /**
@@ -342,7 +352,23 @@ class PostApiController extends Controller {
 
             $this->authorize('delete', $post);
 
-            $post->delete();
+            $post = DB::transaction(function () use ($post) {
+                // Delete all comments associated with the post
+                $this->postRelationService->deleteComments($post);
+
+                // Delete all reports and likes associated with the post
+                $this->postRelationService->deleteReports($post);
+                $this->postRelationService->deleteLikes($post);
+
+                /**
+                 * Note: Favorites are automatically deleted through 
+                 * database foreign key constraints (onDelete('cascade')) 
+                 * and don't require explicit deletion here.
+                 */
+
+                // Delete the post
+                $post->delete();
+            });
 
             return $this->successResponse(null, 'Post deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
