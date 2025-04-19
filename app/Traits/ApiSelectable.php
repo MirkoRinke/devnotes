@@ -61,7 +61,7 @@ trait ApiSelectable {
      *
      * @param Request $request The HTTP request containing query parameters
      */
-    public function modifyRequestSelect(Request $request, $requiredFields = []): void {
+    public function modifyRequestSelect(Request $request, $requiredFields = [], $removeFields = []): void {
         if ($request->has('select')) {
             $select = $this->getSelectFields($request);
 
@@ -70,6 +70,11 @@ trait ApiSelectable {
                     $select[] = $field;
                 }
             }
+
+            if (!empty($removeFields)) {
+                $select = array_diff($select, $removeFields);
+            }
+
             $request->query->set('select', $select);
         }
     }
