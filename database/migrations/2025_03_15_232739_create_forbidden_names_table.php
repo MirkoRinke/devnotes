@@ -13,6 +13,10 @@ return new class extends Migration {
             $table->id();
             $table->string('name')->unique();
             $table->enum('match_type', ['exact', 'partial'])->default('exact');
+            $table->string('created_by_role')->default('system'); // Assuming 'system' is the default role for the system user
+            $table->unsignedBigInteger('created_by_user_id')->default(2); // Assuming 2 is the ID of the system user
+
+            $table->foreign('created_by_user_id')->references('id')->on('users');
             $table->timestamps();
         });
     }
