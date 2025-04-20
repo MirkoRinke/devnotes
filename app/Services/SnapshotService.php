@@ -34,6 +34,9 @@ class SnapshotService {
      * @return array The snapshot of the user profile
      */
     protected function userProfileSnapshot($userProfile): array {
+
+        $user = $userProfile->user()->first(['name', 'email', 'role']);
+
         return [
             'user_id' => $userProfile->user_id,
             'display_name' => $userProfile->display_name,
@@ -43,7 +46,12 @@ class SnapshotService {
             'biography' => $userProfile->biography,
             'skills' => $userProfile->skills,
             'social_links' => $userProfile->social_links,
-            'contact_channels' => $userProfile->contact_channels
+            'contact_channels' => $userProfile->contact_channels,
+            'user_data' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ]
         ];
     }
 
