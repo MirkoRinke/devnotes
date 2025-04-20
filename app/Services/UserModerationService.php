@@ -24,6 +24,9 @@ class UserModerationService {
     /**
      * Check both username and name for partially forbidden words
      * 
+     *! Example: admin1234 = AutoReport / 1234admin456 = AutoReport
+     *! ( Exact match is checked by NotForbiddenName in the registration process before the user is created )
+     * 
      * @param User $user The user to check
      * @return UserReport|null The created report or null if no report was created
      */
@@ -77,9 +80,9 @@ class UserModerationService {
      */
     private function createAutoReport(User $user, string $matchedWord, string $fieldInfo): UserReport {
         // Check if a report already exists for this user
-        $existingReport = UserReport::where(['user_id' => 2, 'reportable_id' => $user->id, 'reportable_type' => User::class])->first();
+        $existingReport = UserReport::where(['user_id' => 2, 'reportable_id' => $user->id, 'reportable_type' => UserProfile::class])->first();
 
-        $reportableSnapshot = $this->snapshotService->createSnapshot($user, UserProfile::class);
+        $reportableSnapshot = $this->snapshotService->createSnapshot($user->profile, UserProfile::class);
 
         if ($existingReport) {
             // Update the existing report instead of creating a new one
