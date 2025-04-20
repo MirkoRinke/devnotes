@@ -2,11 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\Comment;
-use App\Models\Post;
-use App\Models\User;
-use App\Models\UserProfile;
-use App\Observers\UserProfileObserver;
 use App\Services\CommentModerationService;
 use App\Services\externalSourceService;
 use App\Services\ModerationService;
@@ -37,8 +32,6 @@ class AppServiceProvider extends ServiceProvider {
      * Bootstrap any application services.
      */
     public function boot(): void {
-        UserProfile::observe(UserProfileObserver::class);
-
         /**
          * Rate limiting for the API requests.
          */
