@@ -240,6 +240,27 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
+        'forbiddenName' => [
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'match_type'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['name', 'match_type'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'match_type'],
+            ],
+            'getPerPage' => 10
+        ],
     ];
 
     /**
