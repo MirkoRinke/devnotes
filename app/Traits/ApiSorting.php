@@ -23,7 +23,12 @@ trait ApiSorting {
     public function sort(Request $request, Builder $query, $allowedColumns = []): JsonResponse|Builder {
         // Get the page parameter from the request
         $sort = $request->get('sort');
-        
+
+        // If the sort parameter is not set, return the query with default sorting
+        if (!$sort) {
+            return $query->orderBy('id', 'asc');
+        }
+
         if ($sort) {
             // Get the order column from the request
             $orderSettings = $request->get('sort', 'name');
@@ -33,13 +38,14 @@ trait ApiSorting {
             $orderDirection = str_starts_with($orderSettings, '-') ? 'desc' : 'asc';
             // If the column is not allowed, return an error response
             if (!empty($allowedColumns) && !in_array($orderColumnName, $allowedColumns)) {
-                return $this->errorResponse('Invalid order column: ' . $orderColumnName, ['sort' => 'INVALID_ORDER_COLUMN'], 400);             
+                return $this->errorResponse('Invalid order column: ' . $orderColumnName, ['sort' => 'INVALID_ORDER_COLUMN'], 400);
             }
             // If the column is allowed, sort the query
             if (empty($allowedColumns) || in_array($orderColumnName, $allowedColumns)) {
                 return $query->orderBy($orderColumnName, $orderDirection);
             }
-        }        
+        }
+
         return $query;
     }
 }
