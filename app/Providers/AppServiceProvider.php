@@ -6,7 +6,6 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\UserProfile;
-use App\Observers\UserObserver;
 use App\Observers\UserProfileObserver;
 use App\Services\CommentModerationService;
 use App\Services\externalSourceService;
@@ -38,7 +37,6 @@ class AppServiceProvider extends ServiceProvider {
      * Bootstrap any application services.
      */
     public function boot(): void {
-        User::observe(UserObserver::class);
         UserProfile::observe(UserProfileObserver::class);
 
         /**
