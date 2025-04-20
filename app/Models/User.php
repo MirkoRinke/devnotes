@@ -155,4 +155,13 @@ class User extends Authenticatable {
     public function followingRelations() {
         return $this->hasMany(UserFollower::class, 'follower_id');
     }
+
+    /**
+     * Get the forbidden names created by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function forbiddenNames() {
+        return $this->hasMany(ForbiddenName::class, 'created_by_user_id');
+    }
 }
