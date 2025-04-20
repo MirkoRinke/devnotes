@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CommentApiController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\ForbiddenNameController;
 use App\Http\Controllers\Api\UserFollowerController;
 use App\Http\Controllers\Api\UserLikeController;
 use App\Http\Controllers\API\UserProfileController;
@@ -545,5 +546,54 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
         Route::get('following', [UserFollowerController::class, 'getFollowing']);
         Route::post('follow/{userId}', [UserFollowerController::class, 'follow']);
         Route::delete('unfollow/{userId}', [UserFollowerController::class, 'unfollow']);
+    });
+
+
+
+    //! Route for forbidden names
+    // Route to manage forbidden names - requires authentication with email verification
+    // 
+    // GET /api/forbidden-names - Get all forbidden names
+    // - Authorization: Only administrators and moderators can access this endpoint (enforced by Policy)
+    // 
+    // - Select specific fields: GET /api/forbidden-names?select=id,name,match_type (supports: id, name, match_type, created_by_role, created_by_user_id, created_at, updated_at)
+    // - Sort options: GET /api/forbidden-names?sort=name (supports: id, name, match_type, created_at, updated_at)
+    // - Filter options: GET /api/forbidden-names?filter[name]=example (supports: name, match_type, created_at, updated_at)
+    // - Pagination: GET /api/forbidden-names?page=1&per_page=10
+    //
+    // GET /api/forbidden-names/{id} - Get a specific forbidden name
+    // - Authorization: Only administrators and moderators can access this endpoint (enforced by Policy)
+    // - Select fields: GET /api/forbidden-names/{id}?select=id,name,match_type
+    // - Returns 200 OK on success, 404 if not found, 403 if unauthorized
+    //
+    // POST /api/forbidden-names - Create a new forbidden name
+    // - Authorization: Only administrators and moderators can create forbidden names
+    // - Request body:
+    //  {
+    //    "name": "badword",                  // required, string, must be unique
+    //    "match_type": "exact"               // required, enum: exact or partial
+    //  }
+    // - Returns 201 Created on success with the created resource
+    // - Returns 409 Conflict if the name already exists
+    // - Returns 422 for validation errors
+    //
+    // PUT/PATCH /api/forbidden-names/{id} - Update a forbidden name
+    // - Authorization: Only administrators and moderators can update forbidden names
+    // - Request body:
+    //  {
+    //    "name": "updated_word",             // optional, string, must be unique
+    //    "match_type": "partial"             // optional, enum: exact or partial
+    //  }
+    // - Returns 200 OK on success with the updated resource
+    // - Returns 409 Conflict if the name already exists
+    // - Returns 404 if not found, 403 if unauthorized
+    //
+    // DELETE /api/forbidden-names/{id} - Delete a forbidden name
+    // - Authorization: Only administrators and moderators can delete forbidden names
+    // - No request body needed
+    // - Returns 200 OK on success
+    // - Returns 404 if not found, 403 if unauthorized
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::apiResource('forbidden-names', ForbiddenNameController::class);
     });
 });
