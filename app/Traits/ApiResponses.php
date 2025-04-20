@@ -187,6 +187,14 @@ trait ApiResponses {
             'post_id.exists' => 'POST_ID_NOT_FOUND',
             'parent_id.exists' => 'PARENT_ID_NOT_FOUND',
 
+            // Forbidden Name validation messages
+            'name.required' => 'NAME_FIELD_REQUIRED',
+            'name.string' => 'NAME_MUST_BE_STRING',
+            'name.min' => 'NAME_FIELD_MIN_LENGTH',
+            'name.max' => 'NAME_FIELD_MAX_LENGTH',
+            'match_type.required' => 'MATCH_TYPE_FIELD_REQUIRED',
+            'match_type.string' => 'MATCH_TYPE_MUST_BE_STRING',
+            'match_type.in' => 'MATCH_TYPE_INVALID_OPTION',
         ];
     }
 
