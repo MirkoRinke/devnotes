@@ -11,5 +11,19 @@ class ForbiddenName extends Model {
      *
      * @var array
      */
-    protected $fillable = ['name', 'match_type'];
+    protected $fillable = [
+        'name',
+        'match_type',
+        'created_by_role',
+        'created_by_user_id'
+    ];
+
+    /**
+     * Get the user who created this forbidden name
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function creator() {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
 }
