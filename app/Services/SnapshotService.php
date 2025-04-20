@@ -31,7 +31,7 @@ class SnapshotService {
      * Create a snapshot of the user profile
      *
      * @param UserProfile $userProfile The user profile entity
-     * @return array The snapshot of the user profile
+     * @return array The snapshot of the user profile with user data
      */
     protected function userProfileSnapshot($userProfile): array {
 
@@ -59,9 +59,12 @@ class SnapshotService {
      * Create a snapshot of the post
      *
      * @param Post $post The post entity
-     * @return array The snapshot of the post
+     * @return array The snapshot of the post with user data 
      */
     protected function postSnapshot($post): array {
+
+        $user = $post->user()->first(['name', 'email', 'role']);
+
         return [
             'user_id' => $post->user_id,
             'title' => $post->title,
@@ -71,7 +74,13 @@ class SnapshotService {
             'language' => $post->language,
             'images' => $post->images,
             'category' => $post->category,
-            'tags' => $post->tags
+            'tags' => $post->tags,
+            'user_data' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ]
+
         ];
     }
 
@@ -79,15 +88,22 @@ class SnapshotService {
      * Create a snapshot of the comment
      *
      * @param Comment $comment The comment entity
-     * @return array The snapshot of the comment
+     * @return array The snapshot of the comment with user data
      */
     protected function commentSnapshot($comment): array {
+        $user = $comment->user()->first(['name', 'email', 'role']);
+
         return [
             'user_id' => $comment->user_id,
             'post_id' => $comment->post_id,
             'parent_id' => $comment->parent_id,
             'content' => $comment->content,
             'parent_content' => $comment->parent_content,
+            'user_data' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role
+            ]
         ];
     }
 }
