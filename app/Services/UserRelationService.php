@@ -6,10 +6,34 @@ use App\Models\User;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Models\UserLike;
+use App\Models\UserProfile;
 use App\Models\UserReport;
 use Illuminate\Support\Facades\DB;
 
 class UserRelationService {
+
+    /**
+     * Create a user profile for a user
+     * 
+     * @param User $user
+     * @return UserProfile
+     */
+    public function createUserProfile(User $user): UserProfile {
+        return UserProfile::create([
+            'user_id' => $user->id,
+            'display_name' => $user->display_name ?? $user->name,
+        ]);
+    }
+
+    /**
+     * Check user name for moderation
+     * 
+     * @param User $user
+     * @return void
+     */
+    public function checkUsername(User $user): void {
+        app(UserModerationService::class)->checkAndReportUsername($user);
+    }
 
     /**
      * Transfer all posts from a user to the system user
