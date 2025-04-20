@@ -135,11 +135,21 @@ class UserApiController extends Controller {
                 $this->getValidationMessages()
             );
 
-            $user->update([
-                'name' => $validatedData['name'] ?? $user->name,
-                'email' => $validatedData['email'] ?? $user->email,
-                'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
-            ]);
+            $user = DB::transaction(function () use ($user, $validatedData) {
+                $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
+
+                $user->update([
+                    'name' => $validatedData['name'] ?? $user->name,
+                    'email' => $validatedData['email'] ?? $user->email,
+                    'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
+                ]);
+
+                // Create profile and run moderation
+                if ($nameChanged) {
+                    $this->userRelationService->checkUsername($user);
+                }
+                return $user;
+            });
 
             return $this->successResponse($user, 'User update successfully', 200);
         } catch (ModelNotFoundException $e) {
