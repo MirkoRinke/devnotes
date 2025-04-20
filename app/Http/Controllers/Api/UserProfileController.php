@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Models\UserProfile;
 use App\Rules\AllowedContactChannels;
 use App\Rules\AllowedSocialLinks;
@@ -17,6 +19,9 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+
+
+use App\Services\UserRelationService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -31,6 +36,20 @@ class UserProfileController extends Controller {
      *  The traits used in the controller
      */
     use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests;
+
+
+    /**
+     * The user relation service
+     */
+    protected $userRelationService;
+
+
+    /**
+     * Constructor to initialize the services
+     */
+    public function __construct(UserRelationService $userRelationService) {
+        $this->userRelationService = $userRelationService;
+    }
 
 
     /**
@@ -150,7 +169,15 @@ class UserProfileController extends Controller {
                 $this->getValidationMessages()
             );
 
-            $userProfile->update($validatedData);
+            $userProfile = DB::transaction(function () use ($userProfile, $validatedData) {
+
+                $userProfile->update($validatedData);
+
+                // Update Profile display name and check for forbidden words
+                $this->userRelationService->updateProfileDisplayName($userProfile);
+
+                return $userProfile;
+            });
 
             return $this->successResponse($userProfile, 'User Profile updated successfully', 200);
         } catch (ModelNotFoundException $e) {
