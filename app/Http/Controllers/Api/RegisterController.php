@@ -12,11 +12,25 @@ use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
 
+use App\Services\UserRelationService;
+
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller {
+
+    /**
+     *  The user relation service
+     */
+    protected $userRelationService;
+
+    /**
+     *  Constructor
+     */
+    public function __construct(UserRelationService $userRelationService) {
+        $this->userRelationService = $userRelationService;
+    }
 
     /**
      *  The traits used in the controller
@@ -58,13 +72,22 @@ class RegisterController extends Controller {
                 $this->getValidationMessages()
             );
 
-            $user = User::create([
-                'name' => $validatedData['name'],
-                'display_name' => $validatedData['display_name'],
-                'email' => $validatedData['email'],
-                'password' => bcrypt($validatedData['password']),
-                'email_verified_at' => now(), // Auto-verification for demo purposes only
-            ]);
+            $user = DB::transaction(function () use ($validatedData) {
+
+                $user = User::create([
+                    'name' => $validatedData['name'],
+                    'display_name' => $validatedData['display_name'],
+                    'email' => $validatedData['email'],
+                    'password' => bcrypt($validatedData['password']),
+                    'email_verified_at' => now(), // Auto-verification for demo purposes only
+                ]);
+
+                // Create profile and run moderation
+                $this->userRelationService->createUserProfile($user);
+                $this->userRelationService->checkUsername($user);
+
+                return $user;
+            });
 
             return $this->successResponse($user, 'User created successfully', 201);
         } catch (ValidationException $e) {
