@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder {
             LikeSeeder::class,
             FavoriteSeeder::class,
             ForbiddenNameSeeder::class,
+            PostAllowedValueSeeder::class,
         ]);
     }
 }
