@@ -261,6 +261,27 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
+        'postAllowedValues' => [
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'type'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['name', 'type'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'type'],
+            ],
+            'getPerPage' => 10
+        ],
     ];
 
     /**
