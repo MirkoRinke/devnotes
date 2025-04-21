@@ -68,7 +68,7 @@ class ForbiddenNameController extends Controller {
 
             $query = ForbiddenName::query();
 
-            $query = $this->buildQuery($request, $query, 'forbiddenName');
+            $query = $this->buildQuery($request, $query, 'forbidden_names');
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -133,7 +133,7 @@ class ForbiddenNameController extends Controller {
 
             $query = ForbiddenName::query()->where('id', $id);
 
-            $query = $this->buildQuerySelect($request, $query, 'forbiddenName');
+            $query = $this->buildQuerySelect($request, $query, 'forbidden_names');
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -167,13 +167,14 @@ class ForbiddenNameController extends Controller {
             // Find the forbidden name by ID
             $forbiddenName = ForbiddenName::findOrFail($id);
 
-            // Check if the forbidden name already exists
-            if (isset($validatedData['name']) && $validatedData['name'] !== $forbiddenName->name) {
-                $existingName = ForbiddenName::where('name', $validatedData['name'])->first();
+            $nameToCheck = $validatedData['name'] ?? $forbiddenName->name;
 
-                if ($existingName) {
-                    return $this->errorResponse('Forbidden name already exists', 'FORBIDDEN_NAME_EXISTS', 409);
-                }
+            $existingName = ForbiddenName::where('name', $nameToCheck)
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($existingName) {
+                return $this->errorResponse('Forbidden name with this match type already exists', 'FORBIDDEN_NAME_EXISTS', 409);
             }
 
             // Update the forbidden name
@@ -208,11 +209,12 @@ class ForbiddenNameController extends Controller {
 
             // Get the name of the forbidden name
             $name = $forbiddenName->name;
+            $matchType = $forbiddenName->match_type;
 
             // Delete the forbidden name
             $forbiddenName->delete();
 
-            return $this->successResponse(null, "Forbidden name: $name deleted successfully", 200);
+            return $this->successResponse(null, "Forbidden name: $name with match type: $matchType deleted successfully", 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Forbidden name not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
