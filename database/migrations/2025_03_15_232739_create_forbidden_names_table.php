@@ -10,14 +10,16 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('forbidden_names', function (Blueprint $table) {
+            // Default
             $table->id();
+            $table->timestamps();
+
+            // Basic
             $table->string('name')->unique();
-            $table->enum('match_type', ['exact', 'partial'])->default('exact');
+            $table->string('match_type')->default('exact'); // Assuming 'exact' is the default match type
             $table->string('created_by_role')->default('system'); // Assuming 'system' is the default role for the system user
             $table->unsignedBigInteger('created_by_user_id')->default(2); // Assuming 2 is the ID of the system user
-
-            $table->foreign('created_by_user_id')->references('id')->on('users');
-            $table->timestamps();
+            $table->foreign('created_by_user_id')->references('id')->on('users'); // Foreign key reference to users table
         });
     }
 
