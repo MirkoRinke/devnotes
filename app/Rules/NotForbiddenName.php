@@ -19,6 +19,7 @@ class NotForbiddenName implements ValidationRule {
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void {
         // Check if the name is forbidden
+        //!TODO Implement file cache to improve performance
         if (ForbiddenName::whereLike('name', $value)->exists()) {
             $fail('NAME_IS_FORBIDDEN');
             return;
