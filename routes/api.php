@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\ForbiddenNameController;
+use App\Http\Controllers\Api\PostAllowedValueController;
 use App\Http\Controllers\Api\UserFollowerController;
 use App\Http\Controllers\Api\UserLikeController;
 use App\Http\Controllers\API\UserProfileController;
@@ -595,5 +596,11 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Returns 404 if not found, 403 if unauthorized
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('forbidden-names', ForbiddenNameController::class);
+    });
+
+
+    //! Route for post allowed values
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::apiResource('post-allowed-values', PostAllowedValueController::class);
     });
 });
