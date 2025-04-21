@@ -240,7 +240,7 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
-        'forbiddenName' => [
+        'forbidden_names' => [
             'sort' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
@@ -261,7 +261,7 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
-        'postAllowedValues' => [
+        'post_allowed_values' => [
             'sort' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
