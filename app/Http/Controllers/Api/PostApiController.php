@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\Post;
 
+use App\Rules\ValidPostValue;
+
 use App\Traits\AuthHelper; // example $user = $this->getUserFromToken($request);
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
@@ -29,6 +31,7 @@ use App\Traits\PostFieldManager;
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
 use App\Services\PostRelationService;
+
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -79,8 +82,6 @@ class PostApiController extends Controller {
      * The validation rules for the Create method
      */
     public function getValidationRulesCreate(): array {
-        $allowedPostValues = $this->getAllowedPostValues();
-
         $validationRulesCreate = [
             'title' => 'required|string|max:255',
             'code' => 'nullable|string',
@@ -92,13 +93,13 @@ class PostApiController extends Controller {
             'resources' => 'nullable|array',
             'resources.*' => 'url|max:2048',
             'language' => 'required|array|min:1',
-            'language.*' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['language'])],
-            'category' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['category'])],
-            'post_type' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['post_type'])],
+            'language.*' => ['required', new ValidPostValue('language')],
+            'category' => ['required', 'string', new ValidPostValue('category')],
+            'post_type' => ['required', 'string', new ValidPostValue('post_type')],
             'technology' => 'required|array|min:1',
-            'technology.*' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['technology'])],
+            'technology.*' => ['required', 'string', new ValidPostValue('technology')],
             'tags' => 'required|array',
-            'status' => ['required', 'string', 'in:' . implode(',', $allowedPostValues['status'])],
+            'status' => ['required', 'string', new ValidPostValue('status')],
         ];
         return $validationRulesCreate;
     }
@@ -107,8 +108,6 @@ class PostApiController extends Controller {
      * The validation rules for the Update method
      */
     public function getValidationRulesUpdate(): array {
-        $allowedPostValues = $this->getAllowedPostValues();
-
         $validationRulesUpdate = [
             'title' => 'sometimes|required|string|max:255',
             'code' => 'sometimes|nullable|string',
@@ -120,13 +119,13 @@ class PostApiController extends Controller {
             'resources' => 'sometimes|nullable|array',
             'resources.*' => 'sometimes|url|max:2048',
             'language' => 'sometimes|required|array|min:1',
-            'language.*' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['language'])],
-            'category' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['category'])],
-            'post_type' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['post_type'])],
+            'language.*' => ['sometimes', 'required', new ValidPostValue('language')],
+            'category' => ['sometimes', 'required', 'string', new ValidPostValue('category')],
+            'post_type' => ['sometimes', 'required', 'string', new ValidPostValue('post_type')],
             'technology' => 'sometimes|required|array|min:1',
-            'technology.*' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['technology'])],
+            'technology.*' => ['sometimes', 'required', 'string', new ValidPostValue('technology')],
             'tags' => 'sometimes|required|array',
-            'status' => ['sometimes', 'required', 'string', 'in:' . implode(',', $allowedPostValues['status'])],
+            'status' => ['sometimes', 'required', 'string', new ValidPostValue('status')],
         ];
         return $validationRulesUpdate;
     }
