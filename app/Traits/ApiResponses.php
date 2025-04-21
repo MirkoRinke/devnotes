@@ -235,6 +235,18 @@ trait ApiResponses {
             'match_type.required' => 'MATCH_TYPE_FIELD_REQUIRED',
             'match_type.string' => 'MATCH_TYPE_MUST_BE_STRING',
             'match_type.in' => 'MATCH_TYPE_INVALID_OPTION',
+
+
+            // Post Allowed Value validation messages
+            'name.required' => 'NAME_FIELD_REQUIRED',
+            'name.string' => 'NAME_MUST_BE_STRING',
+            'name.min' => 'NAME_FIELD_MIN_LENGTH',
+            'name.max' => 'NAME_FIELD_MAX_LENGTH',
+
+            'type.required' => 'TYPE_FIELD_REQUIRED',
+            'type.string' => 'TYPE_MUST_BE_STRING',
+            'type.in' => 'TYPE_INVALID_OPTION',
+
         ];
     }
 }
