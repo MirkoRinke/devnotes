@@ -164,4 +164,13 @@ class User extends Authenticatable {
     public function forbiddenNames() {
         return $this->hasMany(ForbiddenName::class, 'created_by_user_id');
     }
+
+    /**
+     * Get the post allowed values created by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function postAllowedValues() {
+        return $this->hasMany(PostAllowedValue::class, 'created_by_user_id');
+    }
 }
