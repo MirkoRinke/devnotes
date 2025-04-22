@@ -7,7 +7,14 @@ use App\Models\UserReport;
 use App\Models\ForbiddenName;
 use App\Models\UserProfile;
 
+use App\Traits\CacheHelper;
+
 class UserModerationService {
+
+    /**
+     *  The traits used in the controller
+     */
+    use CacheHelper;
 
     /**
      * The services used in the controller
@@ -59,8 +66,14 @@ class UserModerationService {
      * @return string|null The found forbidden word or null
      */
     private function findForbiddenPartialMatch(string $name): ?string {
-        $partialMatches = ForbiddenName::where('match_type', 'partial')->get(['name']);
 
+        $cacheKey = $this->generateSimpleCacheKey('forbidden_names_partial');
+
+        $partialMatches = $this->cacheData($cacheKey, 3600, function () {
+            return ForbiddenName::where('match_type', 'partial')->get();
+        });
+
+        // Check for partial matches
         foreach ($partialMatches as $forbidden) {
             if (stripos($name, $forbidden->name) !== false) {
                 return $forbidden->name;
