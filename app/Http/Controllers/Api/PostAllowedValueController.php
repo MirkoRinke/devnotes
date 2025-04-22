@@ -16,6 +16,7 @@ use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $quer
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\CacheHelper; // example $this->forgetCacheByModelType('App\Models\Post');
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +31,7 @@ class PostAllowedValueController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder;
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, CacheHelper;
 
     /**
      * The validation rules for the create method
@@ -140,6 +141,8 @@ class PostAllowedValueController extends Controller {
                 'created_by_user_id' => $request->user()->id
             ]);
 
+            $this->forgetPostAllowedValueCache($postAllowedValue->type);
+
             return $this->successResponse($postAllowedValue, 'Post Allowed Value created successfully', 201);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
@@ -214,6 +217,8 @@ class PostAllowedValueController extends Controller {
                 'created_by_user_id' => $request->user()->id
             ]);
 
+            $this->forgetPostAllowedValueCache($postAllowedValue->type);
+
             return $this->successResponse($postAllowedValue, 'Post Allowed Value updated successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
@@ -251,6 +256,8 @@ class PostAllowedValueController extends Controller {
 
             // Delete the Post Allowed Value
             $postAllowedValue->delete();
+
+            $this->forgetPostAllowedValueCache($postAllowedValue->type);
 
             return $this->successResponse(null, "Post Allowed Value: $name with type: $type deleted successfully", 200);
         } catch (ModelNotFoundException $e) {
