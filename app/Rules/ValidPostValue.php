@@ -4,11 +4,18 @@ namespace App\Rules;
 
 use App\Models\PostAllowedValue;
 
+use App\Traits\CacheHelper;
+
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 
 class ValidPostValue implements ValidationRule {
+
+    /**
+     *  The traits used in the controller
+     */
+    use CacheHelper;
 
     /**
      *  The type of post value to validate against
@@ -43,15 +50,17 @@ class ValidPostValue implements ValidationRule {
             return;
         }
 
-        // Check if the value exists in the post_allowed_values table for the given type
-        //!TODO Implement file cache to improve performance
-        $exists = PostAllowedValue::where([
-            'name' => $value,
-            'type' => $this->type
-        ])->exists();
 
-        // If the value does not exist, fail the validation
-        if (!$exists) {
+        $cacheKey = $this->generateSimpleCacheKey('post_allowed_values_' . $this->type);
+
+        $allowedValues = $this->cacheData($cacheKey, 3600, function () {
+            // dd('Fetching allowed values from the database...');
+            return PostAllowedValue::where('type', $this->type)
+                ->pluck('name')
+                ->toArray();
+        });
+
+        if (!in_array($value, $allowedValues)) {
             $fail('VALUE_IS_FORBIDDEN');
             return;
         }
