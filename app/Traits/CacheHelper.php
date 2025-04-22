@@ -84,4 +84,15 @@ trait CacheHelper {
             }
         }
     }
+
+
+    /**
+     * Clear the cache for post allowed values of a specific type.
+     *
+     * @param string $type The type of post allowed values to clear from the cache.
+     * @return void
+     */
+    protected function forgetPostAllowedValueCache(string $type): void {
+        Cache::forget($this->generateSimpleCacheKey('post_allowed_values_' . $type));
+    }
 }
