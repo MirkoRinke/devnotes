@@ -247,6 +247,22 @@ trait ApiResponses {
             'type.string' => 'TYPE_MUST_BE_STRING',
             'type.in' => 'TYPE_INVALID_OPTION',
 
+
+            // Critical Term validation messages
+            'name.required' => 'NAME_FIELD_REQUIRED',
+            'name.string' => 'NAME_MUST_BE_STRING',
+            'name.min' => 'NAME_FIELD_MIN_LENGTH',
+            'name.max' => 'NAME_FIELD_MAX_LENGTH',
+
+            'language.required' => 'LANGUAGE_FIELD_REQUIRED',
+            'language.string' => 'LANGUAGE_MUST_BE_STRING',
+            'language.min' => 'LANGUAGE_FIELD_MIN_LENGTH',
+            'language.max' => 'LANGUAGE_FIELD_MAX_LENGTH',
+
+            'severity.required' => 'SEVERITY_FIELD_REQUIRED',
+            'severity.integer' => 'SEVERITY_MUST_BE_INTEGER',
+            'severity.between' => 'SEVERITY_MUST_BE_BETWEEN_1_AND_5',
+
         ];
     }
 }
