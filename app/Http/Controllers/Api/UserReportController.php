@@ -17,6 +17,7 @@ use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query
 use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\CacheHelper; // example $this->cacheData($cacheKey, function () use ($query) { return $query->get(); });
 
 use App\Services\SnapshotService;
 
@@ -32,7 +33,7 @@ class UserReportController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder;
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, CacheHelper;
 
     /**
      * The services used in the controller
@@ -75,8 +76,7 @@ class UserReportController extends Controller {
      * @param string $reason The report reason to check
      * @return int The severity level
      */
-    //!TODO Implement file cache to improve performance
-    private function checkCriticalTerms($reason) {
+    private function checkCriticalTerms(Request $request, $reason) {
         // Default severity if no critical terms are found
         $defaultSeverity = 1;
 
@@ -84,8 +84,14 @@ class UserReportController extends Controller {
             return $defaultSeverity;
         }
 
+        // Generate a cache key for the critical terms
+        $cacheKey = $this->generateSimpleCacheKey('critical_terms');
+
         // Get all critical terms from the database
-        $criticalTerms = CriticalTerm::all();
+        // Cache the critical terms for 1 hour
+        $criticalTerms = $this->cacheData($cacheKey, 3600, function () {
+            return CriticalTerm::all();
+        });
 
         // Check if any critical term is found in the reason
         foreach ($criticalTerms as $name) {
@@ -181,7 +187,7 @@ class UserReportController extends Controller {
                 return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409);
             }
 
-            $report = DB::transaction(function () use ($user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData) {
+            $report = DB::transaction(function () use ($request, $user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData) {
 
                 $reason = $validatedData['reason'] ?? null;
 
@@ -190,7 +196,7 @@ class UserReportController extends Controller {
                 if ($user->role === 'admin' || $user->role === 'moderator') {
                     $value = 5;
                 } else if ($reason) {
-                    $value = $this->checkCriticalTerms($reason);
+                    $value = $this->checkCriticalTerms($request, $reason);
                 }
 
                 // Create a snapshot of the reportable entity
