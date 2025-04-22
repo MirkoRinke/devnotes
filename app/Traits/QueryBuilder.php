@@ -282,6 +282,27 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
+        'critical_terms' => [
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'language', 'severity'],
+            ],
+            'filter' => [
+                // Default
+                ...['created_at', 'updated_at'],
+                // Basic
+                ...['name', 'language', 'severity'],
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'language', 'severity'],
+            ],
+            'getPerPage' => 10
+        ],
     ];
 
     /**
