@@ -54,7 +54,6 @@ class ValidPostValue implements ValidationRule {
         $cacheKey = $this->generateSimpleCacheKey('post_allowed_values_' . $this->type);
 
         $allowedValues = $this->cacheData($cacheKey, 3600, function () {
-            // dd('Fetching allowed values from the database...');
             return PostAllowedValue::where('type', $this->type)
                 ->pluck('name')
                 ->toArray();
