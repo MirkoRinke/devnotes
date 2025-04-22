@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CriticalTerm;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder {
             FavoriteSeeder::class,
             ForbiddenNameSeeder::class,
             PostAllowedValueSeeder::class,
+            CriticalTermSeeder::class,
         ]);
     }
 }
