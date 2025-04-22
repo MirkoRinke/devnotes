@@ -15,6 +15,7 @@ use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $quer
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\CacheHelper; // example $this->forgetForbiddenNameCache();
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +29,7 @@ class ForbiddenNameController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder;
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, CacheHelper;
 
     /**
      * The validation rules for the create method
@@ -113,6 +114,8 @@ class ForbiddenNameController extends Controller {
                 'created_by_user_id' => $request->user()->id
             ]);
 
+            $this->forgetForbiddenNameCache();
+
             return $this->successResponse($forbiddenName, 'Forbidden name created successfully', 201);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
@@ -182,6 +185,8 @@ class ForbiddenNameController extends Controller {
                 'created_by_user_id' => $request->user()->id
             ]);
 
+            $this->forgetForbiddenNameCache();
+
             return $this->successResponse($forbiddenName, 'Forbidden name updated successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Forbidden name not found', 'NOT_FOUND', 404);
@@ -211,6 +216,8 @@ class ForbiddenNameController extends Controller {
 
             // Delete the forbidden name
             $forbiddenName->delete();
+
+            $this->forgetForbiddenNameCache();
 
             return $this->successResponse(null, "Forbidden name: $name with match type: $matchType deleted successfully", 200);
         } catch (ModelNotFoundException $e) {
