@@ -167,14 +167,12 @@ class ForbiddenNameController extends Controller {
             // Find the forbidden name by ID
             $forbiddenName = ForbiddenName::findOrFail($id);
 
-            $nameToCheck = $validatedData['name'] ?? $forbiddenName->name;
+            if (isset($validatedData['name']) && $validatedData['name'] !== $forbiddenName->name) {
+                $existingName = ForbiddenName::where('name', $validatedData['name'])->first();
 
-            $existingName = ForbiddenName::where('name', $nameToCheck)
-                ->where('id', '!=', $id)
-                ->first();
-
-            if ($existingName) {
-                return $this->errorResponse('Forbidden name with this match type already exists', 'FORBIDDEN_NAME_EXISTS', 409);
+                if ($existingName) {
+                    return $this->errorResponse('Forbidden name already exists', 'FORBIDDEN_NAME_EXISTS', 409);
+                }
             }
 
             // Update the forbidden name
