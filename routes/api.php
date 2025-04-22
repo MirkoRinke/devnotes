@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommentApiController;
+use App\Http\Controllers\Api\CriticalTermController;
 use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Api\PostApiController;
 use App\Http\Controllers\Api\FavoriteController;
@@ -602,5 +603,11 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //! Route for post allowed values
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('post-allowed-values', PostAllowedValueController::class);
+    });
+
+
+    //! Route for Critical Terms
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::apiResource('critical-terms', CriticalTermController::class);
     });
 });
