@@ -5,16 +5,6 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * Trait CacheHelper
- * 
- * NOTE: This trait is currently not in use in the application due to the complexity
- * of properly handling cache invalidation with the complex authorization system.
- * It remains as a reference implementation and could be used for simple, 
- * non-personalized data in the future.
- * 
- * Provides methods for caching query results and invalidating cache when models are updated.
- */
 trait CacheHelper {
 
     /**
@@ -24,8 +14,10 @@ trait CacheHelper {
      * @param \Closure $callback The callback function to execute and cache its result.
      * @return mixed The cached result.
      */
-    protected function cacheData($cacheKey, \Closure $callback) {
-        $cacheTTL = $this->getCacheTTL();
+    protected function cacheData($cacheKey, $cacheTTL, \Closure $callback) {
+        if ($cacheTTL === null) {
+            $cacheTTL = $this->getCacheTTL();
+        }
         return Cache::remember($cacheKey, $cacheTTL, $callback);
     }
 
@@ -39,6 +31,16 @@ trait CacheHelper {
      */
     protected function generateCacheKey(string $modelType, string $parameter, Request $request): string {
         return strtolower($modelType) . $parameter . md5(json_encode($request->all()));
+    }
+
+    /**
+     * Generate a simple cache key based on a prefix.
+     *
+     * @param string $prefix The prefix to be used in the cache key.
+     * @return string The generated cache key.
+     */
+    protected function generateSimpleCacheKey(string $prefix): string {
+        return strtolower($prefix);
     }
 
     /**
