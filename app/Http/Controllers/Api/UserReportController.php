@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\UserReport;
 use App\Models\Post;
 use App\Models\Comment;
+use App\Models\CriticalTerm;
 use App\Models\UserProfile;
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
@@ -71,22 +72,29 @@ class UserReportController extends Controller {
     /**
      * Check for critical terms in the reason
      * 
-     * TODO: Get the critical terms from the database
+     * @param string $reason The report reason to check
+     * @return int The severity level
      */
+    //!TODO Implement file cache to improve performance
     private function checkCriticalTerms($reason) {
-        $criticalTerms = [
-            // EN
-            ...['scam', 'malware', 'phishing', 'harmful', 'porn', 'nude', 'nudity', 'abuse', 'sexual'],
-            // DE
-            ...['betrug', 'schadsoftware', 'phishing', 'schädlich', 'pornografie', 'nackt', 'nacktheit', 'missbrauch', 'sexuell'],
-        ];
+        // Default severity if no critical terms are found
+        $defaultSeverity = 1;
 
-        foreach ($criticalTerms as $term) {
-            if (stripos($reason, $term) !== false) {
-                return 4;
+        if (empty($reason)) {
+            return $defaultSeverity;
+        }
+
+        // Get all critical terms from the database
+        $criticalTerms = CriticalTerm::all();
+
+        // Check if any critical term is found in the reason
+        foreach ($criticalTerms as $name) {
+            if (stripos($reason, $name->name) !== false) {
+                return $name->severity;
             }
         }
-        return 1;
+
+        return $defaultSeverity;
     }
 
 
