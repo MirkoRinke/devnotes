@@ -95,4 +95,14 @@ trait CacheHelper {
     protected function forgetPostAllowedValueCache(string $type): void {
         Cache::forget($this->generateSimpleCacheKey('post_allowed_values_' . $type));
     }
+
+    /**
+     * Clear the cache for forbidden names.
+     *
+     * @return void
+     */
+    protected function forgetForbiddenNameCache(): void {
+        Cache::forget($this->generateSimpleCacheKey('forbidden_names'));
+        Cache::forget($this->generateSimpleCacheKey('forbidden_names_partial'));
+    }
 }
