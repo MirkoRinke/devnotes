@@ -15,6 +15,7 @@ use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $quer
 use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\CacheHelper; // example $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +28,7 @@ class CriticalTermController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder;
+    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, CacheHelper;
 
     /**
      * The validation rules for the create method
@@ -115,6 +116,8 @@ class CriticalTermController extends Controller {
                 'created_by_user_id' => $request->user()->id
             ]);
 
+            $this->forgetCacheByModelType('App\Models\CriticalTerm');
+
             return $this->successResponse($criticalTerm, 'Critical Term created successfully', 201);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
@@ -184,6 +187,8 @@ class CriticalTermController extends Controller {
                 'created_by_user_id' => $request->user()->id
             ]);
 
+            $this->forgetCacheByModelType('App\Models\CriticalTerm');
+
             return $this->successResponse($criticalTerm, 'Critical Term updated successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Critical Term not found', 'NOT_FOUND', 404);
@@ -214,6 +219,8 @@ class CriticalTermController extends Controller {
 
             // Delete the Critical Term
             $criticalTerm->delete();
+
+            $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
             return $this->successResponse(null, "Critical Term '$name' in language '$language' with severity '$severity' deleted successfully", 200);
         } catch (ModelNotFoundException $e) {
