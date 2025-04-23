@@ -10,11 +10,14 @@ use Illuminate\Http\Request;
 
 use \App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 
+use App\Traits\ApiStartsWith;
+use App\Traits\ApiEndsWith;
+
 trait QueryBuilder {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses;
+    use ApiResponses, ApiStartsWith, ApiEndsWith;
 
     /**
      * Predefined query methods for different model types
@@ -38,6 +41,26 @@ trait QueryBuilder {
                 ...['moderation_info'],
             ],
             'select' => [
+                // Default
+                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                // Basic
+                ...['display_name', 'role'],
+                // Ban info
+                ...['is_banned', 'was_ever_banned'],
+                // Moderation info
+                ...['moderation_info'],
+            ],
+            'startsWith' => [
+                // Default
+                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                // Basic
+                ...['display_name', 'role'],
+                // Ban info
+                ...['is_banned', 'was_ever_banned'],
+                // Moderation info
+                ...['moderation_info'],
+            ],
+            'endsWith' => [
                 // Default
                 ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                 // Basic
@@ -76,6 +99,26 @@ trait QueryBuilder {
                 // Counts
                 ...['reports_count'],
             ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                // Settings
+                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
+                // Counts
+                ...['reports_count'],
+            ],
+            'endsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                // Settings
+                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
+                // Counts
+                ...['reports_count'],
+            ],
             'getPerPage' => 10
         ],
         'post' => [
@@ -104,6 +147,30 @@ trait QueryBuilder {
                 ...['moderation_info']
             ],
             'select' => [
+                // Default 
+                ...['id', 'created_at'],
+                // Basic
+                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
+                // Counts
+                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
+                // Update info
+                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'startsWith' => [
+                // Default 
+                ...['id', 'created_at'],
+                // Basic
+                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
+                // Counts
+                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
+                // Update info
+                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'endsWith' => [
                 // Default 
                 ...['id', 'created_at'],
                 // Basic
@@ -154,6 +221,30 @@ trait QueryBuilder {
                 // Moderation info
                 ...['moderation_info']
             ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at'],
+                // Basic
+                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
+                // Counts
+                ...['likes_count', 'reports_count'],
+                // Update info
+                ...['updated_at', 'is_updated', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
+            'endsWith' => [
+                // Default
+                ...['id', 'created_at'],
+                // Basic
+                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
+                // Counts
+                ...['likes_count', 'reports_count'],
+                // Update info
+                ...['updated_at', 'is_updated', 'updated_by_role'],
+                // Moderation info
+                ...['moderation_info']
+            ],
             'getPerPage' => 10
         ],
         'user_favorites' => [
@@ -170,6 +261,18 @@ trait QueryBuilder {
                 ...['user_id', 'post_id'],
             ],
             'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'post_id'],
+            ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'post_id'],
+            ],
+            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -196,6 +299,18 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'likeable_id', 'likeable_type', 'type'],
             ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
+            ],
+            'endsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
+            ],
             'getPerPage' => 10
         ],
         'user_reports' => [
@@ -212,6 +327,18 @@ trait QueryBuilder {
                 ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
             ],
             'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
+            ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
+            ],
+            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -238,6 +365,18 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'follower_id'],
             ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'follower_id'],
+            ],
+            'endsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['user_id', 'follower_id'],
+            ],
             'getPerPage' => 10
         ],
         'forbidden_names' => [
@@ -254,6 +393,18 @@ trait QueryBuilder {
                 ...['name', 'match_type'],
             ],
             'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'match_type'],
+            ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'match_type'],
+            ],
+            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -280,6 +431,18 @@ trait QueryBuilder {
                 // Basic
                 ...['name', 'type'],
             ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'type'],
+            ],
+            'endsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'type'],
+            ],
             'getPerPage' => 10
         ],
         'critical_terms' => [
@@ -296,6 +459,18 @@ trait QueryBuilder {
                 ...['name', 'language', 'severity'],
             ],
             'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'language', 'severity'],
+            ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'language', 'severity'],
+            ],
+            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -397,5 +572,22 @@ trait QueryBuilder {
             return $config;
         }
         return $this->sort($request, $query, $config);
+    }
+
+
+    protected function buildQueryStartsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
+        $config = $this->getQueryConfig($modelType, 'startsWith');
+        if ($config instanceof JsonResponse) {
+            return $config;
+        }
+        return $this->startsWith($request, $query, $config);
+    }
+
+    protected function buildQueryEndWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
+        $config = $this->getQueryConfig($modelType, 'endsWith');
+        if ($config instanceof JsonResponse) {
+            return $config;
+        }
+        return $this->endsWith($request, $query, $config);
     }
 }
