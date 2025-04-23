@@ -27,6 +27,11 @@ trait ApiFiltering {
         $filterArray = $request->query('filter');
 
         if ($filterArray) {
+            // Check if filterArray is actually an array
+            if (!is_array($filterArray)) {
+                return $this->errorResponse('Filter parameter must use array format like filter[column]=value', 'INVALID_FILTER_FORMAT', 400);
+            }
+
             // Check if the filter column is allowed
             foreach (array_keys($filterArray) as $key) {
                 if (!in_array($key, $allowedFilterColumns)) {
