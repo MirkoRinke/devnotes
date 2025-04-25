@@ -23,23 +23,26 @@ return new class extends Migration {
             $table->json('videos')->nullable();
             $table->json('resources')->nullable();
             $table->json('external_source_previews')->nullable();
-            $table->json('language'); // programming language
-            $table->string('category');
+            $table->json('language'); // programming language used (e.g., HTML, CSS, JavaScript, etc.)
+            $table->string('category'); // category of the post (e.g., Frontend, Backend, etc.)
             $table->string('post_type')->default('snippet'); // snippet, tutorial, feedback, showcase, question, etc.
             $table->json('technology')->nullable();; // technology used (e.g., Angular, React, etc.)
             $table->json('tags');
-            $table->string('status')->default('draft'); // draft, published, archived            
+            $table->string('status')->default('draft'); // status of the post (e.g., draft, private, published, archived)
 
             // Counts
             $table->integer('favorite_count')->default(0);
             $table->integer('likes_count')->default(0);
             $table->integer('reports_count')->default(0);
-            $table->integer('comments_count')->default(0); // number of comments
+            $table->integer('comments_count')->default(0);
 
             // Update info
             $table->boolean('is_updated')->default(false);
             $table->string('updated_by_role')->nullable();
             $table->timestamp('last_comment_at')->nullable(); // last comment add, update, delete
+
+            // History
+            $table->json('history')->nullable(); // history of changes made to the post
 
             // Moderation info
             $table->json('moderation_info')->nullable();
