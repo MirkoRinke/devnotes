@@ -21,7 +21,7 @@ class PostAllowedValueSeeder extends Seeder {
                 'CSS',
                 'SCSS',
                 'JavaScript',
-                'Typescript',
+                'TypeScript',
                 'PHP',
                 'Python',
                 'Shell'
