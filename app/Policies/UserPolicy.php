@@ -53,6 +53,11 @@ class UserPolicy {
             return true;
         }
 
+        // Guests cannot delete their own accounts
+        if ($user->account_purpose === 'guest') {
+            return false;
+        }
+
         return $user->id === $model->id;
     }
 
