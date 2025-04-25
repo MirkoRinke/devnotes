@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\UserFollowerController;
 use App\Http\Controllers\Api\UserLikeController;
 use App\Http\Controllers\API\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
+use App\Http\Controllers\Api\CronjobController;
 use App\Http\Middleware\ValidateApiKey;
 
 Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
@@ -610,4 +611,8 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('critical-terms', CriticalTermController::class);
     });
+
+
+    //! Route for CronjobController
+    Route::get('/cron/clean-guest-account', [CronjobController::class, 'cleanGuestAccount']);
 });
