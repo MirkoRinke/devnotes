@@ -31,6 +31,9 @@ use App\Traits\PostFieldManager;
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
 use App\Services\PostRelationService;
+use App\Services\HistoryService;
+
+
 
 
 use Exception;
@@ -64,6 +67,7 @@ class PostApiController extends Controller {
     protected $moderationService;
     protected $externalSourceService;
     protected $postRelationService;
+    protected $historyService;
 
     /**
      * Constructor to initialize the services
@@ -71,11 +75,13 @@ class PostApiController extends Controller {
     public function __construct(
         ModerationService $moderationService,
         ExternalSourceService $externalSourceService,
-        PostRelationService $postRelationService
+        PostRelationService $postRelationService,
+        HistoryService $historyService
     ) {
         $this->moderationService = $moderationService;
         $this->externalSourceService = $externalSourceService;
         $this->postRelationService = $postRelationService;
+        $this->historyService = $historyService;
     }
 
     /**
@@ -201,6 +207,7 @@ class PostApiController extends Controller {
         }
     }
 
+
     /**
      * Store a newly created resource in storage.
      */
@@ -212,9 +219,10 @@ class PostApiController extends Controller {
             );
 
             $validatedData['user_id'] = $request->user()->id;
+            $validatedData['history'] = [];
 
             // Create the external_source_previews field
-            if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
+            if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData) || array_key_exists('videos', $validatedData)) {
                 $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
                     'images' => $validatedData['images'] ?? [],
                     'videos' => $validatedData['videos'] ?? [],
@@ -231,6 +239,7 @@ class PostApiController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -263,6 +272,7 @@ class PostApiController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -323,7 +333,9 @@ class PostApiController extends Controller {
             $validatedData = array_merge(
                 $validatedData,
                 ['is_updated' => true],
-                ['updated_by_role' => $request->user()->role]
+                ['updated_by_role' => $request->user()->role],
+                ['history' => $this->historyService->createPostHistory($post, $request->user()->id)]
+
             );
 
             $post->update($validatedData);
@@ -341,6 +353,7 @@ class PostApiController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
+
 
     /**
      * Remove the specified resource from storage.
