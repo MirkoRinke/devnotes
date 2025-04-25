@@ -178,18 +178,18 @@ class UserApiController extends Controller {
 
             $this->authorize('delete', $user);
 
-            $isGuest = $user->account_purpose === 'guest';
+            /**
+             *  Check if the user is a guest account
+             *  If so, use the special handling for guest account deletion and recreation
+             */
+            if ($user->account_purpose === 'guest') {
+                return $this->handleGuestAccountDeletion($user);
+            }
 
-            $user = DB::transaction(function () use ($user, $isGuest) {
-                if ($isGuest) {
-                    // Delete all posts and comments associated with the guest account
-                    $this->guestAccountService->deletePosts($user);
-                    $this->guestAccountService->deleteComments($user);
-                } else {
-                    // Transfer all posts and comments to the system user (ID 3)
-                    $this->userRelationService->transferPosts($user);
-                    $this->userRelationService->transferComments($user);
-                }
+            DB::transaction(function () use ($user) {
+                // Transfer all posts and comments to the system user (ID 3)
+                $this->userRelationService->transferPosts($user);
+                $this->userRelationService->transferComments($user);
 
                 // Delete all reports and likes associated with the user
                 $this->userRelationService->deleteReports($user);
@@ -198,13 +198,38 @@ class UserApiController extends Controller {
                 $user->delete();
             });
 
-            if ($isGuest) {
-                $this->guestAccountService->createGuestAccount();
-            }
-
             return $this->successResponse(null, 'User deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
+     * Special handling for guest account deletion and recreation
+     */
+    public function handleGuestAccountDeletion(User $user): JsonResponse {
+        try {
+            DB::transaction(function () use ($user) {
+                // Delete all posts and comments associated with the guest account
+                $this->guestAccountService->deletePosts($user);
+                $this->guestAccountService->deleteComments($user);
+
+                // Delete all reports and likes associated with the user
+                $this->userRelationService->deleteReports($user);
+                $this->userRelationService->deleteLikes($user);
+
+                $user->delete();
+            });
+
+            // Recreate the guest account outside the transaction
+            $this->guestAccountService->createGuestAccount();
+
+            return $this->successResponse(null, 'Guest account reset successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
