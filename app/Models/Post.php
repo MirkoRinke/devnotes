@@ -51,6 +51,9 @@ class Post extends Model {
         'updated_by_role',
         'last_comment_at',
 
+        // History
+        'history',
+
         // Moderation info
         'moderation_info',
     ];
@@ -90,6 +93,9 @@ class Post extends Model {
         'is_updated' => 'boolean',
         'updated_by_role' => 'string',
         'last_comment_at' => 'datetime',
+
+        // History
+        'history' => 'array',
 
         // Moderation info
         'moderation_info' => 'array',
