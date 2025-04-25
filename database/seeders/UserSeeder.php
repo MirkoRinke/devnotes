@@ -95,5 +95,16 @@ class UserSeeder extends Seeder {
                 'email_verified_at' => now(),
             ]);
         }
+
+        // Create a guest user
+        $this->createUserWithProfile([
+            'name' => 'Guest',
+            'display_name' => 'Guest',
+            'email' => 'guest@system.local',
+            'password' => Hash::make('sicheresPasswort123'),
+            'role' => 'user',
+            'email_verified_at' => now(),
+            'account_purpose' => 'guest',
+        ]);
     }
 }
