@@ -43,6 +43,9 @@ class User extends Authenticatable {
 
         // Moderation info
         'moderation_info',
+
+        // Account info
+        'account_purpose',
     ];
 
     /**
@@ -52,6 +55,7 @@ class User extends Authenticatable {
      */
     protected $hidden = [
         'password',
+        'account_purpose',
     ];
 
 
@@ -72,6 +76,9 @@ class User extends Authenticatable {
 
             // Moderation info
             'moderation_info' => 'json',
+
+            // Account info
+            'account_purpose' => 'string',
         ];
     }
 
