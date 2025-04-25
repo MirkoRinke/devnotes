@@ -65,6 +65,11 @@ class UserRelationService {
      * @return int Number of transferred posts
      */
     public function transferPosts(User $user, int $systemUserId = 3): int {
+        if ($user->account_purpose === 'guest') {
+            $result['deleted'] = $this->deletePosts($user);
+            return $result['deleted'];
+        }
+
         $totalTransferred = 0;
 
         Post::where('user_id', $user->id)
@@ -80,6 +85,28 @@ class UserRelationService {
     }
 
     /**
+     * Delete all posts from a user
+     * 
+     * @param User $user
+     * @return int Number of deleted posts
+     */
+    public function deletePosts(User $user): int {
+        $totalDeleted = 0;
+
+        Post::where('user_id', $user->id)
+            ->chunkById(100, function ($posts) use (&$totalDeleted) {
+                $ids = $posts->pluck('id')->toArray();
+                $deleted = DB::table('posts')
+                    ->whereIn('id', $ids)
+                    ->delete();
+                $totalDeleted += $deleted;
+            });
+
+        return $totalDeleted;
+    }
+
+
+    /**
      * Transfer all comments from a user to the system user
      * 
      * @param User $user
@@ -87,6 +114,11 @@ class UserRelationService {
      * @return int Number of transferred comments
      */
     public function transferComments(User $user, int $systemUserId = 3): int {
+        if ($user->account_purpose === 'guest') {
+            $result['deleted'] = $this->deleteComments($user);
+            return $result['deleted'];
+        }
+
         $totalTransferred = 0;
 
         Comment::where('user_id', $user->id)
@@ -100,6 +132,29 @@ class UserRelationService {
 
         return $totalTransferred;
     }
+
+
+    /**
+     * Delete all comments from a user
+     * 
+     * @param User $user
+     * @return int Number of deleted comments
+     */
+    public function deleteComments(User $user): int {
+        $totalDeleted = 0;
+
+        Comment::where('user_id', $user->id)
+            ->chunkById(100, function ($comments) use (&$totalDeleted) {
+                $ids = $comments->pluck('id')->toArray();
+                $deleted = DB::table('comments')
+                    ->whereIn('id', $ids)
+                    ->delete();
+                $totalDeleted += $deleted;
+            });
+
+        return $totalDeleted;
+    }
+
 
     /**
      * Delete all reports associated with a user
