@@ -19,14 +19,12 @@ class ValidateApiKey {
     public function handle(Request $request, Closure $next): Response {
 
         // Get the API key from the request header
-        $apiKey = $request->header('X-API-Key');
+        $apiKey = $request->header('X-API-Key') ?: $request->query('api_key');
 
-
-        // If the API key is missing, return an error response
+        // If the API key is not provided in the header or query string, return an error response
         if (!$apiKey) {
-            return $this->errorResponse('This request requires a valid API key in the X-API-Key header', 'API_KEY_MISSING', 401);
+            return $this->errorResponse('This request requires a valid API key in the X-API-Key header or api_key query parameter', 'API_KEY_MISSING', 401);
         }
-
 
         // Check if the API key is valid and active
         $validKey = ApiKey::where('key', $apiKey)
