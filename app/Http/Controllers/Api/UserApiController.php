@@ -19,6 +19,7 @@ use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $met
 
 use App\Services\ModerationService;
 use App\Services\UserRelationService;
+use App\Services\GuestAccountService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -38,10 +39,16 @@ class UserApiController extends Controller {
 
     protected $moderationService;
     protected $userRelationService;
+    protected $guestAccountService;
 
-    public function __construct(ModerationService $moderationService, UserRelationService $userRelationService) {
+    public function __construct(
+        ModerationService $moderationService,
+        UserRelationService $userRelationService,
+        GuestAccountService $guestAccountService
+    ) {
         $this->moderationService = $moderationService;
         $this->userRelationService = $userRelationService;
+        $this->guestAccountService = $guestAccountService;
     }
 
     /**
@@ -171,10 +178,18 @@ class UserApiController extends Controller {
 
             $this->authorize('delete', $user);
 
-            $user = DB::transaction(function () use ($user) {
-                // Transfer all posts and comments to the system user (ID 3)
-                $this->userRelationService->transferPosts($user);
-                $this->userRelationService->transferComments($user);
+            $isGuest = $user->account_purpose === 'guest';
+
+            $user = DB::transaction(function () use ($user, $isGuest) {
+                if ($isGuest) {
+                    // Delete all posts and comments associated with the guest account
+                    $this->guestAccountService->deletePosts($user);
+                    $this->guestAccountService->deleteComments($user);
+                } else {
+                    // Transfer all posts and comments to the system user (ID 3)
+                    $this->userRelationService->transferPosts($user);
+                    $this->userRelationService->transferComments($user);
+                }
 
                 // Delete all reports and likes associated with the user
                 $this->userRelationService->deleteReports($user);
@@ -182,6 +197,10 @@ class UserApiController extends Controller {
 
                 $user->delete();
             });
+
+            if ($isGuest) {
+                $this->guestAccountService->createGuestAccount();
+            }
 
             return $this->successResponse(null, 'User deleted successfully', 200);
         } catch (ModelNotFoundException $e) {
