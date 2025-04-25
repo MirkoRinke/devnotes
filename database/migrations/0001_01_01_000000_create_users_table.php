@@ -28,6 +28,9 @@ return new class extends Migration {
 
             // Moderation info
             $table->json('moderation_info')->nullable();
+
+            // Account info
+            $table->enum('account_purpose', ['regular', 'guest'])->default('regular')->nullable(false);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
