@@ -155,6 +155,8 @@ trait QueryBuilder {
                 ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
                 ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                // History
+                ...['history'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -167,6 +169,8 @@ trait QueryBuilder {
                 ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
                 ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                // History
+                ...['history'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -179,6 +183,8 @@ trait QueryBuilder {
                 ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
                 ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                // History
+                ...['history'],
                 // Moderation info
                 ...['moderation_info']
             ],
