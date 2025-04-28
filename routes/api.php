@@ -601,18 +601,117 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     });
 
 
+
     //! Route for post allowed values
+    // Route to manage allowed values for post attributes - requires authentication with email verification
+    // 
+    // GET /api/post-allowed-values - Get all allowed values
+    // - Authorization: Only administrators and moderators can access this endpoint (enforced by Policy)
+    // 
+    // - Select specific fields: GET /api/post-allowed-values?select=id,name,type (supports: id, name, type, created_by_role, created_by_user_id, created_at, updated_at)
+    // - Sort options: GET /api/post-allowed-values?sort=name (supports: id, name, type, created_at, updated_at)
+    // - Filter options: GET /api/post-allowed-values?filter[type]=language (supports: name, type, created_at, updated_at)
+    // - Pagination: GET /api/post-allowed-values?page=1&per_page=10
+    //
+    // GET /api/post-allowed-values/{id} - Get a specific allowed value
+    // - Authorization: Only administrators and moderators can access this endpoint (enforced by Policy)
+    // - Select fields: GET /api/post-allowed-values/{id}?select=id,name,type
+    // - Returns 200 OK on success, 404 if not found, 403 if unauthorized
+    //
+    // POST /api/post-allowed-values - Create a new allowed value
+    // - Authorization: Only administrators and moderators can create allowed values
+    // - Request body:
+    //  {
+    //    "name": "javascript",              // required, string, must be unique per type
+    //    "type": "language"                 // required, enum: language, category, post_type, technology, status
+    //  }
+    // - Returns 201 Created on success with the created resource
+    // - Returns 409 Conflict if the name already exists for that type
+    // - Returns 422 for validation errors
+    //
+    // PUT/PATCH /api/post-allowed-values/{id} - Update an allowed value
+    // - Authorization: Only administrators and moderators can update allowed values
+    // - Request body:
+    //  {
+    //    "name": "typescript",              // optional, string, must be unique per type
+    //    "type": "language"                 // optional, enum: language, category, post_type, technology, status
+    //  }
+    // - Returns 200 OK on success with the updated resource
+    // - Returns 409 Conflict if the name already exists for that type
+    // - Returns 404 if not found, 403 if unauthorized
+    //
+    // DELETE /api/post-allowed-values/{id} - Delete an allowed value
+    // - Authorization: Only administrators and moderators can delete allowed values
+    // - No request body needed
+    // - Returns 200 OK on success
+    // - Returns 409 Conflict if the value is currently used in posts
+    // - Returns 404 if not found, 403 if unauthorized
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('post-allowed-values', PostAllowedValueController::class);
     });
 
 
     //! Route for Critical Terms
+    // Route to manage critical terms - requires authentication with email verification
+    // 
+    // GET /api/critical-terms - Get all critical terms
+    // - Authorization: Only administrators and moderators can access this endpoint (enforced by Policy)
+    // 
+    // - Select specific fields: GET /api/critical-terms?select=id,name,language (supports: id, name, language, severity, created_by_role, created_by_user_id, created_at, updated_at)
+    // - Sort options: GET /api/critical-terms?sort=name (supports: id, name, language, severity, created_at, updated_at)
+    // - Filter options: GET /api/critical-terms?filter[language]=en (supports: name, language, severity, created_at, updated_at)
+    // - Pagination: GET /api/critical-terms?page=1&per_page=10
+    //
+    // GET /api/critical-terms/{id} - Get a specific critical term
+    // - Authorization: Only administrators and moderators can access this endpoint (enforced by Policy)
+    // - Select fields: GET /api/critical-terms/{id}?select=id,name,language
+    // - Returns 200 OK on success, 404 if not found, 403 if unauthorized
+    //
+    // POST /api/critical-terms - Create a new critical term
+    // - Authorization: Only administrators and moderators can create critical terms
+    // - Request body:
+    //  {
+    //    "name": "example_term",              // required, string, must be unique
+    //    "language": "en",                    // required, string
+    //    "severity": 3                        // required, integer between 1-5
+    //  }
+    // - Returns 201 Created on success with the created resource
+    // - Returns 409 Conflict if the name already exists
+    // - Returns 422 for validation errors
+    //
+    // PUT/PATCH /api/critical-terms/{id} - Update a critical term
+    // - Authorization: Only administrators and moderators can update critical terms
+    // - Request body:
+    //  {
+    //    "name": "updated_term",              // optional, string, must be unique
+    //    "language": "fr",                    // optional, string
+    //    "severity": 5                        // optional, integer between 1-5
+    //  }
+    // - Returns 200 OK on success with the updated resource
+    // - Returns 409 Conflict if the name already exists
+    // - Returns 404 if not found, 403 if unauthorized
+    //
+    // DELETE /api/critical-terms/{id} - Delete a critical term
+    // - Authorization: Only administrators and moderators can delete critical terms
+    // - No request body needed
+    // - Returns 200 OK on success
+    // - Returns 404 if not found, 403 if unauthorized
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('critical-terms', CriticalTermController::class);
     });
 
 
     //! Route for CronjobController
+    // Routes for scheduled maintenance tasks - requires API key authentication
+    // 
+    // GET /api/cron/clean-guest-account - Clean or recreate the guest account
+    // - Authorization: Requires a valid API key (enforced by ValidateApiKey middleware)
+    // - No authentication or email verification required
+    // - No request body needed
+    // - Purpose: Deletes guest account content and resets it, or creates a new guest account if none exists
+    // - Returns 200 OK on successful cleaning of an existing guest account
+    // - Returns 201 Created if a new guest account was created
+    // - Returns 500 Server Error for unexpected issues
+    // - Intended to be called by automated cronjobs/scheduled tasks
     Route::get('/cron/clean-guest-account', [CronjobController::class, 'cleanGuestAccount']);
 });
