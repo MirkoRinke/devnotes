@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\UserFavorite;
 use App\Models\Post;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
-use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\ApiResponses; // example $this->successResponse($favorites, 'Favorites retrieved successfully', 200);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // examples:
 // - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
@@ -32,7 +29,7 @@ class FavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, RelationLoader;
+    use  ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests;
 
 
     /**
