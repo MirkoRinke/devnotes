@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Http\Controllers\Api\UserApiController;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+
+use App\Http\Controllers\Api\UserApiController;
+use App\Http\Controllers\Controller;
+
+use App\Models\User;
 
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
 
 use App\Services\GuestAccountService;
 
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CronjobController extends Controller {
 
