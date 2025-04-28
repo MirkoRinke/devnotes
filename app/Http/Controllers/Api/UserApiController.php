@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\User;
 
 use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
-use App\Traits\ApiSorting; // example $this->sort($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiFiltering; // example $this->filter($request, $query, [ 'name', 'email']);
-use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 
 use App\Services\ModerationService;
@@ -27,14 +25,13 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\DB;
 
 class UserApiController extends Controller {
 
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, QueryBuilder, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, AuthorizesRequests;
 
 
     protected $moderationService;
