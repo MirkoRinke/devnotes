@@ -8,8 +8,6 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
-use function PHPUnit\Framework\isEmpty;
-
 trait ApiFiltering {
 
     use ApiResponses;
@@ -23,7 +21,7 @@ trait ApiFiltering {
      * 
      * @return JsonResponse|Builder
      */
-    public function filter(Request $request, Builder $query, $allowedFilterColumns = []): JsonResponse|Builder {
+    public function filter(Request $request, Builder $query, array $allowedFilterColumns = []): JsonResponse|Builder {
         // Get the filter array from the request
         $filterArray = $request->query('filter');
 
