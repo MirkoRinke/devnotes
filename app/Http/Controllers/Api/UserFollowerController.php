@@ -2,34 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\User;
 use App\Models\UserFollower;
 
 use App\Traits\ApiResponses;
-use App\Traits\ApiSorting;
-use App\Traits\ApiFiltering;
-use App\Traits\ApiSelectable;
-use App\Traits\ApiPagination;
 use App\Traits\ApiInclude;
 use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\DB;
 
 class UserFollowerController extends Controller {
 
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, RelationLoader;
+    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader, AuthorizesRequests;
 
 
     /**
