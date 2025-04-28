@@ -22,13 +22,13 @@ trait ApiPagination {
      * @param int $default
      * @return JsonResponse|Collection|LengthAwarePaginator
      */
-    public function getPerPage(Request $request, Builder $query, int $default = 10): JsonResponse|Collection|LengthAwarePaginator  {
+    public function getPerPage(Request $request, Builder $query, int $default = 10): JsonResponse|Collection|LengthAwarePaginator {
         // Get the page and per_page parameters from the request
         $page = $request->get('page');
-        
-        if ($page) {      
+
+        if ($page) {
             // Get the per_page parameter from the request
-            $perPage = $request->get('per_page', $default);            
+            $perPage = $request->get('per_page', $default);
             // Validate the page and per_page parameters
             if (!is_numeric($page) || $page < 1) {
                 return $this->errorResponse('The page parameter must be a number greater than 0', ['page' => 'INVALID_PAGE_NUMBER'], 400);
