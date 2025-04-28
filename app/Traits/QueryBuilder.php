@@ -8,8 +8,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
-use \App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-
+use App\Traits\ApiResponses;
+use App\Traits\ApiSorting;
+use App\Traits\ApiFiltering;
+use App\Traits\ApiSelectable;
+use App\Traits\ApiPagination;
 use App\Traits\ApiStartsWith;
 use App\Traits\ApiEndsWith;
 
@@ -17,7 +20,7 @@ trait QueryBuilder {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiStartsWith, ApiEndsWith;
+    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiStartsWith, ApiEndsWith;
 
     /**
      * Predefined query methods for different model types
@@ -507,6 +510,7 @@ trait QueryBuilder {
                 return $query;
             }
         }
+
         return $query;
     }
 
@@ -518,7 +522,7 @@ trait QueryBuilder {
      * @param array $fields
      * @return Builder
      */
-    protected function getQueryConfig(string $modelType, ?string $methodName = null): array|JsonResponse {
+    protected function getQueryConfig(string $modelType, ?string $methodName = null): array|int|JsonResponse {
         if (!isset($this->queryConfigurations[$modelType])) {
             return $this->errorResponse("Query configuration for '{$modelType}' is not defined", 'QUERY_CONFIG_NOT_DEFINED', 500);
         }
@@ -545,7 +549,7 @@ trait QueryBuilder {
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->select($request, $query, $config);
+        return $this->select($request, $query, (array) $config);
     }
 
     /**
@@ -561,7 +565,7 @@ trait QueryBuilder {
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->filter($request, $query, $config);
+        return $this->filter($request, $query, (array) $config);
     }
 
     /**
@@ -577,23 +581,56 @@ trait QueryBuilder {
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->sort($request, $query, $config);
+        return $this->sort($request, $query, (array)$config);
     }
 
 
+    /**
+     * startWith the query based on the request
+     * 
+     * @param Request $request
+     * @param Builder $query
+     * @param array $fields
+     * @return Builder
+     */
     protected function buildQueryStartsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'startsWith');
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->startsWith($request, $query, $config);
+        return $this->startsWith($request, $query, (array) $config);
     }
 
-    protected function buildQueryEndWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
+
+    /**
+     * endWith the query based on the request
+     * 
+     * @param Request $request
+     * @param Builder $query
+     * @param array $fields
+     * @return Builder
+     */
+    protected function buildQueryEndsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'endsWith');
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->endsWith($request, $query, $config);
+        return $this->endsWith($request, $query, (array) $config);
+    }
+
+    /**
+     * Paginate the query based on the request
+     * 
+     * @param Request $request
+     * @param Builder $query
+     * @param int $perPage
+     * @return Builder
+     */
+    protected function buildQueryPaginate(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
+        $config = $this->getQueryConfig($modelType, 'getPerPage');
+        if ($config instanceof JsonResponse) {
+            return $config;
+        }
+        return $this->getPerPage($request, $query, (int) $config);
     }
 }
