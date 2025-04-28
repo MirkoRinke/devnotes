@@ -37,8 +37,11 @@ class AppServiceProvider extends ServiceProvider {
          */
         //!TODO Delete the out commented code after testing
         RateLimiter::for('api', function (Request $request) {
-            // The key is the user id or the IP address of the user
-            $key = 'api:' . ($request->user()?->id ?: $request->ip());
+            // Get the user's IP address from the request header
+            $userIp = $request->header('X-Forwarded-For') ?: $request->ip();
+
+            // The key is the user id or the IP address of the user    
+            $key = 'api:' . ($request->user()?->id ?: $userIp);
             // The maximum number of attempts allowed in a minute
             $maxAttempts = 120;
 
