@@ -2,22 +2,18 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 
 use App\Models\Post;
 
 use App\Rules\ValidPostValue;
 
-use App\Traits\AuthHelper; // example $user = $this->getUserFromToken($request);
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
-use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
+use App\Traits\AuthHelper; // example $user = $this->getUserFromToken($request);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // examples:
@@ -33,9 +29,6 @@ use App\Services\ExternalSourceService;
 use App\Services\PostRelationService;
 use App\Services\HistoryService;
 
-
-
-
 use Exception;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -48,17 +41,7 @@ class PostApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses,
-        ApiSorting,
-        ApiFiltering,
-        ApiSelectable,
-        ApiPagination,
-        ApiInclude,
-        QueryBuilder,
-        AuthorizesRequests,
-        RelationLoader,
-        AuthHelper,
-        PostFieldManager;
+    use ApiResponses, AuthHelper, QueryBuilder, ApiInclude, RelationLoader, PostFieldManager, AuthorizesRequests;
 
 
     /**
@@ -397,7 +380,7 @@ class PostApiController extends Controller {
      * Get Interactions for a User's Posts
      * 
      * This method calculates the total count of likes or favorites
-     * that a user has received across all of their posts.
+     * that a user has received across //!all of their posts.
      *
      */
     public function getUserPostsInteractions(Request $request, string $id) {
