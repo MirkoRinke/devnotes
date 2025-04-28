@@ -20,7 +20,7 @@ trait ApiSorting {
      * @param array $allowedColumns
      * @return Builder
      */
-    public function sort(Request $request, Builder $query, $allowedColumns = []): JsonResponse|Builder {
+    public function sort(Request $request, Builder $query, array $allowedColumns = []): JsonResponse|Builder {
         // Get the page parameter from the request
         $sort = $request->get('sort');
 
