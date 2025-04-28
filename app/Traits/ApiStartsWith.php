@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
-
 trait ApiStartsWith {
 
     use ApiResponses;
@@ -26,7 +25,7 @@ trait ApiStartsWith {
      * @return Builder|JsonResponse Returns the modified query builder if successful,
      *                             or a JSON error response if validation fails
      */
-    public function startsWith(Request $request, Builder $query, $allowedColumns = []) {
+    public function startsWith(Request $request, Builder $query, array $allowedColumns = []) {
         if ($request->has('startsWith')) {
             $startsWithFilters = $request->startsWith;
 
