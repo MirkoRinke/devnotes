@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\ForbiddenName;
 
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiSorting;  // example $query = $this->sort(request(), $query, ['id', 'title', 'language', 'category', 'status']);
-use App\Traits\ApiFiltering; // example $query = $this->filter(request(), $query, ['title', 'language', 'category', 'status']);
-use App\Traits\ApiSelectable; // example $this->selectAttributes($request, $query, [ 'id','name', 'email']);
-use App\Traits\ApiPagination; // example $this->getPerPage($request, $query, 10);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\CacheHelper; // example $this->forgetForbiddenNameCache();
@@ -29,7 +26,7 @@ class ForbiddenNameController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiInclude, QueryBuilder, CacheHelper;
+    use ApiResponses, QueryBuilder, ApiInclude, CacheHelper, AuthorizesRequests;
 
     /**
      * The validation rules for the create method
