@@ -20,8 +20,27 @@ use App\Http\Controllers\Api\UserReportController;
 use App\Http\Controllers\Api\CronjobController;
 use App\Http\Middleware\ValidateApiKey;
 
+/**
+ * API Route Security Middleware
+ * -----------------------------
+ * All routes within this group are protected by:
+ * 
+ * 1. ValidateApiKey: Ensures a valid API key is provided
+ *    - Requires API key in 'X-API-Key' header or 'api_key' query parameter
+ *    - Validates against API keys stored in database
+ *    - Updates the 'last_used_at' timestamp on access
+ * 
+ * 2. throttle:api: Implements rate limiting
+ *    - Based on user ID or client IP address
+ *    - Uses X-Forwarded-For header for proxy requests
+ *    - Limit: 120 requests per minute
+ * 
+ * Frontend-proxy implementation requires:
+ *    - X-API-Key: The API key for backend access
+ *    - X-Forwarded-For: The original client IP address
+ *    - Authorization: Bearer token for authenticated user requests
+ */
 Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
-
     //! Route for registration
     // Route to register a new user - no authentication required
     // POST /api/register - Create a new user account
