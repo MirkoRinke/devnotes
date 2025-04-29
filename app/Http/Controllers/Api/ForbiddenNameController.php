@@ -94,7 +94,7 @@ class ForbiddenNameController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('ForbiddenName')
             );
 
             // Check if the forbidden name already exists
@@ -161,7 +161,7 @@ class ForbiddenNameController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('ForbiddenName')
             );
 
             // Find the forbidden name by ID
