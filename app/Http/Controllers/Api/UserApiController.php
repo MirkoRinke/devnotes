@@ -13,7 +13,7 @@ use App\Models\User;
 use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, 'user');
 
 use App\Services\ModerationService;
 use App\Services\UserRelationService;
@@ -33,11 +33,13 @@ class UserApiController extends Controller {
      */
     use ApiResponses, QueryBuilder, AuthorizesRequests;
 
-
     protected $moderationService;
     protected $userRelationService;
     protected $guestAccountService;
 
+    /**
+     * Constructor to initialize the services
+     */
     public function __construct(
         ModerationService $moderationService,
         UserRelationService $userRelationService,
@@ -51,17 +53,99 @@ class UserApiController extends Controller {
     /**
      * The validation rules for the user data
      */
-    public function getValidationRules($user): array {
+    public function getValidationRulesUpdate($user): array {
         $validationRules = [
-            'name' => ['required', 'string', 'min:2', 'max:255', new NotForbiddenName()],
-            'email' => 'required|string|email|unique:users,email,' . $user->id,
-            'password' => 'required|string|min:8|confirmed',
+            'name' => ['sometimes', 'required', 'string', 'min:2', 'max:255', new NotForbiddenName()],
+            'email' => 'sometimes|required|string|email|unique:users,email,' . $user->id,
+            'password' => 'sometimes|required|string|min:8|confirmed',
         ];
         return $validationRules;
     }
 
     /**
-     * Display a listing of the resource.
+     * List all users
+     *
+     * Retrieves a complete list of users with all information, including moderation history.
+     * 
+     * Only administrators can access this endpoint.
+     *
+     * @group User Management
+     *
+     * @queryParam page integer Page number for pagination. Example: 1
+     * @queryParam per_page integer Number of users per page (5-100). Example: 15 ( Default: 10 )
+     * 
+     * @queryParam sort string Field to sort by (prefix with - for descending). Example: -created_at
+     * 
+     * @queryParam filter[name] string Filter users by exact name match. Example: John
+     * @queryParam filter[is_banned] string Filter users by ban status. Options:
+     *        - "is:null": Users who are not banned
+     *        - "is:not_null": Users who are currently banned
+     *        - Date string: Match specific ban expiry date
+     *        Example: /?filter[is_banned]=is:not_null
+     * 
+     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email
+     * 
+     * @queryParam startsWith[name] string Filter by name starting with value. Example: Jo
+     * 
+     * @queryParam endsWith[email] string Filter by email ending with value. Example: @example.com
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Users retrieved successfully",
+     *   "code": 200,
+     *   "count": 2,
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Admin User",
+     *       "email": "admin@example.com",
+     *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *       "created_at": "2025-04-28T10:00:00.000000Z",
+     *       "updated_at": "2025-04-28T10:00:00.000000Z",
+     *       "display_name": "Admin",
+     *       "role": "admin",
+     *       "is_banned": null,
+     *       "was_ever_banned": false,
+     *       "moderation_info": null
+     *     },
+     *     {
+     *       "id": 2,
+     *       "name": "Regular User",
+     *       "email": "user@example.com",
+     *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *       "created_at": "2025-04-28T10:00:00.000000Z",
+     *       "updated_at": "2025-04-28T10:00:00.000000Z",
+     *       "display_name": "User",
+     *       "role": "user",
+     *       "is_banned": null,
+     *       "was_ever_banned": false,
+     *       "moderation_info": null
+     *     }
+     *   ]
+     * }
+     * 
+     * @response status=200 scenario="No users found" {
+     *   "status": "success",
+     *   "message": "No users found with the given filters",
+     *   "code": 200,
+     *   "count": 0,
+     *   "data": []
+     * }
+     * 
+     * @response status=200 scenario="Empty database" {
+     *   "status": "success",
+     *   "message": "No users exist in the database",
+     *   "code": 200,
+     *   "data": []
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "You are not authorized to view users",
+     *   "code": "UNAUTHORIZED_ACTION"
+     * }
+     *
+     * @authenticated
      */
     public function index(Request $request): JsonResponse {
         try {
@@ -74,7 +158,6 @@ class UserApiController extends Controller {
             $query = User::query();
 
             $query = $this->buildQuery($request, $query, 'user');
-
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -92,14 +175,72 @@ class UserApiController extends Controller {
     }
 
     /**
-     * Display the specified resource.
+     * Get a specific user
+     *
+     * Retrieves detailed information about a single user by their ID.
+     * If the requesting user is an administrator, additional information like ban status 
+     * and moderation history will be included in the response.
+     *
+     * @group User Management
+     * 
+     * @urlParam id required The ID of the user to retrieve. Example: 1
+     *
+     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email
+     *
+     * @response status=200 scenario="Success (Admin view)" {
+     *   "status": "success",
+     *   "message": "User retrieved successfully",
+     *   "code": 200,
+     *   "data": {
+     *     "id": 1,
+     *     "name": "Admin User",
+     *     "email": "admin@example.com",
+     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *     "created_at": "2025-04-28T10:00:00.000000Z",
+     *     "updated_at": "2025-04-28T10:00:00.000000Z",
+     *     "display_name": "Admin",
+     *     "role": "admin",
+     *     "is_banned": null,
+     *     "was_ever_banned": false,
+     *     "moderation_info": null
+     *   }
+     * }
+     * 
+     * @response status=200 scenario="Success (Regular user view)" {
+     *   "status": "success", 
+     *   "message": "User retrieved successfully",
+     *   "code": 200,
+     *   "data": {
+     *     "id": 2,
+     *     "name": "Regular User",
+     *     "email": "user@example.com",
+     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *     "created_at": "2025-04-28T10:00:00.000000Z",
+     *     "updated_at": "2025-04-28T10:00:00.000000Z",
+     *     "display_name": "User",
+     *     "role": "user"
+     *   }
+     * }
+     *
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User with ID 999 does not exist",
+     *   "code": "USER_NOT_FOUND"
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": "UNAUTHORIZED"
+     * }
+     *
+     * @authenticated
      */
     public function show(string $id, Request $request): JsonResponse {
         try {
             $query = User::query()->where('id', $id);
 
             $query = $this->buildQuerySelect($request, $query, 'user');
-
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
@@ -125,7 +266,76 @@ class UserApiController extends Controller {
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a user
+     *
+     * Updates the specified user's information. Users can only update their own data,
+     * while administrators can update any user.
+     *
+     * @group User Management
+     *
+     * @urlParam id required The ID of the user to update. Example: 1
+     *
+     * @bodyParam name string Name of the user (2-255 characters). Example: John Doe
+     * @bodyParam email string Email address (must be unique). Example: john@example.com
+     * @bodyParam password string Password (min 8 characters). Example: password123
+     * @bodyParam password_confirmation string Password confirmation (must match password). Example: password123
+     *
+     * @bodyContent {
+     *   "name": "John Doe",
+     *   "email": "john@example.com",
+     *   "password": "securePassword123",
+     *   "password_confirmation": "securePassword123"
+     * }
+     * 
+     * @bodyContent scenario="Update name only" {
+     *   "name": "John Doe"
+     * }
+     * 
+     * @bodyContent scenario="Update email only" {
+     *    "email": "john@example.com"
+     * }
+     * 
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "User update successfully",
+     *   "code": 200,
+     *   "data": {
+     *     "id": 2,
+     *     "name": "John Doe",
+     *     "email": "john@example.com",
+     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *     "created_at": "2025-04-28T10:00:00.000000Z",
+     *     "updated_at": "2025-04-29T15:30:45.000000Z",
+     *     "display_name": "John",
+     *     "role": "user",
+     *     "is_banned": null,
+     *     "was_ever_banned": false,
+     *     "moderation_info": null
+     *   }
+     * }
+     *
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User with ID 999 does not exist",
+     *   "code": "USER_NOT_FOUND"
+     * }
+     *
+     * @response status=422 scenario="Validation error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": {
+     *     "name": ["The name field is required."],
+     *     "email": ["The email has already been taken."]
+     *   }
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": "UNAUTHORIZED"
+     * }
+     *
+     * @authenticated
      */
     public function update(Request $request, string $id): JsonResponse {
         try {
@@ -134,7 +344,7 @@ class UserApiController extends Controller {
             $this->authorize('update', $user);
 
             $validatedData = $request->validate(
-                $this->getValidationRules($user),
+                $this->getValidationRulesUpdate($user),
                 $this->getValidationMessages()
             );
 
@@ -167,7 +377,46 @@ class UserApiController extends Controller {
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a user
+     *
+     * Permanently removes a user account. For regular users, their content (posts and comments) 
+     * will be transferred to the system user, while their reports and likes will be deleted.
+     * Guest accounts receive special handling and will be recreated after deletion.
+     * and their content (posts and comments) will be deleted.
+     *
+     * Only administrators can delete other users' accounts. Regular users can only delete their own account.
+     *
+     * @group User Management
+     *
+     * @urlParam id required The ID of the user to delete. Example: 5
+     *
+     * @response status=200 scenario="Regular user deleted" {
+     *   "status": "success",
+     *   "message": "User deleted successfully",
+     *   "code": 200,
+     *   "data": null
+     * }
+     *
+     * @response status=200 scenario="Guest account deleted" {
+     *   "status": "success",
+     *   "message": "Guest account reset successfully",
+     *   "code": 200,
+     *   "data": null
+     * }
+     *
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User with ID 999 does not exist",
+     *   "code": "USER_NOT_FOUND"
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": "UNAUTHORIZED"
+     * }
+     *
+     * @authenticated
      */
     public function destroy(string $id): JsonResponse {
         try {
@@ -208,6 +457,10 @@ class UserApiController extends Controller {
 
     /**
      * Special handling for guest account deletion and recreation
+     * 
+     * This method deletes all posts and comments associated with the guest account,
+     * deletes all reports and likes associated with the user, and then recreates the guest account.
+     * 
      */
     public function handleGuestAccountDeletion(User $user): JsonResponse {
         try {
@@ -236,7 +489,81 @@ class UserApiController extends Controller {
 
 
     /**
-     * banUser the specified user.
+     * Ban a user
+     *
+     * Bans a user for a specified number of days. While technically temporary,
+     * setting a very large number of days (e.g., 99999) effectively creates a
+     * permanent ban. Only administrators can ban users. Banned users cannot 
+     * log in until the ban expires.
+     *
+     * @group User Management
+     *
+     * @urlParam id required The ID of the user to ban. Example: 2
+     *
+     * @bodyParam moderation_reason string required Reason for banning the user. Example: Repeated violation of community guidelines
+     * @bodyParam days integer required Number of days to ban the user (1-99999). Use a large value like 99999 for effectively permanent bans. Example: 7
+     * 
+     * @bodyContent scenario="Temporary ban (7 days)" {
+     *   "moderation_reason": "Repeated violation of community guidelines",
+     *   "days": 7
+     * }
+     * 
+     * @bodyContent scenario="Permanent ban" {
+     *   "moderation_reason": "Severe violation of terms of service",
+     *   "days": 99999
+     * }
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "User banned successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 6,
+     *     "name": "Max Mustermann6",
+     *     "is_banned": "2025-05-12T23:48:23.000000Z",
+     *     "was_ever_banned": true,
+     *     "moderation_info": [
+     *       {
+     *         "user_id": 1,
+     *         "username": "Max Mustermann1",
+     *         "role": "admin",
+     *         "timestamp": "2025-04-29T01:48:23+02:00",
+     *         "reason": "Violation of terms of service",
+     *         "action": "ban"
+     *       }
+     *     ]
+     *   }
+     * }
+     *
+     * @response status=409 scenario="Already banned" {
+     *   "status": "error",
+     *   "message": "User is already banned",
+     *   "code": "USER_ALREADY_BANNED"
+     * }
+     *
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User with ID 999 does not exist",
+     *   "code": "USER_NOT_FOUND"
+     * }
+     *
+     * @response status=422 scenario="Validation error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": {
+     *     "moderation_reason": ["The moderation reason field is required."],
+     *     "days": ["The days must be at least 1."]
+     *   }
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": "UNAUTHORIZED"
+     * }
+     *
+     * @authenticated
      */
     public function banUser(string $id, Request $request): JsonResponse {
         try {
@@ -257,10 +584,14 @@ class UserApiController extends Controller {
             );
 
             $days = $validatedData['days'];
+
+            /**
+             * Remove the 'days' key from the validated data
+             * this was only required for setting the ban duration
+             */
             unset($validatedData['days']);
 
             $bannedTime = now()->addDays($days);
-
 
             $user = $this->moderationService->handleModerationUpdate(
                 $user,
@@ -294,7 +625,79 @@ class UserApiController extends Controller {
 
 
     /**
-     * unbanUser the specified user.
+     * Unban a user
+     *
+     * Removes an active ban from a user. Only administrators can unban users.
+     * This will allow the user to log in again immediately.
+     *
+     * @group User Management
+     *
+     * @urlParam id required The ID of the user to unban. Example: 2
+     *
+     * @bodyParam moderation_reason string required Reason for unbanning the user. Example: Appeal approved
+     * 
+     * @bodyContent {
+     *   "moderation_reason": "Appeal approved"
+     * }
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "User unbanned successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 6,
+     *     "name": "Max Mustermann6",
+     *     "is_banned": null,
+     *     "was_ever_banned": true,
+     *     "moderation_info": [
+     *       {
+     *         "user_id": 1,
+     *         "username": "Max Mustermann1",
+     *         "role": "admin",
+     *         "timestamp": "2025-04-29T01:50:23+02:00",
+     *         "reason": "Appeal approved",
+     *         "action": "unban"
+     *       },
+     *       {
+     *         "user_id": 1,
+     *         "username": "Max Mustermann1",
+     *         "role": "admin",
+     *         "timestamp": "2025-04-28T10:15:30+02:00",
+     *         "reason": "Violation of terms of service",
+     *         "action": "ban"
+     *       }
+     *     ]
+     *   }
+     * }
+     *
+     * @response status=409 scenario="Not banned" {
+     *   "status": "error",
+     *   "message": "User is not banned",
+     *   "code": "USER_NOT_BANNED"
+     * }
+     *
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User with ID 999 does not exist",
+     *   "code": "USER_NOT_FOUND"
+     * }
+     *
+     * @response status=422 scenario="Validation error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": {
+     *     "moderation_reason": ["The moderation reason field is required."]
+     *   }
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": "UNAUTHORIZED"
+     * }
+     *
+     * @authenticated
      */
     public function unbanUser(string $id, Request $request): JsonResponse {
         try {
@@ -305,7 +708,6 @@ class UserApiController extends Controller {
             }
 
             $this->authorize('unbanUser', $user);
-
 
             $validatedData = $request->validate([
                 'moderation_reason' => 'required|string|max:255',
@@ -341,7 +743,75 @@ class UserApiController extends Controller {
     }
 
     /**
-     * Get users with ban history.
+     * Get users with ban history
+     *
+     * Retrieves all users who have ever been banned, regardless of current ban status.
+     * This is a specialized endpoint that is functionally equivalent to using the main users 
+     * endpoint with filter[was_ever_banned]=true.
+     *
+     * Only administrators can access this endpoint.
+     *
+     * @group User Management
+     *
+     * @queryParam page integer Page number for pagination. Example: 1
+     * @queryParam per_page integer Number of users per page (5-100). Example: 15
+     * @queryParam sort string Field to sort by (prefix with - for descending). Example: -created_at
+     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email,moderation_info
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Users retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       "id": 6,
+     *       "name": "Max Mustermann6",
+     *       "email": "max@example6.com",
+     *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *       "created_at": "2025-04-28T10:00:00.000000Z",
+     *       "updated_at": "2025-04-29T15:30:45.000000Z",
+     *       "display_name": "Max",
+     *       "role": "user",
+     *       "is_banned": null,
+     *       "was_ever_banned": true,
+     *       "moderation_info": [
+     *         {
+     *           "user_id": 1,
+     *           "username": "Admin User",
+     *           "role": "admin",
+     *           "timestamp": "2025-04-29T01:50:23+02:00",
+     *           "reason": "Appeal approved",
+     *           "action": "unban"
+     *         },
+     *         {
+     *           "user_id": 1,
+     *           "username": "Admin User", 
+     *           "role": "admin",
+     *           "timestamp": "2025-04-28T10:15:30+02:00",
+     *           "reason": "Violation of terms of service",
+     *           "action": "ban"
+     *         }
+     *       ]
+     *     }
+     *   ]
+     * }
+     *
+     * @response status=200 scenario="No banned users" {
+     *   "status": "success",
+     *   "message": "No users found with the given filters",
+     *   "code": 200,
+     *   "count": 0,
+     *   "data": []
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "You are not authorized to view users",
+     *   "code": "UNAUTHORIZED_ACTION"
+     * }
+     *
+     * @authenticated
      */
     public function getUsersWithBanHistory(Request $request): JsonResponse {
         try {
