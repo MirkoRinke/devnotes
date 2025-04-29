@@ -198,7 +198,7 @@ class PostApiController extends Controller {
         try {
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('Post')
             );
 
             $validatedData['user_id'] = $request->user()->id;
@@ -278,7 +278,7 @@ class PostApiController extends Controller {
 
             $validatedData = $request->validate(
                 $validationRules,
-                $this->getValidationMessages()
+                $this->getValidationMessages('Post')
             );
 
             // Create the external_source_previews field
@@ -390,7 +390,7 @@ class PostApiController extends Controller {
                 [
                     'type' => 'required|string|in:likes_count,favorite_count',
                 ],
-                $this->getValidationMessages()
+                $this->getValidationMessages('Post')
             );
 
             $total = (int)Post::where('user_id', $id)->sum($validatedData['type']);
