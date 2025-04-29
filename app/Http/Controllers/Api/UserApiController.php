@@ -64,6 +64,8 @@ class UserApiController extends Controller {
 
     /**
      * List all users
+     * 
+     * Endpoint: GET /users
      *
      * Retrieves a complete list of users with all information, including moderation history.
      * 
@@ -124,6 +126,13 @@ class UserApiController extends Controller {
      *   ]
      * }
      * 
+     * @response status=200 scenario="Empty database" {
+     *   "status": "success",
+     *   "message": "No users exist in the database",
+     *   "code": 200,
+     *   "data": []
+     * }
+     * 
      * @response status=200 scenario="No users found" {
      *   "status": "success",
      *   "message": "No users found with the given filters",
@@ -131,18 +140,19 @@ class UserApiController extends Controller {
      *   "count": 0,
      *   "data": []
      * }
-     * 
-     * @response status=200 scenario="Empty database" {
-     *   "status": "success",
-     *   "message": "No users exist in the database",
-     *   "code": 200,
-     *   "data": []
-     * }
      *
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
-     *   "message": "You are not authorized to view users",
-     *   "code": "UNAUTHORIZED_ACTION"
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
      * }
      *
      * @authenticated
@@ -168,7 +178,7 @@ class UserApiController extends Controller {
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse('You are not authorized to update this post', 'UNAUTHORIZED_ACTION', 403);
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -176,6 +186,8 @@ class UserApiController extends Controller {
 
     /**
      * Get a specific user
+     * 
+     * Endpoint: GET /users/{id}
      *
      * Retrieves detailed information about a single user by their ID.
      * If the requesting user is an administrator, additional information like ban status 
@@ -225,13 +237,22 @@ class UserApiController extends Controller {
      * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User with ID 999 does not exist",
-     *   "code": "USER_NOT_FOUND"
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
      * }
      *
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
-     *   "code": "UNAUTHORIZED"
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
      * }
      *
      * @authenticated
@@ -267,6 +288,8 @@ class UserApiController extends Controller {
 
     /**
      * Update a user
+     * 
+     * Endpoint: PATCH /users/{id}
      *
      * Updates the specified user's information. Users can only update their own data,
      * while administrators can update any user.
@@ -317,13 +340,15 @@ class UserApiController extends Controller {
      * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User with ID 999 does not exist",
-     *   "code": "USER_NOT_FOUND"
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
      * }
      *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
-     *   "code": {
+     *   "code": 422,
+     *   "errors": {
      *     "name": ["The name field is required."],
      *     "email": ["The email has already been taken."]
      *   }
@@ -332,9 +357,17 @@ class UserApiController extends Controller {
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
-     *   "code": "UNAUTHORIZED"
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
      * }
      *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
      * @authenticated
      */
     public function update(Request $request, string $id): JsonResponse {
@@ -345,7 +378,7 @@ class UserApiController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate($user),
-                $this->getValidationMessages()
+                $this->getValidationMessages('User')
             );
 
             $user = DB::transaction(function () use ($user, $validatedData) {
@@ -357,7 +390,6 @@ class UserApiController extends Controller {
                     'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
                 ]);
 
-                // Create profile and run moderation
                 if ($nameChanged) {
                     $this->userRelationService->checkUsername($user);
                 }
@@ -378,6 +410,8 @@ class UserApiController extends Controller {
 
     /**
      * Delete a user
+     * 
+     * Endpoint: DELETE /users/{id}
      *
      * Permanently removes a user account. For regular users, their content (posts and comments) 
      * will be transferred to the system user, while their reports and likes will be deleted.
@@ -407,15 +441,24 @@ class UserApiController extends Controller {
      * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User with ID 999 does not exist",
-     *   "code": "USER_NOT_FOUND"
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
      * }
      *
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
-     *   "code": "UNAUTHORIZED"
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
      * }
      *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
      * @authenticated
      */
     public function destroy(string $id): JsonResponse {
@@ -490,6 +533,8 @@ class UserApiController extends Controller {
 
     /**
      * Ban a user
+     * 
+     * Endpoint: POST /users/{id}/ban
      *
      * Bans a user for a specified number of days. While technically temporary,
      * setting a very large number of days (e.g., 99999) effectively creates a
@@ -539,19 +584,22 @@ class UserApiController extends Controller {
      * @response status=409 scenario="Already banned" {
      *   "status": "error",
      *   "message": "User is already banned",
-     *   "code": "USER_ALREADY_BANNED"
+     *   "code": 409,
+     *   "errors": "USER_ALREADY_BANNED"
      * }
      *
      * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User with ID 999 does not exist",
-     *   "code": "USER_NOT_FOUND"
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
      * }
      *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
-     *   "code": {
+     *   "code": 422,
+     *   "errors": {
      *     "moderation_reason": ["The moderation reason field is required."],
      *     "days": ["The days must be at least 1."]
      *   }
@@ -560,7 +608,15 @@ class UserApiController extends Controller {
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
-     *   "code": "UNAUTHORIZED"
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
      * }
      *
      * @authenticated
@@ -580,7 +636,7 @@ class UserApiController extends Controller {
                     'moderation_reason' => 'required|string|max:255',
                     'days' => 'required|integer|min:1|max:99999'
                 ],
-                $this->getValidationMessages()
+                $this->getValidationMessages('User')
             );
 
             $days = $validatedData['days'];
@@ -626,6 +682,8 @@ class UserApiController extends Controller {
 
     /**
      * Unban a user
+     * 
+     * Endpoint: POST /users/{id}/unban
      *
      * Removes an active ban from a user. Only administrators can unban users.
      * This will allow the user to log in again immediately.
@@ -674,19 +732,22 @@ class UserApiController extends Controller {
      * @response status=409 scenario="Not banned" {
      *   "status": "error",
      *   "message": "User is not banned",
-     *   "code": "USER_NOT_BANNED"
+     *   "code": 409,
+     *   "errors": "USER_NOT_BANNED"
      * }
      *
      * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User with ID 999 does not exist",
-     *   "code": "USER_NOT_FOUND"
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
      * }
      *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
-     *   "code": {
+     *   "code": 422,
+     *   "errors": {
      *     "moderation_reason": ["The moderation reason field is required."]
      *   }
      * }
@@ -694,9 +755,17 @@ class UserApiController extends Controller {
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
-     *   "code": "UNAUTHORIZED"
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
      * }
      *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
      * @authenticated
      */
     public function unbanUser(string $id, Request $request): JsonResponse {
