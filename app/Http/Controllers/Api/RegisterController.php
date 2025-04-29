@@ -69,7 +69,7 @@ class RegisterController extends Controller {
         try {
             $validatedData = $request->validate(
                 $this->getValidationRules(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('User')
             );
 
             $user = DB::transaction(function () use ($validatedData) {
