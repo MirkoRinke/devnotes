@@ -52,6 +52,11 @@ class RegisterController extends Controller {
 
     /**
      * Register a new user
+     *
+     * Endpoint: POST /register
+     * 
+     * Creates a new user account with the provided information. Upon successful registration,
+     * a user profile is automatically generated and the username is checked against forbidden names.
      * 
      * Note on Email Verification:
      * For this portfolio/demo project, emails are automatically verified.
@@ -61,9 +66,55 @@ class RegisterController extends Controller {
      * - Provide an API endpoint for verification
      * - Restrict certain functionality for unverified users
      * - Implement the MustVerifyEmail interface in the User model
+     *
+     * @group Authentication
+     *
+     * @bodyParam name string required The full name of the user (2-255 characters). Example: John Doe
+     * @bodyParam display_name string required A unique username for display (2-255 characters). Example: johndoe
+     * @bodyParam email string required A valid, unique email address. Example: john@example.com
+     * @bodyParam password string required Password (min 8 characters). Example: secret123
+     * @bodyParam password_confirmation string required Must match the password field. Example: secret123
+     *
+     * @requestBody {
+     *   "name": "John Doe",
+     *   "display_name": "johndoe",
+     *   "email": "john@example.com",
+     *   "password": "secret123",
+     *   "password_confirmation": "secret123"
+     * }
      * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @response status=201 scenario="Success" {
+     *   "status": "success",
+     *   "message": "User created successfully",
+     *   "code": 201,
+     *   "count": 1,
+     *   "data": {
+     *     "name": "John Doe",
+     *     "display_name": "johndoe", 
+     *     "email": "john@example.com",
+     *     "email_verified_at": "2025-04-29T18:35:29.000000Z",
+     *     "updated_at": "2025-04-29T18:35:29.000000Z",
+     *     "created_at": "2025-04-29T18:35:29.000000Z",
+     *     "id": 10
+     *   }
+     * }
+     *
+     * @response status=422 scenario="Validation Error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "email": ["EMAIL_ALREADY_IN_USE"],
+     *     "display_name": ["DISPLAY_NAME_ALREADY_IN_USE"]
+     *   }
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error",
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
      */
     public function register(Request $request): JsonResponse {
         try {
@@ -82,7 +133,11 @@ class RegisterController extends Controller {
                     'email_verified_at' => now(), // Auto-verification for demo purposes only
                 ]);
 
-                // Create profile and run moderation
+                /**
+                 * Create profile and check username
+                 * The userRelationService is assumed to handle the creation of the user profile
+                 * and the checking of the username against forbidden names.
+                 */
                 $this->userRelationService->createUserProfile($user);
                 $this->userRelationService->checkUsername($user);
 
