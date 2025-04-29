@@ -151,7 +151,7 @@ class UserReportController extends Controller {
             $user = $request->user();
             $validatedData = $request->validate(
                 $this->validationRules,
-                $this->getValidationMessages()
+                $this->getValidationMessages('UserReport')
             );
 
             $typeMap = [
@@ -233,7 +233,7 @@ class UserReportController extends Controller {
             $user = $request->user();
             $validatedData = $request->validate(
                 $this->validationRules,
-                $this->getValidationMessages()
+                $this->getValidationMessages('UserReport')
             );
 
             $typeMap = [
