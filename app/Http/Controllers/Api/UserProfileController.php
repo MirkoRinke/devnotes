@@ -161,7 +161,7 @@ class UserProfileController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate($userProfile),
-                $this->getValidationMessages()
+                $this->getValidationMessages('UserProfile')
             );
 
             $userProfile = DB::transaction(function () use ($userProfile, $validatedData) {
@@ -207,7 +207,7 @@ class UserProfileController extends Controller {
                     'type' => 'required|string|in:images,videos,resources',
                     'hours' => 'required|integer|min:0|max:72'
                 ],
-                $this->getValidationMessages()
+                $this->getValidationMessages('UserProfile')
             );
 
             $type = $validatedData['type'];
