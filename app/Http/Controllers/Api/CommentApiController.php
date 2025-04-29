@@ -166,7 +166,7 @@ class CommentApiController extends Controller {
 
             $validatedData = $request->validate(
                 $this->validationRulesCreate,
-                $this->getValidationMessages()
+                $this->getValidationMessages('Comment')
             );
 
             $depth = 0;
@@ -267,7 +267,7 @@ class CommentApiController extends Controller {
 
             $validatedData = $request->validate(
                 $this->validationRulesUpdate,
-                $this->getValidationMessages()
+                $this->getValidationMessages('Comment')
             );
 
 
