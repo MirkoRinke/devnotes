@@ -96,7 +96,7 @@ class CriticalTermController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('CriticalTerm')
             );
 
             // Check if the Critical Term already exists
@@ -163,7 +163,7 @@ class CriticalTermController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('CriticalTerm')
             );
 
             // Find the Critical Term by ID
