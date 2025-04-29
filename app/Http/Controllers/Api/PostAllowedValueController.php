@@ -120,7 +120,7 @@ class PostAllowedValueController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('PostAllowedValue')
             );
 
             $existingPostAllowedValue = PostAllowedValue::where('name', $validatedData['name'])
@@ -188,7 +188,7 @@ class PostAllowedValueController extends Controller {
 
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate(),
-                $this->getValidationMessages()
+                $this->getValidationMessages('PostAllowedValue')
             );
 
             // Find the Post Allowed Value by ID
