@@ -120,7 +120,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     //! Route for ban and unban users
     // Routes to manage user bans - requires authentication with email verification and admin privileges
     // 
-    // GET /api/users/banned - Get all users with ban history
+    // GET /api/users/was_ever_banned - Get all users with ban history
     // - Authorization: Only administrators can access this endpoint (enforced by Policy)
     // - Returns users who have been banned at any point, even if they're currently not banned
     // 
@@ -150,7 +150,7 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     // - Returns 200 OK with details on success, 404 if user not found, 409 if not currently banned
     // - Returns updated user information including ban status and moderation history
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/users/banned', [UserApiController::class, 'getUsersWithBanHistory']);
+        Route::get('/users/was_ever_banned', [UserApiController::class, 'getUsersWithBanHistory']);
         Route::post('/users/{id}/ban', [UserApiController::class, 'banUser']);
         Route::post('/users/{id}/unban', [UserApiController::class, 'unbanUser']);
     });
