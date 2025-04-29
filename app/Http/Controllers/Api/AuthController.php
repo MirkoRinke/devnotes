@@ -13,6 +13,10 @@ use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post crea
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
+use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
+
 class AuthController extends Controller {
 
     /**
@@ -21,113 +25,361 @@ class AuthController extends Controller {
     use ApiResponses;
 
     /**
-     * Register a new user
+     * User Login
+     * 
+     * Endpoint: POST /login
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Authenticates a user and issues an access token for API requests.
+     * The token expires after 7 days and can be used for subsequent authenticated requests.
+     * If the user account is currently banned, login will be denied.
+     *
+     * @group Authentication
+     *
+     * @bodyParam email string required User's email address. Example: user@example.com
+     * @bodyParam password string required User's password. Example: secret123
+     * @bodyParam device_name string required Name for the device/browser creating this token. Example: iPhone 13
+     *
+     * @requestBody {
+     *   "email": "user@example.com,
+     *   "password": "secret123",
+     *   "device_name": "iPhone 13"
+     * }
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Login successful",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "accessToken": "3|laravel_sanctum_fN7dxYRqdJ2QWJDvhJMmxDaAZ9DvNeHFvHjd9e74e15a",
+     *     "type": "Bearer"
+     *   }
+     * }
+     * 
+     * @response status=401 scenario="Invalid Credentials" {
+     *   "status": "error",
+     *   "message": "The provided credentials are incorrect.",
+     *   "code": 401,
+     *   "errors": "CREDENTIALS_INCORRECT"
+     * }
+     *
+     * @response status=403 scenario="Banned Account" {
+     *   "status": "error",
+     *   "message": "Your account has been suspended.",
+     *   "code": 403,
+     *   "errors": "ACCOUNT_SUSPENDED"
+     * }
+     * 
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=422 scenario="Validation Error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "email": ["The email field is required."],
+     *     "password": ["The password field is required."],
+     *     "device_name": ["The device name field is required."]
+     *   }
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
      */
     public function login(Request $request): JsonResponse {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-            'device_name' => 'required',
-        ]);
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+                'device_name' => 'required',
+            ]);
 
-        $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
+            }
+
+            if ($user->is_banned && now()->lt($user->is_banned)) {
+                return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
+            }
+
+            $token = $user->createToken($request->device_name);
+            $token->accessToken->expires_at = Carbon::now()->addDays(7);
+            $token->accessToken->save();
+
+            return $this->successResponse(['accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
-
-        if ($user->is_banned && now()->lt($user->is_banned)) {
-            return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
-        }
-
-        $token = $user->createToken($request->device_name);
-        $token->accessToken->expires_at = Carbon::now()->addDays(7);
-        $token->accessToken->save();
-
-        return $this->successResponse(['accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
     }
 
-
     /**
-     * Logout a user and revoke the token
+     * Logout
+     * 
+     * Endpoint: POST /logout
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Revokes the current access token, effectively logging the user out.
+     * This invalidates only the token used for the current request.
+     *
+     * @group Authentication
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Logout successful",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized.",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
      */
     public function logout(Request $request): JsonResponse {
-        /** @var \Laravel\Sanctum\PersonalAccessToken $token */
-        $token = $request->user()->currentAccessToken();
-        $token->delete();
-        return $this->successResponse(null, 'Logout successful', 200);
+        try {
+            /** @var \Laravel\Sanctum\PersonalAccessToken $token */
+            $token = $request->user()->currentAccessToken();
+            $token->delete();
+            return $this->successResponse(null, 'Logout successful', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
     }
 
     /**
-     * Logout a user from all devices
+     * Get User Tokens
+     * 
+     * Endpoint: GET /tokens
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Retrieves a list of all access tokens (active sessions) for the authenticated user.
+     * This includes the device name, last used timestamp and whether it's the current session.
+     *
+     * @group Authentication
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Token list retrieved",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "device_name": "test_device",
+     *       "last_used_at": "2025-04-29T20:16:46.000000Z",
+     *       "created_at": "2025-04-29T20:15:56.000000Z",
+     *       "is_current": true
+     *     }
+     *   ]
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized.",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
      */
     public function getUserTokens(Request $request): JsonResponse {
-        $tokensCollection = $request->user()->tokens()->orderBy('last_used_at', 'desc')->get();
+        try {
+            $tokensCollection = $request->user()->tokens()->orderBy('last_used_at', 'desc')->get();
 
-        $formattedTokens = $tokensCollection->map(function ($token) use ($request) {
-            return [
-                'id' => $token->id,
-                'device_name' => $token->name,
-                'last_used_at' => $token->last_used_at,
-                'created_at' => $token->created_at,
-                'is_current' => $token->id === $request->user()->currentAccessToken()->id
-            ];
-        });
+            $formattedTokens = $tokensCollection->map(function ($token) use ($request) {
+                return [
+                    'id' => $token->id,
+                    'device_name' => $token->name,
+                    'last_used_at' => $token->last_used_at,
+                    'created_at' => $token->created_at,
+                    'is_current' => $token->id === $request->user()->currentAccessToken()->id
+                ];
+            });
 
-        return $this->successResponse($formattedTokens, 'Token list retrieved', 200);
+            return $this->successResponse($formattedTokens, 'Token list retrieved', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
     }
 
+
     /**
-     * Revoke a device token
+     * Revoke a Token
+     * 
+     * Endpoint: DELETE /tokens/{tokenId}
      *
-     * @param Request $request
-     * @param $tokenId
-     * @return \Illuminate\Http\JsonResponse
+     * Revokes a specific access token by ID, logging out that specific device/session.
+     * The current token cannot be revoked using this endpoint (use /logout instead).
+     *
+     * @group Authentication
+     * 
+     * @urlParam tokenId integer required The ID of the token to revoke. Example: 5
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Device logged out successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     *
+     * @response status=400 scenario="Invalid Token ID" {
+     *   "status": "error",
+     *   "message": "Invalid token ID.",
+     *   "code": 400,
+     *   "errors": "INVALID_TOKEN_ID"
+     * }
+     *
+     * @response status=404 scenario="Token Not Found" {
+     *   "status": "error",
+     *   "message": "Token not found or does not belong to you.",
+     *   "code": 404,
+     *   "errors": "TOKEN_NOT_FOUND"
+     * }
+     * 
+     * @response status=403 scenario="Current Token" {
+     *   "status": "error",
+     *   "message": "Cannot revoke the current session.",
+     *   "code": 403,
+     *   "errors": "CURRENT_TOKEN_REVOKE_FORBIDDEN"
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized.",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     *
+     * @authenticated
      */
     public function revokeToken(Request $request, $tokenId): JsonResponse {
-        if (!is_numeric($tokenId)) {
-            return $this->errorResponse('Invalid token ID.', 'INVALID_TOKEN_ID', 400);
+        try {
+            if (!is_numeric($tokenId)) {
+                return $this->errorResponse('Invalid token ID.', 'INVALID_TOKEN_ID', 400);
+            }
+
+            $token = $request->user()->tokens()->where('id', $tokenId)->first();
+
+            if (!$token) {
+                return $this->errorResponse('Token not found or does not belong to you.', 'TOKEN_NOT_FOUND', 404);
+            }
+
+            if ($token->id === $request->user()->currentAccessToken()->id) {
+                return $this->errorResponse('Cannot revoke the current session.', 'CURRENT_TOKEN_REVOKE_FORBIDDEN', 403);
+            }
+
+            $token->delete();
+
+            return $this->successResponse(null, 'Device logged out successfully', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
-
-        $token = $request->user()->tokens()->where('id', $tokenId)->first();
-
-        if (!$token) {
-            return $this->errorResponse('Token not found or does not belong to you.', 'TOKEN_NOT_FOUND', 404);
-        }
-
-        if ($token->id === $request->user()->currentAccessToken()->id) {
-            return $this->errorResponse('Cannot revoke the current session.', 'CURRENT_TOKEN_REVOKE_FORBIDDEN', 403);
-        }
-
-        $token->delete();
-
-        return $this->successResponse(null, 'Device logged out successfully', 200);
     }
 
+
     /**
-     * Revoke all tokens except the current one
+     * Revoke All Tokens
+     * 
+     * Endpoint: DELETE /tokens
      *
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Revokes all access tokens except the current one, logging out all other devices.
+     * The current session remains active.
+     *
+     * @group Authentication
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "All other devices logged out successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     *
+     * @response status=400 scenario="No Other Devices" {
+     *   "status": "error",
+     *   "message": "No other devices to logout from.",
+     *   "code": 400,
+     *   "errors": "NO_OTHER_DEVICES"
+     * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized.",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
      */
     public function revokeAllTokens(Request $request): JsonResponse {
-        $tokens = $request->user()->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->get();
+        try {
+            $tokens = $request->user()->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->get();
 
-        if ($tokens->isEmpty()) {
-            return $this->errorResponse('No other devices to logout from.', 'NO_OTHER_DEVICES', 400);
+            if ($tokens->isEmpty()) {
+                return $this->errorResponse('No other devices to logout from.', 'NO_OTHER_DEVICES', 400);
+            }
+
+            $tokens->each->delete();
+
+            return $this->successResponse(null, 'All other devices logged out successfully', 200);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
-
-        $tokens->each->delete();
-
-        return $this->successResponse(null, 'All other devices logged out successfully', 200);
     }
 }
