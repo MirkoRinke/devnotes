@@ -96,7 +96,7 @@ class UserLikeController extends Controller {
             $user = $request->user();
             $validatedData = $request->validate(
                 $this->validationRules,
-                $this->getValidationMessages()
+                $this->getValidationMessages('UserLike')
             );
 
             $typeMap = [
@@ -163,7 +163,7 @@ class UserLikeController extends Controller {
             $user = $request->user();
             $validatedData = $request->validate(
                 $this->validationRules,
-                $this->getValidationMessages()
+                $this->getValidationMessages('UserLike')
             );
 
             $typeMap = [
