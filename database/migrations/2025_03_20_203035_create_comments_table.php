@@ -12,7 +12,6 @@ return new class extends Migration {
         Schema::create('comments', function (Blueprint $table) {
             // Default
             $table->id();
-            $table->timestamps();
 
             // Basic
             $table->foreignId('post_id')->constrained()->cascadeOnDelete();
@@ -33,6 +32,9 @@ return new class extends Migration {
 
             // Moderation info
             $table->json('moderation_info')->nullable();
+
+            // Timestamps
+            $table->timestamps();
         });
     }
 
