@@ -253,6 +253,72 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     });
 
 
+
+    //! Route for comments - Public Access
+    // Public routes - no authentication required
+    //
+    // GET /api/comments - Get all comments
+    // - Public access: All users can view comments
+    // - Request parameters:
+    //   - Select specific fields: GET /api/comments?select=id,content (supports: id, post_id, user_id, parent_id, content, is_deleted, likes_count, reports_count, ...)
+    //   - Sort options: GET /api/comments?sort=created_at (supports: id, post_id, created_at, updated_at, ...)
+    //   - Filter options: GET /api/comments?filter[content]=example (supports: post_id, user_id, parent_id, content, ...)
+    //   - Include relations: GET /api/comments?include=user,children,parent
+    //   - Field filtering for relations: GET /api/comments?include=user&user_fields=id,display_name
+    //   - Pagination: GET /api/comments?page=1&per_page=10
+    //
+    // GET /api/comments/{comment} - Get a specific comment
+    // - Public access: All users can view comments
+    // - Path parameter: comment ID (numeric)
+    // - Select fields: GET /api/comments/{comment}?select=id,content
+    // - Include relations: GET /api/comments/{comment}?include=user,children,parent
+    // - Returns 200 OK on success, 404 if comment not found
+    Route::get('/comments', [CommentApiController::class, 'index']);
+    Route::get('/comments/{comment}', [CommentApiController::class, 'show']);
+
+
+    //! Route for comments - Protected Operations
+    // Protected routes - authentication required (protected by sanctum and Policies)
+    //
+    // POST /api/comments - Create a new comment
+    // - Authorization: Any authenticated user can create comments
+    // - Request body:
+    //  {
+    //    "post_id": 1,                    // required, integer
+    //    "parent_id": 5,                  // optional, integer
+    //    "content": "This is a comment"   // required, string
+    //  }
+    // - Returns 201 Created on success with the created comment
+    // - Returns 422 for validation errors
+    //
+    // PUT/PATCH /api/comments/{comment} - Update a comment
+    // - Authorization: Users can only update their own comments, admins can update any comment
+    // - Path parameter: comment ID (numeric)
+    // - Request body:
+    //  {
+    //    "content": "This is an updated comment"  // required, string
+    //  }
+    // - Returns 200 OK on success with the updated comment
+    // - Returns 403 if unauthorized, 404 if comment not found
+    //
+    // DELETE /api/comments/{comment} - Delete a comment
+    // - Authorization: Users can only delete their own comments, admins can delete any comment
+    // - Path parameter: comment ID (numeric)
+    // - No request body needed
+    // - Returns 200 OK on success
+    // - Returns 403 if unauthorized, 404 if comment not found
+    //
+    // PATCH /api/comments/{id}/deleteComment - Soft delete a comment
+    // - Authorization: Users can only soft-delete their own comments, admins can soft-delete any comment
+    // - Path parameter: comment ID (numeric)
+    // - No request body needed
+    // - Returns updated comment with is_deleted=true
+    // - Does not remove the comment from the database, just marks it
+    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
+        Route::apiResource('comments', CommentApiController::class)->except(['index', 'show']);
+        Route::patch('comments/{id}/deleteComment', [CommentApiController::class, 'deleteComment']);
+    });
+
     //! Routes for user profiles
     // Route to get, update user profiles - you need to be authenticated protected by sanctum and Policies
     // 
@@ -355,52 +421,6 @@ Route::middleware([ValidateApiKey::class, 'throttle:api'])->group(function () {
     });
 
 
-    //! Route for comments
-    // Route to get, view, update and delete comments - you need to be authenticated protected by sanctum and Policies
-    //
-    // GET /api/comments - Get all comments
-    // - Authorization: Only administrators can access this endpoint (enforced by Policy)
-    //
-    // - Select specific fields: GET /api/comments?select=id,content (supports: id, post_id, user_id, parent_id, content, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
-    // - Sort options: GET /api/comments?sort=created_at (supports: id, post_id, user_id, content, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
-    // - Filter options: GET /api/comments?filter[content]=example (supports: post_id, user_id, parent_id, content, is_deleted, is_edited, edited_at, likes_count, reports_count, created_at, updated_at)
-    // - Pagination: GET /api/comments?page=1&per_page=10
-    //
-    // GET /api/comments/{comment} - Get a specific comment
-    // - Authorization: Users can only view their own comments, admins can view any comment
-    // - Select fields: GET /api/comments/{comment}?select=id,content
-    //
-    // POST /api/comments - Create a new comment
-    // - Authorization: Any authenticated user can create comments
-    // - Request body:
-    //  {
-    //    "post_id": 1,                    // required
-    //    "parent_id": 5,                  // optional
-    //    "content": "This is a comment"   // required
-    //  }
-    // - Returns 201 Created on success
-    //
-    // PUT/PATCH /api/comments/{comment} - Update a comment
-    // - Authorization: Users can only update their own comments, admins can update any comment
-    // - Request body:
-    //  {
-    //    "content": "This is an updated comment"  // required
-    //  }
-    // - Returns 200 OK on success
-    //
-    // DELETE /api/comments/{comment} - Delete a comment
-    // - Authorization: Users can only delete their own comments, admins can delete any comment
-    // - No request body needed
-    // - Returns 200 OK on success
-    //
-    // PATCH /api/comments/{id}/toggle-status - deleteComment
-    // - Authorization: Users can only delete their own comments, admins can delete any comment
-    // - No request body needed
-    // - Returns updated comment status
-    Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::apiResource('comments', CommentApiController::class);
-        Route::patch('comments/{id}/deleteComment', [CommentApiController::class, 'deleteComment']);
-    });
 
 
     //! Route for favorites
