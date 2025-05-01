@@ -46,12 +46,7 @@ class CommentApiController extends Controller {
     protected $commentRelationService;
 
     /**
-     *  The constructor for the CommentApiController
-     *  It initializes the ModerationService
-     *  It also initializes the CommentModerationService
-     *
-     * @param ModerationService $moderationService
-     * @param CommentModerationService $commentModerationService
+     * Constructor to initialize the services
      */
     public function __construct(
         ModerationService $moderationService,
@@ -77,7 +72,7 @@ class CommentApiController extends Controller {
      * The validation rules for the Update method
      */
     private $validationRulesUpdate = [
-        'content' => 'sometimes|required|string|max:255',
+        'content' => 'required|string|max:255',
     ];
 
     /**
@@ -122,7 +117,7 @@ class CommentApiController extends Controller {
 
 
         /**
-         * Use the query builder to apply sorting, filtering, selecting, and pagination
+         * Use the query builder methods to build the query
          */
         $query = $this->$methods($request, $query, 'comment');
         if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
@@ -533,6 +528,7 @@ class CommentApiController extends Controller {
                 return $query;
             }
 
+            // Need this because the select method returns only the query object
             $comment = $query->firstOrFail();
 
             $comment = $this->checkForIncludedRelations($request, $comment);
@@ -549,7 +545,145 @@ class CommentApiController extends Controller {
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update a Comment
+     * 
+     * Endpoint: PATCH /comments/{id}
+     *
+     * Updates the content of an existing comment.
+     * Regular users can only update their own comments.
+     * Admins/moderators can update any comment with a required moderation reason.
+     * 
+     * @group Comments
+     * 
+     * @urlParam id required The ID of the comment to update. Example: 15
+     * 
+     * @bodyParam content string required The updated content of the comment. Example: This comment has been updated with more insights.
+     * @bodyParam moderation_reason string required only for admins/moderators. The reason for moderation. Example: Inappropriate language removed.
+     * 
+     * @bodyContent {
+     *   "content": "This comment has been updated with more insights." // required, string, max:255
+     * }
+     * 
+     * @bodyContent scenario="Admin moderation" {
+     *   "content": "This comment has been updated with appropriate language.",  // required, string, max:255
+     *   "moderation_reason": "Inappropriate language removed"                   // required for admins/moderators, string, max:255
+     * }
+     * 
+     * @response status=200 scenario="Comment updated" {
+     *   "status": "success",
+     *   "message": "Comment updated successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 15,
+     *     "post_id": 5,
+     *     "user_id": 1,
+     *     "parent_id": null,
+     *     "content": "This comment has been updated with more insights.",
+     *     "parent_content": null,
+     *     "is_deleted": false,
+     *     "depth": 0,
+     *     "likes_count": 0,
+     *     "reports_count": 0,
+     *     "is_updated": true,
+     *     "updated_by_role": "user",
+     *     "moderation_info": null,
+     *     "created_at": "2025-04-30T19:45:12.000000Z",
+     *     "updated_at": "2025-04-30T20:15:45.000000Z"
+     *   }
+     * }
+     * 
+     * @response status=200 scenario="Comment moderated by admin" {
+     *   "status": "success",
+     *   "message": "Comment updated successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 15,
+     *     "post_id": 5,
+     *     "user_id": 1,
+     *     "parent_id": null,
+     *     "content": "This comment has been updated with appropriate language.",
+     *     "parent_content": null,
+     *     "is_deleted": false,
+     *     "depth": 0,
+     *     "likes_count": 0,
+     *     "reports_count": 0,
+     *     "is_updated": true,
+     *     "updated_by_role": "admin",
+     *     "moderation_info": [
+     *       {
+     *         "user_id": 1,
+     *         "username": "Max Mustermann1",
+     *         "role": "admin",
+     *         "timestamp": "2025-05-01T16:26:32+02:00",
+     *         "reason": "Inappropriate language removed",
+     *         "action": "updated",
+     *         "changes": {
+     *           "content": {
+     *             "from": "This comment has been updated with inappropriate language",
+     *             "to": "This is an updated comment"
+     *           },
+     *           "is_updated": {
+     *             "from": null,
+     *             "to": true
+     *           }
+     *         }
+     *       }
+     *     ],
+     *     "created_at": "2025-04-30T19:45:12.000000Z",
+     *     "updated_at": "2025-04-30T20:15:45.000000Z"
+     *   }
+     * }
+     * 
+     * @response status=422 scenario="Comment is deleted" {
+     *   "status": "error",
+     *   "message": "Comment is deleted",
+     *   "code": 422,
+     *   "errors": "COMMENT_DELETED"
+     * }
+     *
+     * @response status=404 scenario="Comment not found" {
+     *   "status": "error",
+     *   "message": "Comment with ID 999 does not exist",
+     *   "code": 404,
+     *   "errors": "COMMENT_NOT_FOUND"
+     * }
+     * 
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=422 scenario="Validation error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "content": ["The content field is required."]
+     *   }
+     * }
+     * 
+     * @response status=422 scenario="Missing moderation reason" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "moderation_reason": ["The moderation reason field is required."]
+     *   }
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
+     * 
      */
     public function update(Request $request, string $id) {
         try {
@@ -586,7 +720,7 @@ class CommentApiController extends Controller {
                         $validatedData,
                         [
                             'is_updated' => true,
-                            'updated_by_role' => $request->user()->role // For show the user who updated the post for the user
+                            'updated_by_role' => $request->user()->role // For show the user who updated the comment
                         ]
                     ),
                     $request,
@@ -608,11 +742,11 @@ class CommentApiController extends Controller {
                 // Update the comment
                 $comment->update($validatedData);
 
-                // Update last_comment_at
+                // Update the last_comment_at timestamp of the parent post
                 $this->commentRelationService->updateLastCommentAt($comment);
+
                 return $comment;
             });
-
 
             return $this->successResponse($comment, 'Comment updated successfully', 200);
         } catch (ModelNotFoundException $e) {
@@ -627,7 +761,48 @@ class CommentApiController extends Controller {
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Permanently Delete a Comment
+     * 
+     * Endpoint: DELETE /comments/{id}
+     *
+     * Permanently removes a comment from the database, along with all associated data.
+     * This action also removes all child comments, likes, and reports.
+     * This endpoint is restricted to administrators only.
+     * 
+     * @group Comments
+     *
+     * @urlParam id required The ID of the comment to delete. Example: 15
+     * 
+     * @response status=200 scenario="Comment deleted" {
+     *   "status": "success",
+     *   "message": "Comment deleted successfully",
+     *   "code": 200,
+     *   "count": 0,
+     *   "data": null
+     * }
+     * 
+     * @response status=404 scenario="Comment not found" {
+     *   "status": "error",
+     *   "message": "Comment with ID 999 does not exist",
+     *   "code": 404,
+     *   "errors": "COMMENT_NOT_FOUND"
+     * }
+     * 
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
      */
     public function destroy(string $id) {
         try {
@@ -646,7 +821,7 @@ class CommentApiController extends Controller {
                 // Delete the comment
                 $comment->delete();
 
-                // Update last_comment_at and comments_count
+                // Update the last_comment_at timestamp of the parent post and comments_count
                 $this->commentRelationService->updateLastCommentAt($comment);
                 $this->commentRelationService->updateCommentsCount($comment, 'decrement');
 
@@ -664,9 +839,75 @@ class CommentApiController extends Controller {
     }
 
     /**
-     * Handle the deletion of a comment.
-     * If the comment has children, it will be soft deleted.
-     * If the comment has no children, it will be permanently deleted.
+     * Delete a Comment (Soft or Hard Delete)
+     * 
+     * Endpoint: DELETE /comments/{id}/deleteComment
+     *
+     * Deletes a comment using a smart approach based on its children:
+     * - If the comment has children, it will be soft deleted (marked as deleted but still visible)
+     * - If the comment has no children, it will be permanently deleted
+     * 
+     * Regular users can only delete their own comments.
+     * Admins/moderators can delete any comment.
+     * 
+     * @group Comments
+     *
+     * @urlParam id required The ID of the comment to delete. Example: 15
+     * 
+     * @response status=200 scenario="Comment soft-deleted" {
+     *   "status": "success",
+     *   "message": "Comment marked as deleted",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 15,
+     *     "post_id": 5,
+     *     "user_id": 1,
+     *     "parent_id": null,
+     *     "content": "This comment has been deleted",
+     *     "parent_content": null,
+     *     "is_deleted": true,
+     *     "depth": 0,
+     *     "likes_count": 0,
+     *     "reports_count": 0,
+     *     "is_updated": false,
+     *     "updated_by_role": null,
+     *     "moderation_info": null,
+     *     "created_at": "2025-04-30T19:45:12.000000Z",
+     *     "updated_at": "2025-05-01T14:26:32.000000Z"
+     *   }
+     * }
+     * 
+     * @response status=200 scenario="Comment hard-deleted" {
+     *   "status": "success",
+     *   "message": "Comment deleted successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     * 
+     * @response status=404 scenario="Comment not found" {
+     *   "status": "error",
+     *   "message": "Comment with ID 999 does not exist",
+     *   "code": 404,
+     *   "errors": "COMMENT_NOT_FOUND"
+     * }
+     * 
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
      */
     public function deleteComment(string $id) {
         try {
@@ -681,7 +922,8 @@ class CommentApiController extends Controller {
                     $comment->is_deleted = true;
                     $comment->content = "This comment has been deleted";
                     $comment->save();
-                    // Update last_comment_at
+
+                    // Update the last_comment_at timestamp of the parent post
                     $this->commentRelationService->updateLastCommentAt($comment);
 
                     return $comment;
@@ -691,10 +933,8 @@ class CommentApiController extends Controller {
                 $comment = DB::transaction(function () use ($comment) {
                     $comment->delete();
 
-                    // Update last_comment_at
+                    // Update the last_comment_at timestamp of the parent post and comments_count
                     $this->commentRelationService->updateLastCommentAt($comment);
-
-                    // Update comments_count
                     $this->commentRelationService->updateCommentsCount($comment, 'decrement');
 
                     return $comment;
