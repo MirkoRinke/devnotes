@@ -49,8 +49,9 @@ class CommentRelationService {
 
         $totalDeleted = 0;
         foreach (array_chunk($childrenIds, 100) as $chunk) {
-            $deleted = Comment::whereIn('id', $chunk)->delete();
-            $totalDeleted += $deleted;
+            $this->deleteLikes($chunk);
+            $this->deleteReports($chunk);
+            $totalDeleted += Comment::whereIn('id', $chunk)->delete();
         }
 
         if ($totalDeleted > 0) {
@@ -77,42 +78,90 @@ class CommentRelationService {
     }
 
     /**
-     * Delete all likes associated with a comment
+     * Delete all likes associated with comment(s)
      * 
-     * @param Comment $comment
+     * @param Comment|int|array $input Comment object, ID, or array of IDs
      * @return int Number of deleted likes
      */
-    public function deleteLikes(Comment $comment): int {
+    public function deleteLikes($input): int {
         $totalDeleted = 0;
-        UserLike::where('likeable_type', Comment::class)
-            ->where('likeable_id', $comment->id)
-            ->chunkById(100, function ($likes) use (&$totalDeleted) {
-                $deleted = DB::table('user_likes')
-                    ->whereIn('id', $likes->pluck('id'))
-                    ->delete();
-                $totalDeleted += $deleted;
-            });
 
+        $commentIds = $this->convertToIdArray($input);
+
+        if (empty($commentIds)) {
+            return $totalDeleted;
+        }
+
+        /**
+         * Chunking even for already chunked inputs ensures this method
+         * remains performant when called directly with large arrays
+         */
+        foreach (array_chunk($commentIds, 100) as $chunk) {
+            UserLike::where('likeable_type', Comment::class)
+                ->whereIn('likeable_id', $chunk)
+                ->chunkById(100, function ($likes) use (&$totalDeleted) {
+                    $deleted = DB::table('user_likes')
+                        ->whereIn('id', $likes->pluck('id'))
+                        ->delete();
+                    $totalDeleted += $deleted;
+                });
+        }
         return $totalDeleted;
     }
 
     /**
-     * Delete all reports associated with a comment
+     * Delete all reports associated with comment(s)
      * 
-     * @param Comment $comment
+     * @param Comment|int|array $input Comment object, ID, or array of IDs
      * @return int Number of deleted reports
      */
-    public function deleteReports(Comment $comment): int {
+    public function deleteReports($input): int {
         $totalDeleted = 0;
-        UserReport::where('reportable_type', Comment::class)
-            ->where('reportable_id', $comment->id)
-            ->chunkById(100, function ($reports) use (&$totalDeleted) {
-                $deleted = DB::table('user_reports')
-                    ->whereIn('id', $reports->pluck('id'))
-                    ->delete();
-                $totalDeleted += $deleted;
-            });
+
+        $commentIds = $this->convertToIdArray($input);
+
+        if (empty($commentIds)) {
+            return $totalDeleted;
+        }
+
+        /**
+         * Chunking even for already chunked inputs ensures this method
+         * remains performant when called directly with large arrays
+         */
+        foreach (array_chunk($commentIds, 100) as $chunk) {
+            UserReport::where('reportable_type', Comment::class)
+                ->whereIn('reportable_id', $chunk)
+                ->chunkById(100, function ($reports) use (&$totalDeleted) {
+                    $deleted = DB::table('user_reports')
+                        ->whereIn('id', $reports->pluck('id'))
+                        ->delete();
+                    $totalDeleted += $deleted;
+                });
+        }
 
         return $totalDeleted;
+    }
+
+
+    /**
+     * Helper method to normalize input to an array of IDs
+     *
+     * @param Comment|int|array $input
+     * @return array
+     */
+    private function convertToIdArray($input): array {
+        if ($input instanceof Comment) {
+            return [$input->id];
+        }
+
+        if (is_numeric($input)) {
+            return [(int)$input];
+        }
+
+        if (is_array($input)) {
+            return array_map('intval', $input);
+        }
+
+        return [];
     }
 }
