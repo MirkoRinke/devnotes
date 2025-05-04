@@ -13,7 +13,6 @@ use App\Models\Post;
 use App\Rules\ValidPostValue;
 
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\AuthHelper; // example $user = $this->getUserFromToken($request);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // examples:
@@ -41,7 +40,7 @@ class PostApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, AuthHelper, QueryBuilder, ApiInclude, RelationLoader, PostFieldManager, AuthorizesRequests;
+    use ApiResponses,  QueryBuilder, ApiInclude, RelationLoader, PostFieldManager, AuthorizesRequests;
 
 
     /**
