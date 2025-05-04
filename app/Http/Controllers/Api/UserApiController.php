@@ -73,23 +73,20 @@ class UserApiController extends Controller {
      *
      * @group User Management
      *
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of users per page (5-100). Example: 15 ( Default: 10 )
-     * 
+     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email
      * @queryParam sort string Field to sort by (prefix with - for descending). Example: -created_at
-     * 
      * @queryParam filter[name] string Filter users by exact name match. Example: John
      * @queryParam filter[is_banned] string Filter users by ban status. Options:
      *        - "is:null": Users who are not banned
      *        - "is:not_null": Users who are currently banned
      *        - Date string: Match specific ban expiry date
      *        Example: /?filter[is_banned]=is:not_null
-     * 
-     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email
-     * 
      * @queryParam startsWith[name] string Filter by name starting with value. Example: Jo
-     * 
      * @queryParam endsWith[email] string Filter by email ending with value. Example: @example.com
+     * 
+     * @queryParam page integer Page number for pagination. Example: 1
+     * @queryParam per_page integer Number of users per page (5-100). Example: 15 ( Default: 10 )
+     * 
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -344,6 +341,13 @@ class UserApiController extends Controller {
      *   "errors": "USER_NOT_FOUND"
      * }
      *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
@@ -352,13 +356,6 @@ class UserApiController extends Controller {
      *     "name": ["The name field is required."],
      *     "email": ["The email has already been taken."]
      *   }
-     * }
-     *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -399,10 +396,10 @@ class UserApiController extends Controller {
             return $this->successResponse($user, 'User update successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -523,8 +520,6 @@ class UserApiController extends Controller {
             $this->guestAccountService->createGuestAccount();
 
             return $this->successResponse(null, 'Guest account reset successfully', 200);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -595,6 +590,13 @@ class UserApiController extends Controller {
      *   "errors": "USER_NOT_FOUND"
      * }
      *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
@@ -603,13 +605,6 @@ class UserApiController extends Controller {
      *     "moderation_reason": ["The moderation reason field is required."],
      *     "days": ["The days must be at least 1."]
      *   }
-     * }
-     *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
      * }
      * 
      * @response status=500 scenario="Server Error" {
@@ -670,10 +665,10 @@ class UserApiController extends Controller {
             return $this->successResponse($bannedUserInfo, 'User banned successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -743,6 +738,13 @@ class UserApiController extends Controller {
      *   "errors": "USER_NOT_FOUND"
      * }
      *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
@@ -750,13 +752,6 @@ class UserApiController extends Controller {
      *   "errors": {
      *     "moderation_reason": ["The moderation reason field is required."]
      *   }
-     * }
-     *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -802,10 +797,10 @@ class UserApiController extends Controller {
             return $this->successResponse($bannedUserInfo, 'User unbanned successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
