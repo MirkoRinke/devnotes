@@ -107,7 +107,6 @@ class UserReportController extends Controller {
      */
     public function index(Request $request) {
         try {
-
             $this->authorize('viewAny', UserReport::class);
 
             $query = UserReport::query();
@@ -216,10 +215,10 @@ class UserReportController extends Controller {
             });
 
             return $this->successResponse($report, 'Report submitted successfully', 201);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -270,12 +269,12 @@ class UserReportController extends Controller {
             });
 
             return $this->successResponse(null, 'Report removed successfully', 200);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Report not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
