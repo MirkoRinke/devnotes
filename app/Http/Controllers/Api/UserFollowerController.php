@@ -17,14 +17,13 @@ use App\Traits\RelationLoader;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class UserFollowerController extends Controller {
 
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader, AuthorizesRequests;
+    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader;
 
 
     /**
@@ -48,80 +47,93 @@ class UserFollowerController extends Controller {
      * Get all followers for the authenticated user
      */
     public function getFollowers(Request $request): JsonResponse {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        $query = UserFollower::where('user_id', $user->id);
+            $query = UserFollower::where('user_id', $user->id);
 
-        $originalSelectFields = $this->getSelectFields($request);
+            $originalSelectFields = $this->getSelectFields($request);
 
-        $query = $this->setupFollowerQuery($request, $query);
+            $query = $this->setupFollowerQuery($request, $query);
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse($query, 'No followers found', 200);
+            }
+
+            $followerIds = $query->pluck('follower_id');
+
+            $mutualFollows = UserFollower::where('follower_id', $user->id)
+                ->whereIn('user_id', $followerIds)
+                ->pluck('user_id')
+                ->flip()
+                ->toArray();
+
+            $query->each(function ($follower) use ($mutualFollows) {
+                $follower->is_followed = isset($mutualFollows[$follower->follower->id]);
+            });
 
 
-        if ($query instanceof JsonResponse) {
-            return $query;
+            $query = $this->checkForIncludedRelations($request, $query);
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            return $this->successResponse($query, 'Followers retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
-
-        if ($query->isEmpty()) {
-            return $this->successResponse($query, 'No followers found', 200);
-        }
-
-        $followerIds = $query->pluck('follower_id');
-
-        $mutualFollows = UserFollower::where('follower_id', $user->id)
-            ->whereIn('user_id', $followerIds)
-            ->pluck('user_id')
-            ->flip()
-            ->toArray();
-
-        $query->each(function ($follower) use ($mutualFollows) {
-            $follower->is_followed = isset($mutualFollows[$follower->follower->id]);
-        });
-
-
-        $query = $this->checkForIncludedRelations($request, $query);
-        $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
-
-        return $this->successResponse($query, 'Followers retrieved successfully', 200);
     }
 
     /**
      * Get all users the authenticated user is following
      */
     public function getFollowing(Request $request): JsonResponse {
-        $user = $request->user();
+        try {
 
-        $query = UserFollower::where('follower_id', $user->id);
+            $user = $request->user();
 
-        $originalSelectFields = $this->getSelectFields($request);
+            $query = UserFollower::where('follower_id', $user->id);
 
-        $query = $this->setupFollowerQuery($request, $query);
+            $originalSelectFields = $this->getSelectFields($request);
 
-        if ($query instanceof JsonResponse) {
-            return $query;
+            $query = $this->setupFollowerQuery($request, $query);
+
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            if ($query->isEmpty()) {
+                return $this->successResponse($query, 'Not following any users', 200);
+            }
+
+            $followingIds = $query->pluck('user_id');
+
+            $mutualFollows = UserFollower::where('user_id', $user->id)
+                ->whereIn('follower_id', $followingIds)
+                ->pluck('follower_id')
+                ->flip()
+                ->toArray();
+
+            $query->each(function ($follow) use ($mutualFollows) {
+                $follow->is_followed = isset($mutualFollows[$follow->user->id]);
+            });
+
+
+            $query = $this->checkForIncludedRelations($request, $query);
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            return $this->successResponse($query, 'Following retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
-
-        if ($query->isEmpty()) {
-            return $this->successResponse($query, 'Not following any users', 200);
-        }
-
-        $followingIds = $query->pluck('user_id');
-
-        $mutualFollows = UserFollower::where('user_id', $user->id)
-            ->whereIn('follower_id', $followingIds)
-            ->pluck('follower_id')
-            ->flip()
-            ->toArray();
-
-        $query->each(function ($follow) use ($mutualFollows) {
-            $follow->is_followed = isset($mutualFollows[$follow->user->id]);
-        });
-
-
-        $query = $this->checkForIncludedRelations($request, $query);
-        $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
-
-        return $this->successResponse($query, 'Following retrieved successfully', 200);
     }
+
 
     /**
      * Follow a user
