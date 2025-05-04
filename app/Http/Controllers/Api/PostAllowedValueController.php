@@ -83,12 +83,11 @@ class PostAllowedValueController extends Controller {
      */
     public function index(Request $request) {
         try {
+            $this->authorize('viewAny', PostAllowedValue::class);
+
             if (PostAllowedValue::count() == 0) {
                 return $this->errorResponse('No Post Allowed Values found', 'NOT_FOUND', 404);
             }
-
-            // Check if the user is authorized to view Post Allowed Values
-            $this->authorize('viewAny', PostAllowedValue::class);
 
             $query = PostAllowedValue::query();
 
@@ -115,7 +114,6 @@ class PostAllowedValueController extends Controller {
      */
     public function store(Request $request) {
         try {
-            // Check if the user is authorized to create Post Allowed Values
             $this->authorize('create', PostAllowedValue::class);
 
             $validatedData = $request->validate(
@@ -141,10 +139,10 @@ class PostAllowedValueController extends Controller {
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
 
             return $this->successResponse($postAllowedValue, 'Post Allowed Value created successfully', 201);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -155,7 +153,6 @@ class PostAllowedValueController extends Controller {
      */
     public function show(Request $request, $id) {
         try {
-            // Check if the user is authorized to view Post Allowed Values
             $this->authorize('view', PostAllowedValue::class);
 
             $query = PostAllowedValue::query()->where('id', $id);
@@ -183,7 +180,6 @@ class PostAllowedValueController extends Controller {
      */
     public function update(Request $request, string $id) {
         try {
-            // Check if the user is authorized to update Post Allowed Values
             $this->authorize('update', PostAllowedValue::class);
 
             $validatedData = $request->validate(
@@ -217,12 +213,12 @@ class PostAllowedValueController extends Controller {
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
 
             return $this->successResponse($postAllowedValue, 'Post Allowed Value updated successfully', 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -233,7 +229,6 @@ class PostAllowedValueController extends Controller {
      */
     public function destroy(string $id) {
         try {
-            // Check if the user is authorized to delete Post Allowed Values
             $this->authorize('delete', PostAllowedValue::class);
 
             // Find the Post Allowed Value by ID            
@@ -257,10 +252,10 @@ class PostAllowedValueController extends Controller {
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
 
             return $this->successResponse(null, "Post Allowed Value: $name with type: $type deleted successfully", 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
