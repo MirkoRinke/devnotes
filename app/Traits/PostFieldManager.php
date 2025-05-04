@@ -9,12 +9,19 @@ use App\Models\Post;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
+use App\Traits\AuthHelper;
+
 use App\Services\ExternalSourceService;
 
 /**
  * @requires \App\Traits\AuthHelper for getUserFromToken method in the controller
  */
 trait PostFieldManager {
+
+    /**
+     *  The traits used in the controller
+     */
+    use AuthHelper;
 
     /**
      * Get the ExternalSourceService instance
