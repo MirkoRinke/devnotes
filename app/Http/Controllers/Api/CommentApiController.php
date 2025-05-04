@@ -140,6 +140,9 @@ class CommentApiController extends Controller {
      * @queryParam select string Select specific fields (id,content,etc). Example: id,content,user_id
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
      * @queryParam filter[field] string Filter by specific fields. Example: filter[content]=code
+     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[content]=Thanks
+     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[content]=Stores!
+     * 
      * @queryParam page integer Page number for pagination. Example: 1
      * @queryParam per_page integer Number of items per page. Example: 15 ( Default: 10 )
      * 
@@ -411,6 +414,8 @@ class CommentApiController extends Controller {
             });
 
             return $this->successResponse($comment, 'Comment created successfully', 201);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
@@ -642,13 +647,6 @@ class CommentApiController extends Controller {
      *   "code": 422,
      *   "errors": "COMMENT_DELETED"
      * }
-     *
-     * @response status=404 scenario="Comment not found" {
-     *   "status": "error",
-     *   "message": "Comment with ID 999 does not exist",
-     *   "code": 404,
-     *   "errors": "COMMENT_NOT_FOUND"
-     * }
      * 
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
@@ -673,6 +671,13 @@ class CommentApiController extends Controller {
      *   "errors": {
      *     "moderation_reason": ["The moderation reason field is required."]
      *   }
+     * }
+     *
+     * @response status=404 scenario="Comment not found" {
+     *   "status": "error",
+     *   "message": "Comment with ID 999 does not exist",
+     *   "code": 404,
+     *   "errors": "COMMENT_NOT_FOUND"
      * }
      * 
      * @response status=500 scenario="Server Error" {
@@ -781,18 +786,18 @@ class CommentApiController extends Controller {
      *   "data": null
      * }
      * 
-     * @response status=404 scenario="Comment not found" {
-     *   "status": "error",
-     *   "message": "Comment with ID 999 does not exist",
-     *   "code": 404,
-     *   "errors": "COMMENT_NOT_FOUND"
-     * }
-     * 
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=404 scenario="Comment not found" {
+     *   "status": "error",
+     *   "message": "Comment with ID 999 does not exist",
+     *   "code": 404,
+     *   "errors": "COMMENT_NOT_FOUND"
      * }
      * 
      * @response status=500 scenario="Server Error" {
@@ -886,18 +891,18 @@ class CommentApiController extends Controller {
      *   "data": null
      * }
      * 
-     * @response status=404 scenario="Comment not found" {
-     *   "status": "error",
-     *   "message": "Comment with ID 999 does not exist",
-     *   "code": 404,
-     *   "errors": "COMMENT_NOT_FOUND"
-     * }
-     * 
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
+     * }
+     * 
+     * @response status=404 scenario="Comment not found" {
+     *   "status": "error",
+     *   "message": "Comment with ID 999 does not exist",
+     *   "code": 404,
+     *   "errors": "COMMENT_NOT_FOUND"
      * }
      * 
      * @response status=500 scenario="Server Error" {
