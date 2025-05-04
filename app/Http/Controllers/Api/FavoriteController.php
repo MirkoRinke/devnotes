@@ -52,7 +52,9 @@ class FavoriteController extends Controller {
      *
      * @queryParam select string Select specific fields (id,user_id,post_id,etc). Example: id,post_id,created_at
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[post_id]=5
+     * @queryParam filter[field] string Filter by specific fields. Example: filter[post_id]=5     * 
+     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[created_at]=2025-04
+     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[created_at]=Z
      * 
      * @queryParam page integer Page number for pagination. Example: 1
      * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
@@ -306,6 +308,9 @@ class FavoriteController extends Controller {
      * @queryParam select string Select specific fields from posts (id,title,language,etc). Example: id,title,language
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
      * @queryParam filter[field] string Filter by specific fields. Example: filter[language]=php
+     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[title]=Git
+     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[title]=Sheet
+     * 
      * @queryParam page integer Page number for pagination. Example: 1
      * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
      * 
