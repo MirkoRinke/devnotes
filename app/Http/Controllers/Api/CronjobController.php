@@ -17,17 +17,83 @@ use Exception;
 
 class CronjobController extends Controller {
 
+    /**
+     *  The traits used in the controller
+     */
     use ApiResponses;
 
+    /**
+     *  The Service used in the controller
+     */
     protected $userApiController;
     protected $guestAccountService;
 
+    /**
+     * Constructor to initialize the services
+     */
     public function __construct(UserApiController $userApiController, GuestAccountService $guestAccountService) {
         $this->userApiController = $userApiController;
         $this->guestAccountService = $guestAccountService;
     }
 
-
+    /**
+     * Clean Guest Account
+     * 
+     * Endpoint: POST /api/cron/clean-guest-account
+     *
+     * Resets the guest account by completely deleting and recreating it with the same base information.
+     * This process removes all guest-related data (posts, comments, settings and any changes made to the account).
+     * The purpose is to provide a "fresh" guest account while maintaining the same account identifier.
+     * If no guest account exists, a new one will be created.
+     * 
+     * This endpoint is typically called by a scheduled task rather than directly by users.
+     * 
+     * @group System Maintenance
+     *
+     * @header X-API-Key string required A valid API key for authentication. Example: LDWOTtb7GEnZo0b5KDgzat9Kl51ROY6WkviWCJiP
+     * @queryParam api_key string An alternative way to provide the API key if header is not possible. Example: LDWOTtb7GEnZo0b5KDgzat9Kl51ROY6WkviWCJiP
+     *
+     * Example URL: /api/cron/clean-guest-account   || X-API-Key: LDWOTtb7GEnZo0b5KDgzat9Kl51ROY6WkviWCJiP
+     * 
+     * Example URL: /api/cron/clean-guest-account/?api_key=LDWOTtb7GEnZo0b5KDgzat9Kl51ROY6WkviWCJiP
+     *  
+     * @response status=200 scenario="Guest account reset" {
+     *   "status": "success",
+     *   "message": "Guest account reset successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     * 
+     * @response status=201 scenario="Guest account created" {
+     *   "status": "success",
+     *   "message": "Guest account created successfully",
+     *   "code": 201,
+     *   "count": 0,
+     *   "data": []
+     * }
+     *
+     * @response status=401 scenario="Missing API key" {
+     *   "status": "error",
+     *   "message": "This request requires a valid API key in the X-API-Key header or api_key query parameter",
+     *   "code": 401,
+     *   "errors": "API_KEY_MISSING"
+     * }
+     *
+     * @response status=401 scenario="Invalid API key" {
+     *   "status": "error",
+     *   "message": "The provided API key is invalid or has been deactivated",
+     *   "code": 401,
+     *   "errors": "INVALID_API_KEY"
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     */
     public function cleanGuestAccount(): JsonResponse {
         try {
             $guestAccount = User::where('account_purpose', 'guest')->first();
