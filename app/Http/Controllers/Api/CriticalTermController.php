@@ -67,6 +67,9 @@ class CriticalTermController extends Controller {
      * @queryParam select string Select specific fields (id,name,language,etc). Example: id,name,severity
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -severity
      * @queryParam filter[field] string Filter by specific fields. Example: filter[language]=en
+     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=off
+     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=term
+     * 
      * @queryParam page integer Page number for pagination. Example: 1
      * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
      * 
@@ -165,11 +168,11 @@ class CriticalTermController extends Controller {
      */
     public function index(Request $request) {
         try {
+            $this->authorize('viewAny', CriticalTerm::class);
+
             if (CriticalTerm::count() == 0) {
                 return $this->errorResponse('No Critical Terms found', 'NOT_FOUND', 404);
             }
-
-            $this->authorize('viewAny', CriticalTerm::class);
 
             $query = CriticalTerm::query();
 
@@ -234,6 +237,13 @@ class CriticalTermController extends Controller {
      *   "code": 409,
      *   "errors": "CRITICAL_TERM_EXISTS"
      * }
+     *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
      * 
      * @response status=422 scenario="Validation Error" {
      *   "status": "error",
@@ -243,13 +253,6 @@ class CriticalTermController extends Controller {
      *     "name": ["NAME_FIELD_REQUIRED"],
      *     "severity": ["SEVERITY_MUST_BE_BETWEEN_1_AND_5."]
      *   }
-     * }
-     *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -288,10 +291,10 @@ class CriticalTermController extends Controller {
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
             return $this->successResponse($criticalTerm, 'Critical Term created successfully', 201);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -446,13 +449,6 @@ class CriticalTermController extends Controller {
      *   "code": 409,
      *   "errors": "CRITICAL_TERM_EXISTS"
      * }
-     *
-     * @response status=404 scenario="Critical Term not found" {
-     *   "status": "error",
-     *   "message": "Critical Term not found",
-     *   "code": 404,
-     *   "errors": "NOT_FOUND"
-     * }
      * 
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
@@ -460,7 +456,7 @@ class CriticalTermController extends Controller {
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
      * }
-     * 
+     *
      * @response status=422 scenario="Validation Error" {
      *   "status": "error",
      *   "message": "Validation failed",
@@ -468,6 +464,13 @@ class CriticalTermController extends Controller {
      *   "errors": {
      *     "severity": ["SEVERITY_MUST_BE_BETWEEN_1_AND_5"]
      *   }
+     * }
+     * 
+     * @response status=404 scenario="Critical Term not found" {
+     *   "status": "error",
+     *   "message": "Critical Term not found",
+     *   "code": 404,
+     *   "errors": "NOT_FOUND"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -515,12 +518,12 @@ class CriticalTermController extends Controller {
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
             return $this->successResponse($criticalTerm, 'Critical Term updated successfully', 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Critical Term not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Critical Term not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -548,18 +551,18 @@ class CriticalTermController extends Controller {
      *   "data": null
      * }
      *
-     * @response status=404 scenario="Critical Term not found" {
-     *   "status": "error",
-     *   "message": "Critical Term not found",
-     *   "code": 404,
-     *   "errors": "NOT_FOUND"
-     * }
-     *
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
+     * }
+     *
+     * @response status=404 scenario="Critical Term not found" {
+     *   "status": "error",
+     *   "message": "Critical Term not found",
+     *   "code": 404,
+     *   "errors": "NOT_FOUND"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -588,10 +591,10 @@ class CriticalTermController extends Controller {
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
             return $this->successResponse(null, "Critical Term '$name' in language '$language' with severity '$severity' deleted successfully", 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Critical Term not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Critical Term not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
