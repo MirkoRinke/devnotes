@@ -94,6 +94,7 @@ class UserLikeController extends Controller {
     public function store(Request $request) {
         try {
             $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->validationRules,
                 $this->getValidationMessages('UserLike')
@@ -142,10 +143,10 @@ class UserLikeController extends Controller {
             });
 
             return $this->successResponse($like, 'Like added successfully', 201);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -161,6 +162,7 @@ class UserLikeController extends Controller {
     public function destroy(Request $request) {
         try {
             $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->validationRules,
                 $this->getValidationMessages('UserLike')
@@ -191,12 +193,12 @@ class UserLikeController extends Controller {
             });
 
             return $this->successResponse(null, 'Like removed successfully', 200);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
