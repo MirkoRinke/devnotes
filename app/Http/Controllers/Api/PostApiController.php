@@ -248,8 +248,6 @@ class PostApiController extends Controller {
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -384,7 +382,6 @@ class PostApiController extends Controller {
      */
     public function getUserPostsInteractions(Request $request, string $id) {
         try {
-
             $validatedData = $request->validate(
                 [
                     'type' => 'required|string|in:likes_count,favorite_count',
@@ -395,10 +392,6 @@ class PostApiController extends Controller {
             $total = (int)Post::where('user_id', $id)->sum($validatedData['type']);
 
             return $this->successResponse($total, 'Total ' . $validatedData['type'] . ' for user with ID ' . $id, 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
