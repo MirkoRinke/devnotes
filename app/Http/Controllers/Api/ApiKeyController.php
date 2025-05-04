@@ -128,6 +128,13 @@ class ApiKeyController extends Controller {
      *   }
      * }
      *
+     * @response status=403 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
      * @response status=422 scenario="Validation error" {
      *   "status": "error",
      *   "message": "Validation failed",
@@ -135,13 +142,6 @@ class ApiKeyController extends Controller {
      *   "errors": {
      *     "name": ["NAME_FIELD_REQUIRED"]
      *   }
-     * }
-     *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -175,10 +175,10 @@ class ApiKeyController extends Controller {
             ]);
 
             return $this->successResponse(['api_key' => $key, 'name' => $apiKey->name, 'created_at' => $apiKey->created_at,], 'API key generated successfully', 201);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -211,18 +211,18 @@ class ApiKeyController extends Controller {
      *   }
      * }
      *
-     * @response status=404 scenario="API key not found" {
-     *   "status": "error",
-     *   "message": "API key not found",
-     *   "code": 404,
-     *   "errors": "API_KEY_NOT_FOUND"
-     * }
-     *
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
+     * }
+     *
+     * @response status=404 scenario="API key not found" {
+     *   "status": "error",
+     *   "message": "API key not found",
+     *   "code": 404,
+     *   "errors": "API_KEY_NOT_FOUND"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -245,10 +245,10 @@ class ApiKeyController extends Controller {
             $apiKey->save();
 
             return $this->successResponse(['id' => $apiKey->id, 'name' => $apiKey->name, 'active' => $apiKey->active], 'API key status has been toggled successfully', 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('API key not found', 'API_KEY_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('API key not found', 'API_KEY_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -277,18 +277,18 @@ class ApiKeyController extends Controller {
      *   "data": []
      * }
      *
-     * @response status=404 scenario="API key not found" {
-     *   "status": "error",
-     *   "message": "API key not found",
-     *   "code": 404,
-     *   "errors": "API_KEY_NOT_FOUND"
-     * }
-     *
      * @response status=403 scenario="Unauthorized" {
      *   "status": "error",
      *   "message": "Unauthorized",
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
+     * }
+     *
+     * @response status=404 scenario="API key not found" {
+     *   "status": "error",
+     *   "message": "API key not found",
+     *   "code": 404,
+     *   "errors": "API_KEY_NOT_FOUND"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -311,10 +311,10 @@ class ApiKeyController extends Controller {
             $apiKey->delete();
 
             return $this->successResponse([], "API-Key '$name' has been deleted successfully", 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('API key not found', 'API_KEY_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('API key not found', 'API_KEY_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
