@@ -70,13 +70,6 @@ class AuthController extends Controller {
      *   "errors": "ACCOUNT_SUSPENDED"
      * }
      * 
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
-     * }
-     * 
      * @response status=422 scenario="Validation Error" {
      *   "status": "error",
      *   "message": "Validation failed",
@@ -119,8 +112,6 @@ class AuthController extends Controller {
             $token->accessToken->save();
 
             return $this->successResponse(['accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
@@ -146,13 +137,6 @@ class AuthController extends Controller {
      *   "data": null
      * }
      *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized.",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
-     * }
-     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -168,8 +152,6 @@ class AuthController extends Controller {
             $token = $request->user()->currentAccessToken();
             $token->delete();
             return $this->successResponse(null, 'Logout successful', 200);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -201,13 +183,6 @@ class AuthController extends Controller {
      *   ]
      * }
      *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized.",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
-     * }
-     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -232,8 +207,6 @@ class AuthController extends Controller {
             });
 
             return $this->successResponse($formattedTokens, 'Token list retrieved', 200);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -280,13 +253,6 @@ class AuthController extends Controller {
      *   "code": 403,
      *   "errors": "CURRENT_TOKEN_REVOKE_FORBIDDEN"
      * }
-     *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized.",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
-     * }
      * 
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
@@ -316,8 +282,6 @@ class AuthController extends Controller {
             $token->delete();
 
             return $this->successResponse(null, 'Device logged out successfully', 200);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -349,13 +313,6 @@ class AuthController extends Controller {
      *   "errors": "NO_OTHER_DEVICES"
      * }
      *
-     * @response status=403 scenario="Unauthorized" {
-     *   "status": "error",
-     *   "message": "Unauthorized.",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
-     * }
-     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -376,8 +333,6 @@ class AuthController extends Controller {
             $tokens->each->delete();
 
             return $this->successResponse(null, 'All other devices logged out successfully', 200);
-        } catch (AuthorizationException $e) {
-            return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
