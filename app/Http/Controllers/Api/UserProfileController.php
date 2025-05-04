@@ -130,7 +130,6 @@ class UserProfileController extends Controller {
             $query = UserProfile::query()->where('id', $id);
 
             $query = $this->buildQuerySelect($request, $query, 'user_profile');
-
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
             }
@@ -177,10 +176,10 @@ class UserProfileController extends Controller {
             return $this->successResponse($userProfile, 'User Profile updated successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -200,6 +199,7 @@ class UserProfileController extends Controller {
     public function enableTemporaryExternals(Request $request, string $id): JsonResponse {
         try {
             $userProfile = UserProfile::findOrFail($id);
+
             $this->authorize('update', $userProfile);
 
             $validatedData = $request->validate(
@@ -225,10 +225,10 @@ class UserProfileController extends Controller {
             return $this->successResponse($userProfile, "Temporary $type successfully activated for the next $hours hours.", 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("User Profile with ID $id does not exist", 'PROFILE_NOT_FOUND', 404);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
