@@ -100,10 +100,14 @@ trait PostFieldManager {
             if (!$this->getExternalSourceService()->shouldDisplayExternals($request, $user, $type)) {
                 if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
                     foreach ($data as $post) {
-                        $post->{$type} = [];
+                        if ($post->user_id !== $user->id) {
+                            $post->{$type} = [];
+                        }
                     }
                 } else if ($data instanceof Post) {
-                    $data->{$type} = [];
+                    if ($data->user_id !== $user->id) {
+                        $data->{$type} = [];
+                    }
                 }
             }
         }
