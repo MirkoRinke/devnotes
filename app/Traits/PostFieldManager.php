@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 use App\Traits\AuthHelper;
+use App\Traits\ApiSelectable;
 
 use App\Services\ExternalSourceService;
 
@@ -21,7 +22,7 @@ trait PostFieldManager {
     /**
      *  The traits used in the controller
      */
-    use AuthHelper;
+    use AuthHelper, ApiSelectable;
 
     /**
      * Get the ExternalSourceService instance
@@ -96,17 +97,21 @@ trait PostFieldManager {
     protected function filterExternalContent(Request $request, $user, $data): mixed {
         $types = ['images', 'videos', 'resources'];
 
+        $selectedFields = $this->getSelectFields($request);
+
         foreach ($types as $type) {
-            if (!$this->getExternalSourceService()->shouldDisplayExternals($request, $user, $type)) {
-                if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
-                    foreach ($data as $post) {
-                        if ($post->user_id !== $user->id) {
-                            $post->{$type} = [];
+            if (!$selectedFields || in_array($type, $selectedFields)) {
+                if (!$this->getExternalSourceService()->shouldDisplayExternals($request, $user, $type)) {
+                    if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+                        foreach ($data as $post) {
+                            if ($post->user_id !== $user->id) {
+                                $post->{$type} = [];
+                            }
                         }
-                    }
-                } else if ($data instanceof Post) {
-                    if ($data->user_id !== $user->id) {
-                        $data->{$type} = [];
+                    } else if ($data instanceof Post) {
+                        if ($data->user_id !== $user->id) {
+                            $data->{$type} = [];
+                        }
                     }
                 }
             }
