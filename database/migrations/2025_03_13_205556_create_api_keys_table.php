@@ -10,10 +10,15 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('api_keys', function (Blueprint $table) {
+            // Default
             $table->id();                                  // Auto incrementing ID
+
+            // Basic
             $table->string('name');                        // Name of the API key
             $table->string('key')->unique();               // The API key itself
             $table->boolean('active')->default(true);      // Whether the API key is active
+
+            // Update info
             $table->timestamps();                          // Created at and updated at timestamps
             $table->timestamp('last_used_at')->nullable(); // Last time the API key was used
         });

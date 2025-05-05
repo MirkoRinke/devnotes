@@ -14,12 +14,14 @@ class CreateUserFavoritesTable extends Migration {
         Schema::create('user_favorites', function (Blueprint $table) {
             // Default
             $table->id();
-            $table->timestamps();
 
             // Basic
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('post_id')->constrained()->onDelete('cascade');
             $table->unique(['user_id', 'post_id']); // A user can only favorite a post once
+
+            // Update info
+            $table->timestamps();
         });
     }
 

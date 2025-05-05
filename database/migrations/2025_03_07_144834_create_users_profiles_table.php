@@ -12,7 +12,6 @@ return new class extends Migration {
         Schema::create('user_profiles', function (Blueprint $table) {
             // Default
             $table->id();
-            $table->timestamps();
 
             // Basic
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
@@ -39,6 +38,9 @@ return new class extends Migration {
 
             // Counts
             $table->integer('reports_count')->default(0);
+
+            // Update info
+            $table->timestamps();
         });
     }
 

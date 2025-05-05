@@ -12,7 +12,6 @@ return new class extends Migration {
         Schema::create('user_reports', function (Blueprint $table) {
             // Default
             $table->id();
-            $table->timestamps();
 
             // Basic
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // User who created the report
@@ -22,6 +21,9 @@ return new class extends Migration {
             $table->text('reason')->nullable(); // Reason for the report
             $table->json('reportable_snapshot')->nullable(); // Snapshot of the reportable entity at the time of reporting
             $table->integer('impact_value')->default(0);
+
+            // Update info
+            $table->timestamps();
         });
     }
 

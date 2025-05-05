@@ -12,7 +12,6 @@ return new class extends Migration {
         Schema::create('posts', function (Blueprint $table) {
             // Default
             $table->id();
-            $table->timestamps();
 
             // Basic
             $table->foreignId('user_id')->nullable()->constrained('users', 'id');
@@ -46,6 +45,9 @@ return new class extends Migration {
 
             // Moderation info
             $table->json('moderation_info')->nullable();
+
+            // Update info
+            $table->timestamps();
         });
     }
 

@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->timestamp('email_verified_at')->nullable();
             $table->string('email')->unique();
             $table->string('password');
-            $table->timestamps();
 
             // Basic
             $table->string('display_name')->unique();
@@ -31,6 +30,9 @@ return new class extends Migration {
 
             // Account info
             $table->enum('account_purpose', ['regular', 'guest'])->default('regular')->nullable(false);
+
+            // Update info
+            $table->timestamps();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

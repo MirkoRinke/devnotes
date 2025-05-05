@@ -12,7 +12,6 @@ return new class extends Migration {
         Schema::create('forbidden_names', function (Blueprint $table) {
             // Default
             $table->id();
-            $table->timestamps();
 
             // Basic
             $table->string('name')->unique();
@@ -20,6 +19,9 @@ return new class extends Migration {
             $table->string('created_by_role')->default('system'); // Assuming 'system' is the default role for the system user
             $table->unsignedBigInteger('created_by_user_id')->default(2); // Assuming 2 is the ID of the system user
             $table->foreign('created_by_user_id')->references('id')->on('users'); // Foreign key reference to users table
+
+            // Update info
+            $table->timestamps();
         });
     }
 
