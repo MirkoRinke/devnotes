@@ -15,6 +15,7 @@ use App\Models\Comment;
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // example $this->loadRelationIfNeeded($request, $query, 'user', 'user_id', ['id', 'name']);
+use App\Traits\ApiInclude; // example $this->getRelationKeyFields($request, ['user' => 'user_id', 'likeable' => 'likeable_id']);
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -27,7 +28,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude;
 
     /**
      * The validation rule for the like entity
@@ -45,6 +46,73 @@ class UserLikeController extends Controller {
     }
 
     /**
+     * Setup the query for likes
+     */
+    protected function setupLikeQuery(Request $request, $query) {
+        $this->modifyRequestSelect($request, ['id', 'user_id', 'likeable_type', 'likeable_id', 'type']);
+
+        $query = $this->loadRelations($request, $query, [
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
+        ]);
+
+        $query = $this->buildQuery($request, $query, 'like');
+
+        $query = $this->loadPolymorphicLikeablesRelation($request, $query);
+
+        return $query;
+    }
+
+    /**
+     * Load the polymorphic likeable relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection|JsonResponse
+     */
+    private function loadPolymorphicLikeablesRelation(Request $request, $query): mixed {
+        if ($query instanceof JsonResponse) {
+            return $query;
+        }
+
+        if ($request->has('include') && in_array('likeable', explode(',', $request->input('include')))) {
+            $likesByType = $query->groupBy('likeable_type');
+
+            $allowedFields = [
+                Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post'),
+                Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment'),
+            ];
+
+            foreach ($likesByType as $type => $likesOfType) {
+                if (!array_key_exists($type, $allowedFields)) {
+                    continue;
+                }
+
+                $ids = $likesOfType->pluck('likeable_id')->toArray();
+                if (empty($ids)) {
+                    continue;
+                }
+
+                try {
+                    $fieldsToSelect = $allowedFields[$type] ?? ['*'];
+
+                    // Load the related entities based on the type (Post or Comment)
+                    $relatedEntities = app($type)->whereIn('id', $ids)->select($fieldsToSelect)->get()->keyBy('id');
+
+                    foreach ($likesOfType as $like) {
+                        if (isset($relatedEntities[$like->likeable_id])) {
+                            $like->setRelation('likeable', $relatedEntities[$like->likeable_id]);
+                        }
+                    }
+                } catch (Exception $e) {
+                    return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+                }
+            }
+        }
+        return $query;
+    }
+
+
+    /**
      * Get all likes
      * 
      * @param Request $request
@@ -56,17 +124,9 @@ class UserLikeController extends Controller {
 
             $query = UserLike::query();
 
-            if ($request->has('include')) {
-                $includes = explode(',', $request->input('include'));
-                $allowedIncludes = ['user', 'likeable'];
-                $validIncludes = array_intersect($allowedIncludes, $includes);
+            $originalSelectFields = $this->getSelectFields($request);
 
-                if (!empty($validIncludes)) {
-                    $query->with($validIncludes);
-                }
-            }
-
-            $query = $this->buildQuery($request, $query, 'like');
+            $query = $this->setupLikeQuery($request, $query);
 
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -75,6 +135,10 @@ class UserLikeController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse([], 'No likes found', 200);
             }
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Likes retrieved successfully', 200);
         } catch (AuthorizationException $e) {
