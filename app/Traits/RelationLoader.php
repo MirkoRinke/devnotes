@@ -27,7 +27,7 @@ trait RelationLoader {
         foreach ($relationConfig as $config) {
             $relation = $config['relation'];
             $foreignKey = $config['foreignKey'];
-            $columns = $config['columns'] ?? ['*'];
+            $columns = $config['columns'] ?? ['id'];
 
             if (empty($selectArray) || in_array($foreignKey, $selectArray)) {
                 $query = $query->with([$relation => function ($query) use ($columns) {
@@ -37,25 +37,5 @@ trait RelationLoader {
         }
 
         return $query;
-    }
-
-    /**
-     * Load a single relation based on selected columns
-     *
-     * @param Request $request
-     * @param Builder $query
-     * @param string $relation
-     * @param string $foreignKey
-     * @param array $columns
-     * @return Builder
-     */
-    protected function loadRelation(Request $request, Builder $query, string $relation, string $foreignKey, array $columns = ['*']) {
-        return $this->loadRelations($request, $query, [
-            [
-                'relation' => $relation,
-                'foreignKey' => $foreignKey,
-                'columns' => $columns
-            ]
-        ]);
     }
 }
