@@ -300,7 +300,7 @@ class PostApiController extends Controller {
                 return $this->successResponse($query, 'No posts found with the given filters', 200);
             }
 
-            $query = $this->manageFieldVisibility($request, $query);
+            $query = $this->managePostsFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
 
@@ -592,7 +592,7 @@ class PostApiController extends Controller {
 
             $post = $query->firstOrFail();
 
-            $post = $this->manageFieldVisibility($request, $post);
+            $post = $this->managePostsFieldVisibility($request, $post);
 
             $post = $this->checkForIncludedRelations($request, $post);
 
@@ -837,7 +837,7 @@ class PostApiController extends Controller {
 
             $post->update($validatedData);
 
-            $post = $this->manageFieldVisibility($request, $post);
+            $post = $this->managePostsFieldVisibility($request, $post);
 
             return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
