@@ -96,15 +96,15 @@ class PostAllowedValueController extends Controller {
      *
      * @group PostAllowedValue
      *
-     * @queryParam filter[type] string Filter by value type (language, category, post_type, technology, status). Example: language
-     * @queryParam filter[name] string Filter by value name. Example: PHP
-     * @queryParam filter[created_by_role] string Filter by creator role (admin, moderator, user). Example: admin
-     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: -created_at
-     * @queryParam startsWith string Filter results to only those where specified field starts with given string. Format: field:value. Example: name:P
-     * @queryParam endsWith string Filter results to only those where specified field ends with given string. Format: field:value. Example: name:Script
+     * @queryParam select string Comma-separated list of fields to include in the response. Example: select=id,name,type
+     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: sort-created_at
+     * @queryParam filter[type] string Filter by value type (language, category, post_type, technology, status). Example: filter[type]=language
      * 
-     * @queryParam page number The page number. Example: 1
-     * @queryParam per_page number Number of items per page. Example: 15
+     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=Java
+     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=Script
+     * 
+     * @queryParam page number The page number. Example: page=1
+     * @queryParam per_page number Number of items per page. Example: per_page=15 (default: 10)
      * 
      * Example URL: /post-allowed-values
      * 
@@ -327,7 +327,7 @@ class PostAllowedValueController extends Controller {
      * @group PostAllowedValue
      *
      * @urlParam id required The ID of the post allowed value. Example: 1
-     * @queryParam select string Comma-separated list of fields to include in the response. Example: id,name,type
+     * @queryParam select string Comma-separated list of fields to include in the response. Example: select=id,name,type
      *
      * Example URL: /post-allowed-values/1
      *
@@ -519,7 +519,10 @@ class PostAllowedValueController extends Controller {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
             }
 
-            // Update the Post Allowed Value
+            /**
+             * Update the Post Allowed Value
+             * Note: We update the created_by fields because each change basically redefines the entire entity
+             */
             $postAllowedValue->update([
                 ...$validatedData,
                 'created_by_role' => $request->user()->role,
