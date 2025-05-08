@@ -16,7 +16,6 @@ use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'P
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // examples:
-// - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
 // - Multiple relations: $this->loadRelations($request, $query, [
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
@@ -140,7 +139,7 @@ class PostApiController extends Controller {
         $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
 
         ]);
 
