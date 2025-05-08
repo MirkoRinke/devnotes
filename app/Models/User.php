@@ -56,6 +56,9 @@ class User extends Authenticatable {
     protected $hidden = [
         'password',
         'account_purpose',
+        'is_banned',
+        'was_ever_banned',
+        'moderation_info'
     ];
 
 
