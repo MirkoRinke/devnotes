@@ -18,9 +18,9 @@ use App\Traits\RelationLoader;  // examples:
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
+use App\Traits\PostFieldManager;
 
 use App\Services\ModerationService;
-use App\Services\CommentModerationService;
 use App\Services\CommentRelationService;
 
 use Exception;
@@ -35,13 +35,12 @@ class CommentApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, PostFieldManager;
 
     /**
      *  The Service used in the controller
      */
     protected $moderationService;
-    protected $commentModerationService;
     protected $commentRelationService;
 
     /**
@@ -49,11 +48,9 @@ class CommentApiController extends Controller {
      */
     public function __construct(
         ModerationService $moderationService,
-        CommentModerationService $commentModerationService,
         CommentRelationService $commentRelationService
     ) {
         $this->moderationService = $moderationService;
-        $this->commentModerationService = $commentModerationService;
         $this->commentRelationService = $commentRelationService;
     }
 
@@ -248,8 +245,9 @@ class CommentApiController extends Controller {
                 return $this->successResponse([], 'No comments found', 200);
             }
 
+            $query = $this->manageCommentsFieldVisibility($request, $query);
+
             $query = $this->checkForIncludedRelations($request, $query);
-            $query = $this->commentModerationService->replaceReportedContent($query);
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
@@ -546,8 +544,9 @@ class CommentApiController extends Controller {
             // Need this because the select method returns only the query object
             $comment = $query->firstOrFail();
 
+            $comment = $this->manageCommentsFieldVisibility($request, $comment);
+
             $comment = $this->checkForIncludedRelations($request, $comment);
-            $comment = $this->commentModerationService->replaceReportedContent($comment);
 
             $comment = $this->controlVisibleFields($request, $originalSelectFields, $comment);
 
