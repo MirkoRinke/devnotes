@@ -139,7 +139,7 @@ class PostApiController extends Controller {
         $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
 
         ]);
 
@@ -162,17 +162,18 @@ class PostApiController extends Controller {
      *
      * @group Posts
      *
-     * @queryParam filter[category] string Filter posts by category. Example: Backend
-     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: -created_at
-     * @queryParam select string Comma-separated fields to include. Example: id,title,user_id
-     * @queryParam startsWith string Filter where field starts with given string. Format: field:value. Example: title:How
-     * @queryParam endsWith string Filter where field ends with given string. Format: field:value. Example: title:API
+     * @queryParam select string Comma-separated fields to include. Example: select=id,title,user_id
+     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: sort=-created_at
+     * @queryParam filter[category] string Filter posts by category. Example: filter[category]=Frontend
      * 
-     * @queryParam include string Comma-separated relations to include. Example: user
-     * @queryParam user_fields string When including user relation, specify fields to return. Example: id,display_name
+     * @queryParam startsWith string Filter where field starts with given string. Format: field:value. Example: startsWith[title]:Svelte
+     * @queryParam endsWith string Filter where field ends with given string. Format: field:value. Example: endsWith[title]:Management
      * 
-     * @queryParam page number The page number. Example: 1
-     * @queryParam per_page number Items per page. Example: 15
+     * @queryParam include string Comma-separated relations to include. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. Example: user_fields=id,display_name
+     * 
+     * @queryParam page number The page number. Example: page=1
+     * @queryParam per_page number Items per page. Example: per_page=15 (default: 10)
      * 
      * Example URL: /posts
      * 
@@ -188,9 +189,9 @@ class PostApiController extends Controller {
      *       "title": "Svelte Store: Simple State Management",
      *       "code": "import { writable } from 'svelte/store';",
      *       "description": "Svelte Store is a simple and efficient way to manage state in Svelte applications. It allows you to create reactive variables that can be shared across components.",
-     *       "images": [],          // Empty by default - requires user consent or owner access
-     *       "videos": [],          // Empty by default - requires user consent or owner access
-     *       "resources": [],       // Empty by default - requires user consent or owner access
+     *       "images": [],              || Empty by default - requires user consent or owner access
+     *       "videos": [],              || Empty by default - requires user consent or owner access
+     *       "resources": [],           || Empty by default - requires user consent or owner access
      *       "external_source_previews": [
      *         {
      *           "url": "https://picsum.photos/200",
@@ -216,13 +217,13 @@ class PostApiController extends Controller {
      *       "status": "published",
      *       "favorite_count": 3,
      *       "likes_count": 0,
-     *       "reports_count": 0,
+     *       "reports_count": 0,            || Admin and Moderator only
      *       "comments_count": 2,
      *       "is_updated": false,
      *       "updated_by_role": null,
      *       "last_comment_at": "2025-05-04T22:00:44.000000Z",
      *       "history": null,
-     *       "moderation_info": null
+     *       "moderation_info": null        || Admin and Moderator only
      *       "created_at": "2025-05-04T22:00:44.000000Z",
      *       "updated_at": "2025-05-04T22:00:45.000000Z",
      *     }
@@ -324,20 +325,20 @@ class PostApiController extends Controller {
      *
      * @group Posts
      *
-     * @bodyParam title string required The title of the post. Example: Understanding JavaScript Promises
-     * @bodyParam code string The code snippet to include in the post. Example: const promise = new Promise((resolve, reject) => {});
-     * @bodyParam description string required Description of the post. Example: A comprehensive guide to JavaScript Promises
+     * @bodyParam title string required The title of the post. Example: "Understanding JavaScript Promises"
+     * @bodyParam code string The code snippet to include in the post. Example: "const promise = new Promise((resolve, reject) => {});"
+     * @bodyParam description string required Description of the post. Example: "A comprehensive guide to JavaScript Promises"
      * 
      * @bodyParam images array Optional array of image URLs. Example: ["https://example.com/image.jpg"]
      * @bodyParam videos array Optional array of video URLs. Example: ["https://youtube.com/watch?v=example"]
      * @bodyParam resources array Optional array of resource URLs. Example: ["https://mdn.io/promise"]
      * 
      * @bodyParam language array required Array of programming languages. Example: ["JavaScript"]
-     * @bodyParam category string required Category of the post. Example: Frontend
-     * @bodyParam post_type string required Type of the post. Example: tutorial
+     * @bodyParam category string required Category of the post. Example: "Frontend"
+     * @bodyParam post_type string required Type of the post. Example: "tutorial"
      * @bodyParam technology array required Array of technologies used. Example: ["Node.js"]
      * @bodyParam tags array required Array of tags for the post. Example: ["promises", "async", "javascript"]
-     * @bodyParam status string required Publication status. Example: published
+     * @bodyParam status string required Publication status. Example: "published"
      * 
      * @bodyContent {
      *   "title": "Understanding JavaScript Promises",                      || required, string, max:255
@@ -482,10 +483,10 @@ class PostApiController extends Controller {
      *
      * @urlParam id required The ID of the post to retrieve. Example: 1
      * 
-     * @queryParam select string Comma-separated fields to include. Example: id,title,user_id
+     * @queryParam select string Comma-separated fields to include. Example: select=id,title,user_id
      * 
-     * @queryParam include string Comma-separated relations to include. Example: user
-     * @queryParam user_fields string When including user relation, specify fields to return. Example: id,display_name
+     * @queryParam include string Comma-separated relations to include. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. Example: user_fields=id,display_name
      * 
      * Example URL: /posts/1
      * 
@@ -499,9 +500,9 @@ class PostApiController extends Controller {
      *     "title": "Svelte Store: Simple State Management",
      *     "code": "import { writable } from 'svelte/store';",
      *     "description": "Svelte Store is a simple and efficient way to manage state in Svelte applications. It allows you to create reactive variables that can be shared across components.",
-     *     "images": [],            // Empty by default - requires user consent or owner access
-     *     "videos": [],            // Empty by default - requires user consent or owner access
-     *     "resources": [],         // Empty by default - requires user consent or owner access
+     *     "images": [],                || Empty by default - requires user consent or owner access
+     *     "videos": [],                || Empty by default - requires user consent or owner access
+     *     "resources": [],             || Empty by default - requires user consent or owner access
      *     "external_source_previews": [
      *       {
      *         "url": "https://picsum.photos/200",
@@ -527,13 +528,13 @@ class PostApiController extends Controller {
      *     "status": "published",
      *     "favorite_count": 3,
      *     "likes_count": 0,
-     *     "reports_count": 0,
+     *     "reports_count": 0,          || Admin and Moderator only
      *     "comments_count": 2,
      *     "is_updated": false,
      *     "updated_by_role": null,
      *     "last_comment_at": "2025-05-04T22:00:44.000000Z",
      *     "history": null,
-     *     "moderation_info": null,
+     *     "moderation_info": null,     || Admin and Moderator only
      *     "created_at": "2025-05-04T22:00:44.000000Z",
      *     "updated_at": "2025-05-04T22:00:45.000000Z"
      *   }
@@ -620,25 +621,32 @@ class PostApiController extends Controller {
      *
      * @urlParam id required The ID of the post to update. Example: 14
      * 
-     * @bodyParam title string The title of the post. Example: Understanding JavaScript Promises - Updated
-     * @bodyParam code string The code snippet to include in the post. Example: const promise = new Promise((resolve, reject) => {});
-     * @bodyParam description string Description of the post. Example: A comprehensive guide to JavaScript Promises!
+     * @bodyParam title string The title of the post. Example: "Understanding JavaScript Promises - Updated"
+     * @bodyParam code string The code snippet to include in the post. "Example: const promise = new Promise((resolve, reject) => {});"
+     * @bodyParam description string Description of the post. Example: "A comprehensive guide to JavaScript Promises!"
      * 
      * @bodyParam images array Array of image URLs. Example: ["https://example.com/image2.jpg"]
      * @bodyParam videos array Array of video URLs. Example: ["https://youtube.com/watch?v=example"]
      * @bodyParam resources array Array of resource URLs. Example: ["https://mdn.io/promise"]
      * 
      * @bodyParam language array Array of programming languages. Example: ["JavaScript"]
-     * @bodyParam category string Category of the post. Example: Frontend
-     * @bodyParam post_type string Type of the post. Example: tutorial
+     * @bodyParam category string Category of the post. Example: "Frontend"
+     * @bodyParam post_type string Type of the post. Example: "tutorial"
      * @bodyParam technology array Array of technologies used. Example: ["Node.js"]
      * @bodyParam tags array Array of tags for the post. Example: ["promises", "async", "javascript"]
-     * @bodyParam status string Publication status. Example: published
-     * @bodyParam moderation_reason string Admin/moderator only: Reason for moderation action. Example: Fixed code formatting
+     * @bodyParam status string Publication status. Example: "published"
+     * 
+     * @bodyParam moderation_reason string Admin/moderator only: Reason for moderation action. Example: "Fixed code formatting"
      * 
      * @bodyContent {
-     *   "description": "A comprehensive guide to JavaScript Promises!",  // Only fields that need updating
-     *   "images": []                                                     // Empty array to remove all images
+     *   "description": "A comprehensive guide to JavaScript Promises!",  || Only fields that need updating
+     *   "images": []                                                     || Empty array to remove all images
+     * }
+     * 
+     * @bodyContent {
+     *   "description": "A comprehensive guide to JavaScript Promises!",  || Only fields that need updating
+     *   "images": []                                                     || Empty array to remove all images
+     *   "moderation_reason": "Fixed code formatting"                     || Admin and Moderator only
      * }
      * 
      * Example URL: /posts/14
@@ -677,7 +685,7 @@ class PostApiController extends Controller {
      *     "status": "published",
      *     "favorite_count": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,
+     *     "reports_count": 0,          || Admin and Moderator only
      *     "comments_count": 0,
      *     "is_updated": true,
      *     "updated_by_role": "admin",
@@ -717,7 +725,7 @@ class PostApiController extends Controller {
      *         "created_at": "2025-05-05T17:39:44.856399Z"
      *       }
      *     ],
-     *     "moderation_info": null,
+     *     "moderation_info": null,         || Admin and Moderator only
      *     "created_at": "2025-05-04T17:32:42.000000Z",
      *     "updated_at": "2025-05-05T17:39:44.000000Z"
      *   }
