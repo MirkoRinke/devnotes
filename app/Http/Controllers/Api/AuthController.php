@@ -75,9 +75,9 @@ class AuthController extends Controller {
      *   "message": "Validation failed",
      *   "code": 422,
      *   "errors": {
-     *     "email": ["The email field is required."],
-     *     "password": ["The password field is required."],
-     *     "device_name": ["The device name field is required."]
+     *     "email": ["EMAIL_FIELD_REQUIRED"],
+     *     "password": ["PASSWORD_FIELD_REQUIRED"],
+     *     "device_name": ["DEVICE_NAME_FIELD_REQUIRED"]
      *   }
      * }
      *
@@ -91,11 +91,14 @@ class AuthController extends Controller {
      */
     public function login(Request $request): JsonResponse {
         try {
-            $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
-                'device_name' => 'required',
-            ]);
+            $request->validate(
+                [
+                    'email' => 'required|email',
+                    'password' => 'required',
+                    'device_name' => 'required',
+                ],
+                $this->getValidationMessages('Login')
+            );
 
             $user = User::where('email', $request->email)->first();
 
