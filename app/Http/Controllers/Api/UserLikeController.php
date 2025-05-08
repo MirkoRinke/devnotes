@@ -51,14 +51,28 @@ class UserLikeController extends Controller {
     protected function setupLikeQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'likeable_type', 'likeable_id', 'type']);
 
-        $query = $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-        ]);
+        $query = $this->loadUserRelation($request, $query);
 
         $query = $this->buildQuery($request, $query, 'like');
 
         $query = $this->loadPolymorphicLikeablesRelation($request, $query);
 
+        return $query;
+    }
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     */
+    private function loadUserRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ]);
+        }
         return $query;
     }
 
@@ -78,8 +92,8 @@ class UserLikeController extends Controller {
             $likesByType = $query->groupBy('likeable_type');
 
             $allowedFields = [
-                Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post'),
-                Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment'),
+                Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post', [], ['*']),
+                Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', [], ['*']),
             ];
 
             foreach ($likesByType as $type => $likesOfType) {
@@ -93,7 +107,7 @@ class UserLikeController extends Controller {
                 }
 
                 try {
-                    $fieldsToSelect = $allowedFields[$type] ?? ['*'];
+                    $fieldsToSelect = $allowedFields[$type] ?? ['id'];
 
                     // Load the related entities based on the type (Post or Comment)
                     $relatedEntities = app($type)->whereIn('id', $ids)->select($fieldsToSelect)->get()->keyBy('id');
@@ -285,7 +299,9 @@ class UserLikeController extends Controller {
 
             $query = Post::whereIn('id', $likedPostIds);
 
-            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ]);
 
             $query = $this->buildQuery($request, $query, 'post');
 
@@ -296,6 +312,8 @@ class UserLikeController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse([], 'No liked posts found', 200);
             }
+
+            $query = $this->checkForIncludedRelations($request, $query);
 
             return $this->successResponse($query, 'Liked posts retrieved successfully', 200);
         } catch (Exception $e) {
@@ -319,7 +337,9 @@ class UserLikeController extends Controller {
 
             $query = Comment::whereIn('id', $likedCommentIds);
 
-            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ]);
 
             $query = $this->buildQuery($request, $query, 'comment');
 
@@ -330,6 +350,8 @@ class UserLikeController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse([], 'No liked comments found', 200);
             }
+
+            $query = $this->checkForIncludedRelations($request, $query);
 
             return $this->successResponse($query, 'Liked comments retrieved successfully', 200);
         } catch (Exception $e) {
