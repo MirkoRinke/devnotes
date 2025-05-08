@@ -89,6 +89,19 @@ trait FieldManager {
     }
 
     /**
+     * Manages visibility of fields in user data based on user permissions and settings
+     *
+     * @param Request $request The current HTTP request
+     * @param mixed $data The data to filter (can be User, Collection, or LengthAwarePaginator)
+     * @return mixed The filtered data with appropriate field visibility
+     */
+    protected function manageUsersFieldVisibility(Request $request, $data): mixed {
+        $data = $this->moderationFieldsVisibility($request, $data, ['is_banned', 'was_ever_banned', 'moderation_info']);
+        return $data;
+    }
+
+
+    /**
      * Manages visibility of fields in user profile data based on user permissions and settings
      *
      * @param Request $request The current HTTP request
