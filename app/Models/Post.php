@@ -65,6 +65,8 @@ class Post extends Model {
      */
     protected $hidden = [
         'user',
+        'moderation_info',
+        'reports_count'
     ];
 
 
