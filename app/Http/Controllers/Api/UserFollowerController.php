@@ -33,8 +33,8 @@ class UserFollowerController extends Controller {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'follower_id'], ['is_following_back']);
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => ['id', 'name']],
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'name']]
+            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
         ]);
 
         $query = $this->buildQuery($request, $query, 'user_followers');
@@ -97,7 +97,13 @@ class UserFollowerController extends Controller {
      * @queryParam startsWith string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: created_at:2025-05
      * @queryParam endsWith string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: Z
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: follower
+     * @queryParam include string Optional. Include related resources: follower, user. Example: user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
+     *                              Example: id,name,display_name
+     * @queryParam follower_fields string When including follower relation, specify fields to return.
+     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
+     *                              Example: id,name,display_name
      * 
      * Example URL: /followers
      * 
@@ -231,6 +237,12 @@ class UserFollowerController extends Controller {
      * @queryParam endsWith string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: Z
      * 
      * @queryParam include string Optional. Include related resources: follower, user. Example: user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
+     *                              Example: id,name,display_name
+     * @queryParam follower_fields string When including follower relation, specify fields to return.
+     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
+     *                              Example: id,name,display_name
      * 
      * Example URL: /following
      * 
