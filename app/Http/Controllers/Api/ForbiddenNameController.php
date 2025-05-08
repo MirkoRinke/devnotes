@@ -64,14 +64,15 @@ class ForbiddenNameController extends Controller {
      * 
      * @group ForbiddenName
      *
-     * @queryParam select string Select specific fields (id,name,match_type,etc). Example: id,name,match_type
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
+     * @queryParam select string Select specific fields (id,name,match_type,etc). Example: select=id,name,match_type
+     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
      * @queryParam filter[field] string Filter by specific fields. Example: filter[match_type]=exact
+     * 
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=ad
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=tor
      * 
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
+     * @queryParam page integer Page number for pagination. Example: page=2
+     * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
      * 
      * Example URL: /forbidden-names
      * 
@@ -311,7 +312,7 @@ class ForbiddenNameController extends Controller {
      * @group ForbiddenName
      *
      * @urlParam id integer required The ID of the forbidden name to retrieve. Example: 1
-     * @queryParam select string Select specific fields to return. Example: id,name,match_type
+     * @queryParam select string Select specific fields to return. Example: select=id,name,match_type
      * 
      * Example URL: /forbidden-names/1
      * 
