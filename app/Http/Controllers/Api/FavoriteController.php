@@ -12,8 +12,8 @@ use App\Models\Post;
 
 use App\Traits\ApiResponses; // example $this->successResponse($favorites, 'Favorites retrieved successfully', 200);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\RelationLoader; // examples:
-// - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
 // - Multiple relations: $this->loadRelations($request, $query, [
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
@@ -30,7 +30,7 @@ class FavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use  ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, PostFieldManager;
+    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, PostFieldManager;
 
 
     /**
@@ -311,6 +311,11 @@ class FavoriteController extends Controller {
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[title]=Git
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[title]=Sheet
      * 
+     * @queryParam include string Comma-separated relations to include (user). Example: user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id, display_name, role, is_banned, created_at, updated_at
+     *                              Example: id,display_name,role
+     * 
      * @queryParam page integer Page number for pagination. Example: 1
      * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
      * 
@@ -443,7 +448,9 @@ class FavoriteController extends Controller {
                 $subQuery->where('user_id', $userId);
             });
 
-            $query = $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name']);
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ]);
 
             $query = $this->applyAccessFilters($request, $query);
 
@@ -457,6 +464,8 @@ class FavoriteController extends Controller {
             }
 
             $query = $this->manageFieldVisibility($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
 
             return $this->successResponse($query, 'Favorited posts retrieved successfully');
         } catch (Exception $e) {
