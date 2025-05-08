@@ -50,14 +50,15 @@ class FavoriteController extends Controller {
      * 
      * @group User Favorites
      *
-     * @queryParam select string Select specific fields (id,user_id,post_id,etc). Example: id,post_id,created_at
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[post_id]=5     * 
+     * @queryParam select string Select specific fields (id,user_id,post_id,etc). Example: select=id,post_id,created_at
+     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
+     * @queryParam filter[field] string Filter by specific fields. Example: filter[post_id]=5
+     * 
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[created_at]=2025-04
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[created_at]=Z
      * 
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
+     * @queryParam page integer Page number for pagination. Example: page=1
+     * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
      * 
      * Example URL: /user/favorites
      * 
@@ -305,19 +306,20 @@ class FavoriteController extends Controller {
      * 
      * @group User Favorites
      *
-     * @queryParam select string Select specific fields from posts (id,title,language,etc). Example: id,title,language
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
+     * @queryParam select string Select specific fields from posts (id,title,language,etc). Example: select=id,title,language
+     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
      * @queryParam filter[field] string Filter by specific fields. Example: filter[language]=php
+     * 
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[title]=Git
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[title]=Sheet
      * 
-     * @queryParam include string Comma-separated relations to include (user). Example: user
+     * @queryParam include string Comma-separated relations to include (user). Example: include=user
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, is_banned, created_at, updated_at
-     *                              Example: id,display_name,role
+     *                              Available fields: id, display_name, role, created_at, updated_at
+     *                              Example: user_fields=id,display_name,role
      * 
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
+     * @queryParam page integer Page number for pagination. Example: page=1
+     * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
      * 
      * Example URL (basic): user/favorites/posts
      * 
@@ -386,13 +388,13 @@ class FavoriteController extends Controller {
      *       "status": "published",
      *       "favorite_count": 1,
      *       "likes_count": 2,
-     *       "reports_count": 0,
+     *       "reports_count": 0,            || Admin and Moderator only
      *       "comments_count": 0,
      *       "is_updated": false,
      *       "updated_by_role": null,
      *       "last_comment_at": "2025-05-01T16:03:51.000000Z",
      *       "history": null,
-     *       "moderation_info": null,       ||  // Only visible to admin and moderator
+     *       "moderation_info": null,       || Admin and Moderator only
      *       "user": {
      *         "id": 1,
      *         "display_name": "Admin User"
@@ -449,7 +451,7 @@ class FavoriteController extends Controller {
             });
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ]);
 
             $query = $this->applyAccessFilters($request, $query);
