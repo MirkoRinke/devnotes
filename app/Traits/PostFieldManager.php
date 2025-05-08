@@ -13,6 +13,7 @@ use App\Traits\AuthHelper;
 use App\Traits\ApiSelectable;
 
 use App\Services\ExternalSourceService;
+use App\Services\CommentModerationService;
 
 /**
  * @requires \App\Traits\AuthHelper for getUserFromToken method in the controller
@@ -29,6 +30,13 @@ trait PostFieldManager {
      */
     protected function getExternalSourceService(): ExternalSourceService {
         return app(ExternalSourceService::class);
+    }
+
+    /**
+     * Get the CommentModerationService instance
+     */
+    protected function getCommentModerationService(): CommentModerationService {
+        return app(CommentModerationService::class);
     }
 
     /**
@@ -60,28 +68,42 @@ trait PostFieldManager {
      * @param mixed $data The data to filter (can be Post, Collection, or LengthAwarePaginator)
      * @return mixed The filtered data with appropriate field visibility
      */
-    protected function manageFieldVisibility(Request $request, $data): mixed {
-        $user = $this->getUserFromToken($request);
+    protected function managePostsFieldVisibility(Request $request, $data): mixed {
+        $data = $this->moderationFieldsVisibility($request, $data);
+        $data = $this->filterExternalContent($request, $data);
 
-        $data = $this->hideModeratorFields($user, $data);
-        $data = $this->filterExternalContent($request, $user, $data);
+        return $data;
+    }
 
+    /**
+     * Manages visibility of fields in comment data based on user permissions and settings
+     *
+     * @param Request $request The current HTTP request
+     * @param mixed $data The data to filter (can be Comment, Collection, or LengthAwarePaginator)
+     * @return mixed The filtered data with appropriate field visibility
+     */
+    protected function manageCommentsFieldVisibility(Request $request, $data): mixed {
+        $data = $this->moderationFieldsVisibility($request, $data);
+        $data = $this->getCommentModerationService()->replaceReportedContent($data);
         return $data;
     }
 
 
     /**
-     * Hide fields only visible to moderators
+     * Manage visibility of moderator fields
      * 
      * @param mixed $user
      * @param mixed $data
      * @return mixed
      */
-    protected function hideModeratorFields($user, $data): mixed {
-        if (!$user || ($user->role !== 'admin' && $user->role !== 'moderator')) {
-            $data->makeHidden('moderation_info');
-        }
+    protected function moderationFieldsVisibility(Request $request, $data): mixed {
+        $user = $this->getUserFromToken($request);
 
+        if ($user->role === 'admin' || $user->role === 'moderator') {
+            $data->makeVisible(['moderation_info', 'reports_count']);
+        } else {
+            $data->makeHidden(['moderation_info', 'reports_count']);
+        }
         return $data;
     }
 
@@ -94,7 +116,9 @@ trait PostFieldManager {
      * @param mixed $data
      * @return mixed
      */
-    protected function filterExternalContent(Request $request, $user, $data): mixed {
+    protected function filterExternalContent(Request $request, $data): mixed {
+        $user = $this->getUserFromToken($request);
+
         $types = ['images', 'videos', 'resources'];
 
         $selectedFields = $this->getSelectFields($request);
