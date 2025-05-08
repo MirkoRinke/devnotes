@@ -14,7 +14,6 @@ use App\Traits\ApiResponses; // example $this->successResponse($comment, 'Commen
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
 use App\Traits\RelationLoader;  // examples:
-// - Single relation: $this->loadRelation($request, $query, 'user', 'user_id', ['id', 'display_name'])
 // - Multiple relations: $this->loadRelations($request, $query, [
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
@@ -100,19 +99,17 @@ class CommentApiController extends Controller {
 
         $this->modifyRequestSelect($request, [...['id', 'reports_count'], ...$relationKeyFields]);
 
-        $select = $this->getSelectFields($request);
-
         $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'parent', ['id', 'reports_count'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
 
-            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => $select],
-            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'parent', ['id', 'reports_count'])],
+            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
+            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
 
-            ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => $select],
-            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user')],
-            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'parent', ['id', 'reports_count'])],
+            ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
+            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
         ]);
 
 
@@ -137,21 +134,28 @@ class CommentApiController extends Controller {
      * 
      * @group Comments
      *
-     * @queryParam select string Select specific fields (id,content,etc). Example: id,content,user_id
+     * @queryParam select string Select specific fields for the main comment(s). Example: id,content,user_id
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
      * @queryParam filter[field] string Filter by specific fields. Example: filter[content]=code
+     * @queryParam filter[parent_id] string Filter to show only top-level comments. Example: filter[parent_id]=null
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[content]=Thanks
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[content]=Stores!
      * 
      * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of items per page. Example: 15 ( Default: 10 )
+     * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
      * 
-     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: user,children,parent     * 
+     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: user,children,parent
+     * 
+     * Field selection parameters:
      * @queryParam user_fields string Fields to include for user relation. Example: id,display_name,role
-     * @queryParam parent_fields string Fields to include for parent relation. Example: id,content,updated_at
-     * @queryParam children_fields string Fields to include for children relation. Example: id,content,is_deleted,parent_content
+     * @queryParam parent_fields string Fields to include for parent comment relation. Example: id,content,updated_at
+     * @queryParam children_fields string Fields to include for child comment relation. Example: id,content,is_deleted
      * 
-     * Example URL: /?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
+     * Note: If `children_fields` or `parent_fields` are not provided but `select` is, the fields from `select` 
+     * will be applied to child/parent comments as well. This provides consistent field selection across all 
+     * comment levels while still allowing precise control when needed.
+     * 
+     * Example URL: comments/?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
      * 
      * @response status=200 scenario="Comments retrieved" {
      *   "status": "success",
@@ -231,7 +235,7 @@ class CommentApiController extends Controller {
      */
     public function index(Request $request) {
         try {
-            $query = Comment::whereNull('parent_id');
+            $query = Comment::query();
 
             $originalSelectFields = $this->getSelectFields($request);
 
@@ -346,7 +350,7 @@ class CommentApiController extends Controller {
      * 
      * @response status=404 scenario="Parent comment not found" {
      *   "status": "error",
-     *   "message": "Parent comment not found",
+     *   "message": "Parent comment with ID 999 does not exist",
      *   "code": 404,
      *   "errors": "PARENT_COMMENT_NOT_FOUND"
      * }
@@ -420,7 +424,7 @@ class CommentApiController extends Controller {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
             if (strpos($e->getMessage(), 'Comment') !== false) {
-                return $this->errorResponse('Parent comment not found', 'PARENT_COMMENT_NOT_FOUND', 404);
+                return $this->errorResponse("Parent comment with ID {$validatedData['parent_id']} does not exist", 'PARENT_COMMENT_NOT_FOUND', 404);
             } else {
                 return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
             }
@@ -440,14 +444,20 @@ class CommentApiController extends Controller {
      * @group Comments
      *
      * @urlParam id required The ID of the comment. Example: 1
-     * @queryParam select string Select specific fields (id,content,etc). Example: id,content,user_id
+     * @queryParam select string Select specific fields for the main comment. Example: id,content,user_id
      * 
      * @queryParam include string Comma-separated relations to include (user,parent,children). Example: user,children,parent
-     * @queryParam user_fields string Fields to include for user relation. Example: id,display_name,role
-     * @queryParam parent_fields string Fields to include for parent relation. Example: id,content,updated_at
-     * @queryParam children_fields string Fields to include for children relation. Example: id,content,is_deleted,parent_content
      * 
-     * Example URL: /comments/1?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
+     * Field selection parameters:
+     * @queryParam user_fields string Fields to include for user relation. Example: id,display_name,role
+     * @queryParam parent_fields string Fields to include for parent comment relation. Example: id,content,updated_at
+     * @queryParam children_fields string Fields to include for child comment relation. Example: id,content,is_deleted
+     * 
+     * Note: If `children_fields` or `parent_fields` are not provided but `select` is, the fields from `select` 
+     * will be applied to child/parent comments as well. This provides consistent field selection across all 
+     * comment levels while still allowing precise control when needed.
+     * 
+     * Example URL: /comments/1/?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
      * 
      * @response status=200 scenario="Comment retrieved" {
      *   "status": "success",
