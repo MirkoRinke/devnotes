@@ -18,7 +18,7 @@ use App\Traits\RelationLoader; // examples:
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
-use App\Traits\PostFieldManager; // example $this->manageFieldVisibility($request, $query);
+use App\Traits\PostFieldManager; // example $this->managePostsFieldVisibility($request, $query);
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -463,7 +463,7 @@ class FavoriteController extends Controller {
                 return $this->successResponse([], 'No favorited posts found', 200);
             }
 
-            $query = $this->manageFieldVisibility($request, $query);
+            $query = $this->managePostsFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
 
