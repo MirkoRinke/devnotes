@@ -15,6 +15,7 @@ use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Traits\FieldManager;
 
 use App\Services\UserRelationService;
 
@@ -30,7 +31,7 @@ class UserProfileController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, AuthorizesRequests, FieldManager;
 
 
     /**
@@ -107,6 +108,8 @@ class UserProfileController extends Controller {
                 return $this->successResponse($query, 'No User Profiles exist in the database', 200);
             }
 
+            $query = $this->manageUserProfileFieldVisibility($request, $query);
+
             return $this->successResponse($query, 'User Profiles retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
@@ -136,6 +139,8 @@ class UserProfileController extends Controller {
 
             // Need this because the select method returns only the query object
             $query = $query->firstOrFail();
+
+            $query = $this->manageUserProfileFieldVisibility($request, $query);
 
             $this->authorize('view', $query);
 
