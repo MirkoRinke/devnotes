@@ -97,15 +97,15 @@ class CommentApiController extends Controller {
         $this->modifyRequestSelect($request, [...['id', 'reports_count'], ...$relationKeyFields]);
 
         $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
 
             ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
 
             ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
         ]);
 
@@ -131,26 +131,55 @@ class CommentApiController extends Controller {
      * 
      * @group Comments
      *
-     * @queryParam select string Select specific fields for the main comment(s). Example: id,content,user_id
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -created_at
+     * @queryParam select string Select specific fields for the main comment(s). Example: select=id,content,user_id
+     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
      * @queryParam filter[field] string Filter by specific fields. Example: filter[content]=code
      * @queryParam filter[parent_id] string Filter to show only top-level comments. Example: filter[parent_id]=null
+     * 
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[content]=Thanks
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[content]=Stores!
      * 
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
+     * @queryParam page integer Page number for pagination. Example: page=1
+     * @queryParam per_page integer Number of items per page. Example: per_page=15 (default: 10)
      * 
-     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: user,children,parent
+     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: include=user,children,parent
      * 
      * Field selection parameters:
-     * @queryParam user_fields string Fields to include for user relation. Example: id,display_name,role
-     * @queryParam parent_fields string Fields to include for parent comment relation. Example: id,content,updated_at
-     * @queryParam children_fields string Fields to include for child comment relation. Example: id,content,is_deleted
+     * @queryParam user_fields string Fields to include for user relation. Example: user_fields=id,display_name,role
+     * @queryParam parent_fields string Fields to include for parent comment relation. Example: parent_fields=id,content,updated_at
+     * @queryParam children_fields string Fields to include for child comment relation. Example: children_fields=id,content,is_deleted
      * 
      * Note: If `children_fields` or `parent_fields` are not provided but `select` is, the fields from `select` 
      * will be applied to child/parent comments as well. This provides consistent field selection across all 
      * comment levels while still allowing precise control when needed.
+     * 
+     * Example URL: /comments
+     * 
+     * @response status=200 scenario="Comments retrieved" {
+     *   "status": "success",
+     *   "message": "Comments retrieved successfully",
+     *   "code": 200,
+     *   "count": 9,
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "post_id": 1,
+     *       "user_id": 4,
+     *       "parent_id": null,
+     *       "content": "Thanks for this helpful post about Svelte Stores!",
+     *       "parent_content": null,
+     *       "is_deleted": false,
+     *       "depth": 0,
+     *       "likes_count": 2,
+     *       "reports_count": 0,                || Admin and Moderator only
+     *       "is_updated": false,
+     *       "updated_by_role": null,
+     *       "moderation_info": null,           || Admin and Moderator only
+     *       "created_at": "2025-04-30T19:34:25.000000Z",
+     *       "updated_at": "2025-04-30T19:34:25.000000Z",      
+     *     }
+     *   ]
+     * }
      * 
      * Example URL: comments/?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
      * 
@@ -170,10 +199,10 @@ class CommentApiController extends Controller {
      *       "is_deleted": false,
      *       "depth": 0,
      *       "likes_count": 2,
-     *       "reports_count": 0,
+     *       "reports_count": 0,                || Admin and Moderator only
      *       "is_updated": false,
      *       "updated_by_role": null,
-     *       "moderation_info": null,
+     *       "moderation_info": null,           || Admin and Moderator only
      *       "created_at": "2025-04-30T19:34:25.000000Z",
      *       "updated_at": "2025-04-30T19:34:25.000000Z",
      *       "user": {
@@ -192,10 +221,10 @@ class CommentApiController extends Controller {
      *           "is_deleted": false,
      *           "depth": 1,
      *           "likes_count": 1,
-     *           "reports_count": 0,
+     *           "reports_count": 0,                || Admin and Moderator only
      *           "is_updated": false,
      *           "updated_by_role": null,
-     *           "moderation_info": null,
+     *           "moderation_info": null,           || Admin and Moderator only
      *           "created_at": "2025-04-30T19:34:25.000000Z",
      *           "updated_at": "2025-04-30T19:34:25.000000Z",
      *           "user": {
@@ -318,8 +347,8 @@ class CommentApiController extends Controller {
      *   "message": "Validation failed",
      *   "code": 422,
      *   "errors": {
-     *     "content": ["The content field is required."],
-     *     "post_id": ["The post id field is required."]
+     *     "content": ["CONTENT_FIELD_REQUIRED"],
+     *     "post_id": ["POST_ID_FIELD_REQUIRED"]
      *   }
      * }
      * 
@@ -442,18 +471,44 @@ class CommentApiController extends Controller {
      * @group Comments
      *
      * @urlParam id required The ID of the comment. Example: 1
-     * @queryParam select string Select specific fields for the main comment. Example: id,content,user_id
+     * @queryParam select string Select specific fields for the main comment. Example: select=id,content,user_id
      * 
-     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: user,children,parent
+     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: include=user,children,parent
      * 
      * Field selection parameters:
-     * @queryParam user_fields string Fields to include for user relation. Example: id,display_name,role
-     * @queryParam parent_fields string Fields to include for parent comment relation. Example: id,content,updated_at
-     * @queryParam children_fields string Fields to include for child comment relation. Example: id,content,is_deleted
+     * @queryParam user_fields string Fields to include for user relation. Example: user_fields=id,display_name,role
+     * @queryParam parent_fields string Fields to include for parent comment relation. Example: parent_fields=id,content,updated_at
+     * @queryParam children_fields string Fields to include for child comment relation. Example: children_fields=id,content,is_deleted
      * 
      * Note: If `children_fields` or `parent_fields` are not provided but `select` is, the fields from `select` 
      * will be applied to child/parent comments as well. This provides consistent field selection across all 
      * comment levels while still allowing precise control when needed.
+     * 
+     * Example URL: /comments/1
+     * 
+     * @response status=200 scenario="Comment retrieved" {
+     *   "status": "success",
+     *   "message": "Comment retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 1,
+     *     "post_id": 1,
+     *     "user_id": 4,
+     *     "parent_id": null,
+     *     "content": "Thanks for this helpful post about Svelte Stores!",
+     *     "parent_content": null,
+     *     "is_deleted": false,
+     *     "depth": 0,
+     *     "likes_count": 2,
+     *     "reports_count": 0,                  || Admin and Moderator only
+     *     "is_updated": false,
+     *     "updated_by_role": null,
+     *     "moderation_info": null,             || Admin and Moderator only
+     *     "created_at": "2025-04-30T19:34:25.000000Z",
+     *     "updated_at": "2025-04-30T19:34:25.000000Z",       
+     *   }
+     * }
      * 
      * Example URL: /comments/1/?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
      * 
@@ -472,10 +527,10 @@ class CommentApiController extends Controller {
      *     "is_deleted": false,
      *     "depth": 0,
      *     "likes_count": 2,
-     *     "reports_count": 0,
+     *     "reports_count": 0,                  || Admin and Moderator only
      *     "is_updated": false,
      *     "updated_by_role": null,
-     *     "moderation_info": null,
+     *     "moderation_info": null,             || Admin and Moderator only
      *     "created_at": "2025-04-30T19:34:25.000000Z",
      *     "updated_at": "2025-04-30T19:34:25.000000Z",
      *     "user": {
@@ -494,10 +549,10 @@ class CommentApiController extends Controller {
      *         "is_deleted": false,
      *         "depth": 1,
      *         "likes_count": 1,
-     *         "reports_count": 0,
+     *         "reports_count": 0,              || Admin and Moderator only
      *         "is_updated": false,
      *         "updated_by_role": null,
-     *         "moderation_info": null,
+     *         "moderation_info": null,         || Admin and Moderator only
      *         "created_at": "2025-04-30T19:34:25.000000Z",
      *         "updated_at": "2025-04-30T19:34:25.000000Z",
      *         "user": {
@@ -598,10 +653,10 @@ class CommentApiController extends Controller {
      *     "is_deleted": false,
      *     "depth": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,
+     *     "reports_count": 0,          || Admin and Moderator only
      *     "is_updated": true,
      *     "updated_by_role": "user",
-     *     "moderation_info": null,
+     *     "moderation_info": null,     || Admin and Moderator only
      *     "created_at": "2025-04-30T19:45:12.000000Z",
      *     "updated_at": "2025-04-30T20:15:45.000000Z"
      *   }
@@ -622,10 +677,10 @@ class CommentApiController extends Controller {
      *     "is_deleted": false,
      *     "depth": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,
+     *     "reports_count": 0,          || Admin and Moderator only
      *     "is_updated": true,
      *     "updated_by_role": "admin",
-     *     "moderation_info": [
+     *     "moderation_info": [         || Admin and Moderator only
      *       {
      *         "user_id": 1,
      *         "username": "Max Mustermann1",
@@ -762,6 +817,8 @@ class CommentApiController extends Controller {
                 return $comment;
             });
 
+            $comment = $this->manageCommentsFieldVisibility($request, $comment);
+
             return $this->successResponse($comment, 'Comment updated successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse("Comment with ID $id does not exist", 'COMMENT_NOT_FOUND', 404);
@@ -883,10 +940,10 @@ class CommentApiController extends Controller {
      *     "is_deleted": true,
      *     "depth": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,
+     *     "reports_count": 0,              || Admin and Moderator only
      *     "is_updated": false,
      *     "updated_by_role": null,
-     *     "moderation_info": null,
+     *     "moderation_info": null,         || Admin and Moderator only
      *     "created_at": "2025-04-30T19:45:12.000000Z",
      *     "updated_at": "2025-05-01T14:26:32.000000Z"
      *   }
@@ -923,7 +980,7 @@ class CommentApiController extends Controller {
      * 
      * @authenticated
      */
-    public function deleteComment(string $id) {
+    public function deleteComment(Request $request, string $id) {
         try {
             $comment = Comment::findOrFail($id);
 
@@ -942,6 +999,9 @@ class CommentApiController extends Controller {
 
                     return $comment;
                 });
+
+                $comment = $this->manageCommentsFieldVisibility($request, $comment);
+
                 return $this->successResponse($comment, "Comment marked as deleted", 200);
             } else {
                 $comment = DB::transaction(function () use ($comment) {
