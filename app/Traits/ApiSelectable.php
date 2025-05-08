@@ -60,6 +60,8 @@ trait ApiSelectable {
      * It adds requiredFields to the select parameter if they are not already present
      *
      * @param Request $request The HTTP request containing query parameters
+     * @param array $requiredFields Fields that must be included in the selection
+     * @param array $removeFields Fields that should be removed from the selection
      */
     public function modifyRequestSelect(Request $request, $requiredFields = [], $removeFields = []): void {
         if ($request->has('select')) {
@@ -83,8 +85,14 @@ trait ApiSelectable {
     /**
      * Get select fields from request and parse them into an array
      * 
+     * Handles both string format ('id,name,email') and array format.
+     * 
+     * Example:
+     *   If request has ?select=id,name,email
+     *   Returns ['id', 'name', 'email']
+     * 
      * @param Request $request
-     * @return array|null
+     * @return array|null Array of fields or null if no select parameter
      */
     public function getSelectFields(Request $request): array|null {
         if ($request->has('select')) {
@@ -115,21 +123,63 @@ trait ApiSelectable {
      */
     public function controlVisibleFields(Request $request, $originalSelectFields, $data): mixed {
         if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
-            foreach ($data as $c) {
-                $this->applyVisibleFields($request, $originalSelectFields, $c);
+            foreach ($data as $model) {
+                $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $model);
             }
         } else if ($data instanceof Comment || $data instanceof Post) {
-            $this->applyVisibleFields($request, $originalSelectFields, $data);
+            $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $data);
         }
         return $data;
     }
 
 
     /**
+     * Apply field visibility to a model and its relations
+     * 
+     * This helper method applies visibility rules to a single model
+     * and its parent/children relations.
+     * 
+     * Like the TARDIS in Doctor Who, this method travels through time:
+     * - It visits the present (the current model)
+     * - It travels to the future (its children) 
+     * - It looks into the past (its parent)
+     * All while making sure temporal paradoxes (infinite loops) don't occur
+     * because each model instance exists only once in memory, even if
+     * it appears in multiple places in the relationship timeline.
+     * 
+     * @param Request $request The HTTP request
+     * @param array|null $originalSelectFields The original select fields
+     * @param mixed $model The model to process
+     */
+    private function applyFieldsToModelAndRelations(Request $request, $originalSelectFields, $model): void {
+        $this->applyVisibleFields($request, $originalSelectFields, $model);
+
+        if (isset($model->children) && $model->children) {
+            $this->applyVisibleFields($request, $originalSelectFields, $model->children);
+
+            foreach ($model->children as $child) {
+                $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $child);
+            }
+        }
+
+        if (isset($model->parent) && $model->parent) {
+            $this->applyVisibleFields($request, $originalSelectFields, $model->parent);
+        }
+    }
+
+
+    /**
      * Apply visible fields to the model
      * 
-     * This method applies the visible fields to the model based on the 'select' parameter in the request.
-     * It hides any fields that are not in the 'select' parameter.
+     * This method controls field visibility based on the 'select' parameter.
+     * The implementation works in a somewhat counterintuitive way:
+     * 1. It first identifies fields that are in the user's select request but NOT in originalSelectFields
+     * 2. It then HIDES these additional fields with makeHidden()
+     *
+     * In practice, this means the model shows:
+     * - All fields from originalSelectFields
+     * - The 'id' field (always included)
+     * - But hides any extra fields that might be in the select parameter
      *
      * @param Request $request The HTTP request containing the 'select' parameter
      * @param array|null $originalSelectFields The original select fields from the request
