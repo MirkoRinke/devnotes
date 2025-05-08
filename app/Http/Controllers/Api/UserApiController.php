@@ -14,6 +14,7 @@ use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, 'user');
+use App\Traits\FieldManager;
 
 use App\Services\ModerationService;
 use App\Services\UserRelationService;
@@ -31,7 +32,7 @@ class UserApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, AuthorizesRequests, FieldManager;
 
     protected $moderationService;
     protected $userRelationService;
@@ -73,19 +74,20 @@ class UserApiController extends Controller {
      *
      * @group User Management
      *
-     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email
-     * @queryParam sort string Field to sort by (prefix with - for descending). Example: -created_at
-     * @queryParam filter[name] string Filter users by exact name match. Example: John
+     * @queryParam select string Comma-separated list of fields to include. Example: select=id,name,email
+     * @queryParam sort string Field to sort by (prefix with - for descending). Example: sort=-created_at
+     * @queryParam filter[name] string Filter users by exact name match. Example: filter[name]=John Doe
      * @queryParam filter[is_banned] string Filter users by ban status. Options:
-     *        - "is:null": Users who are not banned
-     *        - "is:not_null": Users who are currently banned
+     *        - is:null: Users who are not banned
+     *        - is:not_null: Users who are currently banned
      *        - Date string: Match specific ban expiry date
      *        Example: /?filter[is_banned]=is:not_null
-     * @queryParam startsWith[name] string Filter by name starting with value. Example: Jo
-     * @queryParam endsWith[email] string Filter by email ending with value. Example: @example.com
      * 
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of users per page (5-100). Example: 15 ( Default: 10 )
+     * @queryParam startsWith[name] string Filter by name starting with value. Example: startsWith[name]=John
+     * @queryParam endsWith[email] string Filter by email ending with value. Example: endsWith[email]=@example.com
+     * 
+     * @queryParam page integer Page number for pagination. Example: page=1
+     * @queryParam per_page integer Number of users per page (5-100). Example: per_page=15 (default: 10)
      * 
      *
      * @response status=200 scenario="Success" {
@@ -103,9 +105,9 @@ class UserApiController extends Controller {
      *       "updated_at": "2025-04-28T10:00:00.000000Z",
      *       "display_name": "Admin",
      *       "role": "admin",
-     *       "is_banned": null,
-     *       "was_ever_banned": false,
-     *       "moderation_info": null
+     *       "is_banned": null,             || Admin and Moderator only
+     *       "was_ever_banned": false,      || Admin and Moderator only
+     *       "moderation_info": null        || Admin and Moderator only
      *     },
      *     {
      *       "id": 2,
@@ -116,9 +118,9 @@ class UserApiController extends Controller {
      *       "updated_at": "2025-04-28T10:00:00.000000Z",
      *       "display_name": "User",
      *       "role": "user",
-     *       "is_banned": null,
-     *       "was_ever_banned": false,
-     *       "moderation_info": null
+     *       "is_banned": null,             || Admin and Moderator only
+     *       "was_ever_banned": false,      || Admin and Moderator only
+     *       "moderation_info": null        || Admin and Moderator only
      *     }
      *   ]
      * }
@@ -173,6 +175,8 @@ class UserApiController extends Controller {
                 return $this->successResponse($query, 'No users found with the given filters', 200);
             }
 
+            $query = $this->manageUsersFieldVisibility($request, $query);
+
             return $this->successResponse($query, 'Users retrieved successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
@@ -194,40 +198,24 @@ class UserApiController extends Controller {
      * 
      * @urlParam id required The ID of the user to retrieve. Example: 1
      *
-     * @queryParam select string Comma-separated list of fields to include. Example: id,name,email
+     * @queryParam select string Comma-separated list of fields to include. Example: select=id,name,email
      *
-     * @response status=200 scenario="Success (Admin view)" {
-     *   "status": "success",
-     *   "message": "User retrieved successfully",
-     *   "code": 200,
-     *   "data": {
-     *     "id": 1,
-     *     "name": "Admin User",
-     *     "email": "admin@example.com",
-     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
-     *     "created_at": "2025-04-28T10:00:00.000000Z",
-     *     "updated_at": "2025-04-28T10:00:00.000000Z",
-     *     "display_name": "Admin",
-     *     "role": "admin",
-     *     "is_banned": null,
-     *     "was_ever_banned": false,
-     *     "moderation_info": null
-     *   }
-     * }
-     * 
-     * @response status=200 scenario="Success (Regular user view)" {
+     * @response status=200 scenario="Success" {
      *   "status": "success", 
      *   "message": "User retrieved successfully",
      *   "code": 200,
      *   "data": {
      *     "id": 2,
-     *     "name": "Regular User",
-     *     "email": "user@example.com",
+     *     "name": "John Doe",
+     *     "email": "johndoe@example.com",
      *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
      *     "created_at": "2025-04-28T10:00:00.000000Z",
      *     "updated_at": "2025-04-28T10:00:00.000000Z",
      *     "display_name": "User",
      *     "role": "user"
+     *     "is_banned": null,           || Admin and Moderator only
+     *     "was_ever_banned": false,    || Admin and Moderator only
+     *     "moderation_info": null      || Admin and Moderator only
      *   }
      * }
      *
@@ -266,10 +254,7 @@ class UserApiController extends Controller {
             // Need this because the select method returns only the query object
             $user = $query->firstOrFail();
 
-            // If the user is not an admin, hide the banned user information
-            if ($request->user()->role !== 'admin') {
-                $user = $user->makeHidden(['is_banned', 'moderation_info']);
-            }
+            $user = $this->manageUsersFieldVisibility($request, $user);
 
             $this->authorize('view', $user);
 
@@ -295,10 +280,10 @@ class UserApiController extends Controller {
      *
      * @urlParam id required The ID of the user to update. Example: 1
      *
-     * @bodyParam name string Name of the user (2-255 characters). Example: John Doe
-     * @bodyParam email string Email address (must be unique). Example: john@example.com
-     * @bodyParam password string Password (min 8 characters). Example: password123
-     * @bodyParam password_confirmation string Password confirmation (must match password). Example: password123
+     * @bodyParam name string Name of the user (2-255 characters). Example: "John Doe"
+     * @bodyParam email string Email address (must be unique). Example: "john@example.com"
+     * @bodyParam password string Password (min 8 characters). Example: "password123"
+     * @bodyParam password_confirmation string Password confirmation (must match password). Example: "password123"
      *
      * @bodyContent {
      *   "name": "John Doe",
@@ -328,9 +313,9 @@ class UserApiController extends Controller {
      *     "updated_at": "2025-04-29T15:30:45.000000Z",
      *     "display_name": "John",
      *     "role": "user",
-     *     "is_banned": null,
-     *     "was_ever_banned": false,
-     *     "moderation_info": null
+     *     "is_banned": null,               || Admin and Moderator only
+     *     "was_ever_banned": false,        || Admin and Moderator only
+     *     "moderation_info": null          || Admin and Moderator only
      *   }
      * }
      *
@@ -392,6 +377,8 @@ class UserApiController extends Controller {
                 }
                 return $user;
             });
+
+            $user = $this->manageUsersFieldVisibility($request, $user);
 
             return $this->successResponse($user, 'User update successfully', 200);
         } catch (ModelNotFoundException $e) {
@@ -533,8 +520,7 @@ class UserApiController extends Controller {
      *
      * Bans a user for a specified number of days. While technically temporary,
      * setting a very large number of days (e.g., 99999) effectively creates a
-     * permanent ban. Only administrators can ban users. Banned users cannot 
-     * log in until the ban expires.
+     * permanent ban. Only administrators can ban users. Banned users cannot log in until the ban expires.
      *
      * @group User Management
      *
