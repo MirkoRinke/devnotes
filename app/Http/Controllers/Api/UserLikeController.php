@@ -71,7 +71,7 @@ class UserLikeController extends Controller {
     private function loadUserRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ]);
         }
         return $query;
@@ -146,7 +146,7 @@ class UserLikeController extends Controller {
      * 
      * @queryParam include string Comma-separated relations to include. Example: include=user,likeable
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, is_banned, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at
      *                              Example: user_fields=id,display_name
      * @queryParam likeable_post_fields string When including likeable relation (for posts), specify fields to return.
      *                              Example: likeable_post_fields=id,title,description
@@ -540,7 +540,7 @@ class UserLikeController extends Controller {
      * 
      * @queryParam include string Comma-separated relations to include. Example: include=user,comments
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, is_banned, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at
      *                              Example: user_fields=id,display_name
      * 
      * @queryParam page integer Page number for pagination. Example: page=1
@@ -814,7 +814,7 @@ class UserLikeController extends Controller {
             $query = Post::whereIn('id', $likedPostIds);
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ]);
 
             $query = $this->applyAccessFilters($request, $query);
@@ -858,7 +858,7 @@ class UserLikeController extends Controller {
      * 
      * @queryParam include string Comma-separated relations to include. Example: include=user,post
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, is_banned, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at
      *                              Example: user_fields=id,display_name
      * 
      * @queryParam page integer Page number for pagination. Example: page=1
@@ -990,7 +990,7 @@ class UserLikeController extends Controller {
             $query = Comment::whereIn('id', $likedCommentIds);
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
             ]);
 
             $query = $this->buildQuery($request, $query, 'comment');
