@@ -18,7 +18,7 @@ use App\Services\CommentModerationService;
 /**
  * @requires \App\Traits\AuthHelper for getUserFromToken method in the controller
  */
-trait PostFieldManager {
+trait FieldManager {
 
     /**
      *  The traits used in the controller
@@ -69,7 +69,7 @@ trait PostFieldManager {
      * @return mixed The filtered data with appropriate field visibility
      */
     protected function managePostsFieldVisibility(Request $request, $data): mixed {
-        $data = $this->moderationFieldsVisibility($request, $data);
+        $data = $this->moderationFieldsVisibility($request, $data, ['moderation_info', 'reports_count']);
         $data = $this->filterExternalContent($request, $data);
 
         return $data;
@@ -83,26 +83,40 @@ trait PostFieldManager {
      * @return mixed The filtered data with appropriate field visibility
      */
     protected function manageCommentsFieldVisibility(Request $request, $data): mixed {
-        $data = $this->moderationFieldsVisibility($request, $data);
+        $data = $this->moderationFieldsVisibility($request, $data, ['moderation_info', 'reports_count']);
         $data = $this->getCommentModerationService()->replaceReportedContent($data);
+        return $data;
+    }
+
+    /**
+     * Manages visibility of fields in user profile data based on user permissions and settings
+     *
+     * @param Request $request The current HTTP request
+     * @param mixed $data The data to filter (can be UserProfile, Collection, or LengthAwarePaginator)
+     * @return mixed The filtered data with appropriate field visibility
+     */
+    protected function manageUserProfileFieldVisibility(Request $request, $data): mixed {
+        $data = $this->moderationFieldsVisibility($request, $data, ['reports_count']);
         return $data;
     }
 
 
     /**
-     * Manage visibility of moderator fields
+     * Manage visibility of moderator fields based on user role
      * 
-     * @param mixed $user
-     * @param mixed $data
-     * @return mixed
+     * @param Request $request The current HTTP request
+     * @param mixed $data The data to filter
+     * @param array $fields Fields to make visible/hidden based on user role
+     * @return mixed The filtered data
      */
-    protected function moderationFieldsVisibility(Request $request, $data): mixed {
-        $user = $this->getUserFromToken($request);
-
-        if ($user->role === 'admin' || $user->role === 'moderator') {
-            $data->makeVisible(['moderation_info', 'reports_count']);
-        } else {
-            $data->makeHidden(['moderation_info', 'reports_count']);
+    protected function moderationFieldsVisibility(Request $request, $data, array $fields = []): mixed {
+        if (!empty($fields)) {
+            $user = $this->getUserFromToken($request);
+            if ($user->role === 'admin' || $user->role === 'moderator') {
+                $data->makeVisible($fields);
+            } else {
+                $data->makeHidden($fields);
+            }
         }
         return $data;
     }

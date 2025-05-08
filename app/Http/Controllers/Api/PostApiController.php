@@ -20,7 +20,7 @@ use App\Traits\RelationLoader; // examples:
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
-use App\Traits\PostFieldManager;
+use App\Traits\FieldManager;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
@@ -39,7 +39,7 @@ class PostApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses,  QueryBuilder, ApiInclude, RelationLoader, PostFieldManager, AuthorizesRequests;
+    use ApiResponses,  QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests;
 
 
     /**

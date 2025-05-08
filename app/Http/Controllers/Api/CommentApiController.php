@@ -18,7 +18,7 @@ use App\Traits\RelationLoader;  // examples:
 //     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
 //     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
 // ])
-use App\Traits\PostFieldManager;
+use App\Traits\FieldManager;
 
 use App\Services\ModerationService;
 use App\Services\CommentRelationService;
@@ -35,7 +35,7 @@ class CommentApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, PostFieldManager;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager;
 
     /**
      *  The Service used in the controller

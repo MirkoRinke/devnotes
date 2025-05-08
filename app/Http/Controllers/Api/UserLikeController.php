@@ -16,7 +16,7 @@ use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'P
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
 use App\Traits\RelationLoader; // example $this->loadRelationIfNeeded($request, $query, 'user', 'user_id', ['id', 'name']);
 use App\Traits\ApiInclude; // example $this->getRelationKeyFields($request, ['user' => 'user_id', 'likeable' => 'likeable_id']);
-use App\Traits\PostFieldManager; // example $this->managePostsFieldVisibility($request, $query);
+use App\Traits\FieldManager; // example $this->managePostsFieldVisibility($request, $query);
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -29,7 +29,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, PostFieldManager;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager;
 
     /**
      * The validation rule for the like entity
