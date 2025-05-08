@@ -64,14 +64,15 @@ class CriticalTermController extends Controller {
      * 
      * @group CriticalTerms
      *
-     * @queryParam select string Select specific fields (id,name,language,etc). Example: id,name,severity
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: -severity
+     * @queryParam select string Select specific fields (id,name,language,etc). Example: select=id,name,severity
+     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-severity
      * @queryParam filter[field] string Filter by specific fields. Example: filter[language]=en
+     * 
      * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=off
      * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=term
      * 
-     * @queryParam page integer Page number for pagination. Example: 1
-     * @queryParam per_page integer Number of items per page. Example: 15 (Default: 10)
+     * @queryParam page integer Page number for pagination. Example: page=2
+     * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
      * 
      * Example URL (all terms): /critical-terms
      * 
@@ -251,6 +252,7 @@ class CriticalTermController extends Controller {
      *   "code": 422,
      *   "errors": {
      *     "name": ["NAME_FIELD_REQUIRED"],
+     *     "language": ["LANGUAGE_FIELD_REQUIRED"],
      *     "severity": ["SEVERITY_MUST_BE_BETWEEN_1_AND_5."]
      *   }
      * }
@@ -313,7 +315,7 @@ class CriticalTermController extends Controller {
      * 
      * @urlParam id required integer The ID of the critical term. Example: 2
      *
-     * @queryParam select string Select specific fields (id,name,language,etc). Example: id,name,severity
+     * @queryParam select string Select specific fields (id,name,language,etc). Example: select=id,name,severity
      * 
      * Example URL: /critical-terms/2
      * 
