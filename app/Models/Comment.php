@@ -46,7 +46,9 @@ class Comment extends Model {
     protected $hidden = [
         'user',
         'parent',
-        'children'
+        'children',
+        'moderation_info',
+        'reports_count'
     ];
 
     /**
