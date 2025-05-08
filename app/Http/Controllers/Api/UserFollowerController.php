@@ -33,8 +33,8 @@ class UserFollowerController extends Controller {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'follower_id'], ['is_following_back']);
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'is_banned', 'created_at', 'updated_at'])],
+            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
         ]);
 
         $query = $this->buildQuery($request, $query, 'user_followers');
@@ -89,21 +89,23 @@ class UserFollowerController extends Controller {
      *
      * @group Users - Followers
      *
-     * @queryParam select string Optional. Select specific fields. Example: id,follower_id
-     * @queryParam page int Optional. Page number for pagination. Example: 1
-     * @queryParam per_page int Optional. Items per page for pagination. Example: 15
-     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: -created_at
+     * @queryParam select string Optional. Select specific fields. Example: select=id,follower_id
+     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: sort=-created_at
+     * @queryParam filter string Optional. Filter by fields (prefix with - for descending). Example: filter=[is_following_back]=true
      * 
-     * @queryParam startsWith string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: created_at:2025-05
-     * @queryParam endsWith string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: Z
+     * @queryParam startsWith[name] string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: startsWith[created_at]:2025-05
+     * @queryParam endsWith[email] string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: endsWith:[created_at]:Z
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: user
+     * @queryParam page int Optional. Page number for pagination. Example: page=1
+     * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=10 (default: 15)
+     * 
+     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
-     *                              Example: id,name,display_name
+     *                              Available fields: id, name, display_name, role, created_at, updated_at
+     *                              Example: user_fields=id,name,display_name
      * @queryParam follower_fields string When including follower relation, specify fields to return.
-     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
-     *                              Example: id,name,display_name
+     *                              Available fields: id, name, display_name, role, created_at, updated_at
+     *                              Example: follower_fields=id,name,display_name
      * 
      * Example URL: /followers
      * 
@@ -228,21 +230,23 @@ class UserFollowerController extends Controller {
      *
      * @group Users - Followers
      *
-     * @queryParam select string Optional. Select specific fields. Example: id,user_id
-     * @queryParam page int Optional. Page number for pagination. Example: 1
-     * @queryParam per_page int Optional. Items per page for pagination. Example: 15
-     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: -created_at
+     * @queryParam select string Optional. Select specific fields. Example: select=id,follower_id
+     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: sort=-created_at
+     * @queryParam filter string Optional. Filter by fields (prefix with - for descending). Example: filter=[is_following_back]=true
      * 
-     * @queryParam startsWith string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: created_at:2025-05
-     * @queryParam endsWith string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: Z
+     * @queryParam startsWith[name] string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: startsWith[created_at]:2025-05
+     * @queryParam endsWith[email] string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: endsWith:[created_at]:Z
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: user
+     * @queryParam page int Optional. Page number for pagination. Example: page=1
+     * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=10 (default: 15)
+     * 
+     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
-     *                              Example: id,name,display_name
+     *                              Available fields: id, name, display_name, role, created_at, updated_at
+     *                              Example: user_fields=id,name,display_name
      * @queryParam follower_fields string When including follower relation, specify fields to return.
-     *                              Available fields: id, name, display_name, role, is_banned, created_at, updated_at
-     *                              Example: id,name,display_name
+     *                              Available fields: id, name, display_name, role, created_at, updated_at
+     *                              Example: follower_fields=id,name,display_name
      * 
      * Example URL: /following
      * 
