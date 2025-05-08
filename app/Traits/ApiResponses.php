@@ -65,6 +65,18 @@ trait ApiResponses {
                     'name.string' => 'NAME_MUST_BE_STRING',
                     'name.max' => 'NAME_FIELD_MAX_LENGTH',
                 ];
+            case 'Login':
+                return [
+                    'email.required' => 'EMAIL_FIELD_REQUIRED',
+                    'email.string' => 'EMAIL_MUST_BE_STRING',
+                    'email.email' => 'EMAIL_MUST_BE_VALID',
+
+                    'password.required' => 'PASSWORD_FIELD_REQUIRED',
+                    'password.string' => 'PASSWORD_MUST_BE_STRING',
+
+                    'device_name' => 'DEVICE_NAME_FIELD_REQUIRED',
+                    'device_name.string' => 'DEVICE_NAME_MUST_BE_STRING',
+                ];
             case 'User':
                 return [
                     'name.required' => 'NAME_FIELD_REQUIRED',
