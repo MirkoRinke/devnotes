@@ -17,13 +17,13 @@ class AllowedSocialLinks implements ValidationRule {
     public function validate(string $attribute, mixed $value, Closure $fail): void {
         foreach ($value as $platform => $url) {
             if (!array_key_exists($platform, $this->allowedPlatforms)) {
-                $fail("The platform '$platform' is not allowed. Allowed platforms: " . implode(', ', array_keys($this->allowedPlatforms)));
+                $fail("SOCIAL_LINK_PLATFORM_NOT_ALLOWED");
                 return;
             }
 
             $baseUrl = $this->allowedPlatforms[$platform];
             if (!$this->validateUrl($url, $baseUrl)) {
-                $fail("The URL for '$platform' does not match the required format. It should start with: $baseUrl");
+                $fail("SOCIAL_LINK_INVALID_FORMAT");
                 return;
             }
         }
