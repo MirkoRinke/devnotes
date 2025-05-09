@@ -50,6 +50,7 @@ class UserProfile extends Model {
      * @var array
      */
     protected $hidden = [
+        'user',
         'reports_count',
     ];
 
