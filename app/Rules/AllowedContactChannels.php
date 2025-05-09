@@ -15,7 +15,7 @@ class AllowedContactChannels implements ValidationRule {
         foreach ($value as $channel => $contactValue) {
 
             if (!in_array($channel, $this->allowedChannels)) {
-                $fail("The contact channel '$channel' is not allowed. Allowed channels are: " . implode(', ', $this->allowedChannels));
+                $fail("CONTACT_CHANNEL_TYPE_NOT_ALLOWED");
                 return;
             }
 
@@ -29,7 +29,7 @@ class AllowedContactChannels implements ValidationRule {
 
             // If the value is a URL or contains a web domain, fail the validation
             if ($urlValidator->passes() || $containsWebDomain) {
-                $fail("The value for '$channel' should not contain a URL or web link.");
+                $fail("CONTACT_CHANNEL_CONTAINS_URL");
                 return;
             }
         }
