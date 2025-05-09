@@ -89,7 +89,8 @@ class UserApiController extends Controller {
      * @queryParam page integer Page number for pagination. Example: page=1
      * @queryParam per_page integer Number of users per page (5-100). Example: per_page=15 (default: 10)
      * 
-     *
+     * Example URL: /users
+     * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Users retrieved successfully",
@@ -199,6 +200,8 @@ class UserApiController extends Controller {
      * @urlParam id required The ID of the user to retrieve. Example: 1
      *
      * @queryParam select string Comma-separated list of fields to include. Example: select=id,name,email
+     * 
+     * Example URL: /users/1
      *
      * @response status=200 scenario="Success" {
      *   "status": "success", 
@@ -299,6 +302,8 @@ class UserApiController extends Controller {
      * @bodyContent scenario="Update email only" {
      *    "email": "john@example.com"
      * }
+     * 
+     * Example URL: /users/1
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -407,6 +412,8 @@ class UserApiController extends Controller {
      * @group User Management
      *
      * @urlParam id required The ID of the user to delete. Example: 5
+     * 
+     * Example URL: /users/5
      *
      * @response status=200 scenario="Regular user deleted" {
      *   "status": "success",
@@ -538,6 +545,8 @@ class UserApiController extends Controller {
      *   "moderation_reason": "Severe violation of terms of service",
      *   "days": 99999
      * }
+     * 
+     * Example URL: /users/2/ban
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -678,6 +687,8 @@ class UserApiController extends Controller {
      * @bodyContent {
      *   "moderation_reason": "Appeal approved"
      * }
+     * 
+     * Example URL: /users/2/unban
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
