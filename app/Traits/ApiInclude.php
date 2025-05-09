@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\UserProfile;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -95,7 +96,7 @@ trait ApiInclude {
                     $this->applyRelationVisibility($request, $item, $relations, $select);
                 }
                 return $target;
-            } else if ($target instanceof Comment || $target instanceof Post) {
+            } else if ($target instanceof Comment || $target instanceof Post || $target instanceof UserProfile) {
                 $this->applyRelationVisibility($request, $target, $relations, $select);
                 return $target;
             }
