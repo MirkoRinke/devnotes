@@ -33,8 +33,8 @@ class UserFollowerController extends Controller {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'follower_id'], ['is_following_back']);
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
+            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
         ]);
 
         $query = $this->buildQuery($request, $query, 'user_followers');
