@@ -93,7 +93,7 @@ class UserProfileController extends Controller {
         $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
         ]);
 
         $query = $this->$methods($request, $query, 'user_profile');
@@ -238,7 +238,7 @@ class UserProfileController extends Controller {
                 return $this->successResponse($query, 'No User Profiles exist in the database', 200);
             }
 
-            $query = $this->manageUserProfileFieldVisibility($request, $query);
+            $query = $this->manageUserProfilesFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
 
@@ -350,7 +350,7 @@ class UserProfileController extends Controller {
 
             $this->authorize('view', $query);
 
-            $query = $this->manageUserProfileFieldVisibility($request, $query);
+            $query = $this->manageUserProfilesFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
 
