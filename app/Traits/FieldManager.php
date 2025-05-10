@@ -108,7 +108,7 @@ trait FieldManager {
      * @param mixed $data The data to filter (can be UserProfile, Collection, or LengthAwarePaginator)
      * @return mixed The filtered data with appropriate field visibility
      */
-    protected function manageUserProfileFieldVisibility(Request $request, $data): mixed {
+    protected function manageUserProfilesFieldVisibility(Request $request, $data): mixed {
         $data = $this->moderationFieldsVisibility($request, $data, ['reports_count']);
         return $data;
     }
@@ -129,6 +129,53 @@ trait FieldManager {
                 $data->makeVisible($fields);
             } else {
                 $data->makeHidden($fields);
+            }
+        }
+
+        $data = $this->moderationFieldsVisibilityRelation($request, $data);
+
+        return $data;
+    }
+
+    /**
+     * Manage visibility of moderator fields in relations based on user role
+     * 
+     * @param Request $request The current HTTP request
+     * @param mixed $data The data to filter
+     * @return mixed The filtered data
+     */
+    protected function moderationFieldsVisibilityRelation(Request $request, $data): mixed {
+        $user = $this->getUserFromToken($request);
+
+        if ($user->role === 'admin' || $user->role === 'moderator') {
+            foreach ($data as $relation) {
+                if (isset($relation->user)) {
+                    $relation->user->makeVisible(['is_banned', 'was_ever_banned', 'moderation_info']);
+                }
+                if (isset($relation->post)) {
+                    $relation->post->makeVisible(['moderation_info', 'reports_count']);
+                }
+                if (isset($relation->comment)) {
+                    $relation->comment->makeVisible(['moderation_info', 'reports_count']);
+                }
+                if (isset($relation->profile)) {
+                    $relation->profile->makeVisible(['reports_count']);
+                }
+            }
+        } else {
+            foreach ($data as $relation) {
+                if (isset($relation->user)) {
+                    $relation->user->makeHidden(['is_banned', 'was_ever_banned', 'moderation_info']);
+                }
+                if (isset($relation->post)) {
+                    $relation->post->makeHidden(['moderation_info', 'reports_count']);
+                }
+                if (isset($relation->comment)) {
+                    $relation->comment->makeHidden(['moderation_info', 'reports_count']);
+                }
+                if (isset($relation->profile)) {
+                    $relation->profile->makeHidden(['reports_count']);
+                }
             }
         }
         return $data;
