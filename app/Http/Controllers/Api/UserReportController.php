@@ -229,6 +229,40 @@ class UserReportController extends Controller {
         }
     }
 
+
+    /**
+     * Check if the user can report the entity
+     * 
+     * @param User $user The user who is reporting
+     * @param string $reportableType The type of the reportable entity (Post, UserProfile, Comment)
+     * @param mixed $reportable The reportable entity
+     * @param int $reportableId The ID of the reportable entity
+     * @param string $simpleType The simple type of the reportable entity (post, userProfile, comment)
+     * @return JsonResponse|null
+     */
+    protected function reportValidationCheck($user, $reportableType, $reportable, $reportableId, $simpleType) {
+        if ($reportableType === UserProfile::class && $reportable->user_id == $user->id) {
+            return $this->errorResponse('You cannot report yourself', 'CANNOT_REPORT_SELF', 403);
+        } else if ($reportableType === Post::class && $reportable->user_id == $user->id) {
+            return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403);
+        } else if ($reportableType === Comment::class && $reportable->user_id == $user->id) {
+            return $this->errorResponse('You cannot report your own comment', 'CANNOT_REPORT_OWN_COMMENT', 403);
+        }
+
+        $existingReport = UserReport::where([
+            'user_id' => $user->id,
+            'reportable_id' => $reportableId,
+            'reportable_type' => $reportableType
+        ])->first();
+
+        if ($existingReport) {
+            return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409);
+        }
+
+        return null;
+    }
+
+
     /**
      * Add a report for any reportable entity (Post, User, Comment)
      */
@@ -248,33 +282,18 @@ class UserReportController extends Controller {
 
             $reportableType = $typeMap[$validatedData['reportable_type']];
             $reportableId = $validatedData['reportable_id'];
-
             $simpleType = $validatedData['reportable_type'];
+
 
             $reportable = $reportableType::findOrFail($reportableId);
 
-            if ($reportableType === UserProfile::class && $reportable->user_id == $user->id) {
-                return $this->errorResponse('You cannot report yourself', 'CANNOT_REPORT_SELF', 403);
-            } else if ($reportableType === Post::class && $reportable->user_id == $user->id) {
-                return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403);
-            } else if ($reportableType === Comment::class && $reportable->user_id == $user->id) {
-                return $this->errorResponse('You cannot report your own comment', 'CANNOT_REPORT_OWN_COMMENT', 403);
-            }
-
-            $existingReport = UserReport::where([
-                'user_id' => $user->id,
-                'reportable_id' => $reportableId,
-                'reportable_type' => $reportableType
-            ])->first();
-
-            if ($existingReport) {
-                return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409);
+            $validationResult = $this->reportValidationCheck($user, $reportableType, $reportable, $reportableId, $simpleType);
+            if ($validationResult !== null) {
+                return $validationResult;
             }
 
             $report = DB::transaction(function () use ($request, $user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData) {
-
                 $reason = $validatedData['reason'] ?? null;
-
                 $value = 1;
 
                 if ($user->role === 'admin' || $user->role === 'moderator') {
@@ -345,10 +364,11 @@ class UserReportController extends Controller {
 
             $this->authorize('delete', $report);
 
+            // The entity being reported
             $reportable = $report->reportable;
 
+            // The impact value of the original report
             $value = $report->impact_value;
-
 
             DB::transaction(function () use ($report, $reportable, $value) {
                 $this->updateReportsCount($reportable, 'decrement', $value);
