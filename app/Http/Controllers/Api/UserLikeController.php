@@ -71,7 +71,7 @@ class UserLikeController extends Controller {
     private function loadUserRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ]);
         }
         return $query;
@@ -116,6 +116,11 @@ class UserLikeController extends Controller {
                     foreach ($likesOfType as $like) {
                         if (isset($relatedEntities[$like->likeable_id])) {
                             $like->setRelation('likeable', $relatedEntities[$like->likeable_id]);
+
+                            $modelName = ucfirst($like->type);
+
+                            // Manage the visibility of fields for the likeable entity
+                            $like->likeable = $this->{"manage{$modelName}sFieldVisibility"}($request, $like->likeable);
                         }
                     }
                 } catch (Exception $e) {
@@ -278,6 +283,8 @@ class UserLikeController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse([], 'No likes found', 200);
             }
+
+            $query = $this->manageUsersFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
 
@@ -814,7 +821,7 @@ class UserLikeController extends Controller {
             $query = Post::whereIn('id', $likedPostIds);
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ]);
 
             $query = $this->applyAccessFilters($request, $query);
@@ -990,7 +997,7 @@ class UserLikeController extends Controller {
             $query = Comment::whereIn('id', $likedCommentIds);
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at'])],
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ]);
 
             $query = $this->buildQuery($request, $query, 'comment');
