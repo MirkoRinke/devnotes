@@ -56,10 +56,34 @@ class UserLikeController extends Controller {
 
         $query = $this->buildQuery($request, $query, 'like');
 
-        $query = $this->loadPolymorphicLikeablesRelation($request, $query);
+        $query = $this->loadLikeableRelation($request, $query);
 
         return $query;
     }
+
+
+    /**
+     * Load the likeable polymorphic relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     */
+    private function loadLikeableRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('likeable', explode(',', $request->input('include')))) {
+            $query = $this->loadPolymorphicRelations(
+                $request,
+                $query,
+                'likeable',
+                [
+                    Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post', [], ['*']),
+                    Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', [], ['*']),
+                ]
+            );
+        }
+        return $query;
+    }
+
 
     /**
      * Load the user relation
@@ -77,59 +101,6 @@ class UserLikeController extends Controller {
         return $query;
     }
 
-    /**
-     * Load the polymorphic likeable relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection|JsonResponse
-     */
-    private function loadPolymorphicLikeablesRelation(Request $request, $query): mixed {
-        if ($query instanceof JsonResponse) {
-            return $query;
-        }
-
-        if ($request->has('include') && in_array('likeable', explode(',', $request->input('include')))) {
-            $likesByType = $query->groupBy('likeable_type');
-
-            $allowedFields = [
-                Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post', [], ['*']),
-                Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', [], ['*']),
-            ];
-
-            foreach ($likesByType as $type => $likesOfType) {
-                if (!array_key_exists($type, $allowedFields)) {
-                    continue;
-                }
-
-                $ids = $likesOfType->pluck('likeable_id')->toArray();
-                if (empty($ids)) {
-                    continue;
-                }
-
-                try {
-                    $fieldsToSelect = $allowedFields[$type] ?? ['id'];
-
-                    // Load the related entities based on the type (Post or Comment)
-                    $relatedEntities = app($type)->whereIn('id', $ids)->select($fieldsToSelect)->get()->keyBy('id');
-
-                    foreach ($likesOfType as $like) {
-                        if (isset($relatedEntities[$like->likeable_id])) {
-                            $like->setRelation('likeable', $relatedEntities[$like->likeable_id]);
-
-                            $modelName = ucfirst($like->type);
-
-                            // Manage the visibility of fields for the likeable entity
-                            $like->likeable = $this->{"manage{$modelName}sFieldVisibility"}($request, $like->likeable);
-                        }
-                    }
-                } catch (Exception $e) {
-                    return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-                }
-            }
-        }
-        return $query;
-    }
 
     /**
      * Get All Likes
