@@ -115,8 +115,32 @@ class UserReportController extends Controller {
 
         $query = $this->buildQuery($request, $query, 'user_reports');
 
-        $query = $this->loadPolymorphicReportablesRelation($request, $query);
+        $query = $this->loadReportableRelation($request, $query);
 
+        return $query;
+    }
+
+
+    /**
+     * Load the reportable polymorphic relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     */
+    private function loadReportableRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('reportable', explode(',', $request->input('include')))) {
+            $query = $this->loadPolymorphicRelations(
+                $request,
+                $query,
+                'reportable',
+                [
+                    Post::class => $this->getRelationFieldsFromRequest($request, 'reportable_post', [], ['*']),
+                    Comment::class => $this->getRelationFieldsFromRequest($request, 'reportable_comment', [], ['*']),
+                    UserProfile::class => $this->getRelationFieldsFromRequest($request, 'reportable_user_profile', [], ['*']),
+                ]
+            );
+        }
         return $query;
     }
 
@@ -133,62 +157,6 @@ class UserReportController extends Controller {
             $query = $this->loadRelations($request, $query, [
                 ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ]);
-        }
-        return $query;
-    }
-
-
-    /**
-     * Load the polymorphic reportables relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection|JsonResponse
-     */
-    private function loadPolymorphicReportablesRelation(Request $request, $query): mixed {
-        if ($query instanceof JsonResponse) {
-            return $query;
-        }
-
-        if ($request->has('include') && in_array('reportable', explode(',', $request->input('include')))) {
-            $reportsByType = $query->groupBy('reportable_type');
-
-            $allowedFields = [
-                Post::class => $this->getRelationFieldsFromRequest($request, 'reportable_post', [], ['*']),
-                Comment::class => $this->getRelationFieldsFromRequest($request, 'reportable_comment', [], ['*']),
-                UserProfile::class => $this->getRelationFieldsFromRequest($request, 'reportable_user_profile', [], ['*']),
-            ];
-
-            foreach ($reportsByType as $type => $reportsOfType) {
-                if (!array_key_exists($type, $allowedFields)) {
-                    continue;
-                }
-
-                $ids = $reportsOfType->pluck('reportable_id')->toArray();
-                if (empty($ids)) {
-                    continue;
-                }
-
-                try {
-                    $fieldsToSelect = $allowedFields[$type] ?? ['id'];
-
-                    // Load the related entities based on the type (Post, Comment, UserProfile)
-                    $relatedEntities = app($type)->whereIn('id', $ids)->select($fieldsToSelect)->get()->keyBy('id');
-
-                    foreach ($reportsOfType as $report) {
-                        if (isset($relatedEntities[$report->reportable_id])) {
-                            $report->setRelation('reportable', $relatedEntities[$report->reportable_id]);
-
-                            $modelName = ucfirst($report->type);
-
-                            // Manage the visibility of fields for the reportable entity
-                            $report->reportable = $this->{"manage{$modelName}sFieldVisibility"}($request, $report->reportable);
-                        }
-                    }
-                } catch (Exception $e) {
-                    return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-                }
-            }
         }
         return $query;
     }
