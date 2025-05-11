@@ -63,6 +63,23 @@ class UserLikeController extends Controller {
 
 
     /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     */
+    private function loadUserRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ]);
+        }
+        return $query;
+    }
+
+
+    /**
      * Load the likeable polymorphic relation
      * 
      * @param Request $request
@@ -80,23 +97,6 @@ class UserLikeController extends Controller {
                     Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', [], ['*']),
                 ]
             );
-        }
-        return $query;
-    }
-
-
-    /**
-     * Load the user relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
-     */
-    private function loadUserRelation(Request $request, $query): mixed {
-        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
         }
         return $query;
     }
@@ -122,7 +122,7 @@ class UserLikeController extends Controller {
      * 
      * @queryParam include string Comma-separated relations to include. Example: include=user,likeable
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
      *                              Example: user_fields=id,display_name
      * @queryParam likeable_post_fields string When including likeable relation (for posts), specify fields to return.
      *                              Example: likeable_post_fields=id,title,description
@@ -130,7 +130,7 @@ class UserLikeController extends Controller {
      *                              Example: likeable_comment_fields=id,content
      * 
      * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Items per page. Example: per_page=15
+     * @queryParam per_page integer Items per page. Example: per_page=15 (default: 10)
      *
      * Example URL: /likes
      * 
@@ -163,7 +163,7 @@ class UserLikeController extends Controller {
      * 
      * Example URL: /likes?include=user&user_fields=id,display_name
      * 
-     * @response status=200 scenario="Success" {
+     * @response status=200 scenario="With user relation" {
      *   "status": "success",
      *   "message": "Likes retrieved successfully",
      *   "code": 200,
@@ -518,7 +518,7 @@ class UserLikeController extends Controller {
      * 
      * @queryParam include string Comma-separated relations to include. Example: include=user,comments
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
      *                              Example: user_fields=id,display_name
      * 
      * @queryParam page integer Page number for pagination. Example: page=1
