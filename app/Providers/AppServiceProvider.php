@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
+use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider {
     // Import the ApiResponses trait here to use it in the RateLimiter
@@ -32,6 +33,11 @@ class AppServiceProvider extends ServiceProvider {
      * Bootstrap any application services.
      */
     public function boot(): void {
+        if (env('QUERY_LOGGING_ENABLED', false)) {
+            DB::enableQueryLog();
+        }
+
+
         /**
          * Rate limiting for the API requests.
          */
