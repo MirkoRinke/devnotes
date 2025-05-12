@@ -157,7 +157,7 @@ class UserReportController extends Controller {
                 [
                     Post::class => $this->getRelationFieldsFromRequest($request, 'reportable_post', [], ['*']),
                     Comment::class => $this->getRelationFieldsFromRequest($request, 'reportable_comment', [], ['*']),
-                    UserProfile::class => $this->getRelationFieldsFromRequest($request, 'reportable_user_profile', [], ['*']),
+                    UserProfile::class => $this->getRelationFieldsFromRequest($request, 'reportable_profile', [], ['*']),
                 ]
             );
         }
@@ -223,8 +223,8 @@ class UserReportController extends Controller {
      *                                Example: reportable_post_fields=id,title,description
      * @queryParam reportable_comment_fields string When including reportable relation (for comments), specify fields to return.
      *                                Example: reportable_comment_fields=id,content
-     * @queryParam reportable_user_profile_fields string When including reportable relation (for user profiles), specify fields to return.
-     *                                Example: reportable_user_profile_fields=id,display_name,public_email
+     * @queryParam reportable_profile_fields string When including reportable relation (for user profiles), specify fields to return.
+     *                                Example: reportable_profile_fields=id,display_name,public_email
      * 
      * @queryParam page integer Page number for pagination. Example: page=1
      * @queryParam per_page integer Items per page. Example: per_page=15 (default: 10)
