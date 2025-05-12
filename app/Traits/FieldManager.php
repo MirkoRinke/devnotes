@@ -47,7 +47,7 @@ trait FieldManager {
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected function applyAccessFilters(Request $request, $query) {
-        $user = $this->getUserFromToken($request);
+        $user = $this->getAuthenticatedUser($request);
         if (!$user) {
             $query->where('status', 'published')->where('reports_count', '<', 5);
         } elseif ($user->role !== 'admin' && $user->role !== 'moderator') {
@@ -124,8 +124,8 @@ trait FieldManager {
      */
     protected function moderationFieldsVisibility(Request $request, $data, array $fields = []): mixed {
         if (!empty($fields)) {
-            $user = $this->getUserFromToken($request);
-            if ($user->role === 'admin' || $user->role === 'moderator') {
+            $user = $this->getAuthenticatedUser($request);
+            if ($user && ($user->role === 'admin' || $user->role === 'moderator')) {
                 $data->makeVisible($fields);
             } else {
                 $data->makeHidden($fields);
@@ -138,46 +138,78 @@ trait FieldManager {
     }
 
     /**
-     * Manage visibility of moderator fields in relations based on user role
+     * Manage visibility of moderator fields in related models
      * 
      * @param Request $request The current HTTP request
-     * @param mixed $data The data to filter
-     * @return mixed The filtered data
+     * @param mixed $data The data to filter (can be Post, Collection, or LengthAwarePaginator)
+     * @return mixed The filtered data with appropriate field visibility
+     * 
      */
     protected function moderationFieldsVisibilityRelation(Request $request, $data): mixed {
-        $user = $this->getUserFromToken($request);
+        $user = $this->getAuthenticatedUser($request);
 
-        if ($user->role === 'admin' || $user->role === 'moderator') {
-            foreach ($data as $relation) {
-                if (isset($relation->user)) {
-                    $relation->user->makeVisible(['is_banned', 'was_ever_banned', 'moderation_info']);
+        if ($user && ($user->role === 'admin' || $user->role === 'moderator')) {
+            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+                foreach ($data as $relation) {
+                    if ($relation->relationLoaded('user') && $relation->user) {
+                        $relation->user->makeVisible(['is_banned', 'was_ever_banned', 'moderation_info']);
+                    }
+                    if ($relation->relationLoaded('post') && $relation->post) {
+                        $relation->post->makeVisible(['moderation_info', 'reports_count']);
+                    }
+                    if ($relation->relationLoaded('comment') && $relation->comment) {
+                        $relation->comment->makeVisible(['moderation_info', 'reports_count']);
+                    }
+                    if ($relation->relationLoaded('profile') && $relation->profile) {
+                        $relation->profile->makeVisible(['reports_count']);
+                    }
                 }
-                if (isset($relation->post)) {
-                    $relation->post->makeVisible(['moderation_info', 'reports_count']);
+            } else {
+                if ($data->relationLoaded('user') && $data->user) {
+                    $data->user->makeVisible(['is_banned', 'was_ever_banned', 'moderation_info']);
                 }
-                if (isset($relation->comment)) {
-                    $relation->comment->makeVisible(['moderation_info', 'reports_count']);
+                if ($data->relationLoaded('post') && $data->post) {
+                    $data->post->makeVisible(['moderation_info', 'reports_count']);
                 }
-                if (isset($relation->profile)) {
-                    $relation->profile->makeVisible(['reports_count']);
+                if ($data->relationLoaded('comment') && $data->comment) {
+                    $data->comment->makeVisible(['moderation_info', 'reports_count']);
+                }
+                if ($data->relationLoaded('profile') && $data->profile) {
+                    $data->profile->makeVisible(['reports_count']);
                 }
             }
         } else {
-            foreach ($data as $relation) {
-                if (isset($relation->user)) {
-                    $relation->user->makeHidden(['is_banned', 'was_ever_banned', 'moderation_info']);
+            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+                foreach ($data as $relation) {
+                    if ($relation->relationLoaded('user') && $relation->user) {
+                        $relation->user->makeHidden(['is_banned', 'was_ever_banned', 'moderation_info']);
+                    }
+                    if ($relation->relationLoaded('post') && $relation->post) {
+                        $relation->post->makeHidden(['moderation_info', 'reports_count']);
+                    }
+                    if ($relation->relationLoaded('comment') && $relation->comment) {
+                        $relation->comment->makeHidden(['moderation_info', 'reports_count']);
+                    }
+                    if ($relation->relationLoaded('profile') && $relation->profile) {
+                        $relation->profile->makeHidden(['reports_count']);
+                    }
                 }
-                if (isset($relation->post)) {
-                    $relation->post->makeHidden(['moderation_info', 'reports_count']);
+            } else {
+                if ($data->relationLoaded('user') && $data->user) {
+                    $data->user->makeHidden(['is_banned', 'was_ever_banned', 'moderation_info']);
                 }
-                if (isset($relation->comment)) {
-                    $relation->comment->makeHidden(['moderation_info', 'reports_count']);
+                if ($data->relationLoaded('post') && $data->post) {
+                    $data->post->makeHidden(['moderation_info', 'reports_count']);
                 }
-                if (isset($relation->profile)) {
-                    $relation->profile->makeHidden(['reports_count']);
+                if ($data->relationLoaded('comment') && $data->comment) {
+                    $data->comment->makeHidden(['moderation_info', 'reports_count']);
+                }
+                if ($data->relationLoaded('profile') && $data->profile) {
+                    $data->profile->makeHidden(['reports_count']);
                 }
             }
         }
+
         return $data;
     }
 
@@ -191,7 +223,7 @@ trait FieldManager {
      * @return mixed
      */
     protected function filterExternalContent(Request $request, $data): mixed {
-        $user = $this->getUserFromToken($request);
+        $user = $this->getAuthenticatedUser($request);
 
         $types = ['images', 'videos', 'resources'];
 
@@ -202,12 +234,12 @@ trait FieldManager {
                 if (!$this->getExternalSourceService()->shouldDisplayExternals($request, $user, $type)) {
                     if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
                         foreach ($data as $post) {
-                            if ($post->user_id !== $user->id) {
+                            if (!$user || ($post->user_id !== $user->id)) {
                                 $post->{$type} = [];
                             }
                         }
                     } else if ($data instanceof Post) {
-                        if ($data->user_id !== $user->id) {
+                        if (!$user || ($data->user_id !== $user->id)) {
                             $data->{$type} = [];
                         }
                     }
