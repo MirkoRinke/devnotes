@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 trait ApiResponses {
 
@@ -22,13 +23,25 @@ trait ApiResponses {
             $count = 1;
         }
 
-        return response()->json([
+        $response = [
             'status' => 'success',
             'message' => $message,
             'code' => $code,
-            'count' => $count,
-            'data' => $data
-        ], $code);
+            'count' => $count
+        ];
+
+        // If query logging is enabled, add the query log to the response
+        if (env('QUERY_LOGGING_ENABLED', false)) {
+            $queryLog = DB::getQueryLog();
+            $response['meta'] = [
+                'total_queries' => count($queryLog),
+                'queries' => $queryLog
+            ];
+        }
+
+        $response['data'] = $data;
+
+        return response()->json($response, $code);
     }
 
 
@@ -41,12 +54,23 @@ trait ApiResponses {
      * @return JsonResponse
      */
     protected function errorResponse($message, $errors = [], $code): JsonResponse {
-        return response()->json([
+        $response = [
             'status' => 'error',
             'message' => $message,
             'code' => $code,
             'errors' => $errors
-        ], $code);
+        ];
+
+        // If query logging is enabled, add the query log to the response
+        if (env('QUERY_LOGGING_ENABLED', false)) {
+            $queryLog = DB::getQueryLog();
+            $response['meta'] = [
+                'total_queries' => count($queryLog),
+                'queries' => $queryLog
+            ];
+        }
+
+        return response()->json($response, $code);
     }
 
     /**
