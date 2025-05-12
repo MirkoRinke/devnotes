@@ -8,22 +8,35 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 trait AuthHelper {
     /**
+     * Get authenticated user from either Sanctum session or Bearer token
      * 
-     * Extract user from the authorization bearer token
+     * First checks if a user is authenticated via Sanctum's built-in auth.
+     * If not, attempts to authenticate via Bearer token.
      * 
-     * @param Request $request The HTTP request containing the bearer token
-     * @return mixed|null Returns the authenticated user model instance if 
-     *                    a valid token exists, null otherwise
+     * @param Request $request The HTTP request
+     * @return mixed|null The authenticated user or null
      */
-    protected function getUserFromToken(Request $request) {
+    protected function getAuthenticatedUser(Request $request) {
+        // Check if the user is authenticated via Sanctum session then return it
+        if ($request->user()) {
+            return $request->user();
+        }
+
+        static $cachedUser = null;
+
+        if ($cachedUser !== null) {
+            return $cachedUser;
+        }
+
         $bearerToken = $request->bearerToken();
 
         if (!$bearerToken) {
-            return null;
+            return $cachedUser = null;
         }
 
         $token = PersonalAccessToken::findToken($bearerToken);
 
-        return $token ? $token->tokenable->load('profile') : null;
+        return $cachedUser = $token ? $token->tokenable : null;
+        // return $cachedUser = $token ? $token->tokenable->load('profile') : null;
     }
 }
