@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 
-use App\Http\Controllers\Api\UserApiController;
 use App\Http\Controllers\Controller;
 
 use App\Models\User;
@@ -25,14 +24,12 @@ class CronjobController extends Controller {
     /**
      *  The Service used in the controller
      */
-    protected $userApiController;
     protected $guestAccountService;
 
     /**
      * Constructor to initialize the services
      */
-    public function __construct(UserApiController $userApiController, GuestAccountService $guestAccountService) {
-        $this->userApiController = $userApiController;
+    public function __construct(GuestAccountService $guestAccountService) {
         $this->guestAccountService = $guestAccountService;
     }
 
@@ -104,9 +101,12 @@ class CronjobController extends Controller {
                 return $this->successResponse([], 'Guest account created successfully', 201);
             }
 
-            $result = $this->userApiController->handleGuestAccountDeletion($guestAccount);
+            $success = $this->guestAccountService->resetGuestAccount($guestAccount);
+            if (!$success) {
+                return $this->errorResponse('Failed to reset guest account', 'GUEST_RESET_FAILED', 500);
+            }
 
-            return $result;
+            return $this->successResponse(null, 'Guest account reset successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
