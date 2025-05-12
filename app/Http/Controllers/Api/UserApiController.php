@@ -14,6 +14,8 @@ use App\Rules\NotForbiddenName;
 
 use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
 use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, 'user');
+use App\Traits\ApiInclude;
+use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 
 use App\Services\ModerationService;
@@ -32,7 +34,7 @@ class UserApiController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, AuthorizesRequests, FieldManager;
+    use ApiResponses, QueryBuilder, AuthorizesRequests, ApiInclude, RelationLoader, FieldManager;
 
     protected $moderationService;
     protected $userRelationService;
@@ -64,6 +66,37 @@ class UserApiController extends Controller {
     }
 
     /**
+     * Setup the query for User
+     */
+    protected function setupUserQuery(Request $request, $query, $methods) {
+        $this->modifyRequestSelect($request, ['id']);
+
+        $query = $this->loadProfileRelation($request, $query);
+
+        $query = $this->$methods($request, $query, 'user');
+
+        return $query;
+    }
+
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     */
+    private function loadProfileRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('profile', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'profile', 'foreignKey' => 'id', 'columns' => $this->getRelationFieldsFromRequest($request, 'profile', [], ['*'])],
+            ]);
+        }
+        return $query;
+    }
+
+
+    /**
      * List all users
      * 
      * Endpoint: GET /users
@@ -86,6 +119,9 @@ class UserApiController extends Controller {
      * @queryParam startsWith[name] string Filter by name starting with value. Example: startsWith[name]=John
      * @queryParam endsWith[email] string Filter by email ending with value. Example: endsWith[email]=@example.com
      * 
+     * @queryParam include string Comma-separated relations to include. Example: include=profile
+     * @queryParam profile_fields string When including profile relation, specify fields to return. Example: profile_fields=id,user_id,display_name,public_email
+     * 
      * @queryParam page integer Page number for pagination. Example: page=1
      * @queryParam per_page integer Number of users per page (5-100). Example: per_page=15 (default: 10)
      * 
@@ -104,7 +140,7 @@ class UserApiController extends Controller {
      *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
      *       "created_at": "2025-04-28T10:00:00.000000Z",
      *       "updated_at": "2025-04-28T10:00:00.000000Z",
-     *       "display_name": "Admin",
+     *       "display_name": "John Dev",
      *       "role": "admin",
      *       "is_banned": null,             || Admin and Moderator only
      *       "was_ever_banned": false,      || Admin and Moderator only
@@ -117,7 +153,7 @@ class UserApiController extends Controller {
      *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
      *       "created_at": "2025-04-28T10:00:00.000000Z",
      *       "updated_at": "2025-04-28T10:00:00.000000Z",
-     *       "display_name": "User",
+     *       "display_name": "Jane Designer",
      *       "role": "user",
      *       "is_banned": null,             || Admin and Moderator only
      *       "was_ever_banned": false,      || Admin and Moderator only
@@ -125,6 +161,112 @@ class UserApiController extends Controller {
      *     }
      *   ]
      * }
+     * 
+     * Example URL: /users/?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
+     * 
+     * @response status=200 scenario="Success with select and include" {
+     *   "status": "success",
+     *   "message": "Users retrieved successfully",
+     *   "code": 200,
+     *   "count": 2,
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "email": "admin@example.com",
+     *       "display_name": "John Dev",
+     *       "profile": {
+     *         "id": 1,
+     *         "user_id": 1,
+     *         "display_name": "John Dev",
+     *         "public_email": "john.public@example.com",
+     *         "website": "https://johndev.example.com",
+     *         "avatar_path": "/storage/avatars/johndev.jpg",
+     *         "is_public": true,
+     *         "location": "San Francisco, CA",
+     *         "biography": "Full-stack developer with 5 years of experience",
+     *         "skills": ["PHP", "Laravel", "JavaScript"],
+     *         "social_links": {
+     *           "github": "https://github.com/johndev",
+     *           "linkedin": "https://linkedin.com/in/john-developer"
+     *         },
+     *         "contact_channels": {"discord": "johndev#1234"},
+     *         "auto_load_external_images": false,
+     *         "external_images_temp_until": null,
+     *         "auto_load_external_videos": false,
+     *         "external_videos_temp_until": null,
+     *         "auto_load_external_resources": false,
+     *         "external_resources_temp_until": null,
+     *         "reports_count": 0,          || Admin and Moderator only
+     *         "created_at": "2023-01-15T09:24:12.000000Z",
+     *         "updated_at": "2023-02-20T14:35:47.000000Z"
+     *       }
+     *     },
+     *     {
+     *       "id": 2,
+     *       "email": "user@example.com",
+     *       "display_name": "Jane Designer",
+     *       "profile": {
+     *         "id": 2,
+     *         "user_id": 2,
+     *         "display_name": "Jane Designer",
+     *         "public_email": "jane.public@example.com",
+     *         "website": "https://janedesigner.example.com",
+     *         "avatar_path": "/storage/avatars/janedesigner.jpg",
+     *         "is_public": true,
+     *         "location": "Berlin, Germany",
+     *         "biography": "UI/UX designer focused on user experience",
+     *         "skills": ["UI/UX", "Figma", "CSS"],
+     *         "social_links": {
+     *           "github": "https://github.com/janedesigner",
+     *           "linkedin": "https://linkedin.com/in/jane-designer"
+     *         },
+     *         "contact_channels": {"discord": "janedesigner#5678"},
+     *         "auto_load_external_images": true,
+     *         "external_images_temp_until": null,
+     *         "auto_load_external_videos": false,
+     *         "external_videos_temp_until": "2023-06-15T18:00:00.000000Z",
+     *         "auto_load_external_resources": false,
+     *         "external_resources_temp_until": null,
+     *         "reports_count": 0,          || Admin and Moderator only
+     *         "created_at": "2023-02-10T11:42:23.000000Z",
+     *         "updated_at": "2023-05-18T09:15:32.000000Z"
+     *       }
+     *     }
+     *   ]
+     * }
+     * 
+     * Example URL: /users/?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
+     * 
+     * @response status=200 scenario="Success with select, include and profile_fields" {
+     *   "status": "success",
+     *   "message": "Users retrieved successfully",
+     *   "code": 200,
+     *   "count": 2,
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "email": "admin@example.com",
+     *       "display_name": "John Dev",
+     *       "profile": {
+     *         "id": 1,
+     *         "user_id": 1,
+     *         "display_name": "John Dev",
+     *         "public_email": "john.public@example.com",
+     *       }
+     *     },
+     *     {
+     *       "id": 2,
+     *       "email": "user@example.com",
+     *       "display_name": "Jane Designer",
+     *       "profile": {
+     *         "id": 2,
+     *         "user_id": 2,
+     *         "display_name": "Jane Designer",
+     *         "public_email": "jane.public@example.com",
+     *       }
+     *     }
+     *   ]
+     * }   
      * 
      * @response status=200 scenario="Empty database" {
      *   "status": "success",
@@ -167,7 +309,9 @@ class UserApiController extends Controller {
 
             $query = User::query();
 
-            $query = $this->buildQuery($request, $query, 'user');
+            $originalSelectFields = $this->getSelectFields($request);
+
+            $query = $this->setupUserQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -177,6 +321,10 @@ class UserApiController extends Controller {
             }
 
             $query = $this->manageUsersFieldVisibility($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Users retrieved successfully', 200);
         } catch (AuthorizationException $e) {
@@ -201,6 +349,9 @@ class UserApiController extends Controller {
      *
      * @queryParam select string Comma-separated list of fields to include. Example: select=id,name,email
      * 
+     * @queryParam include string Comma-separated relations to include. Example: include=profile
+     * @queryParam profile_fields string When including profile relation, specify fields to return. Example: profile_fields=id,user_id,display_name,public_email
+     * 
      * Example URL: /users/1
      *
      * @response status=200 scenario="Success" {
@@ -208,17 +359,83 @@ class UserApiController extends Controller {
      *   "message": "User retrieved successfully",
      *   "code": 200,
      *   "data": {
-     *     "id": 2,
-     *     "name": "John Doe",
-     *     "email": "johndoe@example.com",
+     *     "id": 1,
+     *     "name": "Admin User",
+     *     "email": "admin@example.com",
      *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
      *     "created_at": "2025-04-28T10:00:00.000000Z",
      *     "updated_at": "2025-04-28T10:00:00.000000Z",
-     *     "display_name": "User",
-     *     "role": "user"
-     *     "is_banned": null,           || Admin and Moderator only
-     *     "was_ever_banned": false,    || Admin and Moderator only
-     *     "moderation_info": null      || Admin and Moderator only
+     *     "display_name": "John Dev",
+     *     "role": "admin",
+     *     "is_banned": null,             || Admin and Moderator only
+     *     "was_ever_banned": false,      || Admin and Moderator only
+     *     "moderation_info": null        || Admin and Moderator only
+     *   }
+     * }
+     * 
+     * Example URL: /users/1?include=profile
+     * 
+     * @response status=200 scenario="Success with profile relation" {
+     *   "status": "success", 
+     *   "message": "User retrieved successfully",
+     *   "code": 200,
+     *   "data": {
+     *     "id": 1,
+     *     "name": "Admin User",
+     *     "email": "admin@example.com",
+     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
+     *     "created_at": "2025-04-28T10:00:00.000000Z",
+     *     "updated_at": "2025-04-28T10:00:00.000000Z",
+     *     "display_name": "John Dev",
+     *     "role": "admin",
+     *     "is_banned": null,             || Admin and Moderator only
+     *     "was_ever_banned": false,      || Admin and Moderator only
+     *     "moderation_info": null,       || Admin and Moderator only
+     *     "profile": {
+     *       "id": 1,
+     *       "user_id": 1,
+     *       "display_name": "John Dev",
+     *       "public_email": "john.public@example.com",
+     *       "website": "https://johndev.example.com",
+     *       "avatar_path": "/storage/avatars/johndev.jpg",
+     *       "is_public": true,
+     *       "location": "San Francisco, CA",
+     *       "biography": "Full-stack developer with 5 years of experience",
+     *       "skills": ["PHP", "Laravel", "JavaScript"],
+     *       "social_links": {
+     *         "github": "https://github.com/johndev",
+     *         "linkedin": "https://linkedin.com/in/john-developer"
+     *       },
+     *       "contact_channels": {"discord": "johndev#1234"},
+     *       "auto_load_external_images": false,
+     *       "external_images_temp_until": null,
+     *       "auto_load_external_videos": false,
+     *       "external_videos_temp_until": null,
+     *       "auto_load_external_resources": false,
+     *       "external_resources_temp_until": null,
+     *       "reports_count": 0,          || Admin and Moderator only
+     *       "created_at": "2023-01-15T09:24:12.000000Z",
+     *       "updated_at": "2023-02-20T14:35:47.000000Z"
+     *     }
+     *   }
+     * }
+     * 
+     * Example URL: /users/1?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
+     *
+     * @response status=200 scenario="Success with selected fields and profile" {
+     *   "status": "success", 
+     *   "message": "User retrieved successfully",
+     *   "code": 200,
+     *   "data": {
+     *     "id": 1,
+     *     "email": "admin@example.com",
+     *     "display_name": "John Dev",
+     *     "profile": {
+     *       "id": 1,
+     *       "user_id": 1,
+     *       "display_name": "John Dev",
+     *       "public_email": "john.public@example.com"
+     *     }
      *   }
      * }
      *
@@ -249,8 +466,10 @@ class UserApiController extends Controller {
         try {
             $query = User::query()->where('id', $id);
 
-            $query = $this->buildQuerySelect($request, $query, 'user');
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            $originalSelectFields = $this->getSelectFields($request);
+
+            $query = $this->setupUserQuery($request, $query, 'buildQuerySelect');
+            if ($query instanceof JsonResponse) {
                 return $query;
             }
 
@@ -258,6 +477,10 @@ class UserApiController extends Controller {
             $user = $query->firstOrFail();
 
             $user = $this->manageUsersFieldVisibility($request, $user);
+
+            $user = $this->checkForIncludedRelations($request, $user);
+
+            $user = $this->controlVisibleFields($request, $originalSelectFields, $user);
 
             $this->authorize('view', $user);
 
@@ -463,7 +686,12 @@ class UserApiController extends Controller {
              *  If so, use the special handling for guest account deletion and recreation
              */
             if ($user->account_purpose === 'guest') {
-                return $this->handleGuestAccountDeletion($user);
+                $success = $this->guestAccountService->resetGuestAccount($user);
+                if ($success) {
+                    return $this->successResponse(null, 'Guest account reset successfully', 200);
+                } else {
+                    return $this->errorResponse('Failed to reset guest account', 'GUEST_RESET_FAILED', 500);
+                }
             }
 
             DB::transaction(function () use ($user) {
@@ -483,37 +711,6 @@ class UserApiController extends Controller {
             return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
-        } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-        }
-    }
-
-
-    /**
-     * Special handling for guest account deletion and recreation
-     * 
-     * This method deletes all posts and comments associated with the guest account,
-     * deletes all reports and likes associated with the user, and then recreates the guest account.
-     * 
-     */
-    public function handleGuestAccountDeletion(User $user): JsonResponse {
-        try {
-            DB::transaction(function () use ($user) {
-                // Delete all posts and comments associated with the guest account
-                $this->guestAccountService->deletePosts($user);
-                $this->guestAccountService->deleteComments($user);
-
-                // Delete all reports and likes associated with the user
-                $this->userRelationService->deleteReports($user);
-                $this->userRelationService->deleteLikes($user);
-
-                $user->delete();
-            });
-
-            // Recreate the guest account outside the transaction
-            $this->guestAccountService->createGuestAccount();
-
-            return $this->successResponse(null, 'Guest account reset successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
