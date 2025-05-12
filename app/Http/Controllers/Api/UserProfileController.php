@@ -306,6 +306,7 @@ class UserProfileController extends Controller {
      *     "external_videos_temp_until": null,
      *     "auto_load_external_resources": false,
      *     "external_resources_temp_until": null,
+     *     "reports_count": 0,          || Admin and Moderator only
      *     "created_at": "2023-01-15T09:24:12.000000Z",
      *     "updated_at": "2023-02-20T14:35:47.000000Z"
      *   }
