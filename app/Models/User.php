@@ -58,7 +58,8 @@ class User extends Authenticatable {
         'account_purpose',
         'is_banned',
         'was_ever_banned',
-        'moderation_info'
+        'moderation_info',
+        'profile'
     ];
 
 
