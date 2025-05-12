@@ -8,9 +8,19 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
+use App\Traits\ApiResponses;
+
 use App\Services\UserRelationService;
+use Illuminate\Http\JsonResponse;
+
+use Exception;
 
 class GuestAccountService {
+
+    /**
+     *  The traits used in the controller
+     */
+    use ApiResponses;
 
     protected $userRelationService;
 
@@ -42,6 +52,38 @@ class GuestAccountService {
 
         return $user;
     }
+
+    /**
+     * Special handling for guest account deletion and recreation
+     * 
+     * This method deletes all posts and comments associated with the guest account,
+     * deletes all reports and likes associated with the user, and then recreates the guest account.
+     * 
+     */
+    public function resetGuestAccount(User $user): bool {
+        try {
+            DB::transaction(function () use ($user) {
+                // Delete all posts and comments associated with the guest account
+                $this->deletePosts($user);
+                $this->deleteComments($user);
+
+                // Delete all reports and likes associated with the user
+                $this->userRelationService->deleteReports($user);
+                $this->userRelationService->deleteLikes($user);
+
+                $user->delete();
+            });
+
+            // Recreate the guest account outside the transaction
+            $this->createGuestAccount();
+
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+
 
     /**
      * Delete all posts from a user
