@@ -16,6 +16,14 @@ use App\Traits\ApiPagination;
 use App\Traits\ApiStartsWith;
 use App\Traits\ApiEndsWith;
 
+/**
+ * Trait QueryBuilder
+ * 
+ * This trait provides methods to build queries for different models
+ * based on the request parameters. It includes methods for sorting,
+ * filtering, selecting fields, starting with, ending with, and pagination.
+ * 
+ */
 trait QueryBuilder {
     /**
      *  The traits used in the controller
@@ -496,6 +504,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param string $modelType
      * @return JsonResponse|Collection|LengthAwarePaginator
+     * 
+     * @example | $query = $this->buildQuery($request, $query, 'user');
      */
     private function buildQuery(Request $request, Builder $query, string $modelType): JsonResponse|Collection|LengthAwarePaginator {
         if (!isset($this->queryConfigurations[$modelType])) {
@@ -521,6 +531,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param array $fields
      * @return Builder
+     * 
+     * @example | $config = $this->getQueryConfig('user', 'select');
      */
     protected function getQueryConfig(string $modelType, ?string $methodName = null): array|int|JsonResponse {
         if (!isset($this->queryConfigurations[$modelType])) {
@@ -543,6 +555,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param array $fields
      * @return Builder
+     * 
+     * @example | $query = $this->select($request, $query, 'user');
      */
     protected function buildQuerySelect(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'select');
@@ -559,6 +573,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param array $fields
      * @return Builder
+     * 
+     * @example | $query = $this->filter($request, $query, 'user');
      */
     protected function buildQueryFilter(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'filter');
@@ -575,6 +591,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param array $fields
      * @return Builder
+     * 
+     * @example | $query = $this->sort($request, $query, 'user');
      */
     protected function buildQuerySort(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'sort');
@@ -592,6 +610,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param array $fields
      * @return Builder
+     * 
+     * @example | $query = $this->startsWith($request, $query, 'user');
      */
     protected function buildQueryStartsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'startsWith');
@@ -609,6 +629,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param array $fields
      * @return Builder
+     * 
+     * @example | $query = $this->endsWith($request, $query, 'user');
      */
     protected function buildQueryEndsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'endsWith');
@@ -625,6 +647,8 @@ trait QueryBuilder {
      * @param Builder $query
      * @param int $perPage
      * @return Builder
+     * 
+     * @example | $query = $this->paginate($request, $query, 'user');
      */
     protected function buildQueryPaginate(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'getPerPage');
