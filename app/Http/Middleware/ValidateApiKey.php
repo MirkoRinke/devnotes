@@ -9,6 +9,10 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ValidateApiKey {
+
+    /**
+     *  The traits used in the class
+     */
     use ApiResponses;
 
     /**
@@ -18,10 +22,9 @@ class ValidateApiKey {
      */
     public function handle(Request $request, Closure $next): Response {
 
-        // Get the API key from the request header
+        // Get the API key from the request header or query parameter
         $apiKey = $request->header('X-API-Key') ?: $request->query('api_key');
 
-        // If the API key is not provided in the header or query string, return an error response
         if (!$apiKey) {
             return $this->errorResponse('This request requires a valid API key in the X-API-Key header or api_key query parameter', 'API_KEY_MISSING', 401);
         }
@@ -31,8 +34,6 @@ class ValidateApiKey {
             ->where('active', true)
             ->first();
 
-
-        // If the API key is invalid, return an error response
         if (!$validKey) {
             return $this->errorResponse('The provided API key is invalid or has been deactivated', 'INVALID_API_KEY', 401);
         }
