@@ -6,15 +6,26 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Trait ApiResponses
+ *
+ * Provides standardized response formatting for API endpoints.
+ *
+ * @package App\Traits
+ */
 trait ApiResponses {
 
     /**
-     * Success response method for returning data, message and status code
+     * Create a success response with standardized format
      *
-     * @param mixed $data
-     * @param string|null $message
-     * @param int $code
-     * @return JsonResponse
+     * @param mixed $data The data to return in the response
+     * @param string|null $message A descriptive message about the operation
+     * @param int $code HTTP status code (default: 200)
+     * @return \Illuminate\Http\JsonResponse
+     * 
+     * @example
+     * return $this->successResponse($user, 'User created successfully', 201);
+     * return $this->successResponse($posts, 'Posts retrieved successfully');
      */
     protected function successResponse($data, $message = null, $code = 200): JsonResponse {
         if ($data instanceof Collection) {
@@ -46,12 +57,16 @@ trait ApiResponses {
 
 
     /**
-     * Error response method for returning error message, errors and status code
-     *
-     * @param string $message
-     * @param array $errors
-     * @param int $code
-     * @return JsonResponse
+     * Create an error response with standardized format
+     * 
+     * @param string $message Error message
+     * @param mixed $errors Detailed error information or error code
+     * @param int $code HTTP status code
+     * @return \Illuminate\Http\JsonResponse
+     * 
+     * @example
+     * return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+     * return $this->errorResponse('Validation failed', $validator->errors(), 422);
      */
     protected function errorResponse($message, $errors = [], $code): JsonResponse {
         $response = [
@@ -80,8 +95,10 @@ trait ApiResponses {
      * @return JsonResponse
      */
     protected function getValidationMessages(string $model): ?array {
-
-        // Define the validation messages for each model
+        /**
+         * Define the validation messages for specific models
+         * This method returns an array of validation messages based on the model type.
+         */
         switch ($model) {
             case 'ApiKey':
                 return [
