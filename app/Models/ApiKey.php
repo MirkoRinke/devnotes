@@ -18,6 +18,14 @@ class ApiKey extends Model {
         'last_used_at'
     ];
 
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'key'
+    ];
 
     /**
      * The attributes that should be cast to native types.
