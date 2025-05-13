@@ -10,14 +10,10 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Comment;
 
-use App\Traits\ApiResponses; // example $this->successResponse($comment, 'Comment retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
-use App\Traits\RelationLoader;  // examples:
-// - Multiple relations: $this->loadRelations($request, $query, [
-//     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-//     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
-// ])
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
+use App\Traits\ApiInclude;
+use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 
 use App\Services\ModerationService;
@@ -30,6 +26,15 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
 
+/**
+ * Controller handling all comment-related API endpoints.
+ * 
+ * This controller provides CRUD operations for comments, with special handling for:
+ * - Nested comment hierarchies (limited to a configurable depth)
+ * - Field selection and visibility based on user role
+ * - Moderation actions for admins/moderators
+ * - Smart deletion strategies (soft vs. hard delete)
+ */
 class CommentApiController extends Controller {
 
     /**
@@ -86,9 +91,11 @@ class CommentApiController extends Controller {
      * It also loads the relations for the comments
      * 
      * @param Request $request
-     * @param $query
-     * @param $methods
-     * @return mixed
+     * @param $query The query builder instance (used for both collections and single models)
+     * @param $methods The query builder method to use ('buildQuery' or 'buildQuerySelect')
+     * @return mixed The modified query builder instance
+     * 
+     * @example | $query = $this->setupCommentQuery($request, $query, 'buildQuery');
      */
     protected function setupCommentQuery(Request $request, $query, $methods): mixed {
 
@@ -764,11 +771,13 @@ class CommentApiController extends Controller {
                 return $this->errorResponse('Comment is deleted', 'COMMENT_DELETED', 422);
             }
 
+            $isContentModeration = $request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator');
+
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the comment
              * If so, add the moderation_reason to the validation rules
              */
-            if ($request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+            if ($isContentModeration) {
                 $this->validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
             }
 
@@ -777,12 +786,11 @@ class CommentApiController extends Controller {
                 $this->getValidationMessages('Comment')
             );
 
-
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the comment
              * If so, handle the moderation update
              */
-            if ($request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+            if ($isContentModeration) {
                 $comment = $this->moderationService->handleModerationUpdate(
                     $comment,
                     array_merge(
