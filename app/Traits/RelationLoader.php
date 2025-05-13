@@ -8,6 +8,13 @@ use Illuminate\Http\JsonResponse;
 
 use Exception;
 
+/**
+ * Trait RelationLoader
+ * 
+ * This trait provides methods to efficiently load both standard and polymorphic relations in a query builder. 
+ * It supports selective column loading based on request parameters and optimizes database queries by only 
+ * loading relations when their foreign keys are included in the selection.
+ */
 trait RelationLoader {
     /**
      * Load multiple relations based on selected columns
@@ -16,6 +23,15 @@ trait RelationLoader {
      * @param Builder $query
      * @param array $relationConfig Array of relation configurations
      * @return Builder
+     * 
+     * @example | $query = $this->loadRelations(
+     *              $request, 
+     *              $query, 
+     *              [
+     *                  ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+     *                  ['relation' => 'profile', 'foreignKey' => 'id', 'columns' => $this->getRelationFieldsFromRequest($request, 'profile', [], ['*'])]
+     *              ]
+     *            );
      */
     protected function loadRelations(Request $request, Builder $query, array $relationConfig) {
         $selectParameter = $request->input('select');
@@ -50,6 +66,16 @@ trait RelationLoader {
      * @param string $relationship Name of the polymorphic relationship (e.g. 'likeable', 'reportable')
      * @param array $allowedFieldsByModel Map of model class names to fields that should be selected
      * @return Builder|Collection|LengthAwarePaginator
+     * 
+     * @example | $query = $this->loadPolymorphicRelations(
+     *              $request,
+     *              $query,
+     *              'likeable',
+     *              [
+     *                  Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post', [], ['*']),
+     *                  Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', [], ['*']),
+     *              ]
+     *           );
      */
     protected function loadPolymorphicRelations(Request $request, $query, string $relationship, array $allowedFieldsByModel) {
         if ($query instanceof JsonResponse) {
