@@ -11,6 +11,14 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
+/**
+ * Trait ApiInclude
+ * 
+ * Provides methods to dynamically include relationships in API responses based on request parameters.
+ * This trait supports selective loading of relations, fields filtering, and recursive relationship handling
+ * for nested resources like comments with children.
+ * 
+ */
 trait ApiInclude {
 
     /**
@@ -23,6 +31,8 @@ trait ApiInclude {
      * @param Request $request The HTTP request containing the 'include' parameter
      * @param array $relationToKeyMap An associative array mapping relations to keys
      * @return array An array of required keys based on the included relations
+     * 
+     * @example | $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'user_id']);
      */
     protected function getRelationKeyFields(Request $request, array $relationToKeyMap = []) {
         if ($request->has('include')) {
@@ -53,7 +63,7 @@ trait ApiInclude {
      * @return array|null An array of fields to include or null if relation fields 
      *                   are not specified AND no allowedFields are provided
      * 
-     * Example return value: ['id', 'name', 'email']
+     * @example | $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info']);
      */
     protected function getRelationFieldsFromRequest(Request $request, string $relation, array $requiredFields = [], array $allowedFields = []): array | null {
         if ($request->has('include') && $request->has($relation . '_fields')) {
@@ -84,25 +94,27 @@ trait ApiInclude {
      * Collections/LengthAwarePaginator, applying visibility rules recursively.
      *
      * @param Request $request The HTTP request containing the 'include' parameter
-     * @param mixed $target The model, collection or lengthAwarePaginator to process
-     * @return mixed The processed target with visible relations
+     * @param mixed $data The model, collection or lengthAwarePaginator to process
+     * @return mixed The processed $data with visible relations
+     * 
+     * @example | $user = $this->checkForIncludedRelations($request, $user);
      */
-    public function checkForIncludedRelations(Request $request, $target): mixed {
+    public function checkForIncludedRelations(Request $request, $data): mixed {
         if ($request->has('include')) {
             $relations = explode(',', $request->input('include'));
             $select = $this->getSelectFields($request) ?? [];
 
-            if ($target instanceof Collection || $target instanceof LengthAwarePaginator) {
-                foreach ($target as $item) {
+            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+                foreach ($data as $item) {
                     $this->applyRelationVisibility($request, $item, $relations, $select);
                 }
-                return $target;
-            } else if ($target instanceof Comment || $target instanceof Post || $target instanceof UserProfile || $target instanceof User) {
-                $this->applyRelationVisibility($request, $target, $relations, $select);
-                return $target;
+                return $data;
+            } else if ($data instanceof Comment || $data instanceof Post || $data instanceof UserProfile || $data instanceof User) {
+                $this->applyRelationVisibility($request, $data, $relations, $select);
+                return $data;
             }
         }
-        return $target;
+        return $data;
     }
 
 
@@ -119,13 +131,18 @@ trait ApiInclude {
      * @param array $relations An array of relations to make visible
      * @param array $select An array of selected fields from the request
      * @return void
+     * 
+     * @example | $this->applyRelationVisibility($request, $data, $relations, $select);
      */
     protected function applyRelationVisibility(Request $request, $model, array $relations, array $select): void {
         $model->makeVisible($relations);
 
+        // If 'children' relation is requested, apply recursive visibility rules to all nested comments
         if (in_array('children', $relations)) {
             $this->applyChildrenRelationFieldsVisibility($request, $model, $relations, $select);
         }
+
+        // For Comment models, handle parent comment visibility settings
         if ($model instanceof Comment) {
             $this->applyParentFieldsVisibilityInComments($request, $model, $relations, $select);
         }
@@ -133,17 +150,20 @@ trait ApiInclude {
 
 
     /**
-     * Resolve field selection based on input and select
+     * Determine which fields to include based on request input
      * 
-     * This method resolves the field selection based on the input and select parameters.
-     * It checks if the input is an array, a string, or empty and returns the appropriate
-     * field selection. If no input or select is provided, it defaults to ['*'].
+     * This method decides which fields should be included in the response by following
+     * a priority order:
+     * 1. If $input is provided as an array, use it directly
+     * 2. If $input is provided as a string (comma-separated), convert to array
+     * 3. If no $input but $select is provided, use $select
+     * 4. If nothing is provided, default to ['*'] (meaning "all fields")
      * 
-     * @param mixed $input The input field selection from the request
-     * @param array $select An array of selected fields from the request
-     * @return array An array of resolved field selection
+     * @param mixed $input The field selection from request (array or comma-separated string)
+     * @param array $select Fallback field selection if no input is provided
+     * @return array Final list of fields to include
      * 
-     *  Example: $this->resolveFieldSelection($input, $select)
+     * @example | $visibleFields = $this->resolveFieldSelection($request->input('user_fields'), ['id', 'name']);
      */
     private function resolveFieldSelection($input, array $select): array {
         $fieldSelection = match (true) {
@@ -167,6 +187,8 @@ trait ApiInclude {
      * @param array $relations An array of relations to make visible
      * @param array $select An array of selected fields from the request
      * @return void
+     * 
+     * @example | $this->applyChildrenRelationFieldsVisibility($request, $comment, $relations, $select);
      */
     protected function applyChildrenRelationFieldsVisibility(Request $request, $comment, array $relations, array $select): void {
         $input = $request->input('children_fields');
@@ -205,6 +227,8 @@ trait ApiInclude {
      * @param array $relations An array of relations to make visible
      * @param array $select An array of selected fields from the request
      * @return void
+     * 
+     * @example | $this->applyParentFieldsVisibilityInComments($request, $comment, $relations, $select);
      */
     protected function applyParentFieldsVisibilityInComments(Request $request, $comment, array $relations = [], array $select = []): void {
         $input = $request->input('parent_fields');
@@ -234,20 +258,23 @@ trait ApiInclude {
      * 2. Otherwise, it sets only the specified fields as visible
      * It also adds any relations that should be visible on the parent.
      * 
-     * @param mixed $commentObj The comment object with a parent relation
+     * @param mixed $comment The comment object with a parent relation
      * @param array $parentVisibleFields Fields to make visible on the parent
      * @param array $relations Additional relations to make visible
+     * @return void
+     * 
+     * @example | $this->applyParentVisibilityToComment($comment, $parentVisibleFields, $relations);
      */
-    private function applyParentVisibilityToComment($commentObj, array $parentVisibleFields, array $relations): void {
-        if (isset($commentObj->parent) && method_exists($commentObj->parent, 'setVisible')) {
-            $parentVisibleFields = $parentVisibleFields == ['*'] ? array_keys($commentObj->parent->getAttributes()) : $parentVisibleFields;
+    private function applyParentVisibilityToComment($comment, array $parentVisibleFields, array $relations): void {
+        if (isset($comment->parent) && method_exists($comment->parent, 'setVisible')) {
+            $parentVisibleFields = $parentVisibleFields == ['*'] ? array_keys($comment->parent->getAttributes()) : $parentVisibleFields;
 
             if ($parentVisibleFields) {
-                $commentObj->parent->setVisible($parentVisibleFields);
+                $comment->parent->setVisible($parentVisibleFields);
             }
 
             if (!empty($relations)) {
-                $commentObj->parent->makeVisible($relations);
+                $comment->parent->makeVisible($relations);
             }
         }
     }
