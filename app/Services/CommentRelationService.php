@@ -9,12 +9,20 @@ use App\Models\Post;
 use App\Models\UserLike;
 use App\Models\UserReport;
 
+/**
+ * Class CommentRelationService
+ * 
+ * Handles operations related to comment relations, such as updating timestamps,
+ * deleting child comments, and deleting likes and reports.
+ */
 class CommentRelationService {
     /**
      * Update the last_comment_at timestamp of the parent post
      *
      * @param Comment $comment
      * @return void
+     * 
+     * @example | $this->commentRelationService->updateLastCommentAt($comment);
      */
     public function updateLastCommentAt(Comment $comment): void {
         Post::where('id', $comment->post_id)
@@ -27,8 +35,10 @@ class CommentRelationService {
      * @param Comment $comment
      * @param string $operation Operation to perform ('increment' or 'decrement')
      * @return void
+     * 
+     * @example | $this->commentRelationService->updateCommentsCount($comment, 'increment');
      */
-    public function updateCommentsCount(Comment $comment, string $operation = 'increment'): void {
+    public function updateCommentsCount(Comment $comment, string $operation): void {
         Post::where('id', $comment->post_id)
             ->$operation('comments_count', 1);
     }
@@ -38,10 +48,11 @@ class CommentRelationService {
      *
      * @param Comment $comment The parent comment
      * @return int Number of deleted comments
+     * 
+     * @example | $this->deleteChildren($comment);
      */
     public function deleteChildren(Comment $comment): int {
-        $childrenIds = [];
-        $this->collectAllChildrenIds($comment, $childrenIds);
+        $childrenIds = $this->collectAllChildrenIds($comment) ?? [];
 
         if (empty($childrenIds)) {
             return 0;
@@ -65,16 +76,22 @@ class CommentRelationService {
      * Recursively collect all children IDs
      *
      * @param Comment $comment
-     * @param array $ids Array to store collected IDs
+     * @return array Array of child comment IDs including all descendants
+     * 
+     * @example | $this->collectAllChildrenIds($comment);
      */
-    private function collectAllChildrenIds(Comment $comment, array &$ids): void {
+    private function collectAllChildrenIds(Comment $comment): array {
+        $ids = [];
 
         $children = $comment->children()->get(['id']);
 
         foreach ($children as $child) {
             $ids[] = $child->id;
-            $this->collectAllChildrenIds($child, $ids);
+            $childIds = $this->collectAllChildrenIds($child);
+            $ids = array_merge($ids, $childIds);
         }
+
+        return $ids;
     }
 
     /**
@@ -82,6 +99,8 @@ class CommentRelationService {
      * 
      * @param Comment|int|array $input Comment object, ID, or array of IDs
      * @return int Number of deleted likes
+     * 
+     * @example | $this->deleteLikes($comment);
      */
     public function deleteLikes($input): int {
         $totalDeleted = 0;
@@ -93,8 +112,13 @@ class CommentRelationService {
         }
 
         /**
-         * Chunking even for already chunked inputs ensures this method
-         * remains performant when called directly with large arrays
+         * Double chunking strategy:
+         * 
+         * 1. Chunking even for already chunked inputs ensures this method
+         *    remains performant when called directly with large arrays
+         * 
+         * 2. Inner chunkById prevents data loss during deletion by using progressive ID filtering
+         *    rather than OFFSET/LIMIT, ensuring no records are skipped if data changes during processing
          */
         foreach (array_chunk($commentIds, 100) as $chunk) {
             UserLike::where('likeable_type', Comment::class)
@@ -114,6 +138,8 @@ class CommentRelationService {
      * 
      * @param Comment|int|array $input Comment object, ID, or array of IDs
      * @return int Number of deleted reports
+     * 
+     * @example | $this->deleteReports($comment);
      */
     public function deleteReports($input): int {
         $totalDeleted = 0;
@@ -125,8 +151,13 @@ class CommentRelationService {
         }
 
         /**
-         * Chunking even for already chunked inputs ensures this method
-         * remains performant when called directly with large arrays
+         * Double chunking strategy:
+         * 
+         * 1. Chunking even for already chunked inputs ensures this method
+         *    remains performant when called directly with large arrays
+         * 
+         * 2. Inner chunkById prevents data loss during deletion by using progressive ID filtering
+         *    rather than OFFSET/LIMIT, ensuring no records are skipped if data changes during processing
          */
         foreach (array_chunk($commentIds, 100) as $chunk) {
             UserReport::where('reportable_type', Comment::class)
@@ -147,7 +178,9 @@ class CommentRelationService {
      * Helper method to normalize input to an array of IDs
      *
      * @param Comment|int|array $input
-     * @return array
+     * @return array Array of integer IDs or empty array if input is invalid
+     * 
+     * @example | $this->convertToIdArray($input);
      */
     private function convertToIdArray($input): array {
         if ($input instanceof Comment) {
