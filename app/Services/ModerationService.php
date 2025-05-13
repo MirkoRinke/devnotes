@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\Comment;
 
+/**
+ * Class ModerationService
+ * 
+ * This class handles moderation updates for content such as posts and comments.
+ * It tracks changes made to the content and creates moderation log entries.
+ * 
+ */
 class ModerationService {
 
     /**
@@ -16,12 +23,26 @@ class ModerationService {
      * @param array $validatedData The validated data
      * @param Request $request The current request
      * @return mixed The updated model
+     * 
+     * @example |  $post = $this->moderationService->handleModerationUpdate(
+     *                  $post,
+     *                  array_merge(
+     *                      $validatedData,
+     *                      [
+     *                          'is_updated' => true,
+     *                          'updated_by_role' => $request->user()->role
+     *                      ]
+     *                  ),
+     *                  $request,
+     *                  ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
+     *                  'post'
+     *              );
      */
     public function handleModerationUpdate($model, array $validatedData, Request $request, array $trackFields, $moderationEntry): mixed {
         // Save original data for comparison
         $originalData = $this->getOriginalData($model, $trackFields);
 
-        $newEntry = $this->createModerationEntry($request, $moderationEntry, $validatedData);
+        $newEntry = $this->createModerationEntry($request, $moderationEntry);
 
         // Apply changes to model
         foreach ($validatedData as $key => $value) {
@@ -31,7 +52,7 @@ class ModerationService {
         }
 
         // Create moderation log entry
-        $this->createModerationLogEntry($model, $originalData, $newEntry, $request);
+        $model = $this->createModerationLogEntry($model, $originalData, $newEntry);
 
         return $model;
     }
@@ -42,6 +63,8 @@ class ModerationService {
      * @param mixed $model The model being moderated
      * @param array $fields The fields to track
      * @return array The original data
+     * 
+     * @example | $originalData = $this->getOriginalData($model, $trackFields);
      */
     private function getOriginalData($model, array $fields): array {
         $originalData = [];
@@ -61,8 +84,10 @@ class ModerationService {
      * @param mixed $model The model being moderated
      * @param Request $request The current request
      * @return array The created moderation entry
+     * 
+     * @example | $newEntry = $this->createModerationEntry($request, $moderationEntry);
      */
-    private function createModerationEntry(Request $request, $moderationEntry, $validatedData): array {
+    private function createModerationEntry(Request $request, $moderationEntry): array {
         $baseEntry = [
             'user_id' => $request->user()->id,
             'username' => $request->user()->name,
@@ -97,9 +122,11 @@ class ModerationService {
      * @param mixed $model The model being moderated
      * @param array $originalData The original data before changes
      * @param array $validatedData The validated data
-     * @param Request $request The current request
+     * @return mixed The updated model with the moderation log entry
+     * 
+     * @example | $this->createModerationLogEntry($model, $originalData, $newEntry);
      */
-    private function createModerationLogEntry($model, array $originalData, array $newEntry, Request $request): void {
+    private function createModerationLogEntry($model, array $originalData, array $newEntry): mixed {
         if (($model instanceof Post || $model instanceof Comment)) {
             $newEntry = $this->getModelChanges($model, $originalData, $newEntry);
         }
@@ -111,7 +138,10 @@ class ModerationService {
         }
 
         array_unshift($moderationLog, $newEntry);
+
         $model->moderation_info = $moderationLog;
+
+        return $model;
     }
 
     /**
@@ -120,6 +150,8 @@ class ModerationService {
      * @param mixed $model The model being moderated
      * @param array $originalData The original data before changes
      * @return array|null The changes made to the model or null
+     * 
+     * @example | $newEntry = $this->getModelChanges($model, $originalData, $newEntry);
      */
     private function getModelChanges($model, array $originalData, array  $newEntry): array {
         $dirtyFields = $model->getDirty();
@@ -142,17 +174,25 @@ class ModerationService {
         $newEntry = array_merge($newEntry, [
             'changes' => !empty($changes) ? $changes : null
         ]);
+
         return $newEntry;
     }
 
     /**
      * Check if a string is valid JSON
+     * 
+     * @param string $string The string to check
+     * @return bool True if the string is valid JSON, false otherwise
+     * 
+     * @example | $this->isValidJson($string);
      */
     private function isValidJson($string): bool {
         if (!is_string($string)) {
             return false;
         }
+
         json_decode($string);
+
         return json_last_error() === JSON_ERROR_NONE;
     }
 }
