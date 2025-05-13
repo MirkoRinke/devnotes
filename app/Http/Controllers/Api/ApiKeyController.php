@@ -8,7 +8,7 @@ use App\Models\ApiKey;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-use App\Traits\ApiResponses; // example $this->successResponse($key, 'API key generated successfully', 201);
+use App\Traits\ApiResponses;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -81,7 +81,7 @@ class ApiKeyController extends Controller {
      *
      * @authenticated
      */
-    public function index(Request $request) {
+    public function index() {
         try {
             $this->authorize('viewAny', ApiKey::class);
 
@@ -204,6 +204,7 @@ class ApiKeyController extends Controller {
      *   "status": "success",
      *   "message": "API key status has been toggled successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": {
      *     "id": 2,
      *     "name": "Development Environment",
@@ -234,7 +235,7 @@ class ApiKeyController extends Controller {
      *
      * @authenticated
      */
-    public function toggleStatus(Request $request, $id) {
+    public function toggleStatus($id) {
         try {
             $this->authorize('toggleStatus', ApiKey::class);
 
@@ -274,6 +275,7 @@ class ApiKeyController extends Controller {
      *   "status": "success",
      *   "message": "API-Key 'Mobile App' has been deleted successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": []
      * }
      *
@@ -300,7 +302,7 @@ class ApiKeyController extends Controller {
      *
      * @authenticated
      */
-    public function destroy(Request $request, $id) {
+    public function destroy($id) {
         try {
             $this->authorize('delete', ApiKey::class);
 
