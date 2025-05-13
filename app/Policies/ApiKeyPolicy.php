@@ -2,9 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\ApiKey;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ApiKeyPolicy {
     /**
@@ -13,7 +11,6 @@ class ApiKeyPolicy {
     private function isAdmin(User $user): bool {
         return $user->role === 'admin';
     }
-
 
     /**
      * Determine whether the user can view any models.
@@ -29,14 +26,12 @@ class ApiKeyPolicy {
         return $this->isAdmin($user);
     }
 
-
     /**
      * Determine whether the user can toggle the status of the model.
      */
     public function toggleStatus(User $user): bool {
         return $this->isAdmin($user);
     }
-
 
     /**
      * Determine whether the user can delete the model.
