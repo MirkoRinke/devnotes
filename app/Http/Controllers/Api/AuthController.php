@@ -8,13 +8,12 @@ use Illuminate\Http\Request;
 
 use App\Models\User;
 
-use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
+use App\Traits\ApiResponses;
 
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller {
@@ -33,7 +32,7 @@ class AuthController extends Controller {
      * The token expires after 7 days and can be used for subsequent authenticated requests.
      * If the user account is currently banned, login will be denied.
      *
-     * @group Authentication
+     * @group User Authentication
      *
      * @bodyParam email string required User's email address. Example: user@example.com
      * @bodyParam password string required User's password. Example: secret123
@@ -51,7 +50,7 @@ class AuthController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "accessToken": "3|laravel_sanctum_fN7dxYRqdJ2QWJDvhJMmxDaAZ9DvNeHFvHjd9e74e15a",
+     *     "accessToken": "3|Kdi93NNg0xeWkNbERRYbo7c3IZhLoVUiD1RkNhmd3d718836",
      *     "type": "Bearer"
      *   }
      * }
@@ -130,7 +129,7 @@ class AuthController extends Controller {
      * Revokes the current access token, effectively logging the user out.
      * This invalidates only the token used for the current request.
      *
-     * @group Authentication
+     * @group User Authentication
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -168,7 +167,7 @@ class AuthController extends Controller {
      * Retrieves a list of all access tokens (active sessions) for the authenticated user.
      * This includes the device name, last used timestamp and whether it's the current session.
      *
-     * @group Authentication
+     * @group User Authentication
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -177,11 +176,18 @@ class AuthController extends Controller {
      *   "count": 1,
      *   "data": [
      *     {
+     *       "id": 2,
+     *       "device_name": "test_device",
+     *       "last_used_at": null,
+     *       "created_at": "2025-05-13T11:13:39.000000Z",
+     *       "is_current": true
+     *     },
+     *     {
      *       "id": 1,
      *       "device_name": "test_device",
      *       "last_used_at": "2025-04-29T20:16:46.000000Z",
      *       "created_at": "2025-04-29T20:15:56.000000Z",
-     *       "is_current": true
+     *       "is_current": false
      *     }
      *   ]
      * }
@@ -224,7 +230,7 @@ class AuthController extends Controller {
      * Revokes a specific access token by ID, logging out that specific device/session.
      * The current token cannot be revoked using this endpoint (use /logout instead).
      *
-     * @group Authentication
+     * @group User Authentication
      * 
      * @urlParam tokenId integer required The ID of the token to revoke. Example: 5
      *
@@ -299,7 +305,7 @@ class AuthController extends Controller {
      * Revokes all access tokens except the current one, logging out all other devices.
      * The current session remains active.
      *
-     * @group Authentication
+     * @group User Authentication
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
