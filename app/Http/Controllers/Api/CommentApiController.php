@@ -61,20 +61,34 @@ class CommentApiController extends Controller {
 
     /**
      * The validation rules for the Create method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesCreate()
      */
-    private $validationRulesCreate = [
-        'content' => 'required|string|max:255',
-        'post_id' => 'required|exists:posts,id',
-        'parent_id' => 'nullable|exists:comments,id',
-    ];
+    public function getValidationRulesCreate(): array {
+        $validationRulesCreate = [
+            'content' => 'required|string|max:255',
+            'post_id' => 'required|exists:posts,id',
+            'parent_id' => 'nullable|exists:comments,id',
+        ];
+        return $validationRulesCreate;
+    }
 
 
     /**
      * The validation rules for the Update method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate()
      */
-    private $validationRulesUpdate = [
-        'content' => 'required|string|max:255',
-    ];
+    public function getValidationRulesUpdate(): array {
+        $validationRulesUpdate = [
+            'content' => 'required|string|max:255',
+        ];
+        return $validationRulesUpdate;
+    }
 
     /**
      * The maximum depth of comments
@@ -411,7 +425,7 @@ class CommentApiController extends Controller {
             $this->authorize('create', Comment::class);
 
             $validatedData = $request->validate(
-                $this->validationRulesCreate,
+                $this->getValidationRulesCreate(),
                 $this->getValidationMessages('Comment')
             );
 
@@ -771,6 +785,8 @@ class CommentApiController extends Controller {
                 return $this->errorResponse('Comment is deleted', 'COMMENT_DELETED', 422);
             }
 
+            $validationRulesUpdate = $this->getValidationRulesUpdate();
+
             $isContentModeration = $request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator');
 
             /** 
@@ -778,11 +794,11 @@ class CommentApiController extends Controller {
              * If so, add the moderation_reason to the validation rules
              */
             if ($isContentModeration) {
-                $this->validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
+                $validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
             }
 
             $validatedData = $request->validate(
-                $this->validationRulesUpdate,
+                $validationRulesUpdate,
                 $this->getValidationMessages('Comment')
             );
 
