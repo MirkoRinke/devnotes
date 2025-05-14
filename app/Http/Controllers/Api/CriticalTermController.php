@@ -9,10 +9,10 @@ use App\Http\Controllers\Controller;
 
 use App\Models\CriticalTerm;
 
-use App\Traits\ApiResponses; // example $this->successResponse($criticalTerm, 'Critical Term retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
-use App\Traits\CacheHelper; // example $this->forgetCacheByModelType('App\Models\CriticalTerm');
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
+use App\Traits\ApiInclude;
+use App\Traits\CacheHelper;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +21,13 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
 
+/**
+ * Controller handling all critical term-related API endpoints.
+ * 
+ * Critical terms are words/phrases that are flagged for moderation with different severity levels.
+ * This controller provides functionality to create, read, update and delete critical terms,
+ * with comprehensive validation and cache management.
+ */
 class CriticalTermController extends Controller {
 
     /**
@@ -30,6 +37,10 @@ class CriticalTermController extends Controller {
 
     /**
      * The validation rules for the create method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesCreate()
      */
     public function getValidationRulesCreate(): array {
         $validationRulesUpdate = [
@@ -43,6 +54,10 @@ class CriticalTermController extends Controller {
 
     /**
      * The validation rules for the Update method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate()
      */
     public function getValidationRulesUpdate(): array {
         $validationRulesUpdate = [
