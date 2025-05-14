@@ -8,12 +8,19 @@ use App\Http\Controllers\Controller;
 
 use App\Models\User;
 
-use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
+use App\Traits\ApiResponses;
 
 use App\Services\GuestAccountService;
 
 use Exception;
 
+/**
+ * Controller handling scheduled maintenance tasks via API endpoints.
+ * 
+ * This controller provides endpoints for system maintenance operations that
+ * are typically called by scheduled tasks or cron jobs rather than direct user interaction.
+ * All endpoints require API key authentication for security.
+ */
 class CronjobController extends Controller {
 
     /**
@@ -69,7 +76,21 @@ class CronjobController extends Controller {
      *   "count": 0,
      *   "data": []
      * }
+     * 
+     * @response status=500 scenario="Guest reset failed" {
+     *   "status": "error",
+     *   "message": "Failed to reset guest account",
+     *   "code": 500,
+     *   "errors": "GUEST_RESET_FAILED"
+     * }
      *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
      * @response status=401 scenario="Missing API key" {
      *   "status": "error",
      *   "message": "This request requires a valid API key in the X-API-Key header or api_key query parameter",
@@ -82,13 +103,6 @@ class CronjobController extends Controller {
      *   "message": "The provided API key is invalid or has been deactivated",
      *   "code": 401,
      *   "errors": "INVALID_API_KEY"
-     * }
-     *
-     * @response status=500 scenario="Server Error" {
-     *   "status": "error", 
-     *   "message": "An unexpected error occurred",
-     *   "code": 500,
-     *   "errors": "SERVER_ERROR"
      * }
      */
     public function cleanGuestAccount(): JsonResponse {
