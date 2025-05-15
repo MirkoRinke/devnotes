@@ -6,6 +6,10 @@ use App\Models\Post;
 use App\Models\Comment;
 use App\Models\UserProfile;
 
+/**
+ * This Class SnapshotService is responsible for creating snapshots of reportable entities such as Post, UserProfile, and Comment.
+ * It provides methods to create snapshots of these entities, including user data if requested.
+ */
 class SnapshotService {
     /**
      * Create a snapshot of the reportable entity
@@ -13,6 +17,8 @@ class SnapshotService {
      * @param mixed $reportable The reportable entity (Post, UserProfile, Comment)
      * @param string $reportableType The fully qualified class name of the reportable
      * @return array The snapshot of the reportable entity
+     * 
+     * @example | $reportableSnapshot = $this->snapshotService->createSnapshot($reportable, $reportableType);
      */
     public function createSnapshot($reportable, $reportableType): array|null {
         switch ($reportableType) {
@@ -32,6 +38,8 @@ class SnapshotService {
      *
      * @param UserProfile $userProfile The user profile entity
      * @return array The snapshot of the user profile ( user data included if requested )
+     * 
+     * @example | $this->userProfileSnapshot($reportable, true);
      */
     protected function userProfileSnapshot($userProfile, $user_data = false): array {
         $userProfile_data = [
@@ -65,6 +73,8 @@ class SnapshotService {
      *
      * @param Post $post The post entity
      * @return array The snapshot of the post ( user data included if requested )
+     * 
+     * @example | $this->postSnapshot($reportable, true);
      */
     public function postSnapshot($post, $user_data = false): array {
         $post_data = [
@@ -103,6 +113,8 @@ class SnapshotService {
      *
      * @param Comment $comment The comment entity
      * @return array The snapshot of the comment ( user data included if requested )
+     * 
+     * @example | $this->commentSnapshot($reportable, true);
      */
     protected function commentSnapshot($comment, $user_data = false): array {
         $comment_data = [
