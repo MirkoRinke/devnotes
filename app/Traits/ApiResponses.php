@@ -9,9 +9,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Trait ApiResponses
  *
- * Provides standardized response formatting for API endpoints.
- *
- * @package App\Traits
+ * This trait provides methods for creating standardized API responses.
+ * It includes methods for success and error responses, as well as validation error messages.
  */
 trait ApiResponses {
 
