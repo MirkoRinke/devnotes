@@ -25,9 +25,14 @@ class UserFollowerController extends Controller {
      */
     use ApiResponses, ApiInclude, QueryBuilder, RelationLoader;
 
-
     /**
      * Setup the query for followers
+     * 
+     * @param Request $request
+     * @param mixed $query
+     * @return mixed The modified query
+     * 
+     * @example | $query = $this->setupFollowerQuery($request, $query);
      */
     protected function setupFollowerQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'follower_id'], ['is_following_back']);
@@ -55,6 +60,8 @@ class UserFollowerController extends Controller {
      * @param string $relation The relation type (followers or following)
      * 
      * @return mixed The modified query with mutual follow status
+     * 
+     * @example | $query = $this->addMutualFollowStatus($request, $query, $user, $originalSelectFields, 'followers');
      */
     private function addMutualFollowStatus(Request $request, $query, $user, $originalSelectFields, string $relation): mixed {
         if (!$request->has('select')  || $request->has('select') && in_array('is_following_back', $originalSelectFields)) {
@@ -99,7 +106,7 @@ class UserFollowerController extends Controller {
      * @queryParam page int Optional. Page number for pagination. Example: page=1
      * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=10 (default: 15)
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user
+     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user,follower
      * @queryParam user_fields string When including user relation, specify fields to return. 
      *                              Available fields: id, name, display_name, role, created_at, updated_at
      *                              Example: user_fields=id,name,display_name
@@ -134,9 +141,9 @@ class UserFollowerController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /followers?include=follower
+     * Example URL: /followers/?include=user,follower
      * 
-     * @response status=200 scenario="Success with Included Follower Data" {
+     * @response status=200 scenario="Success with Included User and Follower Data" {
      *   "status": "success",
      *   "message": "Followers retrieved successfully",
      *   "code": 200,
@@ -153,6 +160,10 @@ class UserFollowerController extends Controller {
      *         "id": 6,
      *         "name": "Max Mustermann6"
      *       }
+     *       "user": {
+     *        "id": 1,
+     *        "name": "Max Mustermann1"
+     *      }
      *     },
      *     {
      *       "id": 4,
@@ -164,6 +175,10 @@ class UserFollowerController extends Controller {
      *       "follower": {
      *         "id": 7,
      *         "name": "Max Mustermann7"
+     *       }
+     *       "user": {
+     *         "id": 1,
+     *         "name": "Max Mustermann1"
      *       }
      *     }
      *   ]
@@ -240,7 +255,7 @@ class UserFollowerController extends Controller {
      * @queryParam page int Optional. Page number for pagination. Example: page=1
      * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=10 (default: 15)
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user
+     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user,follower
      * @queryParam user_fields string When including user relation, specify fields to return. 
      *                              Available fields: id, name, display_name, role, created_at, updated_at
      *                              Example: user_fields=id,name,display_name
@@ -275,9 +290,9 @@ class UserFollowerController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /following?include=user
+     * Example URL: /following/?include=user,follower
      * 
-     * @response status=200 scenario="Success with Included User Data" {
+     * @response status=200 scenario="Success with Included User and Follower Data" {
      *   "status": "success",
      *   "message": "Following retrieved successfully",
      *   "code": 200,
@@ -290,6 +305,10 @@ class UserFollowerController extends Controller {
      *       "created_at": "2025-05-06T17:24:15.000000Z",
      *       "updated_at": "2025-05-06T17:24:15.000000Z",
      *       "is_following_back": true,
+     *       "follower": {
+     *         "id": 1,
+     *         "name": "Max Mustermann1"
+     *       },
      *       "user": {
      *         "id": 8,
      *         "name": "Max Mustermann8"
@@ -302,6 +321,10 @@ class UserFollowerController extends Controller {
      *       "created_at": "2025-05-06T17:24:22.000000Z",
      *       "updated_at": "2025-05-06T17:24:22.000000Z",
      *       "is_following_back": false,
+     *       "follower": {
+     *         "id": 1,
+     *         "name": "Max Mustermann1"
+     *       },
      *       "user": {
      *         "id": 9,
      *         "name": "Max Mustermann9"
