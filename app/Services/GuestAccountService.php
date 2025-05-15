@@ -2,19 +2,23 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 use App\Traits\ApiResponses;
 
 use App\Services\UserRelationService;
-use Illuminate\Http\JsonResponse;
 
 use Exception;
 
+/**
+ * This GuestAccountService class is responsible for managing guest accounts.
+ * It includes methods for creating a guest account, resetting a guest account,
+ */
 class GuestAccountService {
 
     /**
@@ -22,6 +26,9 @@ class GuestAccountService {
      */
     use ApiResponses;
 
+    /**
+     *  The Service used in the controller
+     */
     protected $userRelationService;
 
     /**
@@ -36,6 +43,8 @@ class GuestAccountService {
      * 
      * @param User $user
      * @return User
+     * 
+     * @example | $this->createGuestAccount();
      */
     public function createGuestAccount() {
         $user = User::create([
@@ -58,6 +67,11 @@ class GuestAccountService {
      * 
      * This method deletes all posts and comments associated with the guest account,
      * deletes all reports and likes associated with the user, and then recreates the guest account.
+     * 
+     * @param User $user The guest user to be reset
+     * @return bool True if the operation was successful, false otherwise
+     * 
+     * @example | $success = $this->guestAccountService->resetGuestAccount($user);
      * 
      */
     public function resetGuestAccount(User $user): bool {
@@ -90,6 +104,8 @@ class GuestAccountService {
      * 
      * @param User $user
      * @return int Number of deleted posts
+     * 
+     * @example | $this->deletePosts($user);
      */
     public function deletePosts(User $user): int {
         $totalDeleted = 0;
@@ -111,6 +127,8 @@ class GuestAccountService {
      * 
      * @param User $user
      * @return int Number of deleted comments
+     * 
+     * @example | $this->deleteComments($user);
      */
     public function deleteComments(User $user): int {
         $totalDeleted = 0;
