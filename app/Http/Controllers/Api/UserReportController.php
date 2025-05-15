@@ -14,9 +14,9 @@ use App\Models\Comment;
 use App\Models\CriticalTerm;
 use App\Models\UserProfile;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\CacheHelper; // example $this->cacheData($cacheKey, function () use ($query) { return $query->get(); });
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
+use App\Traits\CacheHelper;
 use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
@@ -51,23 +51,32 @@ class UserReportController extends Controller {
 
     /**
      * The validation rule for the user report data
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRules()
      */
-    private $validationRules = [
-        'user_id' => 'integer',
-        'reportable_type' => 'required|in:post,userProfile,comment',
-        'reportable_id' => 'required|integer',
-        'reason' => 'nullable|string|max:500'
-    ];
+    public function getValidationRules(): array {
+        $validationRules = [
+            'user_id' => 'integer',
+            'reportable_type' => 'required|in:post,userProfile,comment',
+            'reportable_id' => 'required|integer',
+            'reason' => 'nullable|string|max:500'
+        ];
+        return $validationRules;
+    }
 
     /**
      * Update the reports_count for a reportable entity
      *
-     * @param mixed $reportable The reportable entity (Post, User, Comment)
-     * @param string $reportableType The fully qualified class name of the reportable
-     * @param bool $increment Whether to increment or decrement the counter
+     * @param mixed $reportable The reportable entity (Post, UserProfile, Comment)
+     * @param string $method The method to call on the reportable entity (increment or decrement)
+     * @param int $value The value to increment or decrement by (default is 1)
      * @return void
+     * 
+     * @example | $this->updateReportsCount($reportable, 'increment', 1);
      */
-    private function updateReportsCount($reportable, $method = 'increment', $value = 1) {
+    private function updateReportsCount($reportable, string $method, int $value = 1): void {
         $reportable->$method('reports_count', $value);
     }
 
@@ -76,6 +85,8 @@ class UserReportController extends Controller {
      * 
      * @param string $reason The report reason to check
      * @return int The severity level
+     * 
+     * @example | $this->checkCriticalTerms($reason);
      */
     private function checkCriticalTerms($reason) {
         // Default severity if no critical terms are found
@@ -109,8 +120,10 @@ class UserReportController extends Controller {
      * Setup the query for user reports
      * 
      * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
+     * @param mixed $query 
+     * @return mixed
+     * 
+     * @example | $this->setupReportQuery($request, $query);
      */
     protected function setupReportQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'reportable_type', 'reportable_id', 'type']);
@@ -130,6 +143,8 @@ class UserReportController extends Controller {
      * @param Request $request
      * @param mixed $query Builder|LengthAwarePaginator|Collection
      * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadUserRelation($request, $query);
      */
     private function loadUserRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
@@ -147,6 +162,8 @@ class UserReportController extends Controller {
      * @param Request $request
      * @param mixed $query Builder|LengthAwarePaginator|Collection
      * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadReportableRelation($request, $query);
      */
     private function loadReportableRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('reportable', explode(',', $request->input('include')))) {
@@ -174,6 +191,11 @@ class UserReportController extends Controller {
      * @param int $reportableId The ID of the reportable entity
      * @param string $simpleType The simple type of the reportable entity (post, userProfile, comment)
      * @return JsonResponse|null
+     * 
+     * @example | $validationResult = $this->reportValidationCheck($user, $reportableType, $reportable, $reportableId, $simpleType);
+     *            if ($validationResult !== null) {
+     *             return $validationResult;
+     *          }
      */
     protected function reportValidationCheck($user, $reportableType, $reportable, $reportableId, $simpleType) {
         if ($reportableType === UserProfile::class && $reportable->user_id == $user->id) {
@@ -260,7 +282,7 @@ class UserReportController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /reports?include=user&user_fields=id,display_name
+     * Example URL: /reports/?include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="With user relation" {
      *   "success": true,
@@ -284,7 +306,7 @@ class UserReportController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /reports?include=reportable&reportable_post_fields=id,title,description
+     * Example URL: /reports/?include=reportable&reportable_post_fields=id,title,description
      * 
      * @response status=200 scenario="With reportable" {
      *   "success": true,
@@ -344,7 +366,6 @@ class UserReportController extends Controller {
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupReportQuery($request, $query);
-
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -465,7 +486,7 @@ class UserReportController extends Controller {
         try {
             $user = $request->user();
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->getValidationRules(),
                 $this->getValidationMessages('UserReport')
             );
 
@@ -593,7 +614,7 @@ class UserReportController extends Controller {
             $user = $request->user();
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->getValidationRules(),
                 $this->getValidationMessages('UserReport')
             );
 
