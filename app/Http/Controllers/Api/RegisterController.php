@@ -10,7 +10,7 @@ use App\Models\User;
 
 use App\Rules\NotForbiddenName;
 
-use App\Traits\ApiResponses; // example $this->successResponse($post, 'Post created successfully', 201);
+use App\Traits\ApiResponses;
 
 use App\Services\UserRelationService;
 
@@ -39,6 +39,10 @@ class RegisterController extends Controller {
 
     /**
      * The validation rules for the user data
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRules()
      */
     public function getValidationRules(): array {
         $validationRules = [
