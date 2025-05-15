@@ -779,15 +779,17 @@ class CommentApiController extends Controller {
         try {
             $comment = Comment::findOrFail($id);
 
+            $user = $request->user();
+
             $this->authorize('update', $comment);
 
-            if ($comment->is_deleted && $request->user()->role === 'user') {
+            if ($comment->is_deleted && $user->role === 'user') {
                 return $this->errorResponse('Comment is deleted', 'COMMENT_DELETED', 422);
             }
 
             $validationRulesUpdate = $this->getValidationRulesUpdate();
 
-            $isContentModeration = $request->user()->id !== $comment->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator');
+            $isContentModeration = $user->id !== $comment->user_id && ($user->role === 'admin' || $user->role === 'moderator');
 
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the comment
@@ -813,7 +815,7 @@ class CommentApiController extends Controller {
                         $validatedData,
                         [
                             'is_updated' => true,
-                            'updated_by_role' => $request->user()->role // For show the user who updated the comment
+                            'updated_by_role' => $user->role // For show the user who updated the comment
                         ]
                     ),
                     $request,
@@ -828,7 +830,7 @@ class CommentApiController extends Controller {
             $validatedData = array_merge(
                 $validatedData,
                 ['is_updated' => true],
-                ['updated_by_role' => $request->user()->role]
+                ['updated_by_role' => $user->role]
             );
 
             $comment = DB::transaction(function () use ($comment, $validatedData) {
