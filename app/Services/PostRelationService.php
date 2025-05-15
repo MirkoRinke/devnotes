@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 use App\Services\CommentRelationService;
 
+/**
+ * This PostRelationService handles the deletion of comments, likes, and reports associated with a post.
+ * It ensures that all related data is cleaned up when a post is deleted or modified.
+ */
 class PostRelationService {
 
     /**
@@ -29,6 +33,8 @@ class PostRelationService {
      * 
      * @param Post $post
      * @return int Number of deleted comments
+     * 
+     * @example | $this->postRelationService->deleteComments($post);
      */
     public function deleteComments(Post $post): int {
         $totalDeleted = 0;
@@ -59,6 +65,8 @@ class PostRelationService {
      * 
      * @param Post $post
      * @return int Number of deleted reports
+     * 
+     * @example | $this->postRelationService->deleteReports($post);
      */
     public function deleteReports(Post $post): int {
         $totalDeleted = 0;
@@ -80,6 +88,8 @@ class PostRelationService {
      * 
      * @param Post $post
      * @return int Number of deleted likes
+     * 
+     * @example | $this->postRelationService->deleteLikes($post);
      */
     public function deleteLikes(Post $post): int {
         $totalDeleted = 0;
