@@ -12,14 +12,10 @@ use App\Models\Post;
 
 use App\Rules\ValidPostValue;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\RelationLoader; // examples:
-// - Multiple relations: $this->loadRelations($request, $query, [
-//     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-//     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
-// ])
+use App\Traits\ApiResponses;
+use App\Traits\ApiInclude;
+use App\Traits\QueryBuilder;
+use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 
 use App\Services\ModerationService;
@@ -67,6 +63,10 @@ class PostApiController extends Controller {
 
     /**
      * The validation rules for the Create method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesCreate()
      */
     public function getValidationRulesCreate(): array {
         $validationRulesCreate = [
@@ -93,6 +93,10 @@ class PostApiController extends Controller {
 
     /**
      * The validation rules for the Update method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate()
      */
     public function getValidationRulesUpdate(): array {
         $validationRulesUpdate = [
@@ -127,10 +131,12 @@ class PostApiController extends Controller {
      * 
      * @param Request $request
      * @param $query
-     * @param $methods
+     * @param $methods (string) The method to call for building the query
      * @return mixed
+     * 
+     * @example | $query = $this->setupPostQuery($request, $query, 'buildQuery');
      */
-    protected function setupPostQuery(Request $request, $query, $methods): mixed {
+    protected function setupPostQuery(Request $request, $query, string $methods): mixed {
 
         $query = $this->applyAccessFilters($request, $query);
 
@@ -149,6 +155,26 @@ class PostApiController extends Controller {
         }
 
         return $query;
+    }
+
+
+    /**
+     * Generate external source previews for post data
+     * 
+     * @param array $validatedData The validated post data
+     * @param Post|null $existingPost Existing post for fallback values (null for creation)
+     * @return array Updated validatedData with external_source_previews field
+     */
+    protected function generateExternalSourcePreviews(array $validatedData, ?Post $existingPost = null): array {
+        if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData) || array_key_exists('videos', $validatedData)) {
+            $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
+                'images' => $validatedData['images'] ?? $existingPost?->images ?? [],
+                'videos' => $validatedData['videos'] ?? $existingPost?->videos ?? [],
+                'resources' => $validatedData['resources'] ?? $existingPost?->resources ?? []
+            ]);
+        }
+
+        return $validatedData;
     }
 
 
@@ -230,7 +256,7 @@ class PostApiController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /posts?select=title&include=user&user_fields=id,display_name
+     * Example URL: /posts/?select=title&include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="Success with select and include" {
      *   "status": "success",
@@ -292,7 +318,6 @@ class PostApiController extends Controller {
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupPostQuery($request, $query, 'buildQuery');
-
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -452,13 +477,7 @@ class PostApiController extends Controller {
             $validatedData['history'] = [];
 
             // Create the external_source_previews field
-            if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData) || array_key_exists('videos', $validatedData)) {
-                $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
-                    'images' => $validatedData['images'] ?? [],
-                    'videos' => $validatedData['videos'] ?? [],
-                    'resources' => $validatedData['resources'] ?? []
-                ]);
-            }
+            $validatedData = $this->generateExternalSourcePreviews($validatedData);
 
             $post = Post::create($validatedData);
 
@@ -540,7 +559,7 @@ class PostApiController extends Controller {
      *   }
      * }
      * 
-     * Example URL with select and include: /posts/1?select=title,description&include=user&user_fields=id,display_name
+     * Example URL with select and include: /posts/1/?select=title,description&include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="Success with select and include" {
      *   "status": "success",
@@ -587,7 +606,7 @@ class PostApiController extends Controller {
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupPostQuery($request, $query, 'buildQuerySelect');
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
+            if ($query instanceof JsonResponse) {
                 return $query;
             }
 
@@ -780,15 +799,19 @@ class PostApiController extends Controller {
         try {
             $post = Post::findOrFail($id);
 
+            $user = $request->user();
+
             $this->authorize('update', $post);
 
             $validationRules = $this->getValidationRulesUpdate();
+
+            $isContentModeration = $user->id !== $post->user_id && ($user->role === 'admin' || $user->role === 'moderator');
 
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
              * If so, add the moderation_reason to the validation rules
              */
-            if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+            if ($isContentModeration) {
                 $validationRules['moderation_reason'] = 'required|string|max:255';
             }
 
@@ -804,26 +827,20 @@ class PostApiController extends Controller {
             }
 
             // Create the external_source_previews field
-            if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData)) {
-                $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
-                    'images' => $validatedData['images'] ?? $post->images ?? [],
-                    'videos' => $validatedData['videos'] ?? $post->videos ?? [],
-                    'resources' => $validatedData['resources'] ?? $post->resources ?? []
-                ]);
-            }
+            $validatedData = $this->generateExternalSourcePreviews($validatedData, $post);
 
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
              * If so, handle the moderation update
              */
-            if ($request->user()->id !== $post->user_id && ($request->user()->role === 'admin' || $request->user()->role === 'moderator')) {
+            if ($isContentModeration) {
                 $post = $this->moderationService->handleModerationUpdate(
                     $post,
                     array_merge(
                         $validatedData,
                         [
                             'is_updated' => true,
-                            'updated_by_role' => $request->user()->role // For show the user who updated the post for the user
+                            'updated_by_role' => $user->role // For show the user who updated the post for the user
                         ]
                     ),
                     $request,
@@ -838,8 +855,8 @@ class PostApiController extends Controller {
             $validatedData = array_merge(
                 $validatedData,
                 ['is_updated' => true],
-                ['updated_by_role' => $request->user()->role],
-                ['history' => $this->historyService->createPostHistory($post, $request->user()->id)]
+                ['updated_by_role' => $user->role],
+                ['history' => $this->historyService->createPostHistory($post, $user->id)]
 
             );
 
@@ -958,7 +975,7 @@ class PostApiController extends Controller {
      * 
      * @queryParam type required The type of interaction to count. Must be either "likes_count", "favorite_count" or "interactions".
      * 
-     * Example URL: /posts/1/received-interactions?type=likes_count
+     * Example URL: /posts/1/received-interactions/?type=likes_count
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -968,7 +985,7 @@ class PostApiController extends Controller {
      *   "data": 3
      * }
      * 
-     * Example URL: /posts/1/received-interactions?type=favorite_count
+     * Example URL: /posts/1/received-interactions/?type=favorite_count
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -978,7 +995,7 @@ class PostApiController extends Controller {
      *   "data": 4
      * }
      * 
-     * Example URL: /posts/1/received-interactions?type=interactions
+     * Example URL: /posts/1/received-interactions/?type=interactions
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
