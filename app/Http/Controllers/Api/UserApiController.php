@@ -12,8 +12,8 @@ use App\Models\User;
 
 use App\Rules\NotForbiddenName;
 
-use App\Traits\ApiResponses; // example $this->successResponse($users, 'Users retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, 'user');
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
 use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
@@ -36,6 +36,9 @@ class UserApiController extends Controller {
      */
     use ApiResponses, QueryBuilder, AuthorizesRequests, ApiInclude, RelationLoader, FieldManager;
 
+    /**
+     *  The services used in the controller
+     */
     protected $moderationService;
     protected $userRelationService;
     protected $guestAccountService;
@@ -55,6 +58,11 @@ class UserApiController extends Controller {
 
     /**
      * The validation rules for the user data
+     * 
+     * @param User $user
+     * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate($user)
      */
     public function getValidationRulesUpdate($user): array {
         $validationRules = [
@@ -67,6 +75,13 @@ class UserApiController extends Controller {
 
     /**
      * Setup the query for User
+     * 
+     * @param Request $request
+     * @param mixed $query 
+     * @param string $methods (string) The method to call for building the query
+     * @return mixed
+     * 
+     * @example | $query = $this->setupUserQuery($request, $query, 'buildQuery');
      */
     protected function setupUserQuery(Request $request, $query, $methods) {
         $this->modifyRequestSelect($request, ['id']);
@@ -83,8 +98,10 @@ class UserApiController extends Controller {
      * Load the user relation
      * 
      * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
+     * @param mixed $query 
+     * @return mixed
+     * 
+     * @example | $query = $this->loadProfileRelation($request, $query);
      */
     private function loadProfileRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('profile', explode(',', $request->input('include')))) {
@@ -373,7 +390,7 @@ class UserApiController extends Controller {
      *   }
      * }
      * 
-     * Example URL: /users/1?include=profile
+     * Example URL: /users/1/?include=profile
      * 
      * @response status=200 scenario="Success with profile relation" {
      *   "status": "success", 
@@ -420,7 +437,7 @@ class UserApiController extends Controller {
      *   }
      * }
      * 
-     * Example URL: /users/1?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
+     * Example URL: /users/1/?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
      *
      * @response status=200 scenario="Success with selected fields and profile" {
      *   "status": "success", 
@@ -473,7 +490,9 @@ class UserApiController extends Controller {
                 return $query;
             }
 
-            // Need this because the select method returns only the query object
+            /**
+             * Need this because the select method returns only the query object
+             */
             $user = $query->firstOrFail();
 
             $user = $this->manageUsersFieldVisibility($request, $user);
@@ -525,8 +544,6 @@ class UserApiController extends Controller {
      * @bodyContent scenario="Update email only" {
      *    "email": "john@example.com"
      * }
-     * 
-     * Example URL: /users/1
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -635,8 +652,6 @@ class UserApiController extends Controller {
      * @group User Management
      *
      * @urlParam id required The ID of the user to delete. Example: 5
-     * 
-     * Example URL: /users/5
      *
      * @response status=200 scenario="Regular user deleted" {
      *   "status": "success",
@@ -742,8 +757,6 @@ class UserApiController extends Controller {
      *   "moderation_reason": "Severe violation of terms of service",
      *   "days": 99999
      * }
-     * 
-     * Example URL: /users/2/ban
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -884,8 +897,6 @@ class UserApiController extends Controller {
      * @bodyContent {
      *   "moderation_reason": "Appeal approved"
      * }
-     * 
-     * Example URL: /users/2/unban
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
