@@ -98,7 +98,7 @@ class FavoriteController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /user/favorites?select=id,user_id,post_id
+     * Example URL: /user/favorites/?select=id,user_id,post_id
      * 
      * @response status=200 scenario="Favorites retrieved with selected fields" {
      *   "status": "success",
@@ -172,8 +172,6 @@ class FavoriteController extends Controller {
      * @group Favorites
      *
      * @urlParam postId integer required The ID of the post to add to favorites. Example: 12
-     * 
-     * Example URL: /posts/12/favorites
      * 
      * @response status=201 scenario="Post added to favorites" {
      *   "status": "success",
@@ -262,8 +260,6 @@ class FavoriteController extends Controller {
      * @group Favorites
      *
      * @urlParam postId integer required The ID of the post to remove from favorites. Example: 12
-     * 
-     * Example URL: /posts/12/favorites
      * 
      * @response status=200 scenario="Post removed from favorites" {
      *   "status": "success",
@@ -437,7 +433,7 @@ class FavoriteController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /user/favorites/posts?select=id,title,language
+     * Example URL: /user/favorites/posts/?select=id,title,language
      * 
      * @response status=200 scenario="Selected fields with select parameter" {
      *   "status": "success",

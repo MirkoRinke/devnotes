@@ -89,7 +89,7 @@ class CriticalTermController extends Controller {
      * @queryParam page integer Page number for pagination. Example: page=2
      * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
      * 
-     * Example URL (all terms): /critical-terms
+     * Example URL: /critical-terms
      * 
      * @response status=200 scenario="All Critical Terms retrieved" {
      *   "status": "success",
@@ -130,7 +130,7 @@ class CriticalTermController extends Controller {
      *   ]
      * }
      * 
-     * Example URL (filtered): /critical-terms?select=id,name,severity&sort=-severity&filter[language]=en
+     * Example URL: /critical-terms/?select=id,name,severity&sort=-severity&filter[language]=en
      * 
      * @response status=200 scenario="Filtered Critical Terms retrieved" {
      *   "status": "success",
@@ -223,8 +223,7 @@ class CriticalTermController extends Controller {
      * @bodyParam language string required The language code of the term. Example: en
      * @bodyParam severity integer required The severity level of the term (1-5). Example: 4
      * 
-     * Example Request:
-     * {
+     * @bodyContent {
      *   "name": "offensive_word",
      *   "language": "en",
      *   "severity": 4
@@ -351,7 +350,7 @@ class CriticalTermController extends Controller {
      *   }
      * }
      * 
-     * Example URL with select: /critical-terms/2?select=id,name,severity,language
+     * Example URL with select: /critical-terms/2/?select=id,name,severity,language
      * 
      * @response status=200 scenario="Critical Term retrieved (selected fields)" {
      *   "status": "success",
@@ -429,8 +428,7 @@ class CriticalTermController extends Controller {
      * @bodyParam language string optional The language code of the term. Example: de
      * @bodyParam severity integer optional The severity level of the term (1-5). Example: 3
      * 
-     * Example Request:
-     * {
+     * @bodyContent {
      *   "name": "updated_offensive_term",  || Optional but at least one field must be provided
      *   "language": "de",                  || Optional but at least one field must be provided 
      *   "severity": 3                      || Optional but at least one field must be provided
@@ -557,8 +555,6 @@ class CriticalTermController extends Controller {
      * @group CriticalTerms
      * 
      * @urlParam id required integer The ID of the critical term to delete. Example: 3
-     * 
-     * Example URL: /critical-terms/3
      * 
      * @response status=200 scenario="Critical Term deleted" {
      *   "status": "success",

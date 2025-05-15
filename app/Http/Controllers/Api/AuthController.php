@@ -38,7 +38,7 @@ class AuthController extends Controller {
      * @bodyParam password string required User's password. Example: secret123
      * @bodyParam device_name string required Name for the device/browser creating this token. Example: iPhone 13
      *
-     * @requestBody {
+     * @bodyContent {
      *   "email": "user@example.com,
      *   "password": "secret123",
      *   "device_name": "iPhone 13"

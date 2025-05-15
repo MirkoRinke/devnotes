@@ -202,7 +202,7 @@ class CommentApiController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: comments/?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
+     * Example URL: comments/?/include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
      * 
      * @response status=200 scenario="Comments retrieved" {
      *   "status": "success",

@@ -112,7 +112,7 @@ class ApiKeyController extends Controller {
      *
      * @bodyParam name string required The name for the new API key (used for identification). Example: Production Frontend
      *
-     * @requestBody {
+     * @bodyContent {
      *   "name": "Postman API Key"
      * }
      * 

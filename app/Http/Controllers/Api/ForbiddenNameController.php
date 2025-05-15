@@ -127,7 +127,7 @@ class ForbiddenNameController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /forbidden-names?select=id,name,match_type
+     * Example URL: /forbidden-names/?select=id,name,match_type
      * 
      * @response status=200 scenario="Forbidden names retrieved with select" {
      *  "status": "success",
@@ -347,7 +347,7 @@ class ForbiddenNameController extends Controller {
      *   }
      * }
      * 
-     * Example URL: /forbidden-names/1?select=id,name,match_type
+     * Example URL: /forbidden-names/1/?select=id,name,match_type
      * 
      * @response status=200 scenario="Forbidden name retrieved with select" {
      *   "status": "success",
