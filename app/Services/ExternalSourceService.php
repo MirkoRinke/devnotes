@@ -2,6 +2,16 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
+
+use App\Models\User;
+
+/**
+ * ExternalSourceService for handling external content in posts.
+ *
+ * This service handles the generation of preview data for external sources (images, videos, resources)
+ * and determines whether to display external sources based on user settings and preferences.
+ */
 class ExternalSourceService {
 
     /**
@@ -9,6 +19,12 @@ class ExternalSourceService {
      *
      * @param array $fields An associative array where keys are field names and values are arrays of URLs.
      * @return array|null An array of preview data or null if no valid URLs are found.
+     * 
+     * @example | $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
+     *              'images' => $validatedData['images'] ?? [],
+     *              'videos' => $validatedData['videos'] ?? [],
+     *              'resources' => $validatedData['resources'] ?? []
+     *            ]);
      */
     public function generatePreviews(array $fields): ?array {
         $previewData = [];
@@ -19,6 +35,7 @@ class ExternalSourceService {
             }
 
             foreach ($urls as $url) {
+
                 $previewData[] = [
                     'type' => $fieldName,
                     'url' => $url,
@@ -38,8 +55,10 @@ class ExternalSourceService {
      * @param \App\Models\User $user The user instance.
      * @param string $type The type of external source (e.g., 'images', 'videos', 'resources').
      * @return bool True if external sources should be displayed, false otherwise.
+     * 
+     * @example | $this->shouldDisplayExternals($request, $user, $type)
      */
-    public function shouldDisplayExternals($request, $user, string $type) {
+    public function shouldDisplayExternals(Request $request, ?User $user, string $type) {
         // If no user is logged in 
         if (!$user) {
             return $request->header("X-Show-External-" . ucfirst($type)) === 'true';
