@@ -10,21 +10,27 @@ use App\Http\Controllers\Controller;
 use App\Models\UserFavorite;
 use App\Models\Post;
 
-use App\Traits\ApiResponses; // example $this->successResponse($favorites, 'Favorites retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
-use App\Traits\RelationLoader; // examples:
-// - Multiple relations: $this->loadRelations($request, $query, [
-//     ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => ['id', 'display_name']],
-//     ['relation' => 'post', 'foreignKey' => 'post_id', 'columns' => ['id', 'title']]
-// ])
-use App\Traits\FieldManager; // example $this->managePostsFieldVisibility($request, $query);
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
+use App\Traits\ApiInclude;
+use App\Traits\RelationLoader;
+use App\Traits\FieldManager;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Controller handling user favorites functionality for posts.
+ * 
+ * This controller provides endpoints to manage user favorite posts:
+ * - Retrieving a user's favorite relationships
+ * - Adding/removing posts from favorites
+ * - Fetching the complete post objects that a user has favorited
+ * 
+ * All operations maintain favorite counts consistency on the post objects.
+ */
 class FavoriteController extends Controller {
 
     /**
@@ -35,10 +41,17 @@ class FavoriteController extends Controller {
 
     /**
      * Update the favorite_count for a post
+     * 
+     * @param Post $post The post model instance
+     * @param string $method The method to use ('increment' or 'decrement')
+     * @return void
+     * 
+     * @example | $this->updateFavoriteCount($post, 'increment');
      */
-    private function updateFavoriteCount($favorite, $method = 'increment') {
-        $favorite->$method('favorite_count');
+    private function updateFavoriteCount($post, $method) {
+        $post->$method('favorite_count');
     }
+
 
     /**
      * Get All User Favorites
@@ -48,7 +61,7 @@ class FavoriteController extends Controller {
      * Retrieves all favorites for the authenticated user.
      * Shows the relationship objects between users and posts, not the post content.
      * 
-     * @group User Favorites
+     * @group Favorites
      *
      * @queryParam select string Select specific fields (id,user_id,post_id,etc). Example: select=id,post_id,created_at
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
@@ -81,6 +94,27 @@ class FavoriteController extends Controller {
      *       "post_id": 7,
      *       "created_at": "2025-04-15T09:22:41.000000Z",
      *       "updated_at": "2025-04-15T09:22:41.000000Z"
+     *     }
+     *   ]
+     * }
+     * 
+     * Example URL: /user/favorites?select=id,user_id,post_id
+     * 
+     * @response status=200 scenario="Favorites retrieved with selected fields" {
+     *   "status": "success",
+     *   "message": "Favorites retrieved successfully",
+     *   "code": 200,
+     *   "count": 2,
+     *   "data": [
+     *     {
+     *       "id": 5,
+     *       "user_id": 2,
+     *       "post_id": 12,
+     *     },
+     *     {
+     *       "id": 8,
+     *       "user_id": 2,
+     *       "post_id": 7,
      *     }
      *   ]
      * }
@@ -135,7 +169,7 @@ class FavoriteController extends Controller {
      * 
      * This operation also increments the favorite_count of the post.
      * 
-     * @group User Favorites
+     * @group Favorites
      *
      * @urlParam postId integer required The ID of the post to add to favorites. Example: 12
      * 
@@ -225,7 +259,7 @@ class FavoriteController extends Controller {
      * 
      * This operation also decrements the favorite_count of the post.
      * 
-     * @group User Favorites
+     * @group Favorites
      *
      * @urlParam postId integer required The ID of the post to remove from favorites. Example: 12
      * 
@@ -289,7 +323,7 @@ class FavoriteController extends Controller {
     /**
      * Get User's Favorited Posts
      * 
-     * Endpoint: GET user/favorites/posts
+     * Endpoint: GET /user/favorites/posts
      *
      * Retrieves a list of posts that have been favorited by the authenticated user.
      * Returns the full post objects rather than just the favorite relationship.
@@ -304,7 +338,7 @@ class FavoriteController extends Controller {
      * This means a post that was favorited might not appear in results if its status changed 
      * from "published" to another status (like "draft" or "archived").
      * 
-     * @group User Favorites
+     * @group Favorites
      *
      * @queryParam select string Select specific fields from posts (id,title,language,etc). Example: select=id,title,language
      * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
@@ -321,7 +355,7 @@ class FavoriteController extends Controller {
      * @queryParam page integer Page number for pagination. Example: page=1
      * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
      * 
-     * Example URL (basic): user/favorites/posts
+     * Example URL: /user/favorites/posts
      * 
      * @response status=200 scenario="Complete favorited post data" {
      *   "status": "success",
@@ -403,7 +437,7 @@ class FavoriteController extends Controller {
      *   ]
      * }
      * 
-     * Example URL (optimized for list view): user/favorites/posts?select=id,title,language
+     * Example URL: /user/favorites/posts?select=id,title,language
      * 
      * @response status=200 scenario="Selected fields with select parameter" {
      *   "status": "success",
@@ -469,7 +503,7 @@ class FavoriteController extends Controller {
 
             $query = $this->checkForIncludedRelations($request, $query);
 
-            return $this->successResponse($query, 'Favorited posts retrieved successfully');
+            return $this->successResponse($query, 'Favorited posts retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
