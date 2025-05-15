@@ -9,10 +9,10 @@ use App\Http\Controllers\Controller;
 
 use App\Models\ForbiddenName;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\CacheHelper; // example $this->forgetForbiddenNameCache();
+use App\Traits\ApiResponses;
+use App\Traits\ApiInclude;
+use App\Traits\QueryBuilder;
+use App\Traits\CacheHelper;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +21,13 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
 
+/**
+ * ForbiddenNameController
+ *
+ * This controller handles the management of forbidden names in the system.
+ * Forbidden names are names that users are not allowed to use when registering or updating their profiles.
+ * 
+ */
 class ForbiddenNameController extends Controller {
 
     /**
@@ -30,18 +37,26 @@ class ForbiddenNameController extends Controller {
 
     /**
      * The validation rules for the create method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesCreate()
      */
     public function getValidationRulesCreate(): array {
-        $validationRulesUpdate = [
+        $validationRulesCreate = [
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'match_type' => ['required', 'string', 'in:exact,partial'],
         ];
-        return $validationRulesUpdate;
+        return $validationRulesCreate;
     }
 
 
     /**
      * The validation rules for the Update method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate()
      */
     public function getValidationRulesUpdate(): array {
         $validationRulesUpdate = [
@@ -533,8 +548,6 @@ class ForbiddenNameController extends Controller {
      * @group ForbiddenName
      *
      * @urlParam id integer required The ID of the forbidden name to delete. Example: 1
-     * 
-     * Example URL: /forbidden-names/1
      * 
      * @response status=200 scenario="Forbidden name deleted" {
      *   "status": "success",
