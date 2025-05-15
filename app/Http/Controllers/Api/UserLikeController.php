@@ -12,11 +12,11 @@ use App\Models\UserLike;
 use App\Models\Post;
 use App\Models\Comment;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\RelationLoader; // example $this->loadRelationIfNeeded($request, $query, 'user', 'user_id', ['id', 'name']);
-use App\Traits\ApiInclude; // example $this->getRelationKeyFields($request, ['user' => 'user_id', 'likeable' => 'likeable_id']);
-use App\Traits\FieldManager; // example $this->managePostsFieldVisibility($request, $query);
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
+use App\Traits\RelationLoader;
+use App\Traits\ApiInclude;
+use App\Traits\FieldManager;
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -33,21 +33,41 @@ class UserLikeController extends Controller {
 
     /**
      * The validation rule for the like entity
+     * 
+     * @return array
+     * 
+     * @example | $this->geValidationRules()
      */
-    private $validationRules = [
-        'likeable_type' => 'required|in:post,comment',
-        'likeable_id' => 'required|integer',
-    ];
+    public function geValidationRules(): array {
+        $validationRules = [
+            'likeable_type' => 'required|in:post,comment',
+            'likeable_id' => 'required|integer',
+        ];
+        return $validationRules;
+    }
+
 
     /**
      * Update the likes_count for a likeable entity
+     * 
+     * @param mixed $likeable The likeable entity (Post or Comment)
+     * @param string $method The method to call on the likeable entity (increment or decrement)
+     * @return void
+     * 
+     * @example | $this->updateLikesCount($likeable, 'increment')
      */
-    private function updateLikesCount($likeable, $method = 'increment') {
+    private function updateLikesCount($likeable, $method) {
         $likeable->$method('likes_count');
     }
 
     /**
      * Setup the query for likes
+     * 
+     * @param Request $request
+     * @param mixed $query
+     * @return mixed
+     * 
+     * @example | $this->setupLikeQuery($request, $query)
      */
     protected function setupLikeQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'likeable_type', 'likeable_id', 'type']);
@@ -68,6 +88,8 @@ class UserLikeController extends Controller {
      * @param Request $request
      * @param mixed $query Builder|LengthAwarePaginator|Collection
      * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadUserRelation($request, $query)
      */
     private function loadUserRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
@@ -85,6 +107,8 @@ class UserLikeController extends Controller {
      * @param Request $request
      * @param mixed $query Builder|LengthAwarePaginator|Collection
      * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadLikeableRelation($request, $query)
      */
     private function loadLikeableRelation(Request $request, $query): mixed {
         if ($request->has('include') && in_array('likeable', explode(',', $request->input('include')))) {
@@ -99,6 +123,41 @@ class UserLikeController extends Controller {
             );
         }
         return $query;
+    }
+
+
+    /**
+     * Check if the user can like the content
+     * 
+     * @param mixed $user The authenticated user
+     * @param string $likeableType The type of entity to like (Post or Comment)
+     * @param mixed $likeable The likeable entity
+     * @param int $likeableId The ID of the entity to like
+     * @param string $simpleType The simple type of the entity (post or comment)
+     * @return JsonResponse|null
+     * 
+     * @example | $likeableResult = $this->checkIfUserCanLike($user, $likeableType, $likeable, $likeableId, $simpleType);
+     *            if ($likeableResult !== null) {
+     *              return $likeableResult;
+     *            }
+     */
+    private function checkIfUserCanLike($user, $likeableType, $likeable, $likeableId, $simpleType) {
+        if ($likeableType === Post::class && $likeable->user_id == $user->id) {
+            return $this->errorResponse('You cannot like your own post', 'CANNOT_LIKE_OWN_POST', 403);
+        } else if ($likeableType === Comment::class && $likeable->user_id == $user->id) {
+            return $this->errorResponse('You cannot like your own comment', 'CANNOT_LIKE_OWN_COMMENT', 403);
+        }
+
+        $existingLike = UserLike::where([
+            'user_id' => $user->id,
+            'likeable_id' => $likeableId,
+            'likeable_type' => $likeableType
+        ])->first();
+
+        if ($existingLike) {
+            return $this->errorResponse('You have already liked this ' . $simpleType, 'ALREADY_LIKED', 403);
+        }
+        return null;
     }
 
 
@@ -161,7 +220,7 @@ class UserLikeController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /likes?include=user&user_fields=id,display_name
+     * Example URL: /likes/?include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="With user relation" {
      *   "status": "success",
@@ -185,7 +244,7 @@ class UserLikeController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /likes?include=likeable&likeable_post_fields=id,title,description
+     * Example URL: /likes/?include=likeable&likeable_post_fields=id,title,description
      * 
      * @response status=200 scenario="With likeable" {
      *   "status": "success",
@@ -246,7 +305,6 @@ class UserLikeController extends Controller {
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupLikeQuery($request, $query);
-
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -282,6 +340,11 @@ class UserLikeController extends Controller {
      *
      * @bodyParam likeable_type string required The type of entity to like ('post' or 'comment'). Example: post
      * @bodyParam likeable_id integer required The ID of the entity to like. Example: 5
+     * 
+     * @bodyContent {
+     *   "likeable_type": "post",
+     *   "likeable_id": 5
+     * }
      *
      * @response status=201 scenario="Success" {
      *   "status": "success",
@@ -343,7 +406,7 @@ class UserLikeController extends Controller {
             $user = $request->user();
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->geValidationRules(),
                 $this->getValidationMessages('UserLike')
             );
 
@@ -359,20 +422,9 @@ class UserLikeController extends Controller {
 
             $likeable = $likeableType::findOrFail($likeableId);
 
-            if ($likeableType === Post::class && $likeable->user_id == $user->id) {
-                return $this->errorResponse('You cannot like your own post', 'CANNOT_LIKE_OWN_POST', 403);
-            } else if ($likeableType === Comment::class && $likeable->user_id == $user->id) {
-                return $this->errorResponse('You cannot like your own comment', 'CANNOT_LIKE_OWN_COMMENT', 403);
-            }
-
-            $existingLike = UserLike::where([
-                'user_id' => $user->id,
-                'likeable_id' => $likeableId,
-                'likeable_type' => $likeableType
-            ])->first();
-
-            if ($existingLike) {
-                return $this->errorResponse('You have already liked this ' . $simpleType, 'ALREADY_LIKED', 403);
+            $likeableResult = $this->checkIfUserCanLike($user, $likeableType, $likeable, $likeableId, $simpleType);
+            if ($likeableResult !== null) {
+                return $likeableResult;
             }
 
             // Add the like and update the likes count for the likeable entity in a transaction
@@ -411,6 +463,11 @@ class UserLikeController extends Controller {
      *
      * @bodyParam likeable_type string required The type of entity to unlike ('post' or 'comment'). Example: post
      * @bodyParam likeable_id integer required The ID of the entity to unlike. Example: 5
+     * 
+     * @bodyContent {
+     *   "likeable_type": "post",
+     *   "likeable_id": 5
+     * }
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -458,7 +515,7 @@ class UserLikeController extends Controller {
             $user = $request->user();
 
             $validatedData = $request->validate(
-                $this->validationRules,
+                $this->geValidationRules(),
                 $this->getValidationMessages('UserLike')
             );
 
@@ -640,7 +697,7 @@ class UserLikeController extends Controller {
      *   ]
      * }
      *
-     * Example URL: /user-likes/posts?include=user&user_fields=id,display_name
+     * Example URL: /user-likes/posts/?include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="With included user relation" {
      *   "status": "success",
@@ -791,9 +848,7 @@ class UserLikeController extends Controller {
 
             $query = Post::whereIn('id', $likedPostIds);
 
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
+            $query = $this->loadUserRelation($request, $query);
 
             $query = $this->applyAccessFilters($request, $query);
 
@@ -887,7 +942,7 @@ class UserLikeController extends Controller {
      *   ]
      * }
      *
-     * Example URL: /user-likes/comments?include=user&user_fields=id,display_name
+     * Example URL: /user-likes/comments/?include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="With included user relation" {
      *   "status": "success",
@@ -967,9 +1022,7 @@ class UserLikeController extends Controller {
 
             $query = Comment::whereIn('id', $likedCommentIds);
 
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
+            $query = $this->loadUserRelation($request, $query);
 
             $query = $this->buildQuery($request, $query, 'comment');
 
