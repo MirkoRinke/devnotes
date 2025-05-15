@@ -8,13 +8,14 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
 
-use App\Models\UserProfile;
 use App\Rules\AllowedContactChannels;
 use App\Rules\AllowedSocialLinks;
 use App\Rules\NotForbiddenName;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
+use App\Models\UserProfile;
+
+use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
@@ -54,9 +55,11 @@ class UserProfileController extends Controller {
      * The validation messages for the user profile data plus the forbidden name validation
      *
      * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate($userProfile)
      */
     public function getValidationRulesUpdate($userProfile): array {
-        $validationRules = [
+        $validationRulesUpdate = [
             'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'public_email' => 'sometimes|nullable|email|max:255',
             'website' => 'sometimes|nullable|string|max:255',
@@ -71,7 +74,7 @@ class UserProfileController extends Controller {
             'auto_load_external_videos' => 'sometimes|required|boolean',
             'auto_load_external_resources' => 'sometimes|required|boolean',
         ];
-        return $validationRules;
+        return $validationRulesUpdate;
     }
 
 
@@ -85,6 +88,8 @@ class UserProfileController extends Controller {
      * @param mixed $query The query object
      * @param string $methods The method to call for the query
      * @return mixed The modified query object
+     * 
+     * @example | $query = $this->setupUserProfileQuery($request, $query, 'buildQuery');
      * 
      */
     protected function setupUserProfileQuery(Request $request, $query, $methods): mixed {
@@ -102,6 +107,29 @@ class UserProfileController extends Controller {
         }
 
         return $query;
+    }
+
+
+    /**
+     * Apply access filters based on user role
+     * Admins and moderators can see all profiles
+     * Regular users can only see public profiles and their own
+     * 
+     * @param Request $request The request containing the user
+     * @return \Illuminate\Database\Eloquent\Builder Query with appropriate filters
+     * 
+     * @example | $query = $this->applyProfileAccessFilters($request);
+     */
+    private function applyProfileAccessFilters(Request $request) {
+        $user = $request->user();
+
+        if ($user->role === 'admin' || $user->role === 'moderator') {
+            return UserProfile::query();
+        } else {
+            return UserProfile::query()->where(function ($subQuery) use ($user) {
+                $subQuery->where('is_public', true)->orWhere('user_id', $user->id);
+            });
+        }
     }
 
     /**
@@ -213,19 +241,11 @@ class UserProfileController extends Controller {
                 return $this->successResponse([], 'No User Profiles exist in the database', 200);
             }
 
-            $user = $request->user();
-
             /**
              * Check if the user is an admin or moderator get all user profiles
              * Otherwise, get only public profiles
              */
-            if ($user->role === 'admin' || $user->role === 'moderator') {
-                $query = UserProfile::query();
-            } else {
-                $query = UserProfile::query()->where(function ($subQuery) use ($user) {
-                    $subQuery->where('is_public', true)->orWhere('user_id', $user->id);
-                });
-            }
+            $query = $this->applyProfileAccessFilters($request);
 
             $originalSelectFields = $this->getSelectFields($request);
 
@@ -416,8 +436,6 @@ class UserProfileController extends Controller {
      * @bodyContent application/json Skills Update {
      *   "skills": ["PHP", "Laravel", "Vue.js", "API Design", "TypeScript"]
      * }
-     *
-     * Example URL: /user-profiles/1
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -524,7 +542,7 @@ class UserProfileController extends Controller {
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, string $id): JsonResponse {
+    public function destroy(): JsonResponse {
         return $this->errorResponse('Profiles are automatically managed and cannot be deleted manually', 'PROFILE_DELETE_DISABLED', 405);
     }
 
@@ -553,8 +571,6 @@ class UserProfileController extends Controller {
      *   "type": "images",
      *   "hours": 0
      * }
-     *
-     * Example URL: /user-profiles/1/enable-temporary-externals
      *
      * @response status=200 scenario="Successfully Enabled" {
      *   "status": "success",
