@@ -2,22 +2,27 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Models\User;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Models\UserLike;
 use App\Models\UserProfile;
 use App\Models\UserReport;
-use Illuminate\Support\Facades\DB;
 
-use App\Services\GuestAccountService;
-
+/**
+ * This UserRelationService handles user-related operations such as creating user profiles,
+ * checking usernames for moderation, transferring posts and comments, and deleting reports and likes.
+ */
 class UserRelationService {
     /**
      * Create a user profile for a user
      * 
      * @param User $user
      * @return UserProfile
+     * 
+     * @example | $this->userRelationService->createUserProfile($user);
      */
     public function createUserProfile(User $user): UserProfile {
         return UserProfile::create([
@@ -31,6 +36,8 @@ class UserRelationService {
      * 
      * @param User $user
      * @return void
+     * 
+     * @example | $this->userRelationService->checkUsername($user);
      */
     public function checkUsername(User $user): void {
         app(UserModerationService::class)->checkAndReportUsername($user);
@@ -43,6 +50,8 @@ class UserRelationService {
      * @param UserProfile $profile
      * @param string $newDisplayName
      * @return UserProfile
+     * 
+     * @example | $this->userRelationService->updateProfileDisplayName($userProfile);
      */
     public function updateProfileDisplayName(UserProfile $profile) {
         // Check if the display name has changed
@@ -64,6 +73,8 @@ class UserRelationService {
      * @param User $user
      * @param int $systemUserId Default: 3
      * @return int Number of transferred posts
+     * 
+     * @example | $this->userRelationService->transferPosts($user);
      */
     public function transferPosts(User $user, int $systemUserId = 3): int {
         $totalTransferred = 0;
@@ -85,6 +96,8 @@ class UserRelationService {
      * @param User $user
      * @param int $systemUserId Default: 3
      * @return int Number of transferred comments
+     * 
+     * @example | $this->userRelationService->transferComments($user);
      */
     public function transferComments(User $user, int $systemUserId = 3): int {
         $totalTransferred = 0;
@@ -105,6 +118,8 @@ class UserRelationService {
      * 
      * @param User $user
      * @return int Number of deleted reports
+     * 
+     * @example | $this->userRelationService->deleteReports($user);
      */
     public function deleteReports(User $user): int {
         $totalDeleted = 0;
@@ -127,6 +142,8 @@ class UserRelationService {
      * 
      * @param User $user
      * @return int Number of deleted likes
+     * 
+     * @example | $this->userRelationService->deleteLikes($user);
      */
     public function deleteLikes(User $user): int {
         $totalDeleted = 0;
