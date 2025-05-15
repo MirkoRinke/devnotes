@@ -49,7 +49,7 @@ class CommentRelationService {
      * @param Comment $comment The parent comment
      * @return int Number of deleted comments
      * 
-     * @example | $this->deleteChildren($comment);
+     * @example | $this->commentRelationService->deleteChildren($comment);
      */
     public function deleteChildren(Comment $comment): int {
         $childrenIds = $this->collectAllChildrenIds($comment) ?? [];
