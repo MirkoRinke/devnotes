@@ -10,10 +10,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\PostAllowedValue;
 
-use App\Traits\ApiResponses; // example return $this->successResponse($posts, 'Posts retrieved successfully', 200);
-use App\Traits\ApiInclude; // example $this->checkForIncludedRelations($request, $query);
-use App\Traits\QueryBuilder; // example $this->buildQuery($request, $query, $methods);
-use App\Traits\CacheHelper; // example $this->forgetCacheByModelType('App\Models\Post');
+use App\Traits\ApiResponses;
+use App\Traits\ApiInclude;
+use App\Traits\QueryBuilder;
+use App\Traits\CacheHelper;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +23,13 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Auth\Access\AuthorizationException;
 
 
+/**
+ * PostAllowedValueController
+ * 
+ * This controller handles the CRUD operations for Post Allowed Values.
+ * It allows admin users to create, read, update, and delete allowed values
+ * that can be used in posts.
+ */
 class PostAllowedValueController extends Controller {
 
     /**
@@ -32,17 +39,25 @@ class PostAllowedValueController extends Controller {
 
     /**
      * The validation rules for the create method
+     * 
+     * @return array 
+     * 
+     * @example | $this->getValidationRulesCreate()
      */
     public function getValidationRulesCreate(): array {
-        $validationRulesUpdate = [
+        $validationRulesCreate = [
             'name' => ['required', 'string', 'min:1', 'max:255'],
             'type' => ['required', 'string', 'in:language,category,post_type,technology,status'],
         ];
-        return $validationRulesUpdate;
+        return $validationRulesCreate;
     }
 
     /**
      * The validation rules for the Update method
+     * 
+     * @return array
+     * 
+     * @example | $this->getValidationRulesUpdate()
      */
     public function getValidationRulesUpdate(): array {
         $validationRulesUpdate = [
@@ -59,6 +74,8 @@ class PostAllowedValueController extends Controller {
      * @param string $name The name of the allowed value
      * @param string $type The type of the allowed value (language, category, post_type, technology, status)
      * @return bool True if the value is in use, false otherwise
+     * 
+     * @example | $isInUse = $this->isPostAllowedValueInUse($name, $type);
      */
     protected function isPostAllowedValueInUse($name, $type) {
         $isInUse = false;
@@ -346,7 +363,7 @@ class PostAllowedValueController extends Controller {
      *   }
      * }
      *
-     * Example URL with select: /post-allowed-values/1?select=id,name,type
+     * Example URL with select: /post-allowed-values/1/?select=id,name,type
      * 
      * @response status=200 scenario="Success with select parameter" {
      *   "status": "success",
@@ -424,8 +441,6 @@ class PostAllowedValueController extends Controller {
      *   "name": "TypeScript",           || Optional but at least one field must be provided
      *   "type": "language"              || Optional but at least one field must be provided
      * }
-     * 
-     * Example URL: /post-allowed-values/1
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -555,8 +570,6 @@ class PostAllowedValueController extends Controller {
      * @group PostAllowedValue
      *
      * @urlParam id required The ID of the post allowed value to delete. Example: 3
-     *
-     * Example URL: /post-allowed-values/3
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
