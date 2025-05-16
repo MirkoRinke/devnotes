@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\UserFavorite;
 
-
 class Post extends Model {
 
+    /**
+     * The traits used in the model
+     */
     use HasFactory;
 
     /**
@@ -64,9 +66,14 @@ class Post extends Model {
      * @var array
      */
     protected $hidden = [
+        // Relationships
         'user',
+
+        // Counts
+        'reports_count',
+
+        // Moderation info
         'moderation_info',
-        'reports_count'
     ];
 
 
@@ -108,6 +115,9 @@ class Post extends Model {
      * Get the user that owns the post.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $post->user // Access the related user
+     * @example | Post::with('user')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
@@ -117,6 +127,9 @@ class Post extends Model {
      * Get the favorites for the post.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $post->favorites // Access the related favorites
+     * @example | Post::with('favorites')->get() // Eager loading
      */
     public function favorites() {
         return $this->hasMany(UserFavorite::class);
@@ -126,6 +139,9 @@ class Post extends Model {
      * Get all reports for this post
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * 
+     * @example | $post->reports // Access the related reports
+     * @example | Post::with('reports')->get() // Eager loading
      */
     public function reports() {
         return $this->morphMany(UserReport::class, 'reportable');
@@ -135,6 +151,9 @@ class Post extends Model {
      * Get all comments for this post
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $post->comments // Access the related comments
+     * @example | Post::with('comments')->get() // Eager loading
      */
     public function comments() {
         return $this->hasMany(Comment::class);
@@ -144,6 +163,9 @@ class Post extends Model {
      * Get all likes for this post
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * 
+     * @example | $post->likes // Access the related likes
+     * @example | Post::with('likes')->get() // Eager loading
      */
     public function likes() {
         return $this->morphMany(UserLike::class, 'likeable');
