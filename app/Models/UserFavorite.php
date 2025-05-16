@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class UserFavorite extends Model {
 
     /**
-     *  The traits used in the controller
+     *  The traits used in the model
      */
     use HasFactory;
 
@@ -20,13 +20,22 @@ class UserFavorite extends Model {
     protected $fillable = [
         // Default
         'id',
-        'created_at',
-        'updated_at',
 
         // Basic
         'user_id',
         'post_id',
+
+        // Update info
+        'created_at',
+        'updated_at',
     ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [];
 
     /**
      * The attributes that should be cast to native types.
@@ -39,6 +48,9 @@ class UserFavorite extends Model {
      * Get the user that owns the UserFavorite
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userFavorite->user // Access the related user
+     * @example | UserFavorite::with('user')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
@@ -48,6 +60,9 @@ class UserFavorite extends Model {
      * Get the post that owns the UserFavorite
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userFavorite->post // Access the related post
+     * @example | UserFavorite::with('post')->get() // Eager loading
      */
     public function post() {
         return $this->belongsTo(Post::class);
