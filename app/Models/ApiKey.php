@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ApiKey extends Model {
+
+    /**
+     * The traits used in the model
+     */
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -12,9 +18,17 @@ class ApiKey extends Model {
      * @var array
      */
     protected $fillable = [
+        // Default
+        'id',
+
+        // Basic
         'name',
         'key',
         'active',
+
+        // Update info
+        'created_at',
+        'updated_at',
         'last_used_at'
     ];
 
@@ -24,6 +38,7 @@ class ApiKey extends Model {
      * @var array
      */
     protected $hidden = [
+        // Basic
         'key'
     ];
 
@@ -33,7 +48,10 @@ class ApiKey extends Model {
      * @var array
      */
     protected $casts = [
+        // Basic
         'active' => 'boolean',
+
+        // Update info
         'last_used_at' => 'datetime',
     ];
 }
