@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model {
+
+    /**
+     * The traits used in the model
+     */
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -44,11 +50,16 @@ class Comment extends Model {
      * @var array
      */
     protected $hidden = [
+        // Relationships
         'user',
         'parent',
         'children',
+
+        // Counts
+        'reports_count',
+
+        // Moderation info
         'moderation_info',
-        'reports_count'
     ];
 
     /**
@@ -77,6 +88,9 @@ class Comment extends Model {
      * Get the post that owns the comment
      * 
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $comment->post // Access the related post
+     * @example | Comment::with('post')->get() // Eager loading
      */
     public function post() {
         return $this->belongsTo(Post::class);
@@ -86,6 +100,9 @@ class Comment extends Model {
      * Get the user that owns the comment
      * 
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $comment->user // Access the related user
+     * @example | Comment::with('user')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
@@ -95,6 +112,9 @@ class Comment extends Model {
      * Get the parent comment
      * 
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $comment->parent // Access the parent comment
+     * @example | Comment::with('parent')->get() // Eager loading
      */
     public function parent() {
         return $this->belongsTo(Comment::class, 'parent_id');
@@ -104,6 +124,9 @@ class Comment extends Model {
      * Get the children comments
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $comment->children // Access the children comments
+     * @example | Comment::with('children')->get() // Eager loading
      */
     public function children() {
         return $this->hasMany(Comment::class, 'parent_id');
@@ -113,6 +136,9 @@ class Comment extends Model {
      * Get all likes for this comment
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * 
+     * @example | $comment->likes // Access the likes
+     * @example | Comment::with('likes')->get() // Eager loading
      */
     public function likes() {
         return $this->morphMany(UserLike::class, 'likeable');
