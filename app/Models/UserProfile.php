@@ -2,9 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model {
+
+    /**
+     * The traits used in the model
+     */
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -14,8 +20,6 @@ class UserProfile extends Model {
     protected $fillable = [
         // Default
         'id',
-        'created_at',
-        'updated_at',
 
         // Basic
         'user_id',
@@ -42,6 +46,10 @@ class UserProfile extends Model {
 
         // Counts
         'reports_count',
+
+        // Update info
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -50,7 +58,9 @@ class UserProfile extends Model {
      * @var array
      */
     protected $hidden = [
+        // Relationships
         'user',
+        // Counts
         'reports_count',
     ];
 
@@ -83,6 +93,11 @@ class UserProfile extends Model {
 
     /**
      * Get the user that owns the profile.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userProfile->user // Access the related user
+     * @example | UserProfile::with('user')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
