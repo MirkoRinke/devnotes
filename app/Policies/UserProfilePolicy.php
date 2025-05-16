@@ -4,16 +4,27 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\UserProfile;
-use Illuminate\Auth\Access\Response;
+
+use App\Traits\PolicyChecks;
 
 class UserProfilePolicy {
 
     /**
+     * The traits used in the policy
+     */
+    use PolicyChecks;
+
+    /**
      * Determine whether the user can view the model.
+     * 
+     * @param User $user
+     * @param UserProfile $userProfile
+     * @return bool
+     * 
+     * @example | $this->authorize('view', $userProfile);
      */
     public function view(User $user, UserProfile $userProfile): bool {
-        if ($user->role === 'admin') {
-            // Admins can view any profile
+        if ($this->isAdmin($user)) {
             return true;
         }
         // If the profile is public, everyone can view it
@@ -22,18 +33,23 @@ class UserProfilePolicy {
         }
 
         // If the profile is private, only the owner can view it
-        return $user->id === $userProfile->user_id;
+        return $this->isOwner($user, $userProfile);
     }
 
     /**
      * Determine whether the user can update the model.
+     * 
+     * @param User $user
+     * @param UserProfile $userProfile
+     * @return bool
+     * 
+     * @example | $this->authorize('update', $userProfile);
      */
     public function update(User $user, UserProfile $userProfile): bool {
-        if ($user->role === 'admin') {
-            // Admins can update any profile
+        if ($this->isAdmin($user)) {
             return true;
         }
-        // Only the owner can update the profile
-        return $user->id === $userProfile->user_id;
+
+        return $this->isOwner($user, $userProfile);
     }
 }
