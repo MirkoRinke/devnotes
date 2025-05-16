@@ -4,11 +4,29 @@ namespace App\Policies;
 
 use App\Models\Comment;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
+use App\Traits\PolicyChecks;
+
+/**
+ * Class CommentPolicy
+ * 
+ * This policy class handles authorization for the Comment model.
+ * It uses the PolicyChecks trait for common checks.
+ */
 class CommentPolicy {
+
+    /**
+     * The traits used in the policy
+     */
+    use PolicyChecks;
+
     /**
      * Determine whether the user can create models.
+     * 
+     * @param User $user
+     * @return bool
+     * 
+     * @example | $this->authorize('create', Comment::class);
      */
     public function create(User $user): bool {
         if ($user) {
@@ -22,14 +40,19 @@ class CommentPolicy {
      * 
      * Admins can update any comment.
      * Users can only update their own comments within 15 minutes after creation.
+     * 
+     * @param User $user
+     * @param Comment $comment
+     * @return bool
+     * 
+     * @example | $this->authorize('update', $comment);
      */
     public function update(User $user, Comment $comment): bool {
-        // Check if user is an admin or moderator
-        if ($user->role === 'admin' || $user->role === 'moderator') {
+        if ($this->hasModeratorPrivileges($user)) {
             return true;
         }
         // Check if user is the owner of the comment
-        if ($user->id !== $comment->user_id) {
+        if ($this->isNotOwner($user, $comment)) {
             return false;
         }
         // Check if the comment was created within the last 15 minutes
@@ -37,19 +60,33 @@ class CommentPolicy {
     }
 
     /**
-     * Determine whether the user can view the comment.
+     * Determine whether the user can delete the comment.
+     * 
+     * @param User $user
+     * @param Comment $comment
+     * @return bool
+     * 
+     * @example | $this->authorize('delete', $comment);
      */
-    public function delete(User $user, Comment $comment): bool {
-        return $user->role === 'admin';
+    public function delete(User $user): bool {
+        return $this->isAdmin($user);
     }
 
     /**
      * Determine whether the user can delete the comment.
+     * 
+     * @param User $user
+     * @param Comment $comment
+     * @return bool
+     * 
+     * @example | $this->authorize('deleteComment', $comment);
      */
     public function deleteComment(User $user, Comment $comment): bool {
-        if ($user->role === 'admin') {
+        if ($this->isAdmin($user)) {
             return true;
         }
-        return $user->id === $comment->user_id;
+
+        // Check if user is the owner of the comment
+        return $this->isOwner($user, $comment);
     }
 }
