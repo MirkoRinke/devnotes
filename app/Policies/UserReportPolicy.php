@@ -4,35 +4,47 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\UserReport;
-use App\Models\Post;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
+use App\Traits\PolicyChecks;
+
+/**
+ * UserReportPolicy
+ * 
+ * This policy class is used to authorize actions on the UserReport model.
+ * It checks if the user is an admin or the owner of the report.
+ */
 class UserReportPolicy {
-    use HandlesAuthorization;
 
     /**
-     * Determine if the user can view all reports (admin function).
-     *
-     * @param  \App\Models\User  $user
-     * @return mixed
+     * The traits used in the policy
      */
-    public function viewAny(User $user) {
-        // Only admins can view all reports
-        return $user->role === 'admin';
+    use PolicyChecks;
+
+    /**
+     * Determine if the user can view all reports.
+     * 
+     * @param User $user
+     * @return bool
+     * 
+     * @example | $this->authorize('viewAny', UserReport::class);
+     */
+    public function viewAny(User $user): bool {
+        return $this->isAdmin($user);
     }
 
     /**
      * The user can only delete their own report.
-     *
-     * @param  \App\Models\User  $user
-     * @param  \App\Models\UserReport  $userReport
-     * @return mixed
+     * 
+     * @param User $user
+     * @param UserReport $userReport
+     * @return bool
+     * 
+     * @example | $this->authorize('delete', $userReport);
      */
-    public function delete(User $user, UserReport $userReport) {
-        // Admins can delete any report
-        if ($user->role === 'admin') {
+    public function delete(User $user, UserReport $userReport): bool {
+        if ($this->isAdmin($user)) {
             return true;
         }
-        return $user->id === $userReport->user_id;
+        return $this->isOwner($user, $userReport);
     }
 }
