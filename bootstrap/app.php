@@ -1,9 +1,12 @@
 <?php
 
-use App\Http\Middleware\EnsureEmailIsVerifiedApi;
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+
+use App\Http\Middleware\EnsureEmailIsVerifiedApi;
+use App\Http\Middleware\ValidateApiKey;
 
 use Illuminate\Http\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -21,17 +24,21 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->alias([
             'email-verified' => EnsureEmailIsVerifiedApi::class,
+            'api-key' => ValidateApiKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        /**
+         * Handle exceptions for route not found
+         */
         $exceptions->render(function (RouteNotFoundException $e, Request $request) {
             if (!$request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Unauthorized',
-                    'code' => 401,
-                    'data' => null
-                ], 401);
+                    'code' => 404,
+                    'errors' => 'UNAUTHORIZED'
+                ], 404);
             }
         });
     })
