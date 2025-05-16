@@ -12,10 +12,11 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\Post;
 use App\Models\UserFavorite;
 
-
-
 class User extends Authenticatable {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+
+    /**
+     * The traits used in the model
+     */
     use HasFactory, Notifiable, HasApiTokens;
 
     /**
@@ -54,12 +55,21 @@ class User extends Authenticatable {
      * @var list<string>
      */
     protected $hidden = [
+        // Relationships
+        'profile',
+
+        // Default
         'password',
-        'account_purpose',
+
+        // Ban info
         'is_banned',
         'was_ever_banned',
+
+        // Moderation info
         'moderation_info',
-        'profile'
+
+        // Account info
+        'account_purpose',
     ];
 
 
@@ -90,6 +100,10 @@ class User extends Authenticatable {
      * Get the posts for the user.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->posts // Access the related posts
+     * @example | User::with('posts')->get() // Eager loading
+     * 
      */
     public function posts() {
         return $this->hasMany(Post::class);
@@ -99,6 +113,9 @@ class User extends Authenticatable {
      * Get the favorites for the user.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->favorites // Access the related favorites
+     * @example | User::with('favorites')->get() // Eager loading
      */
     public function favorites() {
         return $this->hasMany(UserFavorite::class);
@@ -108,6 +125,9 @@ class User extends Authenticatable {
      * Get the profile for the user.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * 
+     * @example | $user->profile // Access the related profile
+     * @example | User::with('profile')->get() // Eager loading
      */
     public function profile() {
         return $this->hasOne(UserProfile::class);
@@ -117,6 +137,9 @@ class User extends Authenticatable {
      * Get all reports received by this user
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * 
+     * @example | $user->reports // Access the related reports
+     * @example | User::with('reports')->get() // Eager loading
      */
     public function reportsReceived() {
         return $this->morphMany(UserReport::class, 'reportable');
@@ -126,6 +149,9 @@ class User extends Authenticatable {
      * Get all reports created by this user
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->reportsSent // Access the related reports
+     * @example | User::with('reportsSent')->get() // Eager loading
      */
     public function reportsSent() {
         return $this->hasMany(UserReport::class, 'user_id');
@@ -135,6 +161,9 @@ class User extends Authenticatable {
      * Get all comments created by this user
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->comments // Access the related comments
+     * @example | User::with('comments')->get() // Eager loading
      */
     public function comments() {
         return $this->hasMany(Comment::class);
@@ -144,6 +173,9 @@ class User extends Authenticatable {
      * Get all likes created by this user
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->likes // Access the related likes
+     * @example | User::with('likes')->get() // Eager loading
      */
     public function likes() {
         return $this->hasMany(UserLike::class);
@@ -153,6 +185,9 @@ class User extends Authenticatable {
      * Get the follower relations for this user.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->followerRelations // Access the related followers
+     * @example | User::with('followerRelations')->get() // Eager loading
      */
     public function followerRelations() {
         return $this->hasMany(UserFollower::class, 'user_id');
@@ -162,6 +197,9 @@ class User extends Authenticatable {
      * Get the following relations for this user.
      * 
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->followingRelations // Access the related followings
+     * @example | User::with('followingRelations')->get() // Eager loading
      */
     public function followingRelations() {
         return $this->hasMany(UserFollower::class, 'follower_id');
@@ -171,6 +209,9 @@ class User extends Authenticatable {
      * Get the forbidden names created by this user
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->forbiddenNames // Access the related forbidden names
+     * @example | User::with('forbiddenNames')->get() // Eager loading
      */
     public function forbiddenNames() {
         return $this->hasMany(ForbiddenName::class, 'created_by_user_id');
@@ -180,6 +221,9 @@ class User extends Authenticatable {
      * Get the post allowed values created by this user
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->postAllowedValues // Access the related post allowed values
+     * @example | User::with('postAllowedValues')->get() // Eager loading
      */
     public function postAllowedValues() {
         return $this->hasMany(PostAllowedValue::class, 'created_by_user_id');
