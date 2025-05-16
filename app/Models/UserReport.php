@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserReport extends Model {
+
+    /**
+     * The traits used in the model
+     */
     use HasFactory;
 
     /**
@@ -18,8 +20,6 @@ class UserReport extends Model {
     protected $fillable = [
         // Default
         'id',
-        'created_at',
-        'updated_at',
 
         // Basic
         'user_id',
@@ -28,7 +28,11 @@ class UserReport extends Model {
         'type',
         'reason',
         'reportable_snapshot',
-        'impact_value'
+        'impact_value',
+
+        // Update info
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -37,6 +41,7 @@ class UserReport extends Model {
      * @var array
      */
     protected $hidden = [
+        // Relationships
         'user',
         'reportable'
     ];
@@ -47,14 +52,18 @@ class UserReport extends Model {
      * @var array
      */
     protected $casts = [
-        'impact_value' => 'integer',
+        // Basic
         'reportable_snapshot' => 'array',
+        'impact_value' => 'integer',
     ];
 
     /**
      * Get the user who created the report
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userReport->user // Access the related user
+     * @example | User::with('reports')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
@@ -64,6 +73,9 @@ class UserReport extends Model {
      * Get the entity that was reported (Post or User)
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * 
+     * @example $userReport->reportable // Access the related reportable entity
+     * @example UserReport::with('reportable')->get() // Eager loading
      */
     public function reportable() {
         return $this->morphTo();
