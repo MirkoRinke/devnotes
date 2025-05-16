@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class UserFollower extends Model {
 
     /**
-     *  The traits used in the controller
+     *  The traits used in the model
      */
     use HasFactory;
 
@@ -20,12 +20,14 @@ class UserFollower extends Model {
     protected $fillable = [
         // Default
         'id',
-        'created_at',
-        'updated_at',
 
         // Basic
         'user_id',
         'follower_id',
+
+        // Update info
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -34,10 +36,10 @@ class UserFollower extends Model {
      * @var array
      */
     protected $hidden = [
+        // Relationships
         'follower',
         'user',
     ];
-
 
     /**
      * The attributes that should be cast to native types.
@@ -46,11 +48,13 @@ class UserFollower extends Model {
      */
     protected $casts = [];
 
-
     /**
      * Get the user that owns the UserFollower.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userFollower->user // Access the related user
+     * @example | UserFollower::with('user')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
@@ -60,6 +64,9 @@ class UserFollower extends Model {
      * Get the follower that owns the UserFollower.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userFollower->follower // Access the related follower
+     * @example | UserFollower::with('follower')->get() // Eager loading
      */
     public function follower() {
         return $this->belongsTo(User::class, 'follower_id');
