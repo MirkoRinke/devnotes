@@ -20,14 +20,16 @@ class UserLike extends Model {
     protected $fillable = [
         // Default
         'id',
-        'created_at',
-        'updated_at',
 
         // Basic
         'user_id',
         'likeable_type',
         'likeable_id',
         'type',
+
+        // Update info
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -36,6 +38,7 @@ class UserLike extends Model {
      * @var array
      */
     protected $hidden = [
+        // Relationships
         'user',
         'likeable',
     ];
@@ -51,6 +54,9 @@ class UserLike extends Model {
      * Get the user that owns the like
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $userLike->user // Access the related user
+     * @example | UserLike::with('user')->get() // Eager loading
      */
     public function user() {
         return $this->belongsTo(User::class);
@@ -60,6 +66,9 @@ class UserLike extends Model {
      * Get the owning likeable model
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * 
+     * @example | $userLike->likeable // Access the related likeable model
+     * @example | UserLike::with('likeable')->get() // Eager loading
      */
     public function likeable() {
         return $this->morphTo();
