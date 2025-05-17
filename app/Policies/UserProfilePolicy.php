@@ -7,6 +7,12 @@ use App\Models\UserProfile;
 
 use App\Traits\PolicyChecks;
 
+/**
+ * UserProfilePolicy
+ * 
+ * This policy class is responsible for authorizing actions on the UserProfile model.
+ * It checks if the user is an admin or the owner of the profile to determine access.
+ */
 class UserProfilePolicy {
 
     /**
