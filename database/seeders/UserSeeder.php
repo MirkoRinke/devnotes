@@ -13,6 +13,9 @@ use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder {
 
+    /**
+     *  The Service used in the Seeder
+     */
     protected $userRelationService;
 
     /**
@@ -27,6 +30,8 @@ class UserSeeder extends Seeder {
      *
      * @param array $data
      * @return User
+     * 
+     * @example | $this->createUserWithProfile($data);
      */
     private function createUserWithProfile(array $data): User {
         return DB::transaction(function () use ($data) {
