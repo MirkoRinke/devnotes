@@ -6,11 +6,30 @@ use Closure;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Contracts\Validation\ValidationRule;
 
+/**
+ * This AllowedContactChannels is used to validate the contact channels provided by the user.
+ * It checks if the contact channels are allowed and ensures that the values are NOT URLs or web domains.
+ * 
+ * @example | new AllowedContactChannels()
+ * @example | 'contact_channels' => ['sometimes', 'nullable', 'array', new AllowedContactChannels()]
+ */
 class AllowedContactChannels implements ValidationRule {
+
+    /**
+     * The allowed contact channels
+     */
     protected $allowedChannels = [
         'discord',
     ];
 
+    /**
+     * Run the validation rule.
+     *
+     * @param string $attribute The attribute name
+     * @param mixed $value The value to validate
+     * @param Closure $fail The closure to call on failure
+     * 
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void {
         foreach ($value as $channel => $contactValue) {
 
@@ -19,12 +38,12 @@ class AllowedContactChannels implements ValidationRule {
                 return;
             }
 
-            // Check if the value is a URL
+            // Check if the value is a URL (e.g., http://example.com)
             $urlValidator = Validator::make(['contact' => $contactValue], [
                 'contact' => 'url'
             ]);
 
-            // Check if the value looks like a domain
+            // Check if the value looks like a domain (e.g., example.com)
             $containsWebDomain = $this->looksLikeDomain($contactValue);
 
             // If the value is a URL or contains a web domain, fail the validation
@@ -35,12 +54,25 @@ class AllowedContactChannels implements ValidationRule {
         }
     }
 
+    /**
+     * Detects if a string resembles a web domain.
+     *
+     * This method checks if the input could be interpreted as a domain name,
+     * even if it doesn't have a protocol prefix (http://, https://, etc.).
+     *
+     * @param string $value The string to check
+     * @return bool True if it looks like a domain, false otherwise
+     * 
+     * @example | $this->looksLikeDomain('example.com')
+     */
     protected function looksLikeDomain(string $value): bool {
-        // Check if the value looks like a domain
+        // If no protocol (://), add 'http://' temporarily to help parse_url function    
         $testUrl = (strpos($value, '://') === false) ? 'http://' . $value : $value;
-        // Parse the URL and check if it has a host with a dot
+
+        // Use PHP's URL parser to extract components
         $parsed = parse_url($testUrl);
-        // Check if the host has a dot in it
+
+        // A domain typically has a host with at least one dot (e.g., example.com)
         return isset($parsed['host']) && strpos($parsed['host'], '.') !== false;
     }
 }
