@@ -9,9 +9,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Traits\ApiResponses;
 
+/**
+ * This ApiPagination Trait provides a method to paginate a query based on the request parameters.
+ * It checks if the page and per_page parameters are valid and applies them to the query.
+ */
 trait ApiPagination {
 
-    // Import the ApiResponses trait to use the errorResponse method
+    /**
+     *  The traits used in the Trait
+     */
     use ApiResponses;
 
     /**
@@ -21,6 +27,8 @@ trait ApiPagination {
      * @param Builder $query
      * @param int $default
      * @return JsonResponse|Collection|LengthAwarePaginator
+     * 
+     * @example | $this->getPerPage($request, $query, (int) $config);
      */
     public function getPerPage(Request $request, Builder $query, int $default = 10): JsonResponse|Collection|LengthAwarePaginator {
         // Get the page and per_page parameters from the request
