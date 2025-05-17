@@ -2,18 +2,24 @@
 
 namespace App\Rules;
 
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
+
 use App\Models\PostAllowedValue;
 
 use App\Traits\CacheHelper;
 
-use Closure;
-use Illuminate\Contracts\Validation\ValidationRule;
-
-
+/**
+ * This ValidPostValue is used to validate the post value provided by the user.
+ * It checks if the value exists in the post_allowed_values table.
+ * 
+ * @example | new ValidPostValue('category')
+ * @example | 'category' => ['required', 'string', new ValidPostValue('category')],
+ */
 class ValidPostValue implements ValidationRule {
 
     /**
-     *  The traits used in the controller
+     *  The traits used in the Rule
      */
     use CacheHelper;
 
@@ -37,19 +43,17 @@ class ValidPostValue implements ValidationRule {
      * 
      *  This rule is applied to ensure that the provided value exists in the allowed values for the given type.
      * 
-     *  @param string $attribute The name of the attribute being validated
-     *  @param mixed $value The value of the attribute being validated
+     *  @param string $attribute The name of the attribute being validated (e.g. 'category')
+     *  @param mixed $value The value of the attribute being validated (e.g. 'Backend')
      *  @param \Closure $fail The closure to call if validation fails
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void {
 
-        // Check if the value is empty
         if (!is_string($value)) {
             $type = explode('.', $attribute)[0];
             $fail(strtoupper($type) . '_MUST_BE_STRING');
             return;
         }
-
 
         $cacheKey = $this->generateSimpleCacheKey('post_allowed_values_' . $this->type);
 
