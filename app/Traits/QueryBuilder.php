@@ -17,16 +17,15 @@ use App\Traits\ApiStartsWith;
 use App\Traits\ApiEndsWith;
 
 /**
- * Trait QueryBuilder
- * 
- * This trait provides methods to build queries for different models
+ * This QueryBuilder Trait provides methods to build queries for different models
  * based on the request parameters. It includes methods for sorting,
  * filtering, selecting fields, starting with, ending with, and pagination.
  * 
  */
 trait QueryBuilder {
+
     /**
-     *  The traits used in the controller
+     *  The traits used in the Trait
      */
     use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiStartsWith, ApiEndsWith;
 
