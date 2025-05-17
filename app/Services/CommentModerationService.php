@@ -6,6 +6,11 @@ use App\Models\Comment;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * This Class CommentModerationService is responsible for moderating comments
+ * It checks if the comment has been reported too many times and replaces the content with a message
+ * It also checks if the comment has children and replaces the parent_content in the children with a message
+ */
 class CommentModerationService {
 
     /**
@@ -14,8 +19,10 @@ class CommentModerationService {
      *
      * @param Comment|Collection|LengthAwarePaginator $comment
      * @return Comment|Collection|LengthAwarePaginator
+     * 
+     * @example | commentModerationService->replaceReportedContent($comment);
      */
-    function replaceReportedContent($comment) {
+    public function replaceReportedContent($comment) {
         if ($comment instanceof Collection || $comment instanceof LengthAwarePaginator) {
             foreach ($comment as $c) {
                 $this->applyReportModeration($c);
@@ -34,8 +41,10 @@ class CommentModerationService {
      *
      * @param Comment $comment
      * @return Comment
+     * 
+     * @example | $this->applyReportModeration($comment);
      */
-    function applyReportModeration($comment) {
+    private function applyReportModeration($comment) {
         /**
          * Check if the comment has report attribute
          * If not, return the comment
