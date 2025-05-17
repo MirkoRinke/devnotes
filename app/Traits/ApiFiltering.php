@@ -8,8 +8,15 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
+/**
+ * This ApiFiltering Trait provides a method to filter a query based on the request parameters.
+ * It checks if the filter parameters are valid and applies them to the query.
+ */
 trait ApiFiltering {
 
+    /**
+     *  The traits used in the Trait
+     */
     use ApiResponses;
 
     /**
@@ -20,6 +27,8 @@ trait ApiFiltering {
      * @param array $allowedFilterColumns
      * 
      * @return JsonResponse|Builder
+     * 
+     * @example | $this->filter($request, $query, (array) $config);
      */
     public function filter(Request $request, Builder $query, array $allowedFilterColumns = []): JsonResponse|Builder {
         // Get the filter array from the request
