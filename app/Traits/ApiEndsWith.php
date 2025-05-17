@@ -8,8 +8,15 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
+/**
+ * This ApiEndsWith Trait provides a method to filter a query based on the request parameters.
+ * It checks if the endsWith parameters are valid and applies them to the query.
+ */
 trait ApiEndsWith {
 
+    /**
+     *  The traits used in the Trait
+     */
     use ApiResponses;
 
     /**
@@ -24,8 +31,10 @@ trait ApiEndsWith {
      * 
      * @return Builder|JsonResponse Returns the modified query builder if successful,
      *                             or a JSON error response if validation fails
+     * 
+     * @example | $this->endsWith($request, $query, (array) $config);
      */
-    public function endsWith(Request $request, Builder $query, array $allowedColumns = []) {
+    public function endsWith(Request $request, Builder $query, array $allowedColumns = []): JsonResponse|Builder {
         if ($request->has('endsWith')) {
             $endsWithFilters = $request->endsWith;
 
