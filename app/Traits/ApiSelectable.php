@@ -15,9 +15,14 @@ use App\Traits\ApiResponses;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * This ApiSelectable Trait provides a method to select specific columns from a query
+ * based on the request parameters. It checks if the select parameters are valid and applies them to the query.
+ */
 trait ApiSelectable {
+
     /**
-     *  The traits used in the controller
+     *  The traits used in the Trait
      */
     use ApiResponses;
 
@@ -28,6 +33,8 @@ trait ApiSelectable {
      * @param Builder $query
      * @param array $allowedAttributes
      * @return JsonResponse|Builder
+     * 
+     * @example | $this->select($request, $query, (array) $config);
      */
     public function select(Request $request, Builder $query, array $allowedAttributes = []): JsonResponse|Builder {
         // Get the select string or array from the request
@@ -65,6 +72,8 @@ trait ApiSelectable {
      * @param Request $request The HTTP request containing query parameters
      * @param array $requiredFields Fields that must be included in the selection
      * @param array $removeFields Fields that should be removed from the selection
+     * 
+     * @example | $this->modifyRequestSelect($request, ['id'], []);
      */
     public function modifyRequestSelect(Request $request, $requiredFields = [], $removeFields = []): void {
         if ($request->has('select')) {
@@ -96,6 +105,8 @@ trait ApiSelectable {
      * 
      * @param Request $request
      * @return array|null Array of fields or null if no select parameter
+     * 
+     * @example | $this->getSelectFields($request);
      */
     public function getSelectFields(Request $request): array|null {
         if ($request->has('select')) {
@@ -107,7 +118,6 @@ trait ApiSelectable {
         }
         return null;
     }
-
 
 
     /**
@@ -123,6 +133,8 @@ trait ApiSelectable {
      * @param array|null $originalSelectFields The original select fields from the request
      * @param mixed $data The data to process (Collection, LengthAwarePaginator, Comment, or Post)
      * @return mixed The processed data with visibility rules applied
+     * 
+     * @example | $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
      */
     public function controlVisibleFields(Request $request, $originalSelectFields, $data): mixed {
         if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
@@ -153,6 +165,8 @@ trait ApiSelectable {
      * @param Request $request The HTTP request
      * @param array|null $originalSelectFields The original select fields
      * @param mixed $model The model to process
+     * 
+     * @example | $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $model);
      */
     private function applyFieldsToModelAndRelations(Request $request, $originalSelectFields, $model): void {
         $this->applyVisibleFields($request, $originalSelectFields, $model);
@@ -188,6 +202,8 @@ trait ApiSelectable {
      * @param array|null $originalSelectFields The original select fields from the request
      * @param mixed $model The model to process
      * @return mixed The processed model with visible fields
+     * 
+     * @example | $this->applyVisibleFields($request, $originalSelectFields, $model);
      */
     protected function applyVisibleFields(Request $request, $originalSelectFields, $model): mixed {
         if ($request->has('select')) {
