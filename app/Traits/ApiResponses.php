@@ -7,9 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Trait ApiResponses
- *
- * This trait provides methods for creating standardized API responses.
+ * This ApiResponses Trait provides methods for creating standardized API responses.
  * It includes methods for success and error responses, as well as validation error messages.
  */
 trait ApiResponses {
@@ -22,9 +20,7 @@ trait ApiResponses {
      * @param int $code HTTP status code (default: 200)
      * @return \Illuminate\Http\JsonResponse
      * 
-     * @example
-     * return $this->successResponse($user, 'User created successfully', 201);
-     * return $this->successResponse($posts, 'Posts retrieved successfully');
+     * @example | return $this->successResponse($query, 'Users retrieved successfully', 200);
      */
     protected function successResponse($data, $message = null, $code = 200): JsonResponse {
         if ($data instanceof Collection) {
@@ -63,9 +59,7 @@ trait ApiResponses {
      * @param int $code HTTP status code
      * @return \Illuminate\Http\JsonResponse
      * 
-     * @example
-     * return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
-     * return $this->errorResponse('Validation failed', $validator->errors(), 422);
+     * @example | return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
      */
     protected function errorResponse($message, $errors = [], $code): JsonResponse {
         $response = [
@@ -88,10 +82,15 @@ trait ApiResponses {
     }
 
     /**
-     * Validation error response method for returning validation errors
+     * Get validation error messages for a specific model
      *
-     * @param array $errors
-     * @return JsonResponse
+     * This method returns an array of validation messages based on the model type.
+     * These messages use standardized error codes to make API responses consistent.
+     *
+     * @param string $model The model name to get validation messages for
+     * @return array|null Array of validation messages or null if model not found
+     * 
+     * @example | $this->getValidationMessages('ApiKey')
      */
     protected function getValidationMessages(string $model): ?array {
         /**
