@@ -13,6 +13,8 @@ class PostAllowedValueSeeder extends Seeder {
      * Get allowed values for post fields
      * 
      * @return array
+     * 
+     * @example | $this->getAllowedPostValues();
      */
     protected function getAllowedPostValues(): array {
         return [
