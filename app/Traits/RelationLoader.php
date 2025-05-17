@@ -9,13 +9,12 @@ use Illuminate\Http\JsonResponse;
 use Exception;
 
 /**
- * Trait RelationLoader
- * 
- * This trait provides methods to efficiently load both standard and polymorphic relations in a query builder. 
+ * This RelationLoader Trait provides methods to efficiently load both standard and polymorphic relations in a query builder. 
  * It supports selective column loading based on request parameters and optimizes database queries by only 
  * loading relations when their foreign keys are included in the selection.
  */
 trait RelationLoader {
+
     /**
      * Load multiple relations based on selected columns
      *
