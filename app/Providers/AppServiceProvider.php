@@ -2,18 +2,24 @@
 
 namespace App\Providers;
 
-use App\Services\CommentModerationService;
-use App\Services\externalSourceService;
-use App\Services\ModerationService;
-use App\Services\UserModerationService;
-use Illuminate\Support\ServiceProvider;
-
-use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
+use App\Services\CommentModerationService;
+use App\Services\CommentRelationService;
+use App\Services\ExternalSourceService;
+use App\Services\GuestAccountService;
+use App\Services\HistoryService;
+use App\Services\ModerationService;
+use App\Services\PostRelationService;
+use App\Services\SnapshotService;
+use App\Services\UserModerationService;
+use App\Services\UserRelationService;
+
 use App\Traits\ApiResponses;
-use Illuminate\Support\Facades\DB;
 
 
 class AppServiceProvider extends ServiceProvider {
@@ -27,10 +33,16 @@ class AppServiceProvider extends ServiceProvider {
      * Register any application services.
      */
     public function register(): void {
-        $this->app->singleton(UserModerationService::class);
-        $this->app->singleton(ModerationService::class);
         $this->app->singleton(CommentModerationService::class);
-        $this->app->singleton(externalSourceService::class);
+        $this->app->singleton(CommentRelationService::class);
+        $this->app->singleton(ExternalSourceService::class);
+        $this->app->singleton(GuestAccountService::class);
+        $this->app->singleton(HistoryService::class);
+        $this->app->singleton(ModerationService::class);
+        $this->app->singleton(PostRelationService::class);
+        $this->app->singleton(SnapshotService::class);
+        $this->app->singleton(UserModerationService::class);
+        $this->app->singleton(UserRelationService::class);
     }
 
     /**
