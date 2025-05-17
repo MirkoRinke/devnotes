@@ -5,9 +5,7 @@ namespace App\Traits;
 use App\Models\User;
 
 /**
- * Trait PolicyChecks
- * 
- * This trait contains common policy checks for user roles and ownership.
+ * This PolicyChecks Trait contains common policy checks for user roles and ownership.
  */
 trait PolicyChecks {
     /**
