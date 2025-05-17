@@ -9,15 +9,22 @@ use App\Models\UserProfile;
 
 use App\Traits\CacheHelper;
 
+/**
+ * UserModerationService is responsible for checking and reporting users
+ * based on their usernames and display names.
+ * 
+ * It checks for forbidden words in the user's name and creates reports
+ * if any matches are found.
+ */
 class UserModerationService {
 
     /**
-     *  The traits used in the controller
+     *  The traits used in the Service
      */
     use CacheHelper;
 
     /**
-     * The services used in the controller
+     * The services used in the Service
      */
     protected $snapshotService;
 
@@ -36,6 +43,8 @@ class UserModerationService {
      * 
      * @param User $user The user to check
      * @return UserReport|null The created report or null if no report was created
+     * 
+     * @example | app(UserModerationService::class)->checkAndReportUsername($user);
      */
     public function checkAndReportUsername(User $user): ?UserReport {
         // Check if the user is an admin, system, or moderator
@@ -64,6 +73,8 @@ class UserModerationService {
      * 
      * @param string $name The name to check
      * @return string|null The found forbidden word or null
+     * 
+     * @example | $this->findForbiddenPartialMatch($user->name);
      */
     private function findForbiddenPartialMatch(string $name): ?string {
 
@@ -90,9 +101,11 @@ class UserModerationService {
      * @param string $matchedWord The found forbidden word
      * @param string $fieldInfo Information about which field contained the word
      * @return UserReport The created report
+     * 
+     * @example | $this->createAutoReport($user, $nameMatchedWord, "name '{$user->name}'");
      */
     private function createAutoReport(User $user, string $matchedWord, string $fieldInfo): UserReport {
-        // Check if a report already exists for this user
+        // Check if a report already exists for this user ( user_id = 2  is the system user )
         $existingReport = UserReport::where(['user_id' => 2, 'reportable_id' => $user->id, 'reportable_type' => UserProfile::class])->first();
 
         $reportableSnapshot = $this->snapshotService->createSnapshot($user->profile, UserProfile::class);
