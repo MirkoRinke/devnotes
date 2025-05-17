@@ -12,12 +12,26 @@ use Illuminate\Support\Facades\DB;
 
 class CommentSeeder extends Seeder {
 
+    /**
+     *  The Service used in the Seeder
+     */
     protected $commentRelationService;
 
+    /**
+     * Constructor to initialize the services
+     */
     public function __construct(CommentRelationService $commentRelationService) {
         $this->commentRelationService = $commentRelationService;
     }
 
+    /**
+     * Create a comment and update the metadata
+     *
+     * @param array $data
+     * @return Comment
+     * 
+     * @example | $this->createCommentWithMetadata($data);
+     */
     private function createCommentWithMetadata(array $data) {
         return DB::transaction(function () use ($data) {
             $comment = Comment::create($data);
