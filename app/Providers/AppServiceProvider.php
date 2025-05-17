@@ -15,8 +15,12 @@ use Illuminate\Http\Request;
 use App\Traits\ApiResponses;
 use Illuminate\Support\Facades\DB;
 
+
 class AppServiceProvider extends ServiceProvider {
-    // Import the ApiResponses trait here to use it in the RateLimiter
+
+    /**
+     * The traits used in the ServiceProvider
+     */
     use ApiResponses;
 
     /**
@@ -48,6 +52,7 @@ class AppServiceProvider extends ServiceProvider {
 
             // The key is the user id or the IP address of the user    
             $key = 'api:' . ($request->user()?->id ?: $userIp);
+
             // The maximum number of attempts allowed in a minute
             $maxAttempts = 120;
 
