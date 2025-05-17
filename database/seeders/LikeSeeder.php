@@ -24,6 +24,8 @@ class LikeSeeder extends Seeder {
 
     /**
      * Creates likes for posts from different users
+     * 
+     * @example | $this->createPostLikes();
      */
     private function createPostLikes(): void {
         // Get all posts with their author IDs
@@ -66,6 +68,8 @@ class LikeSeeder extends Seeder {
 
     /**
      * Creates likes for comments from different users
+     * 
+     * @example | $this->createCommentLikes();
      */
     private function createCommentLikes(): void {
         // Get all comments with their author IDs
@@ -108,6 +112,8 @@ class LikeSeeder extends Seeder {
 
     /**
      * Updates the likes_count specifically for posts
+     * 
+     * @example | $this->updatePostLikesCounts();
      */
     private function updatePostLikesCounts(): void {
         // Get all likes for posts
@@ -130,6 +136,8 @@ class LikeSeeder extends Seeder {
 
     /**
      * Updates the likes_count specifically for comments
+     * 
+     * @example | $this->updateCommentLikesCounts();
      */
     private function updateCommentLikesCounts(): void {
         // Get all likes for comments
