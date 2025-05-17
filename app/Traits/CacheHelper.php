@@ -6,12 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Trait CacheHelper
- *
- * This trait provides methods for caching data and generating cache keys.
+ * This CacheHelper Trait provides methods for caching data and generating cache keys.
  * It includes methods to cache the result of a callback function, generate cache keys,
  * retrieve the cache TTL, and clear the cache for specific model types.
- * 
  */
 trait CacheHelper {
 
