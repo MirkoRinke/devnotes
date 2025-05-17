@@ -8,8 +8,15 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
+/**
+ * This ApiSorting Trait provides a method to sort query results based on request parameters.
+ * It checks if the sort parameters are valid and applies the appropriate order direction to the query.
+ */
 trait ApiSorting {
 
+    /**
+     *  The traits used in the Trait
+     */
     use ApiResponses;
 
     /**
@@ -19,6 +26,8 @@ trait ApiSorting {
      * @param Builder $query
      * @param array $allowedColumns
      * @return Builder
+     * 
+     * @example | $this->sort($request, $query, (array)$config);
      */
     public function sort(Request $request, Builder $query, array $allowedColumns = []): JsonResponse|Builder {
         // Get the page parameter from the request
