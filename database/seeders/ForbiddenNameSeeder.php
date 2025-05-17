@@ -32,6 +32,12 @@ class ForbiddenNameSeeder extends Seeder {
 
     /**
      * Import names from a file
+     * 
+     * @param string $filePath
+     * @param string $matchType
+     * @return int
+     * 
+     * @example | $this->importFromFile($filePath, $matchType);
      */
     private function importFromFile(string $filePath, string $matchType): int {
         if (!file_exists($filePath)) {
