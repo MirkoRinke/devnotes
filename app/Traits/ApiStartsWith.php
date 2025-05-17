@@ -8,8 +8,15 @@ use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
 
+/**
+ * This ApiStartsWith Trait provides a method to filter a query based on the request parameters.
+ * It checks if the startsWith parameters are valid and applies them to the query.
+ */
 trait ApiStartsWith {
 
+    /**
+     *  The traits used in the Trait
+     */
     use ApiResponses;
 
     /**
@@ -24,8 +31,10 @@ trait ApiStartsWith {
      * 
      * @return Builder|JsonResponse Returns the modified query builder if successful,
      *                             or a JSON error response if validation fails
+     * 
+     * @example | $this->startsWith($request, $query, (array) $config);
      */
-    public function startsWith(Request $request, Builder $query, array $allowedColumns = []) {
+    public function startsWith(Request $request, Builder $query, array $allowedColumns = []): JsonResponse|Builder {
         if ($request->has('startsWith')) {
             $startsWithFilters = $request->startsWith;
 
