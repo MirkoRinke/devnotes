@@ -16,9 +16,7 @@ use App\Services\ExternalSourceService;
 use App\Services\CommentModerationService;
 
 /**
- * Trait FieldManager
- * 
- * Provides methods to manage field visibility and content filtering based on user permissions.
+ * This FieldManager Trait Provides methods to manage field visibility and content filtering based on user permissions.
  * This trait handles access control for sensitive fields like moderation information and
  * external content based on user role and settings.
  * 
