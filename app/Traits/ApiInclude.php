@@ -12,9 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 /**
- * Trait ApiInclude
- * 
- * Provides methods to dynamically include relationships in API responses based on request parameters.
+ * This ApiInclude Trait Provides methods to dynamically include relationships in API responses based on request parameters.
  * This trait supports selective loading of relations, fields filtering, and recursive relationship handling
  * for nested resources like comments with children.
  * 
