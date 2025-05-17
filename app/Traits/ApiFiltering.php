@@ -52,6 +52,14 @@ trait ApiFiltering {
                 if (!in_array($key, $allowedFilterColumns)) {
                     return $this->errorResponse('Invalid filter column: ' . $key, ['filter' => 'INVALID_FILTER_COLUMN'], 400);
                 }
+
+                /**
+                 * Check if the filter column is a valid format
+                 * The filter column must be alphanumeric and can contain underscores
+                 */
+                if (!preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
+                    return $this->errorResponse('Invalid column format', 'INVALID_FORMAT', 400);
+                }
             }
 
             // Group all filters in a single AND clause to maintain security constraints
