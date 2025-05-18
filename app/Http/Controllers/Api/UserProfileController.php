@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Rules\AllowedContactChannels;
 use App\Rules\AllowedSocialLinks;
 use App\Rules\NotForbiddenName;
+use App\Rules\SafeUrl;
 
 use App\Models\UserProfile;
 
@@ -62,7 +63,7 @@ class UserProfileController extends Controller {
         $validationRulesUpdate = [
             'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'public_email' => 'sometimes|nullable|email|max:255',
-            'website' => 'sometimes|nullable|string|max:255',
+            'website' => ['sometimes', 'nullable', 'string', 'max:255', new SafeUrl()],
             'avatar_path' => 'sometimes|nullable|string|max:255',
             'is_public' => 'sometimes|required|boolean',
             'location' => 'sometimes|nullable|string|max:255',
