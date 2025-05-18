@@ -42,6 +42,11 @@ class AllowedSocialLinks implements ValidationRule {
                 $fail("SOCIAL_LINK_INVALID_FORMAT");
                 return;
             }
+
+            $safeUrlValidator = new SafeUrl();
+            if (!$safeUrlValidator->isValidUrl($url, $fail)) {
+                return;
+            }
         }
     }
 
