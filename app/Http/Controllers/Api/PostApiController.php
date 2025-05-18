@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Post;
 
+use App\Rules\SafeUrl;
 use App\Rules\ValidPostValue;
 
 use App\Traits\ApiResponses;
@@ -74,11 +75,11 @@ class PostApiController extends Controller {
             'code' => 'nullable|string',
             'description' => 'required|string',
             'images' => 'nullable|array',
-            'images.*' => 'url|max:2048',
+            'images.*' => ['max:2048', new SafeUrl()],
             'videos' => 'nullable|array',
-            'videos.*' => 'url|max:2048',
+            'videos.*' => ['max:2048', new SafeUrl()],
             'resources' => 'nullable|array',
-            'resources.*' => 'url|max:2048',
+            'resources.*' => ['max:2048', new SafeUrl()],
             'language' => 'required|array|min:1',
             'language.*' => ['required', new ValidPostValue('language')],
             'category' => ['required', 'string', new ValidPostValue('category')],
@@ -104,11 +105,11 @@ class PostApiController extends Controller {
             'code' => 'sometimes|nullable|string',
             'description' => 'sometimes|required|string',
             'images' => 'sometimes|nullable|array',
-            'images.*' => 'sometimes|url|max:2048',
+            'images.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'videos' => 'sometimes|nullable|array',
-            'videos.*' => 'sometimes|url|max:2048',
+            'videos.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'resources' => 'sometimes|nullable|array',
-            'resources.*' => 'sometimes|url|max:2048',
+            'resources.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'language' => 'sometimes|required|array|min:1',
             'language.*' => ['sometimes', 'required', new ValidPostValue('language')],
             'category' => ['sometimes', 'required', 'string', new ValidPostValue('category')],
