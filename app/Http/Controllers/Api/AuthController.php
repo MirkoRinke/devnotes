@@ -13,6 +13,10 @@ use App\Traits\ApiResponses;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+
 use Exception;
 use Illuminate\Validation\ValidationException;
 
@@ -342,6 +346,161 @@ class AuthController extends Controller {
             $tokens->each->delete();
 
             return $this->successResponse(null, 'All other devices logged out successfully', 200);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
+     * Forgot Password
+     * 
+     * Endpoint: POST /forgot-password
+     *
+     * Sends a password reset link to the user's email address.
+     * The email will contain a token that can be used to reset the password.
+     * During development, the email is saved to the log file.
+     *
+     * @group User Authentication
+     *
+     * @bodyParam email string required The email address of the user. Example: user@example.com
+     *
+     * @bodyContent {
+     *   "email": "user@example.com"
+     * }
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Password reset link sent",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     * 
+     * @response status=422 scenario="Validation Error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "email": ["EMAIL_FIELD_REQUIRED"]
+     *   }
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     */
+    public function forgotPassword(Request $request): JsonResponse {
+        try {
+            $request->validate(
+                ['email' => 'required|string|email'],
+                $this->getValidationMessages('ForgotPassword')
+            );
+
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+
+            if ($status === Password::RESET_LINK_SENT) {
+                return $this->successResponse(null, 'Password reset link sent', 200);
+            }
+
+            return $this->errorResponse(__($status), 'PASSWORD_RESET_FAILED', 400);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Reset Password
+     * 
+     * Endpoint: POST /reset-password
+     *
+     * Resets the user's password using the token received in the email.
+     *
+     * @group User Authentication
+     *
+     * @bodyParam token string required The token from the reset link. Example: 5b39dcaa83dafb56581ad1c3c8335984eb666e9a29e46c171833e257ec60cbfd
+     * @bodyParam email string required The email address of the user. Example: user@example.com
+     * @bodyParam password string required The new password. Example: newSecurePassword123
+     * @bodyParam password_confirmation string required Password confirmation. Example: newSecurePassword123
+     *
+     * @bodyContent {
+     *   "token": "5b39dcaa83dafb56581ad1c3c8335984eb666e9a29e46c171833e257ec60cbfd",
+     *   "email": "user@example.com",
+     *   "password": "newSecurePassword123",
+     *   "password_confirmation": "newSecurePassword123"
+     * }
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Password has been reset",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": null
+     * }
+     * 
+     * @response status=400 scenario="Invalid Token" {
+     *   "status": "error",
+     *   "message": "This password reset token is invalid.",
+     *   "code": 400,
+     *   "errors": "PASSWORD_RESET_FAILED"
+     * }
+     * 
+     * @response status=422 scenario="Validation Error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "email": ["EMAIL_FIELD_REQUIRED"],
+     *     "password": ["PASSWORD_FIELD_REQUIRED"],
+     *     "token": ["TOKEN_FIELD_REQUIRED"]
+     *   }
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     */
+    public function resetPassword(Request $request): JsonResponse {
+        try {
+            $request->validate(
+                [
+                    'token' => 'required|string',
+                    'email' => 'required|string|email',
+                    'password' => 'required|string|min:8|confirmed',
+                ],
+                $this->getValidationMessages('ResetPassword')
+            );
+
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+                function ($user, $password) {
+                    $user->forceFill([
+                        'password' => Hash::make($password)
+                    ])->setRememberToken(Str::random(60));
+
+                    $user->save();
+
+                    event(new PasswordReset($user));
+                }
+            );
+
+            if ($status === Password::PASSWORD_RESET) {
+                return $this->successResponse(null, 'Password has been reset', 200);
+            }
+
+            return $this->errorResponse(__($status), 'PASSWORD_RESET_FAILED', 400);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
