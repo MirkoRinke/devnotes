@@ -112,4 +112,21 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Frontend URLs for SPA Authentication
+    |--------------------------------------------------------------------------
+    |
+    | These settings define the URLs used when sending links to the frontend
+    | for password reset and other authentication-related features.
+    | This is essential for API/SPA applications where the frontend
+    | is separate from the backend.
+    |
+    */
+
+    'frontend' => [
+        'url' => env('FRONTEND_URL', 'http://localhost:4200'),
+        'reset_password_url' => env('FRONTEND_RESET_PASSWORD_URL', '/auth/reset-password'),
+    ],
+
 ];
