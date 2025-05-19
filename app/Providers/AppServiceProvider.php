@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -94,6 +95,16 @@ class AppServiceProvider extends ServiceProvider {
 
             // The perMinute method is used to limit the number of requests per minute
             return Limit::perMinute($maxAttempts)->by($key);
+        });
+
+
+        /**
+         * Customizing the password reset URL
+         */
+        ResetPassword::createUrlUsing(function ($notifiable, $token) {
+            $frontendUrl = config('auth.frontend.url', 'http://localhost:4200');
+            $resetUrl = config('auth.frontend.reset_password_url', '/auth/reset-password');
+            return $frontendUrl . $resetUrl . '?token=' . $token . '&email=' . urlencode($notifiable->email);
         });
     }
 }
