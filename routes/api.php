@@ -70,6 +70,12 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     });
 
     /**
+     * Route for password reset
+     */
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+    /**
      * Route for ban and unban users
      */
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
