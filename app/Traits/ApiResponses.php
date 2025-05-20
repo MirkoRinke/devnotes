@@ -116,6 +116,14 @@ trait ApiResponses {
                     'device_name' => 'DEVICE_NAME_FIELD_REQUIRED',
                     'device_name.string' => 'DEVICE_NAME_MUST_BE_STRING',
                 ];
+            case 'verifyEmail':
+                return [
+                    'id.required' => 'ID_FIELD_REQUIRED',
+                    'id.integer' => 'ID_MUST_BE_INTEGER',
+
+                    'hash.required' => 'HASH_FIELD_REQUIRED',
+                    'hash.string' => 'HASH_MUST_BE_STRING',
+                ];
             case 'ForgotPassword':
                 return [
                     'email.required' => 'EMAIL_FIELD_REQUIRED',
