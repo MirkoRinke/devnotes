@@ -55,6 +55,15 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     Route::post('/register', [RegisterController::class, 'register']);
 
     /**
+     * Route for email verification
+     */
+    Route::post('/email/verify', [RegisterController::class, 'verifyEmail']);
+
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/email/verification-notification', [RegisterController::class, 'resendVerificationEmail']);
+    });
+
+    /**
      * Route for login
      */
     Route::post('/login', [AuthController::class, 'login']);
