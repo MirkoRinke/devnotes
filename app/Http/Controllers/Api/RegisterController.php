@@ -17,6 +17,8 @@ use App\Services\UserRelationService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RegisterController extends Controller {
 
@@ -61,15 +63,6 @@ class RegisterController extends Controller {
      * 
      * Creates a new user account with the provided information. Upon successful registration,
      * a user profile is automatically generated and the username is checked against forbidden names.
-     * 
-     * Note on Email Verification:
-     * For this portfolio/demo project, emails are automatically verified.
-     * In a production environment, the typical implementation would:
-     * - Set email_verified_at to null initially
-     * - Send a verification email with a token/signed link
-     * - Provide an API endpoint for verification
-     * - Restrict certain functionality for unverified users
-     * - Implement the MustVerifyEmail interface in the User model
      *
      * @group Authentication
      *
@@ -134,8 +127,17 @@ class RegisterController extends Controller {
                     'display_name' => $validatedData['display_name'],
                     'email' => $validatedData['email'],
                     'password' => bcrypt($validatedData['password']),
-                    'email_verified_at' => now(), // Auto-verification for demo purposes only
+                    'email_verified_at' => config('app.features.email_verification', true) ? null : now(),
                 ]);
+
+
+                /**
+                 * Send email verification notification
+                 * The user must implement the MustVerifyEmail interface
+                 */
+                if (config('app.features.email_verification', true)) {
+                    $user->sendEmailVerificationNotification();
+                }
 
                 /**
                  * Create profile and check username
@@ -149,6 +151,149 @@ class RegisterController extends Controller {
             });
 
             return $this->successResponse($user, 'User created successfully', 201);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Resend the email verification notification
+     *
+     * Endpoint: POST /email/verification-notification
+     * 
+     * Resend the verification email to the authenticated user if their 
+     * email hasn't been verified yet.
+     *
+     * @group Authentication
+     *
+     * @response status=200 scenario="Email sent" {
+     *   "status": "success",
+     *   "message": "Verification link sent",
+     *   "code": 200,
+     *   "data": null
+     * }
+     * 
+     * @response status=200 scenario="Already verified" {
+     *   "status": "success",
+     *   "message": "Email already verified",
+     *   "code": 200,
+     *   "data": null
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error",
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     */
+    public function resendVerificationEmail(Request $request): JsonResponse {
+        try {
+            // Check if email is already verified
+            if ($request->user()->hasVerifiedEmail()) {
+                return $this->successResponse(null, 'Email already verified', 200);
+            }
+
+            // Resend the verification email
+            $request->user()->sendEmailVerificationNotification();
+
+            return $this->successResponse(null, 'Verification link sent', 200);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
+     * Verify the user's email address
+     *
+     * Endpoint: POST /email/verify
+     * 
+     * Verifies a user's email address using the ID and hash from 
+     * the verification link. This endpoint is typically called by the frontend
+     * after receiving the verification link from the email.
+     *
+     * @group Authentication
+     *
+     * @bodyParam id integer required The user ID. Example: 1
+     * @bodyParam hash string required The verification hash from the email. Example: 3d8d2bb014340f7b4e8547f3381068d347c27f3e
+     *
+     * @bodyContent {
+     *   "id": 1,
+     *   "hash": "3d8d2bb014340f7b4e8547f3381068d347c27f3e"
+     * }
+     *
+     * @response status=200 scenario="Email verified" {
+     *   "status": "success",
+     *   "message": "Email verified successfully",
+     *   "code": 200,
+     *   "data": null
+     * }
+     * 
+     * @response status=400 scenario="Invalid link" {
+     *   "status": "error",
+     *   "message": "Invalid verification link",
+     *   "code": 400,
+     *   "errors": "INVALID_VERIFICATION_LINK"
+     * }
+     * 
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User not found",
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
+     * }
+     * 
+     * @response status=422 scenario="Validation Error" {
+     *   "status": "error",
+     *   "message": "Validation failed",
+     *   "code": 422,
+     *   "errors": {
+     *     "id": ["ID_FIELD_REQUIRED"],
+     *     "hash": ["HASH_FIELD_REQUIRED"]
+     *   }
+     * }
+     * 
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error",
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     */
+    public function verifyEmail(Request $request): JsonResponse {
+        try {
+            // Validate the request parameters
+            $validated = $request->validate(
+                [
+                    'id' => 'required|integer',
+                    'hash' => 'required|string',
+                ],
+                $this->getValidationMessages('verifyEmail')
+            );
+
+            // Find the user by ID
+            $user = User::findOrFail($validated['id']);
+
+            // Verify that the hash matches
+            if (!hash_equals((string) $validated['hash'], sha1($user->getEmailForVerification()))) {
+                return $this->errorResponse('Invalid verification link', 'INVALID_VERIFICATION_LINK', 400);
+            }
+
+            // Check if already verified
+            if ($user->hasVerifiedEmail()) {
+                return $this->successResponse(null, 'Email already verified', 200);
+            }
+
+            // Mark as verified and trigger Verified event
+            if ($user->markEmailAsVerified()) {
+                event(new Verified($user));
+            }
+
+            return $this->successResponse(null, 'Email verified successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
