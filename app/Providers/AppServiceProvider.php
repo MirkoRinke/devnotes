@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -95,6 +96,19 @@ class AppServiceProvider extends ServiceProvider {
 
             // The perMinute method is used to limit the number of requests per minute
             return Limit::perMinute($maxAttempts)->by($key);
+        });
+
+        // Customize the email verification URL to point to the frontend
+        VerifyEmail::createUrlUsing(function ($notifiable) {
+            $frontendUrl = config('auth.frontend.url', 'http://localhost:4200');
+            $verifyUrl = config('auth.frontend.verify_email_url', '/auth/verify-email');
+
+            $params = http_build_query([
+                'id' => $notifiable->getKey(),
+                'hash' => sha1($notifiable->getEmailForVerification()),
+            ]);
+
+            return $frontendUrl . $verifyUrl . '?' . $params;
         });
 
 
