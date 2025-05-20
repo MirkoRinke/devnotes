@@ -127,6 +127,6 @@ return [
     'frontend' => [
         'url' => env('FRONTEND_URL', 'http://localhost:4200'),
         'reset_password_url' => env('FRONTEND_RESET_PASSWORD_URL', '/auth/reset-password'),
+        'verify_email_url' => env('FRONTEND_VERIFY_EMAIL_URL', '/auth/verify-email'),
     ],
-
 ];
