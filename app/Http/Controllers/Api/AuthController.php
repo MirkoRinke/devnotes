@@ -113,6 +113,12 @@ class AuthController extends Controller {
                 return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
             }
 
+            // Check if the user has a Token with the same device name, if so, delete it
+            $existingTokens = $user->tokens()->where('name', $request->device_name)->get();
+            if ($existingTokens->count() > 0) {
+                $existingTokens->each->delete();
+            }
+
             $token = $user->createToken($request->device_name);
             $token->accessToken->expires_at = Carbon::now()->addDays(7);
             $token->accessToken->save();
