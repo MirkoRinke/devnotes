@@ -174,7 +174,7 @@ class ApiKeyController extends Controller {
                 'active' => true,
             ]);
 
-            return $this->successResponse(['api_key' => $key, 'name' => $apiKey->name, 'created_at' => $apiKey->created_at,], 'API key generated successfully', 201);
+            return $this->successResponse(['name' => $apiKey->name, 'api_key' => $key], 'API key generated successfully', 201);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
