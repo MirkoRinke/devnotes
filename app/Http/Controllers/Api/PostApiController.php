@@ -33,6 +33,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 
 
 class PostApiController extends Controller {
+
     /**
      *  The traits used in the controller
      */
@@ -956,97 +957,6 @@ class PostApiController extends Controller {
             return $this->errorResponse("Post with ID $id does not exist", 'POST_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
-        } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-        }
-    }
-
-
-    /**
-     * Get Interactions for a User's Posts
-     * 
-     * Endpoint: GET /posts/{user_id}/received-interactions
-     *
-     * Calculates the total count of likes, favorites, or combined interactions (sum of likes + favorites) for a user's posts.
-     * This provides an aggregated view of how popular a user's content is.
-     *
-     * @group Users
-     *
-     * @urlParam user_id required The ID of the user to get interactions for. Example: 1
-     * 
-     * @queryParam type required The type of interaction to count. Must be either "likes_count", "favorite_count" or "interactions".
-     * 
-     * Example URL: /posts/1/received-interactions/?type=likes_count
-     * 
-     * @response status=200 scenario="Success" {
-     *   "status": "success",
-     *   "message": "Total likes_count for user with ID 1",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": 3
-     * }
-     * 
-     * Example URL: /posts/1/received-interactions/?type=favorite_count
-     *
-     * @response status=200 scenario="Success" {
-     *   "status": "success",
-     *   "message": "Total favorite_count for user with ID 1",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": 4
-     * }
-     * 
-     * Example URL: /posts/1/received-interactions/?type=interactions
-     * 
-     * @response status=200 scenario="Success" {
-     *   "status": "success",
-     *   "message": "Total interactions for user with ID 1",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": 7
-     * }
-     * 
-     * @response status=422 scenario="Validation Error" {
-     *   "status": "error",
-     *   "message": "Validation failed",
-     *   "code": 422,
-     *   "errors": {
-     *     "type": ["TYPE_INVALID_OPTION"]
-     *   }
-     * }
-     *
-     * @response status=500 scenario="Server Error" {
-     *   "status": "error", 
-     *   "message": "An unexpected error occurred",
-     *   "code": 500,
-     *   "errors": "SERVER_ERROR"
-     * }
-     * 
-     * Note: This endpoint sums the total number of likes, favorites, or both (interactions)
-     * received on posts created by the specified user. It doesn't count interactions on individual comments.
-     * 
-     * @authenticated
-     */
-    public function getUserPostsInteractions(Request $request, string $id) {
-        try {
-            $validatedData = $request->validate(
-                [
-                    'type' => 'required|string|in:likes_count,favorite_count,interactions',
-                ],
-                $this->getValidationMessages('Post')
-            );
-
-            if ($validatedData['type'] === 'likes_count' || $validatedData['type'] === 'favorite_count') {
-                $total = (int)Post::where('user_id', $id)->sum($validatedData['type']);
-            }
-
-            if ($validatedData['type'] === 'interactions') {
-                $total = (int)Post::where('user_id', $id)->sum('likes_count') + Post::where('user_id', $id)->sum('favorite_count');
-            }
-
-            return $this->successResponse($total, 'Total ' . $validatedData['type'] . ' for user with ID ' . $id, 200);
-        } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
