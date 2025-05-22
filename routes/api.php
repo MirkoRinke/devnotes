@@ -171,8 +171,8 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
         Route::apiResource('likes', UserLikeController::class)->only(['index', 'store']);
         Route::delete('/likes', [UserLikeController::class, 'destroy']);
 
-        Route::get('/user-likes/posts', [UserLikeController::class, 'getLikedPosts']);
-        Route::get('/user-likes/comments', [UserLikeController::class, 'getLikedComments']);
+        Route::get('/user-likes/{userId}/posts', [UserLikeController::class, 'getLikedPosts']);
+        Route::get('/user-likes/{userId}/comments', [UserLikeController::class, 'getLikedComments']);
     });
 
     /**
