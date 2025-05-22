@@ -15,6 +15,8 @@ use App\Traits\QueryBuilder;
 use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
+use App\Traits\PostQuerySetup;
+
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -36,7 +38,7 @@ class FavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager;
+    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup;
 
 
     /**
@@ -480,13 +482,9 @@ class FavoriteController extends Controller {
                 $subQuery->where('user_id', $userId);
             });
 
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
+            $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->applyAccessFilters($request, $query);
-
-            $query = $this->buildQuery($request, $query, 'post');
+            $query = $this->setupPostQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -498,6 +496,9 @@ class FavoriteController extends Controller {
             $query = $this->managePostsFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
 
             return $this->successResponse($query, 'Favorited posts retrieved successfully', 200);
         } catch (Exception $e) {
