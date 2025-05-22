@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\UserLike;
 use App\Models\Post;
 use App\Models\Comment;
-
+use App\Models\User;
 use App\Traits\ApiResponses;
 use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
@@ -559,9 +559,9 @@ class UserLikeController extends Controller {
     /**
      * Get Liked Posts
      * 
-     * Endpoint: GET /user-likes/posts
+     * Endpoint: GET /user-likes/{userId}/posts
      *
-     * Retrieves all posts that have been liked by the authenticated user, with support for
+     * Retrieves all posts that have been liked by the specified user, with support for
      * filtering, sorting, and relation inclusion.
      *
      * @group User Likes
@@ -581,7 +581,7 @@ class UserLikeController extends Controller {
      * @queryParam page integer Page number for pagination. Example: page=1
      * @queryParam per_page integer Items per page. Example: per_page=15
      *
-     * Example URL: /user-likes/posts
+     * Example URL: /user-likes/5/posts
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -697,7 +697,7 @@ class UserLikeController extends Controller {
      *   ]
      * }
      *
-     * Example URL: /user-likes/posts/?include=user&user_fields=id,display_name
+     * Example URL: /user-likes/5/posts/?include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="With included user relation" {
      *   "status": "success",
@@ -820,13 +820,20 @@ class UserLikeController extends Controller {
      *     }
      *   ]
      * }
-     *
+     * 
      * @response status=200 scenario="No liked posts found" {
      *   "status": "success",
      *   "message": "No liked posts found",
      *   "code": 200,
      *   "count": 0,
      *   "data": []
+     * }
+     * 
+     * @response status=403 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User not found",
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -838,9 +845,9 @@ class UserLikeController extends Controller {
      * 
      * @authenticated
      */
-    public function getLikedPosts(Request $request) {
+    public function getLikedPosts(Request $request, string $userId) {
         try {
-            $user = $request->user();
+            $user = User::findOrFail($userId);
 
             $likedPostIds = $user->likes()
                 ->where('likeable_type', Post::class)
@@ -867,6 +874,8 @@ class UserLikeController extends Controller {
             $query = $this->checkForIncludedRelations($request, $query);
 
             return $this->successResponse($query, 'Liked posts retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -875,9 +884,9 @@ class UserLikeController extends Controller {
     /**
      * Get Liked Comments
      * 
-     * Endpoint: GET /user-likes/comments
+     * Endpoint: GET /user-likes/{userId}/comments
      *
-     * Retrieves all comments that have been liked by the authenticated user, with support for
+     * Retrieves all comments that have been liked by the specified user, with support for
      * filtering, sorting, and relation inclusion.
      *
      * @group User Likes
@@ -897,7 +906,7 @@ class UserLikeController extends Controller {
      * @queryParam page integer Page number for pagination. Example: page=1
      * @queryParam per_page integer Items per page. Example: per_page=15
      *
-     * Example URL: /user-likes/comments
+     * Example URL: /user-likes/4/comments
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -942,7 +951,7 @@ class UserLikeController extends Controller {
      *   ]
      * }
      *
-     * Example URL: /user-likes/comments/?include=user&user_fields=id,display_name
+     * Example URL: /user-likes/4/comments/?include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="With included user relation" {
      *   "status": "success",
@@ -1003,6 +1012,13 @@ class UserLikeController extends Controller {
      *   "data": []
      * }
      *
+     * @response status=403 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User not found",
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
+     * }
+     * 
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -1012,9 +1028,9 @@ class UserLikeController extends Controller {
      * 
      * @authenticated
      */
-    public function getLikedComments(Request $request) {
+    public function getLikedComments(Request $request, string $userId) {
         try {
-            $user = $request->user();
+            $user = User::findOrFail($userId);
 
             $likedCommentIds = $user->likes()
                 ->where('likeable_type', Comment::class)
@@ -1039,6 +1055,8 @@ class UserLikeController extends Controller {
             $query = $this->checkForIncludedRelations($request, $query);
 
             return $this->successResponse($query, 'Liked comments retrieved successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
