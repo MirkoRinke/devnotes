@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\UserLikeController;
 use App\Http\Controllers\API\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
 use App\Http\Controllers\Api\CronjobController;
+use App\Http\Controllers\API\UserStatsController;
 
 /**
  * API Route Security Middleware
@@ -100,15 +101,20 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     });
 
     /**
+     * Route for user stats
+     */
+    Route::get('/users/{user_id}/post-interactions', [UserStatsController::class, 'getUserPostsInteractions']);
+
+    /**
      * Route for posts
      */
     Route::get('/posts', [PostApiController::class, 'index']);
     Route::get('/posts/{post}', [PostApiController::class, 'show']);
-    Route::get('/posts/{user_id}/received-interactions', [PostApiController::class, 'getUserPostsInteractions']);
 
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
         Route::apiResource('posts', PostApiController::class)->except(['index', 'show']);
     });
+
 
     /**
      * Route for comments
