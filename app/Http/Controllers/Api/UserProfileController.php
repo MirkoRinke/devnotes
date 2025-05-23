@@ -155,7 +155,7 @@ class UserProfileController extends Controller {
      * 
      * @queryParam include string Optional. Include related resources: user. Example: include=user
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, name, display_name, role, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
      *                              Example: user_fields=id,name,display_name
      * 
      *  Example URL: /user-profiles
@@ -295,7 +295,7 @@ class UserProfileController extends Controller {
      * @queryParam select string Optional. Select specific fields. Example: select=id,display_name,website
      * @queryParam include string Optional. Include related resources: user. Example: include=user
      * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, name, display_name, role, created_at, updated_at
+     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
      *                              Example: user_fields=id,name,display_name
      * 
      * Example URL: /user-profiles/1
