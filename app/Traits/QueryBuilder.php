@@ -400,31 +400,31 @@ trait QueryBuilder {
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['name', 'match_type'],
+                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
             'filter' => [
                 // Default
                 ...['created_at', 'updated_at'],
                 // Basic
-                ...['name', 'match_type'],
+                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
             'select' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['name', 'match_type'],
+                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
             'startsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['name', 'match_type'],
+                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
             'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['name', 'match_type'],
+                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
             'getPerPage' => 10
         ],
