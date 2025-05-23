@@ -3,11 +3,9 @@
 namespace App\Traits;
 
 use App\Models\Comment;
-use App\Models\Post;
-use App\Models\User;
-use App\Models\UserProfile;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
@@ -101,13 +99,12 @@ trait ApiInclude {
         if ($request->has('include')) {
             $relations = explode(',', $request->input('include'));
             $select = $this->getSelectFields($request) ?? [];
-
             if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
                 foreach ($data as $item) {
                     $this->applyRelationVisibility($request, $item, $relations, $select);
                 }
                 return $data;
-            } else if ($data instanceof Comment || $data instanceof Post || $data instanceof UserProfile || $data instanceof User) {
+            } else if ($data instanceof Model) {
                 $this->applyRelationVisibility($request, $data, $relations, $select);
                 return $data;
             }
