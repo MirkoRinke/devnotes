@@ -10,9 +10,11 @@ use App\Http\Controllers\Controller;
 use App\Models\ForbiddenName;
 
 use App\Traits\ApiResponses;
-use App\Traits\ApiInclude;
 use App\Traits\QueryBuilder;
+use App\Traits\RelationLoader;
+use App\Traits\ApiInclude;
 use App\Traits\CacheHelper;
+use App\Traits\FieldManager;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -33,7 +35,7 @@ class ForbiddenNameController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, CacheHelper, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, RelationLoader, ApiInclude, CacheHelper, FieldManager, AuthorizesRequests;
 
     /**
      * The validation rules for the create method
@@ -67,6 +69,55 @@ class ForbiddenNameController extends Controller {
     }
 
 
+
+    /**
+     * Setup the Forbidden Name Query
+     * This method is used to setup the query for the forbidden names
+     * It applies sorting, filtering, selecting, and pagination
+     * It also loads the relations for the forbidden names
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @param string $methods The method to call for building the query
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->setupForbiddenNameQuery($request, $query, 'buildQuery')
+     */
+    protected function setupForbiddenNameQuery(Request $request, $query, $methods): mixed {
+        $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'created_by_user_id']);
+
+        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
+
+        $this->loadUserRelation($request, $query);
+
+        $query = $this->$methods($request, $query, 'forbidden_names');
+        if ($query instanceof JsonResponse) {
+            return $query;
+        }
+
+        return $query;
+    }
+
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadUserRelation($request, $query)
+     */
+    private function loadUserRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'created_by_user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ]);
+        }
+        return $query;
+    }
+
+
     /**
      * List All Forbidden Names
      * 
@@ -88,6 +139,11 @@ class ForbiddenNameController extends Controller {
      * 
      * @queryParam page integer Page number for pagination. Example: page=2
      * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
+     * 
+     * @queryParam include string Optional. Include related resources: user. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
+     *                              Example: user_fields=id,name,display_name
      * 
      * Example URL: /forbidden-names
      * 
@@ -127,7 +183,7 @@ class ForbiddenNameController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /forbidden-names/?select=id,name,match_type
+     * Example URL: /forbidden-names/?select=id,name,match_type&include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="Forbidden names retrieved with select" {
      *  "status": "success",
@@ -139,16 +195,28 @@ class ForbiddenNameController extends Controller {
      *       "id": 1,
      *       "name": "admin",
      *       "match_type": "exact",
+     *      "user": {
+     *         "id": 1,
+     *         "display_name": "system"
+     *       }
      *     },
      *     {
      *       "id": 2,
      *       "name": "moderator",
      *       "match_type": "exact",
+     *       "user": {
+     *         "id": 1,
+     *         "display_name": "system"
+     *       }
      *     },
      *     {
      *       "id": 3,
      *       "name": "system",
      *       "match_type": "partial",
+     *      "user": {
+     *         "id": 1,
+     *         "display_name": "system"
+     *       }
      *     }
      *   ]
      * }
@@ -194,8 +262,9 @@ class ForbiddenNameController extends Controller {
 
             $query = ForbiddenName::query();
 
-            $query = $this->buildQuery($request, $query, 'forbidden_names');
+            $originalSelectFields = $this->getSelectFields($request);
 
+            $query = $this->setupForbiddenNameQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -204,11 +273,18 @@ class ForbiddenNameController extends Controller {
                 return $this->successResponse($query, 'No forbidden names found', 200);
             }
 
+            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
             return $this->successResponse($query, 'Forbidden names retrieved successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
         }
     }
 
@@ -329,6 +405,11 @@ class ForbiddenNameController extends Controller {
      * @urlParam id integer required The ID of the forbidden name to retrieve. Example: 1
      * @queryParam select string Select specific fields to return. Example: select=id,name,match_type
      * 
+     * @queryParam include string Optional. Include related resources: user. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
+     *                              Example: user_fields=id,name,display_name
+     * 
      * Example URL: /forbidden-names/1
      * 
      * @response status=200 scenario="Forbidden name retrieved" {
@@ -347,7 +428,7 @@ class ForbiddenNameController extends Controller {
      *   }
      * }
      * 
-     * Example URL: /forbidden-names/1/?select=id,name,match_type
+     * Example URL: /forbidden-names/1/?select=id,name,match_type&include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="Forbidden name retrieved with select" {
      *   "status": "success",
@@ -357,7 +438,11 @@ class ForbiddenNameController extends Controller {
      *   "data": {
      *     "id": 1,
      *     "name": "admin",
-     *     "match_type": "exact"
+     *     "match_type": "partial",
+     *     "user": {
+     *       "id": 2,
+     *       "display_name": "system"
+     *     }
      *   }
      * }
      *
@@ -390,15 +475,22 @@ class ForbiddenNameController extends Controller {
 
             $query = ForbiddenName::query()->where('id', $id);
 
-            $query = $this->buildQuerySelect($request, $query, 'forbidden_names');
+            $originalSelectFields = $this->getSelectFields($request);
 
+            $query = $this->setupForbiddenNameQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
 
-            $forbiddenName = $query->firstOrFail();
+            $query = $query->firstOrFail();
 
-            return $this->successResponse($forbiddenName, 'Forbidden name retrieved successfully', 200);
+            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            return $this->successResponse($query, 'Forbidden name retrieved successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ModelNotFoundException $e) {
