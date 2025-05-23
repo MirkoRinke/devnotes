@@ -37,7 +37,10 @@ class ForbiddenName extends Model {
      *
      * @var array
      */
-    protected $hidden = [];
+    protected $hidden = [
+        // Relationships
+        'user',
+    ];
 
     /**
      * The attributes that should be cast to native types.
@@ -55,6 +58,18 @@ class ForbiddenName extends Model {
      * @example | ForbiddenName::with('creator')->get() // Eager loading
      */
     public function creator() {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    /**
+     * Get the user who created this forbidden name
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $forbiddenName->user // Access the user of the forbidden name
+     * @example | ForbiddenName::with('user')->get() // Eager loading
+     */
+    public function user() {
         return $this->belongsTo(User::class, 'created_by_user_id');
     }
 }
