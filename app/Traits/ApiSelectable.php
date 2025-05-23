@@ -2,12 +2,8 @@
 
 namespace App\Traits;
 
-use App\Models\Comment;
-use App\Models\Post;
-use App\Models\User;
-use App\Models\UserProfile;
-
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -141,7 +137,7 @@ trait ApiSelectable {
             foreach ($data as $model) {
                 $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $model);
             }
-        } else if ($data instanceof Comment || $data instanceof Post || $data instanceof UserProfile || $data instanceof User) {
+        } else if ($data instanceof Model) {
             $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $data);
         }
         return $data;
@@ -210,7 +206,6 @@ trait ApiSelectable {
             $select = $this->getSelectFields($request);
             $visibleFields = array_merge($originalSelectFields ?? [], ['id']);
             $fieldsOnlyInSelect = array_diff($select, $visibleFields);
-
             foreach ($fieldsOnlyInSelect as $field) {
                 $model->makeHidden($field);
             }
