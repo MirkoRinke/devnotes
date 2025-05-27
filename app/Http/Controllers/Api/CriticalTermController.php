@@ -11,8 +11,10 @@ use App\Models\CriticalTerm;
 
 use App\Traits\ApiResponses;
 use App\Traits\QueryBuilder;
+use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\CacheHelper;
+use App\Traits\FieldManager;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -33,7 +35,7 @@ class CriticalTermController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, CacheHelper, AuthorizesRequests;
+    use ApiResponses, QueryBuilder, ApiInclude, CacheHelper, AuthorizesRequests, RelationLoader, FieldManager;
 
     /**
      * The validation rules for the create method
@@ -68,6 +70,52 @@ class CriticalTermController extends Controller {
         return $validationRulesUpdate;
     }
 
+    /**
+     * Setup the query for the critical terms
+     * This method is used to setup the query for the critical terms
+     * It applies sorting, filtering, selecting, and pagination
+     * It also loads the relations for the critical terms
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @param string $methods The method to call for building the query
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->setupCriticalTermQuery($request, $query, 'buildQuery')
+     */
+    protected function setupCriticalTermQuery(Request $request, $query, $methods): mixed {
+        $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'created_by_user_id']);
+
+        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
+
+        $this->loadUserRelation($request, $query);
+
+        $query = $this->$methods($request, $query, 'critical_terms');
+        if ($query instanceof JsonResponse) {
+            return $query;
+        }
+
+        return $query;
+    }
+
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadUserRelation($request, $query)
+     */
+    private function loadUserRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'created_by_user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ]);
+        }
+        return $query;
+    }
 
     /**
      * Get All Critical Terms
@@ -88,6 +136,11 @@ class CriticalTermController extends Controller {
      * 
      * @queryParam page integer Page number for pagination. Example: page=2
      * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
+     * 
+     * @queryParam include string Optional. Include related resources: user. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
+     *                              Example: user_fields=id,name,display_name
      * 
      * Example URL: /critical-terms
      * 
@@ -130,7 +183,7 @@ class CriticalTermController extends Controller {
      *   ]
      * }
      * 
-     * Example URL: /critical-terms/?select=id,name,severity&sort=-severity&filter[language]=en
+     * Example URL: /critical-terms/?select=id,name,severity,language&include=user&user_fields=id,display_name
      * 
      * @response status=200 scenario="Filtered Critical Terms retrieved" {
      *   "status": "success",
@@ -139,14 +192,22 @@ class CriticalTermController extends Controller {
      *   "count": 2,
      *   "data": [
      *     {
-     *       "id": 2,
+     *       "id": 1,
      *       "name": "offensive_term",
-     *       "severity": 5
+     *       "severity": 5,
+     *       "user": {
+     *         "id": 2,
+     *         "display_name": "Maxi2"
+     *       }
      *     },
      *     {
-     *       "id": 1,
+     *       "id": 2,
      *       "name": "inappropriate_word",
-     *       "severity": 3
+     *       "severity": 3,
+     *        "user": {
+     *         "id": 2,
+     *         "display_name": "Maxi2"
+     *       }
      *     }
      *   ]
      * }
@@ -192,7 +253,9 @@ class CriticalTermController extends Controller {
 
             $query = CriticalTerm::query();
 
-            $query = $this->buildQuery($request, $query, 'critical_terms');
+            $originalSelectFields = $this->getSelectFields($request);
+
+            $query = $this->setupCriticalTermQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -200,6 +263,12 @@ class CriticalTermController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No Critical Terms found', 200);
             }
+
+            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Critical Terms retrieved successfully', 200);
         } catch (AuthorizationException $e) {
@@ -331,6 +400,11 @@ class CriticalTermController extends Controller {
      *
      * @queryParam select string Select specific fields (id,name,language,etc). Example: select=id,name,severity
      * 
+     * @queryParam include string Optional. Include related resources: user. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
+     *                              Example: user_fields=id,name,display_name
+     * 
      * Example URL: /critical-terms/2
      * 
      * @response status=200 scenario="Critical Term retrieved (full data)" {
@@ -350,9 +424,9 @@ class CriticalTermController extends Controller {
      *   }
      * }
      * 
-     * Example URL with select: /critical-terms/2/?select=id,name,severity,language
+     * Example URL with select: /critical-terms/2/?select=id,name,severity,language&include=user&user_fields=id,display_name
      * 
-     * @response status=200 scenario="Critical Term retrieved (selected fields)" {
+     * @response status=200 scenario="Critical Term with selected fields and included user relation" {
      *   "status": "success",
      *   "message": "Critical Term retrieved successfully",
      *   "code": 200,
@@ -361,7 +435,11 @@ class CriticalTermController extends Controller {
      *     "id": 2,
      *     "name": "offensive_term",
      *     "severity": 5,
-     *     "language": "en"
+     *     "language": "en",
+     *     "user": {
+     *         "id": 2,
+     *         "display_name": "Maxi2"
+     *     }
      *   }
      * }
      *
@@ -394,15 +472,23 @@ class CriticalTermController extends Controller {
 
             $query = CriticalTerm::query()->where('id', $id);
 
-            $query = $this->buildQuerySelect($request, $query, 'critical_terms');
+            $originalSelectFields = $this->getSelectFields($request);
+
+            $query = $this->setupCriticalTermQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
 
             // Need this because the select method returns only the query object
-            $criticalTerm = $query->firstOrFail();
+            $query = $query->firstOrFail();
 
-            return $this->successResponse($criticalTerm, 'Critical Term retrieved successfully', 200);
+            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            return $this->successResponse($query, 'Critical Term retrieved successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ModelNotFoundException $e) {
