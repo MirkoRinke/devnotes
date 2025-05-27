@@ -11,9 +11,11 @@ use App\Models\Post;
 use App\Models\PostAllowedValue;
 
 use App\Traits\ApiResponses;
-use App\Traits\ApiInclude;
 use App\Traits\QueryBuilder;
+use App\Traits\ApiInclude;
+use App\Traits\RelationLoader;
 use App\Traits\CacheHelper;
+use App\Traits\FieldManager;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -35,7 +37,7 @@ class PostAllowedValueController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiInclude, QueryBuilder, CacheHelper;
+    use AuthorizesRequests, ApiResponses, ApiInclude, QueryBuilder, CacheHelper, RelationLoader, FieldManager;
 
     /**
      * The validation rules for the create method
@@ -65,6 +67,53 @@ class PostAllowedValueController extends Controller {
             'type' => ['sometimes', 'required', 'string', 'in:language,category,post_type,technology,status'],
         ];
         return $validationRulesUpdate;
+    }
+
+    /**
+     * Setup the query for the Post Allowed Values
+     * This method is used to setup the query for the Post Allowed Values
+     * It applies sorting, filtering, selecting, and pagination
+     * It also loads the relations for the Post Allowed Values
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @param string $methods The method to call for building the query
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->setupPostAllowedValueQuery($request, $query, 'buildQuery')
+     */
+    protected function setupPostAllowedValueQuery(Request $request, $query, $methods): mixed {
+        $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'created_by_user_id']);
+
+        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
+
+        $this->loadUserRelation($request, $query);
+
+        $query = $this->$methods($request, $query, 'post_allowed_values');
+        if ($query instanceof JsonResponse) {
+            return $query;
+        }
+
+        return $query;
+    }
+
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadUserRelation($request, $query)
+     */
+    private function loadUserRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'created_by_user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ]);
+        }
+        return $query;
     }
 
 
@@ -123,6 +172,11 @@ class PostAllowedValueController extends Controller {
      * @queryParam page number The page number. Example: page=1
      * @queryParam per_page number Number of items per page. Example: per_page=15 (default: 10)
      * 
+     * @queryParam include string Optional. Include related resources: user. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
+     *                              Example: user_fields=id,name,display_name
+     * 
      * Example URL: /post-allowed-values
      * 
      * @response status=200 scenario="Success" {
@@ -152,9 +206,9 @@ class PostAllowedValueController extends Controller {
      *   ],
      * }
      * 
-     * Example URL: /post-allowed-values/?select=id,name,type
+     * Example URL: /post-allowed-values/?select=id,name,type&include=user&user_fields=id,display_name
      *
-     * @response status=200 scenario="Success" {
+     * @response status=200 scenario="Success with select and include" {
      *   "status": "success",
      *   "message": "Post Allowed Values retrieved successfully",
      *   "code": 200,
@@ -164,11 +218,19 @@ class PostAllowedValueController extends Controller {
      *       "id": 1,
      *       "name": "PHP",
      *       "type": "language",
+     *       "user": {
+     *          "id": 1,
+     *          "display_name": "Maxi1",
+     *        }
      *     },
      *     {
      *       "id": 2,
      *       "name": "JavaScript",
      *       "type": "language",
+     *       "user": {
+     *          "id": 1,
+     *          "display_name": "Maxi1",
+     *        }
      *     }
      *   ],
      * }
@@ -213,8 +275,9 @@ class PostAllowedValueController extends Controller {
 
             $query = PostAllowedValue::query();
 
-            $query = $this->buildQuery($request, $query, 'post_allowed_values');
+            $originalSelectFields = $this->getSelectFields($request);
 
+            $query = $this->setupPostAllowedValueQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -222,6 +285,12 @@ class PostAllowedValueController extends Controller {
             if ($query->isEmpty()) {
                 return $this->successResponse($query, 'No Post Allowed Values found', 200);
             }
+
+            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Post Allowed Values retrieved successfully', 200);
         } catch (AuthorizationException $e) {
@@ -345,6 +414,11 @@ class PostAllowedValueController extends Controller {
      *
      * @urlParam id required The ID of the post allowed value. Example: 1
      * @queryParam select string Comma-separated list of fields to include in the response. Example: select=id,name,type
+     * 
+     * @queryParam include string Optional. Include related resources: user. Example: include=user
+     * @queryParam user_fields string When including user relation, specify fields to return. 
+     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
+     *                              Example: user_fields=id,name,display_name
      *
      * Example URL: /post-allowed-values/1
      *
@@ -363,16 +437,20 @@ class PostAllowedValueController extends Controller {
      *   }
      * }
      *
-     * Example URL with select: /post-allowed-values/1/?select=id,name,type
-     * 
-     * @response status=200 scenario="Success with select parameter" {
+     * Example URL with select: /post-allowed-values/1/?select=id,name,type&include=user&user_fields=id,display_name
+     * display_name
+     * @response status=200 scenario="Success with select and include" {
      *   "status": "success",
      *   "message": "Post Allowed Value retrieved successfully",
      *   "code": 200,
      *   "data": {
      *     "id": 1,
      *     "name": "PHP",
-     *     "type": "language"
+     *     "type": "language",
+     *     "user": {
+     *         "id": 2,
+     *         "display_name": "Maxi2"
+     *     }
      *   }
      * }
      *
@@ -405,15 +483,22 @@ class PostAllowedValueController extends Controller {
 
             $query = PostAllowedValue::query()->where('id', $id);
 
-            $query = $this->buildQuerySelect($request, $query, 'post_allowed_values');
+            $originalSelectFields = $this->getSelectFields($request);
 
+            $query = $this->setupPostAllowedValueQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
 
-            $postAllowedValue = $query->firstOrFail();
+            $query = $query->firstOrFail();
 
-            return $this->successResponse($postAllowedValue, 'Post Allowed Value retrieved successfully', 200);
+            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+
+            $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            return $this->successResponse($query, 'Post Allowed Value retrieved successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ModelNotFoundException $e) {
