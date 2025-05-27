@@ -5,7 +5,19 @@ namespace App\Traits;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use App\Traits\AccessFilter;
+
+/**
+ * Trait for setting up post queries with access filters and relations.
+ * This trait is used to set up the query for the post, applying access filters,
+ * loading relations, and modifying the request select fields.
+ */
 trait PostQuerySetup {
+
+    /**
+     *  The traits used in the controller
+     */
+    use AccessFilter;
 
     /**
      * Setup the post query
@@ -23,7 +35,7 @@ trait PostQuerySetup {
      */
     protected function setupPostQuery(Request $request, $query, string $methods): mixed {
 
-        $query = $this->applyAccessFilters($request, $query);
+        $query = $this->applyPostAccessFilters($request, $query);
 
         $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'user_id']);
 
