@@ -38,7 +38,10 @@ class CriticalTerm extends Model {
      *
      * @var array
      */
-    protected $hidden = [];
+    protected $hidden = [
+        // Relationships
+        'user',
+    ];
 
     /**
      * The attributes that should be cast to native types.
@@ -49,4 +52,17 @@ class CriticalTerm extends Model {
         // Basic
         'severity' => 'integer',
     ];
+
+
+    /**
+     * Get the user who created the critical term.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $criticalTerm->user // Access the user of the post allowed value
+     * @example | CriticalTerm::with('user')->get() // Eager loading
+     */
+    public function user() {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
 }
