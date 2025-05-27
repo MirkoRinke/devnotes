@@ -17,6 +17,7 @@ use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
+use App\Traits\AccessFilter;
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -29,7 +30,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter;
 
     /**
      * The validation rule for the like entity
@@ -857,7 +858,7 @@ class UserLikeController extends Controller {
 
             $query = $this->loadUserRelation($request, $query);
 
-            $query = $this->applyAccessFilters($request, $query);
+            $query = $this->applyPostAccessFilters($request, $query);
 
             $query = $this->buildQuery($request, $query, 'post');
 
