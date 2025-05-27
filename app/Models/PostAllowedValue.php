@@ -37,7 +37,10 @@ class PostAllowedValue extends Model {
      *
      * @var array
      */
-    protected $hidden = [];
+    protected $hidden = [
+        // Relationships
+        'user'
+    ];
 
     /**
      * The attributes that should be cast to native types.
@@ -55,6 +58,18 @@ class PostAllowedValue extends Model {
      * @example | PostAllowedValue::with('createdByUser')->get() // Eager loading
      */
     public function createdByUser() {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    /**
+     * Get the user who created this post allowed value
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * 
+     * @example | $postAllowedValue->user // Access the user of the post allowed value
+     * @example | PostAllowedValue::with('user')->get() // Eager loading
+     */
+    public function user() {
         return $this->belongsTo(User::class, 'created_by_user_id');
     }
 }
