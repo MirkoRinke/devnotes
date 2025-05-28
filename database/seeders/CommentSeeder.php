@@ -34,7 +34,17 @@ class CommentSeeder extends Seeder {
      */
     private function createCommentWithMetadata(array $data) {
         return DB::transaction(function () use ($data) {
-            $comment = Comment::create($data);
+            $comment = new Comment();
+
+            $comment->content = $data['content'];
+            $comment->post_id = $data['post_id'];
+            $comment->parent_id = $data['parent_id'] ?? null;
+            $comment->user_id = $data['user_id'] ?? null;
+            $comment->parent_content = $data['parent_content'] ?? null;
+            $comment->is_deleted = $data['is_deleted'] ?? false;
+            $comment->depth = $data['depth'] ?? 0;
+
+            $comment->save();
 
             $this->commentRelationService->updateLastCommentAt($comment);
             $this->commentRelationService->updateCommentsCount($comment, 'increment');
