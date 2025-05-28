@@ -15,12 +15,10 @@ class ApiKeySeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
-        ApiKey::create([
-            'name' => 'Development API Key',
-            'key' => 'FQojPlIFCVzOBZWHbVmRMMy8jkOl0XlLM67lGD2E',
-            'active' => true,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
-        ]);
+        $apiKey = new ApiKey();
+        $apiKey->name = 'Development API Key';
+        $apiKey->key = 'FQojPlIFCVzOBZWHbVmRMMy8jkOl0XlLM67lGD2E';
+        $apiKey->active = true;
+        $apiKey->save();
     }
 }
