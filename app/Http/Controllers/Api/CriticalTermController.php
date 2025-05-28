@@ -367,11 +367,12 @@ class CriticalTermController extends Controller {
             }
 
             // Create the Critical Term
-            $criticalTerm = CriticalTerm::create([
-                ...$validatedData,
-                'created_by_role' => $request->user()->role,
-                'created_by_user_id' => $request->user()->id
-            ]);
+            $criticalTerm = new CriticalTerm($validatedData);
+
+            $criticalTerm->created_by_role = $request->user()->role;
+            $criticalTerm->created_by_user_id = $request->user()->id;
+
+            $criticalTerm->save();
 
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
@@ -610,11 +611,12 @@ class CriticalTermController extends Controller {
             }
 
             // Update the Critical Term
-            $criticalTerm->update([
-                ...$validatedData,
-                'created_by_role' => $request->user()->role,
-                'created_by_user_id' => $request->user()->id
-            ]);
+            $criticalTerm->fill($validatedData);
+
+            $criticalTerm->created_by_role = $request->user()->role;
+            $criticalTerm->created_by_user_id = $request->user()->id;
+
+            $criticalTerm->save();
 
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
 
