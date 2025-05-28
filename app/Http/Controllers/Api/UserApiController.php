@@ -608,7 +608,7 @@ class UserApiController extends Controller {
                 $this->getValidationMessages('User')
             );
 
-            $user = DB::transaction(function () use ($user, $validatedData) {
+            $user = DB::transaction(function () use ($user, $validatedData, $request) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
 
                 $user->fill([
@@ -616,11 +616,12 @@ class UserApiController extends Controller {
                     'email' => $validatedData['email'] ?? $user->email,
                 ]);
 
-                if (isset($validatedData['password'])) {
+                if (isset($validatedData['password']) && $user === $request->user()) {
                     $user->password = bcrypt($validatedData['password']);
 
-                    // If the password is changed, delete all tokens to force re-authentication
-                    $user->tokens()->delete();
+                    // If the password is changed, delete all other tokens except the current one
+                    $tokens = $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->get();
+                    $tokens->each->delete();
                 }
 
                 $user->save();
