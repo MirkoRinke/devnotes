@@ -611,11 +611,19 @@ class UserApiController extends Controller {
             $user = DB::transaction(function () use ($user, $validatedData) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
 
-                $user->update([
+                $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
                     'email' => $validatedData['email'] ?? $user->email,
-                    'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
                 ]);
+
+                if (isset($validatedData['password'])) {
+                    $user->password = bcrypt($validatedData['password']);
+
+                    // If the password is changed, delete all tokens to force re-authentication
+                    $user->tokens()->delete();
+                }
+
+                $user->save();
 
                 if ($nameChanged) {
                     $this->userRelationService->checkUsername($user);
@@ -849,15 +857,25 @@ class UserApiController extends Controller {
 
             $bannedTime = now()->addDays($days);
 
-            $user = $this->moderationService->handleModerationUpdate(
-                $user,
-                array_merge($validatedData, ['is_banned' => $bannedTime, 'was_ever_banned' => true]),
-                $request,
-                [],
-                'banUser'
-            );
+            $user = DB::transaction(function () use ($user, $bannedTime, $validatedData, $request) {
+                $user = $this->moderationService->handleModerationUpdate(
+                    $user,
+                    $validatedData,
+                    $request,
+                    [],
+                    'banUser'
+                );
 
-            $user->save();
+                $user->is_banned = $bannedTime;
+                $user->was_ever_banned = true;
+
+                // Delete all tokens to force logout on all devices
+                $user->tokens()->delete();
+
+                $user->save();
+
+                return $user;
+            });
 
             $bannedUserInfo = [
                 'id' => $user->id,
@@ -984,11 +1002,14 @@ class UserApiController extends Controller {
 
             $user = $this->moderationService->handleModerationUpdate(
                 $user,
-                array_merge($validatedData, ['is_banned' => null]),
+                $validatedData,
                 $request,
                 [],
                 'unbanUser'
             );
+
+            $user->is_banned = null;
+
             $user->save();
 
             $bannedUserInfo = [
