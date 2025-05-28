@@ -19,17 +19,17 @@ class ApiKey extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                            || Laravel will automatically handle the 'id' field
+        // 'created_at',                    || Laravel will automatically handle the 'created_at' field
 
         // Basic
         'name',
-        'key',
-        'active',
+        // 'key',                           || Automatically created in the controller
+        // 'active',                        || Automatically created in the controller
 
         // Update info
-        'created_at',
-        'updated_at',
-        'last_used_at'
+        // 'updated_at',                    || Laravel will automatically handle the 'updated_at' field
+        // 'last_used_at'                   || Automatically handled by ValidateApiKey middleware
     ];
 
     /**
