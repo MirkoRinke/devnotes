@@ -35,9 +35,18 @@ class UserSeeder extends Seeder {
      */
     private function createUserWithProfile(array $data): User {
         return DB::transaction(function () use ($data) {
-            $user = User::create($data);
+            $user = new User();
 
-            // Create profile and run moderation
+            $user->name = $data['name'];
+            $user->email = $data['email'];
+            $user->password = $data['password'];
+            $user->display_name = $data['display_name'] ?? null;
+            $user->role = $data['role'] ?? 'user';
+            $user->email_verified_at = $data['email_verified_at'] ?? null;
+            $user->account_purpose = $data['account_purpose'] ?? 'regular';
+
+            $user->save();
+
             $this->userRelationService->createUserProfile($user);
             $this->userRelationService->checkUsername($user);
 
