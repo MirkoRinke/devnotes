@@ -26,13 +26,7 @@ class ModerationService {
      * 
      * @example |  $post = $this->moderationService->handleModerationUpdate(
      *                  $post,
-     *                  array_merge(
-     *                      $validatedData,
-     *                      [
-     *                          'is_updated' => true,
-     *                          'updated_by_role' => $request->user()->role
-     *                      ]
-     *                  ),
+     *                  $validatedData,
      *                  $request,
      *                  ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
      *                  'post'
