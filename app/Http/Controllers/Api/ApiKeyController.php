@@ -168,11 +168,11 @@ class ApiKeyController extends Controller {
             $key = Str::random(40);
 
             // Create a new API key record in the database
-            $apiKey = ApiKey::create([
-                'name' => $validated['name'],
-                'key' => $key,
-                'active' => true,
-            ]);
+            $apiKey = new ApiKey();
+            $apiKey->name = $validated['name'];
+            $apiKey->key = $key;
+            $apiKey->active = true;
+            $apiKey->save();
 
             return $this->successResponse(['name' => $apiKey->name, 'api_key' => $key], 'API key generated successfully', 201);
         } catch (AuthorizationException $e) {
