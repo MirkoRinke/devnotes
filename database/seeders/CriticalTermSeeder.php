@@ -45,19 +45,23 @@ class CriticalTermSeeder extends Seeder {
      */
     public function run(): void {
         foreach ($this->criticalTermsEN as $name => $severity) {
-            CriticalTerm::create([
-                'name' => $name,
-                'language' => 'en',
-                'severity' => $severity,
-            ]);
+            $criticalTerm = new CriticalTerm();
+
+            $criticalTerm->name = $name;
+            $criticalTerm->language = 'en';
+            $criticalTerm->severity = $severity;
+
+            $criticalTerm->save();
         }
 
         foreach ($this->criticalTermsDE as $name => $severity) {
-            CriticalTerm::create([
-                'name' => $name,
-                'language' => 'de',
-                'severity' => $severity,
-            ]);
+            $criticalTerm = new CriticalTerm();
+
+            $criticalTerm->name = $name;
+            $criticalTerm->language = 'de';
+            $criticalTerm->severity = $severity;
+
+            $criticalTerm->save();
         }
     }
 }
