@@ -68,8 +68,8 @@ class ValidateApiKey {
         }
 
         // Update the last_used_at timestamp of the API key
-        $validKey->update(['last_used_at' => now()]);
-
+        $validKey->last_used_at = now();
+        $validKey->save();
 
         // Continue with the request
         return $next($request);
