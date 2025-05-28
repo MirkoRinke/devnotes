@@ -442,19 +442,20 @@ class CommentApiController extends Controller {
                 if ($depth >= $this->maxCommentDepth) {
                     return $this->errorResponse("Comments can only be nested to a maximum depth of {$this->maxCommentDepth}", 'COMMENT_NESTING_LIMIT', 422);
                 }
-
-                $validatedData['parent_content'] = $parentComment->content;
             }
 
-            $comment = DB::transaction(function () use ($request, $validatedData, $depth) {
-                $comment = Comment::create([
-                    'user_id' => $request->user()->id,
-                    'content' => $validatedData['content'],
-                    'parent_content' => $validatedData['parent_content'] ?? null,
-                    'post_id' => $validatedData['post_id'],
-                    'parent_id' => $validatedData['parent_id'] ?? null,
-                    'depth' => $depth,
-                ]);
+            $comment = DB::transaction(function () use ($request, $validatedData, $depth, $parentComment) {
+                $comment = new Comment();
+
+                $comment->user_id = $request->user()->id;
+                $comment->content = $validatedData['content'];
+                $comment->parent_content = $parentComment->content ?? null;
+                $comment->post_id = $validatedData['post_id'];
+                $comment->parent_id = $validatedData['parent_id'] ?? null;
+                $comment->depth = $depth;
+
+                // Save the comment
+                $comment->save();
 
                 // Update last_comment_at
                 $this->commentRelationService->updateLastCommentAt($comment);
@@ -809,33 +810,30 @@ class CommentApiController extends Controller {
              * If so, handle the moderation update
              */
             if ($isContentModeration) {
+                // Set the moderation_info field and apply all changes from validatedData to the model
                 $comment = $this->moderationService->handleModerationUpdate(
                     $comment,
-                    array_merge(
-                        $validatedData,
-                        [
-                            'is_updated' => true,
-                            'updated_by_role' => $user->role // For show the user who updated the comment
-                        ]
-                    ),
+                    $validatedData,
                     $request,
                     ['content'],
                     'comment'
                 );
+
+                $comment->is_updated = true;
+                $comment->updated_by_role = $user->role;
+
                 $comment->save();
 
                 return $this->successResponse($comment, 'Comment updated successfully', 200);
             }
 
-            $validatedData = array_merge(
-                $validatedData,
-                ['is_updated' => true],
-                ['updated_by_role' => $user->role]
-            );
+            $comment = DB::transaction(function () use ($comment, $validatedData, $user) {
+                $comment->fill($validatedData);
 
-            $comment = DB::transaction(function () use ($comment, $validatedData) {
-                // Update the comment
-                $comment->update($validatedData);
+                $comment->is_updated = true;
+                $comment->updated_by_role = $user->role;
+
+                $comment->save();
 
                 // Update the last_comment_at timestamp of the parent post
                 $this->commentRelationService->updateLastCommentAt($comment);
