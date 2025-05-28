@@ -30,16 +30,16 @@ class Post extends Model {
         'title',
         'code',
         'description',
-        'resources',
-        'language',
         'images',
         'videos',
-        // 'external_source_previews',  || Automatically created in the controller
+        'resources',
+        'language',
         'category',
         'post_type',
         'technology',
         'tags',
         'status',
+        // 'external_source_previews',  || Automatically created in the controller
 
         // Counts
         // 'favorite_count',            || Automatically handled by the UserFavorite model
@@ -49,8 +49,8 @@ class Post extends Model {
 
         // Update info
         // 'updated_at',                || Laravel will automatically handle the 'updated_at' field
-        'is_updated',
-        'updated_by_role',
+        // 'is_updated',                || Automatically created in the controller
+        // 'updated_by_role',           || Automatically created in the controller
         // 'last_comment_at',           || Automatically handled by the Comment model
 
         // History
