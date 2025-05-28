@@ -22,11 +22,11 @@ class Post extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
-        'created_at',
+        // 'id',                        || Laravel will automatically handle the 'id' field
+        // 'created_at',                || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        'user_id',
+        // 'user_id',                   || Automatically created in the controller
         'title',
         'code',
         'description',
@@ -34,7 +34,7 @@ class Post extends Model {
         'language',
         'images',
         'videos',
-        'external_source_previews',
+        // 'external_source_previews',  || Automatically created in the controller
         'category',
         'post_type',
         'technology',
@@ -42,22 +42,22 @@ class Post extends Model {
         'status',
 
         // Counts
-        'favorite_count',
-        'likes_count',
-        'reports_count',
-        'comments_count',
+        // 'favorite_count',            || Automatically handled by the UserFavorite model
+        // 'likes_count',               || Automatically handled by the UserLike model
+        // 'reports_count',             || Automatically handled by the UserReport model
+        // 'comments_count',            || Automatically handled by the Comment model
 
         // Update info
-        'updated_at',
+        // 'updated_at',                || Laravel will automatically handle the 'updated_at' field
         'is_updated',
         'updated_by_role',
-        'last_comment_at',
+        // 'last_comment_at',           || Automatically handled by the Comment model
 
         // History
-        'history',
+        // 'history',                   || Automatically created in the controller
 
         // Moderation info
-        'moderation_info',
+        // 'moderation_info',           || Automatically created in the controller
     ];
 
     /**
