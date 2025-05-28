@@ -26,27 +26,29 @@ class User extends Authenticatable implements MustVerifyEmail {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                            || Laravel will automatically handle the 'id' field
         'name',
         'email',
-        'email_verified_at',
+        // 'email_verified_at',             || || Automatically handled by the RegisterController
         'password',
-        'created_at',
-        'updated_at',
+        // 'created_at',                    || Laravel will automatically handle the 'created_at' field
 
         // Basic
         'display_name',
-        'role',
+        // 'role',                          || Automatically handled by the RegisterController ( default is 'user' )
 
         // Ban info
-        'is_banned',
-        'was_ever_banned',
+        // 'is_banned',                     || Automatically handled by the Controller
+        // 'was_ever_banned',               || Automatically handled by the Controller
+
+        // Update info
+        // 'updated_at',                    || Laravel will automatically handle the 'updated_at' field
 
         // Moderation info
-        'moderation_info',
+        // 'moderation_info',               || Automatically handled by the Controller
 
         // Account info
-        'account_purpose',
+        // 'account_purpose',               || Automatically handled by the Controller ( default is 'regular' )
     ];
 
     /**
