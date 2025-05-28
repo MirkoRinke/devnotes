@@ -47,15 +47,17 @@ class GuestAccountService {
      * @example | $this->createGuestAccount();
      */
     public function createGuestAccount() {
-        $user = User::create([
-            'name' => 'Guest',
-            'display_name' => 'Guest',
-            'email' => 'guest@system.local',
-            'password' => Hash::make('sicheresPasswort123'),
-            'role' => 'user',
-            'email_verified_at' => now(),
-            'account_purpose' => 'guest',
-        ]);
+        $user = new User();
+
+        $user->name = 'Guest';
+        $user->display_name = 'Guest';
+        $user->email = 'guest@system.local';
+        $user->password = Hash::make('sicheresPasswort123'); //!Todo Use a secure password
+        $user->role = 'user';
+        $user->email_verified_at = now();
+        $user->account_purpose = 'guest';
+
+        $user->save();
 
         $this->userRelationService->createUserProfile($user);
 
