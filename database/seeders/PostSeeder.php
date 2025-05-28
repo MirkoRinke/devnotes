@@ -7,13 +7,44 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PostSeeder extends Seeder {
+
+    /**
+     * Create a post with all fields explicitly set
+     *
+     * @param array $data
+     * @return Post
+     */
+    private function createPost(array $data): Post {
+        $post = new Post();
+
+        $post->user_id = $data['user_id'];
+        $post->title = $data['title'];
+        $post->code = $data['code'] ?? null;
+        $post->description = $data['description'];
+        $post->images = $data['images'] ?? [];
+        $post->videos = $data['videos'] ?? [];
+        $post->resources = $data['resources'] ?? [];
+        $post->external_source_previews = $data['external_source_previews'] ?? null;
+        $post->language = $data['language'];
+        $post->category = $data['category'];
+        $post->post_type = $data['post_type'] ?? 'snippet';
+        $post->technology = $data['technology'] ?? null;
+        $post->tags = $data['tags'];
+        $post->status = $data['status'] ?? 'draft';
+
+        $post->history = $data['history'] ?? [];
+
+        $post->save();
+        return $post;
+    }
+
     /**
      * Run the database seeds.
      */
     public function run(): void {
 
         // Example post 1
-        Post::create([
+        $this->createPost([
             'user_id' => 1,
             'title' => "Svelte Store: Einfaches State Management",
             'code' =>  "import { writable } from 'svelte/store';",
@@ -62,7 +93,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 2
-        Post::create([
+        $this->createPost([
             'user_id' => 4,
             'title' => "Laravel 8: Eloquent ORM",
             'code' =>  "use App\Models\User;",
@@ -106,7 +137,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 3
-        Post::create([
+        $this->createPost([
             'user_id' => 8,
             'title' => "Vue 3: Composition API",
             'code' =>  "import { ref } from 'vue';",
@@ -150,7 +181,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 4
-        Post::create([
+        $this->createPost([
             'user_id' => 9,
             'title' => "React: Functional Components",
             'code' =>  "import React from 'react';",
@@ -194,7 +225,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 5
-        Post::create([
+        $this->createPost([
             'user_id' => 6,
             'title' => "Node.js: RESTful API",
             'code' =>  "const express = require('express');",
@@ -238,7 +269,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 6
-        Post::create([
+        $this->createPost([
             'user_id' => 8,
             'title' => "Docker: Containerisierung",
             'code' =>  "docker run -d -p 80:80 nginx",
@@ -281,7 +312,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 7
-        Post::create([
+        $this->createPost([
             'user_id' => 1,
             'title' => "Git: Branching",
             'code' =>  "git checkout -b feature-branch",
@@ -324,7 +355,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 8
-        Post::create([
+        $this->createPost([
             'user_id' => 9,
             'title' => "Python: Data Science",
             'code' =>  "import pandas as pd",
@@ -368,7 +399,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 9
-        Post::create([
+        $this->createPost([
             'user_id' => 4,
             'title' => "AWS: S3 Bucket",
             'code' =>  "aws s3 ls",
@@ -411,7 +442,7 @@ class PostSeeder extends Seeder {
         ]);
 
         // Example post 10
-        Post::create([
+        $this->createPost([
             'user_id' => 7,
             'title' => "GraphQL: Query Language",
             'code' =>  "query { user { name } }",
@@ -455,7 +486,7 @@ class PostSeeder extends Seeder {
 
 
         // Example post 11
-        Post::create([
+        $this->createPost([
             'user_id' => 7,
             'title' => "Meine Portfolio Website",
             'description' => "Hier ist mein Portfolio, das ich mit Angular erstellt habe.",
