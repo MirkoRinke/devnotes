@@ -168,8 +168,8 @@ class ApiKeyController extends Controller {
             $key = Str::random(40);
 
             // Create a new API key record in the database
-            $apiKey = new ApiKey();
-            $apiKey->name = $validated['name'];
+            $apiKey = new ApiKey($validated);
+
             $apiKey->key = $key;
             $apiKey->active = true;
             $apiKey->save();
