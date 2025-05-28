@@ -429,6 +429,8 @@ class CommentApiController extends Controller {
                 $this->getValidationMessages('Comment')
             );
 
+            $parentComment = null;
+
             $depth = 0;
             if (!empty($validatedData['parent_id'])) {
                 $parentComment = Comment::findOrFail($validatedData['parent_id']);
@@ -445,13 +447,10 @@ class CommentApiController extends Controller {
             }
 
             $comment = DB::transaction(function () use ($request, $validatedData, $depth, $parentComment) {
-                $comment = new Comment();
+                $comment = new Comment($validatedData);
 
                 $comment->user_id = $request->user()->id;
-                $comment->content = $validatedData['content'];
                 $comment->parent_content = $parentComment->content ?? null;
-                $comment->post_id = $validatedData['post_id'];
-                $comment->parent_id = $validatedData['parent_id'] ?? null;
                 $comment->depth = $depth;
 
                 // Save the comment
