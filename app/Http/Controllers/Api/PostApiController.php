@@ -130,18 +130,19 @@ class PostApiController extends Controller {
      * 
      * @param array $validatedData The validated post data
      * @param Post|null $existingPost Existing post for fallback values (null for creation)
-     * @return array Updated validatedData with external_source_previews field
+     * @return array The generated external source previews
      */
     protected function generateExternalSourcePreviews(array $validatedData, ?Post $existingPost = null): array {
         if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData) || array_key_exists('videos', $validatedData)) {
-            $validatedData['external_source_previews'] = $this->externalSourceService->generatePreviews([
+
+            $externalSourcePreviews = $this->externalSourceService->generatePreviews([
                 'images' => $validatedData['images'] ?? $existingPost?->images ?? [],
                 'videos' => $validatedData['videos'] ?? $existingPost?->videos ?? [],
                 'resources' => $validatedData['resources'] ?? $existingPost?->resources ?? []
             ]);
         }
 
-        return $validatedData;
+        return $externalSourcePreviews;
     }
 
 
@@ -440,13 +441,11 @@ class PostApiController extends Controller {
                 $this->getValidationMessages('Post')
             );
 
-            $validatedData['user_id'] = $request->user()->id;
-            $validatedData['history'] = [];
-
-            // Create the external_source_previews field
-            $validatedData = $this->generateExternalSourcePreviews($validatedData);
-
-            $post = Post::create($validatedData);
+            $post = new Post($validatedData);
+            $post->user_id = $request->user()->id;
+            $post->history = [];
+            $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
+            $post->save();
 
             return $this->successResponse($post, 'Post created successfully', 201);
         } catch (ValidationException $e) {
@@ -793,9 +792,6 @@ class PostApiController extends Controller {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
 
-            // Create the external_source_previews field
-            $validatedData = $this->generateExternalSourcePreviews($validatedData, $post);
-
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
              * If so, handle the moderation update
@@ -803,31 +799,29 @@ class PostApiController extends Controller {
             if ($isContentModeration) {
                 $post = $this->moderationService->handleModerationUpdate(
                     $post,
-                    array_merge(
-                        $validatedData,
-                        [
-                            'is_updated' => true,
-                            'updated_by_role' => $user->role // For show the user who updated the post for the user
-                        ]
-                    ),
+                    $validatedData,
                     $request,
                     ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
                     'post'
                 );
+
+                $post->is_updated = true;
+                $post->updated_by_role = $user->role;
+                $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
+
                 $post->save();
 
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
 
-            $validatedData = array_merge(
-                $validatedData,
-                ['is_updated' => true],
-                ['updated_by_role' => $user->role],
-                ['history' => $this->historyService->createPostHistory($post, $user->id)]
+            $post->fill($validatedData);
 
-            );
+            $post->is_updated = true;
+            $post->updated_by_role = $user->role;
+            $post->history = $this->historyService->createPostHistory($post, $user->id);
+            $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-            $post->update($validatedData);
+            $post->save();
 
             $post = $this->managePostsFieldVisibility($request, $post);
 
