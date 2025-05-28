@@ -122,14 +122,15 @@ class RegisterController extends Controller {
 
             $user = DB::transaction(function () use ($validatedData) {
 
-                $user = User::create([
-                    'name' => $validatedData['name'],
-                    'display_name' => $validatedData['display_name'],
-                    'email' => $validatedData['email'],
-                    'password' => bcrypt($validatedData['password']),
-                    'email_verified_at' => config('app.features.email_verification', true) ? null : now(),
-                ]);
 
+                $user = new User();
+                $user->name = $validatedData['name'];
+                $user->display_name = $validatedData['display_name'];
+                $user->email = $validatedData['email'];
+                $user->password = bcrypt($validatedData['password']);
+                $user->email_verified_at = config('app.features.email_verification', true) ? null : now();
+
+                $user->save();
 
                 /**
                  * Send email verification notification
