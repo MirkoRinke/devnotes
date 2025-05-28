@@ -19,29 +19,29 @@ class Comment extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
-        'created_at',
+        // 'id',                    || Laravel will automatically handle the 'id' field
+        // 'created_at',            || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        'post_id',
-        'user_id',
-        'parent_id',
         'content',
-        'parent_content',
-        'is_deleted',
-        'depth',
+        'post_id',
+        'parent_id',
+        // 'user_id',               || Automatically created in the controller
+        // 'parent_content',        || Automatically created in the controller
+        // 'is_deleted',            || Automatically created in the controller
+        // 'depth',                 || Automatically created in the controller   
 
         // Counts
-        'likes_count',
-        'reports_count',
+        // 'likes_count',           || Automatically handled by the UserLike model
+        // 'reports_count',         || Automatically handled by the UserReport model  
 
         // Update info
-        'updated_at',
-        'is_updated',
-        'updated_by_role',
+        // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
+        // 'is_updated',            || Automatically created in the controller
+        // 'updated_by_role',       || Automatically created in the controller
 
         // Moderation info
-        'moderation_info',
+        // 'moderation_info',       || Automatically created in the controller
     ];
 
     /**
