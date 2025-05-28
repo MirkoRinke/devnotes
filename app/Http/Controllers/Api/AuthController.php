@@ -494,6 +494,9 @@ class AuthController extends Controller {
                         'password' => Hash::make($password)
                     ])->setRememberToken(Str::random(60));
 
+                    // Delete all tokens after password reset
+                    $user->tokens()->delete();
+
                     $user->save();
 
                     event(new PasswordReset($user));
