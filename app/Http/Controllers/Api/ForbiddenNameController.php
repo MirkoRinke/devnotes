@@ -372,12 +372,12 @@ class ForbiddenNameController extends Controller {
                 return $this->errorResponse('Forbidden name already exists', 'FORBIDDEN_NAME_EXISTS', 409);
             }
 
-            // Create the forbidden name
-            $forbiddenName = ForbiddenName::create([
-                ...$validatedData,
-                'created_by_role' => $request->user()->role,
-                'created_by_user_id' => $request->user()->id
-            ]);
+            $forbiddenName = new ForbiddenName($validatedData);
+
+            $forbiddenName->created_by_role = $request->user()->role;
+            $forbiddenName->created_by_user_id = $request->user()->id;
+
+            $forbiddenName->save();
 
             $this->forgetForbiddenNameCache();
 
@@ -607,12 +607,12 @@ class ForbiddenNameController extends Controller {
                 }
             }
 
-            // Update the forbidden name
-            $forbiddenName->update([
-                ...$validatedData,
-                'created_by_role' => $request->user()->role,
-                'created_by_user_id' => $request->user()->id
-            ]);
+            $forbiddenName->fill($validatedData);
+
+            $forbiddenName->created_by_role = $request->user()->role;
+            $forbiddenName->created_by_user_id = $request->user()->id;
+
+            $forbiddenName->save();
 
             $this->forgetForbiddenNameCache();
 
