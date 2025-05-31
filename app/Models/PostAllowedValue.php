@@ -19,17 +19,17 @@ class PostAllowedValue extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                    || Laravel will automatically handle the 'id' field
+        // 'created_at',            || Laravel will automatically handle the 'created_at' field
 
         // Basic
         'name',
         'type',
-        'created_by_role',
-        'created_by_user_id',
+        // 'created_by_role',       || Automatically created in the controller
+        // 'created_by_user_id',    || Automatically created in the controller
 
         // Update info
-        'created_at',
-        'updated_at',
+        // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
     ];
 
     /**
