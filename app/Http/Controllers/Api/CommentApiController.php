@@ -424,6 +424,8 @@ class CommentApiController extends Controller {
         try {
             $this->authorize('create', Comment::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
                 $this->getValidationMessages('Comment')
@@ -446,10 +448,12 @@ class CommentApiController extends Controller {
                 }
             }
 
-            $comment = DB::transaction(function () use ($request, $validatedData, $depth, $parentComment) {
+            $comment = DB::transaction(function () use ($user, $validatedData, $depth, $parentComment) {
+
+                // Create the new comment
                 $comment = new Comment($validatedData);
 
-                $comment->user_id = $request->user()->id;
+                $comment->user_id = $user->id;
                 $comment->parent_content = $parentComment->content ?? null;
                 $comment->depth = $depth;
 
@@ -779,9 +783,9 @@ class CommentApiController extends Controller {
         try {
             $comment = Comment::findOrFail($id);
 
-            $user = $request->user();
-
             $this->authorize('update', $comment);
+
+            $user = $request->user();
 
             if ($comment->is_deleted && $user->role === 'user') {
                 return $this->errorResponse('Comment is deleted', 'COMMENT_DELETED', 422);
@@ -809,6 +813,7 @@ class CommentApiController extends Controller {
              * If so, handle the moderation update
              */
             if ($isContentModeration) {
+                // Update the comment
                 // Set the moderation_info field and apply all changes from validatedData to the model
                 $comment = $this->moderationService->handleModerationUpdate(
                     $comment,
@@ -827,6 +832,8 @@ class CommentApiController extends Controller {
             }
 
             $comment = DB::transaction(function () use ($comment, $validatedData, $user) {
+
+                // Update the comment
                 $comment->fill($validatedData);
 
                 $comment->is_updated = true;
