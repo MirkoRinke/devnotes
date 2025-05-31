@@ -19,15 +19,15 @@ class UserFollower extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                    || Laravel will automatically handle the 'id' field
+        // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
 
         // Basic
-        'user_id',
-        'follower_id',
+        // 'user_id',               || Automatically created in the controller
+        // 'follower_id',           || Automatically created in the controller
 
         // Update info
-        'created_at',
-        'updated_at',
+        // 'created_at',            || Laravel will automatically handle the 'created_at' field
     ];
 
     /**
