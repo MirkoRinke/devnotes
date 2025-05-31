@@ -441,8 +441,11 @@ class PostApiController extends Controller {
                 $this->getValidationMessages('Post')
             );
 
+            $user = $request->user();
+
+            // Create a new post
             $post = new Post($validatedData);
-            $post->user_id = $request->user()->id;
+            $post->user_id = $user->id;
             $post->history = [];
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
             $post->save();
@@ -765,9 +768,9 @@ class PostApiController extends Controller {
         try {
             $post = Post::findOrFail($id);
 
-            $user = $request->user();
-
             $this->authorize('update', $post);
+
+            $user = $request->user();
 
             $validationRules = $this->getValidationRulesUpdate();
 
@@ -797,6 +800,8 @@ class PostApiController extends Controller {
              * If so, handle the moderation update
              */
             if ($isContentModeration) {
+                // Update the post
+                // Set the moderation_info field and apply all changes from validatedData to the model
                 $post = $this->moderationService->handleModerationUpdate(
                     $post,
                     $validatedData,
@@ -814,6 +819,7 @@ class PostApiController extends Controller {
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
 
+            // Update the post
             $post->fill($validatedData);
 
             $post->is_updated = true;
