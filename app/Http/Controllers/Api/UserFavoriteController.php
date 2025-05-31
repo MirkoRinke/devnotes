@@ -228,10 +228,14 @@ class UserFavoriteController extends Controller {
 
             if (!$exists) {
                 $favorite = DB::transaction(function () use ($user, $post) {
-                    $favorite = UserFavorite::create([
-                        'user_id' => $user->id,
-                        'post_id' => $post->id
-                    ]);
+
+                    // Create the favorite relationship
+                    $favorite = new UserFavorite();
+
+                    $favorite->user_id = $user->id;
+                    $favorite->post_id = $post->id;
+
+                    $favorite->save();
 
                     $this->updateFavoriteCount($post, 'increment');
 
