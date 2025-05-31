@@ -361,6 +361,8 @@ class ForbiddenNameController extends Controller {
         try {
             $this->authorize('create', ForbiddenName::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
                 $this->getValidationMessages('ForbiddenName')
@@ -372,10 +374,11 @@ class ForbiddenNameController extends Controller {
                 return $this->errorResponse('Forbidden name already exists', 'FORBIDDEN_NAME_EXISTS', 409);
             }
 
+            // Create a new ForbiddenName
             $forbiddenName = new ForbiddenName($validatedData);
 
-            $forbiddenName->created_by_role = $request->user()->role;
-            $forbiddenName->created_by_user_id = $request->user()->id;
+            $forbiddenName->created_by_role = $user->role;
+            $forbiddenName->created_by_user_id = $user->id;
 
             $forbiddenName->save();
 
@@ -587,6 +590,8 @@ class ForbiddenNameController extends Controller {
         try {
             $this->authorize('update', ForbiddenName::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate(),
                 $this->getValidationMessages('ForbiddenName')
@@ -607,10 +612,11 @@ class ForbiddenNameController extends Controller {
                 }
             }
 
+            // Update the forbidden name
             $forbiddenName->fill($validatedData);
 
-            $forbiddenName->created_by_role = $request->user()->role;
-            $forbiddenName->created_by_user_id = $request->user()->id;
+            $forbiddenName->created_by_role = $user->role;
+            $forbiddenName->created_by_user_id = $user->id;
 
             $forbiddenName->save();
 
