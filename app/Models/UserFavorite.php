@@ -19,15 +19,15 @@ class UserFavorite extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                || Laravel will automatically handle the 'id' field
+        // 'created_at',        || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        'user_id',
-        'post_id',
+        // 'user_id',           || Automatically created in the controller
+        // 'post_id',           || Automatically created in the controller
 
         // Update info
-        'created_at',
-        'updated_at',
+        // 'updated_at',        || Laravel will automatically handle the 'updated_at' field
     ];
 
     /**
