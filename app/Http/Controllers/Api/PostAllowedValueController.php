@@ -370,6 +370,8 @@ class PostAllowedValueController extends Controller {
         try {
             $this->authorize('create', PostAllowedValue::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
                 $this->getValidationMessages('PostAllowedValue')
@@ -383,12 +385,13 @@ class PostAllowedValueController extends Controller {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
             }
 
-            // Create the Post Allowed Value
-            $postAllowedValue = PostAllowedValue::create([
-                ...$validatedData,
-                'created_by_role' => $request->user()->role,
-                'created_by_user_id' => $request->user()->id
-            ]);
+            // Create the new Post Allowed Value
+            $postAllowedValue = new PostAllowedValue($validatedData);
+
+            $postAllowedValue->created_by_role = $user->role;
+            $postAllowedValue->created_by_user_id = $user->id;
+
+            $postAllowedValue->save();
 
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
 
@@ -593,6 +596,8 @@ class PostAllowedValueController extends Controller {
         try {
             $this->authorize('update', PostAllowedValue::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate(),
                 $this->getValidationMessages('PostAllowedValue')
@@ -623,11 +628,12 @@ class PostAllowedValueController extends Controller {
              * Update the Post Allowed Value
              * Note: We update the created_by fields because each change basically redefines the entire entity
              */
-            $postAllowedValue->update([
-                ...$validatedData,
-                'created_by_role' => $request->user()->role,
-                'created_by_user_id' => $request->user()->id
-            ]);
+            $postAllowedValue->fill($validatedData);
+
+            $postAllowedValue->created_by_role = $user->role;
+            $postAllowedValue->created_by_user_id = $user->id;
+
+            $postAllowedValue->save();
 
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
 
