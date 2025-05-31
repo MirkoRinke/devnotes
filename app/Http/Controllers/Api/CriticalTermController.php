@@ -354,6 +354,8 @@ class CriticalTermController extends Controller {
             // Check if the user is authorized to create Critical Terms
             $this->authorize('create', CriticalTerm::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesCreate(),
                 $this->getValidationMessages('CriticalTerm')
@@ -369,8 +371,8 @@ class CriticalTermController extends Controller {
             // Create the Critical Term
             $criticalTerm = new CriticalTerm($validatedData);
 
-            $criticalTerm->created_by_role = $request->user()->role;
-            $criticalTerm->created_by_user_id = $request->user()->id;
+            $criticalTerm->created_by_role = $user->role;
+            $criticalTerm->created_by_user_id = $user->id;
 
             $criticalTerm->save();
 
@@ -589,6 +591,8 @@ class CriticalTermController extends Controller {
             // Check if the user is authorized to update Critical Terms
             $this->authorize('update', CriticalTerm::class);
 
+            $user = $request->user();
+
             $validatedData = $request->validate(
                 $this->getValidationRulesUpdate(),
                 $this->getValidationMessages('CriticalTerm')
@@ -613,8 +617,8 @@ class CriticalTermController extends Controller {
             // Update the Critical Term
             $criticalTerm->fill($validatedData);
 
-            $criticalTerm->created_by_role = $request->user()->role;
-            $criticalTerm->created_by_user_id = $request->user()->id;
+            $criticalTerm->created_by_role = $user->role;
+            $criticalTerm->created_by_user_id = $user->id;
 
             $criticalTerm->save();
 
