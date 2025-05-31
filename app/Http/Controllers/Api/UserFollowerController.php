@@ -464,10 +464,13 @@ class UserFollowerController extends Controller {
                 return $this->successResponse($follow, 'Already following this user', 200);
             }
 
-            $follow = UserFollower::create([
-                'user_id' => $userToFollow->id,
-                'follower_id' => $follower->id
-            ]);
+            // Create the follow relationship
+            $follow = new UserFollower();
+
+            $follow->user_id = $userToFollow->id;
+            $follow->follower_id = $follower->id;
+
+            $follow->save();
 
             return $this->successResponse($follow, 'User followed successfully', 201);
         } catch (ModelNotFoundException $e) {
