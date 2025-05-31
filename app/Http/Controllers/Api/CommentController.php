@@ -35,7 +35,7 @@ use Illuminate\Auth\Access\AuthorizationException;
  * - Moderation actions for admins/moderators
  * - Smart deletion strategies (soft vs. hard delete)
  */
-class CommentApiController extends Controller {
+class CommentController extends Controller {
 
     /**
      *  The traits used in the controller

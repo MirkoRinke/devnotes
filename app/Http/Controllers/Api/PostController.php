@@ -33,7 +33,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Auth\Access\AuthorizationException;
 
 
-class PostApiController extends Controller {
+class PostController extends Controller {
 
     /**
      *  The traits used in the controller

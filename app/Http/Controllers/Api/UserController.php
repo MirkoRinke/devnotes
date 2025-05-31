@@ -29,7 +29,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
 
-class UserApiController extends Controller {
+class UserController extends Controller {
 
     /**
      *  The traits used in the controller

@@ -5,19 +5,19 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CommentApiController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\CriticalTermController;
-use App\Http\Controllers\Api\UserApiController;
-use App\Http\Controllers\Api\PostApiController;
-use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\UserFavoriteController;
 use App\Http\Controllers\Api\ForbiddenNameController;
 use App\Http\Controllers\Api\PostAllowedValueController;
 use App\Http\Controllers\Api\UserFollowerController;
 use App\Http\Controllers\Api\UserLikeController;
-use App\Http\Controllers\API\UserProfileController;
+use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\UserReportController;
 use App\Http\Controllers\Api\CronjobController;
-use App\Http\Controllers\API\UserStatsController;
+use App\Http\Controllers\Api\UserStatsController;
 
 /**
  * API Route Security Middleware
@@ -89,15 +89,15 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      * Route for ban and unban users
      */
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::post('/users/{id}/ban', [UserApiController::class, 'banUser']);
-        Route::post('/users/{id}/unban', [UserApiController::class, 'unbanUser']);
+        Route::post('/users/{id}/ban', [UserController::class, 'banUser']);
+        Route::post('/users/{id}/unban', [UserController::class, 'unbanUser']);
     });
 
     /**
      * Route for users
      */
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::apiResource('users', UserApiController::class);
+        Route::apiResource('users', UserController::class);
     });
 
     /**
@@ -108,23 +108,23 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for posts
      */
-    Route::get('/posts', [PostApiController::class, 'index']);
-    Route::get('/posts/{post}', [PostApiController::class, 'show']);
+    Route::get('/posts', [PostController::class, 'index']);
+    Route::get('/posts/{post}', [PostController::class, 'show']);
 
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::apiResource('posts', PostApiController::class)->except(['index', 'show']);
+        Route::apiResource('posts', PostController::class)->except(['index', 'show']);
     });
 
 
     /**
      * Route for comments
      */
-    Route::get('/comments', [CommentApiController::class, 'index']);
-    Route::get('/comments/{comment}', [CommentApiController::class, 'show']);
+    Route::get('/comments', [CommentController::class, 'index']);
+    Route::get('/comments/{comment}', [CommentController::class, 'show']);
 
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::apiResource('comments', CommentApiController::class)->except(['index', 'show']);
-        Route::patch('comments/{id}/deleteComment', [CommentApiController::class, 'deleteComment']);
+        Route::apiResource('comments', CommentController::class)->except(['index', 'show']);
+        Route::patch('comments/{id}/deleteComment', [CommentController::class, 'deleteComment']);
     });
 
     /**
@@ -149,11 +149,11 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      * Route for favorites
      */
     Route::middleware(['auth:sanctum', 'email-verified'])->group(function () {
-        Route::get('/user/favorites', [FavoriteController::class, 'index']);
-        Route::post('/posts/{post}/favorites', [FavoriteController::class, 'store']);
-        Route::delete('/posts/{post}/favorites', [FavoriteController::class, 'destroy']);
+        Route::get('/user/favorites', [UserFavoriteController::class, 'index']);
+        Route::post('/posts/{post}/favorites', [UserFavoriteController::class, 'store']);
+        Route::delete('/posts/{post}/favorites', [UserFavoriteController::class, 'destroy']);
 
-        Route::get('/user/favorites/posts', [FavoriteController::class, 'getFavoritePosts']);
+        Route::get('/user/favorites/posts', [UserFavoriteController::class, 'getFavoritePosts']);
     });
 
     /**

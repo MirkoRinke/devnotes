@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\DB;
  * 
  * All operations maintain favorite counts consistency on the post objects.
  */
-class FavoriteController extends Controller {
+class UserFavoriteController extends Controller {
 
     /**
      *  The traits used in the controller
