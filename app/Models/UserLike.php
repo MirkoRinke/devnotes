@@ -19,17 +19,17 @@ class UserLike extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                    || Laravel will automatically handle the 'id' field
+        // 'created_at',            || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        'user_id',
-        'likeable_type',
-        'likeable_id',
-        'type',
+        // 'user_id',               || Automatically created in the controller
+        // 'likeable_type',         || Automatically created in the controller
+        // 'likeable_id',           || Automatically created in the controller
+        // 'type',                  || Automatically created in the controller
 
         // Update info
-        'created_at',
-        'updated_at',
+        // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
     ];
 
     /**
