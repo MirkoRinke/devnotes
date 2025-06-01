@@ -99,6 +99,7 @@ class AuthController extends Controller {
                     'email' => 'required|email',
                     'password' => 'required',
                     'device_name' => 'required',
+                    'device_fingerprint' => 'required|string|max:255',
                 ],
                 $this->getValidationMessages('Login')
             );
@@ -120,7 +121,8 @@ class AuthController extends Controller {
             }
 
             $token = $user->createToken($request->device_name);
-            $token->accessToken->expires_at = Carbon::now()->addDays(7);
+            $token->accessToken->expires_at = Carbon::now()->addDays(30);
+            $token->accessToken->device_fingerprint = $request->device_fingerprint;
             $token->accessToken->save();
 
             return $this->successResponse(['accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
