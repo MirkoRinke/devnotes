@@ -21,6 +21,7 @@ class CriticalTerm extends Model {
         // Default
         // 'id',                    || Laravel will automatically handle the 'id' field
         // 'created_at',            || Laravel will automatically handle the 'created_at' field
+
         // Basic
         'name',
         'language',
