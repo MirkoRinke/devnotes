@@ -26,10 +26,10 @@ class Comment extends Model {
         'content',
         'post_id',
         'parent_id',
-        // 'user_id',               || Automatically created in the controller
-        // 'parent_content',        || Automatically created in the controller
-        // 'is_deleted',            || Automatically created in the controller
-        // 'depth',                 || Automatically created in the controller   
+        // 'user_id',               || Explicitly set in controller from authenticated user
+        // 'parent_content',        || Explicitly set in controller from parent comment
+        // 'is_deleted',            || Explicitly set in controller during soft delete
+        // 'depth',                 || Explicitly set in controller based on parent comment depth + 1
 
         // Counts
         // 'likes_count',           || Automatically handled by the UserLike model
@@ -37,11 +37,11 @@ class Comment extends Model {
 
         // Update info
         // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
-        // 'is_updated',            || Automatically created in the controller
-        // 'updated_by_role',       || Automatically created in the controller
+        // 'is_updated',            || Explicitly set in controller during update operations
+        // 'updated_by_role',       || Explicitly set in controller from user's role
 
         // Moderation info
-        // 'moderation_info',       || Automatically created in the controller
+        // 'moderation_info',       || Set by ModerationService during admin/moderator actions
     ];
 
     /**
