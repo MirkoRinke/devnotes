@@ -520,15 +520,18 @@ class UserReportController extends Controller {
                 // Create a snapshot of the reportable entity
                 $reportableSnapshot = $this->snapshotService->createSnapshot($reportable, $reportableType);
 
-                $report = UserReport::create([
-                    'user_id' => $user->id,
-                    'reportable_id' => $reportableId,
-                    'reportable_type' => $reportableType,
-                    'type' => $simpleType,
-                    'reason' => $validatedData['reason'] ?? null,
-                    'reportable_snapshot' => $reportableSnapshot,
-                    'impact_value' => $value
-                ]);
+                // Create the report
+                $report = new UserReport();
+
+                $report->user_id = $user->id;
+                $report->reportable_id = $reportableId;
+                $report->reportable_type = $reportableType;
+                $report->type = $simpleType;
+                $report->reason = $reason;
+                $report->reportable_snapshot = $reportableSnapshot;
+                $report->impact_value = $value;
+
+                $report->save();
 
                 $this->updateReportsCount($reportable, 'increment', $value);
 
