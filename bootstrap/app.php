@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 
 use App\Http\Middleware\EnsureEmailIsVerifiedApi;
 use App\Http\Middleware\ValidateApiKey;
+use App\Http\Middleware\VerifyDeviceFingerprint;
 
 use Illuminate\Http\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -20,11 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         /**
-         * Register the middleware for email verification
+         * Register the middleware aliases for the application
          */
         $middleware->alias([
             'email-verified' => EnsureEmailIsVerifiedApi::class,
             'api-key' => ValidateApiKey::class,
+            'device-fingerprint' => VerifyDeviceFingerprint::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
