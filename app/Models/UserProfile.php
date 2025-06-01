@@ -19,10 +19,11 @@ class UserProfile extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                                || Laravel will automatically handle the 'id' field
+        // 'created_at',                        || Laravel will automatically handle the 'created_at' field 
 
         // Basic
-        'user_id',
+        // 'user_id',                           || Automatically created in the controller 
         'display_name',
         'public_email',
         'website',
@@ -36,20 +37,19 @@ class UserProfile extends Model {
 
         // Settings
         'auto_load_external_images',
-        'external_images_temp_until',
+        // 'external_images_temp_until',        || Automatically created in the controller 
 
         'auto_load_external_videos',
-        'external_videos_temp_until',
+        // 'external_videos_temp_until',        || Automatically created in the controller
 
         'auto_load_external_resources',
-        'external_resources_temp_until',
+        // 'external_resources_temp_until',     || Automatically created in the controller
 
         // Counts
-        'reports_count',
+        // 'reports_count',                     || Automatically handled by the UserReport model
 
         // Update info
-        'created_at',
-        'updated_at',
+        // 'updated_at',                        || Laravel will automatically handle the 'updated_at' field
     ];
 
     /**
