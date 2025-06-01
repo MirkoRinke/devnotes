@@ -16,6 +16,7 @@ return new class extends Migration {
             // Basic
             $table->morphs('tokenable');
             $table->string('name');
+            $table->string('device_fingerprint');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();
 
