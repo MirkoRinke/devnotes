@@ -19,20 +19,20 @@ class UserReport extends Model {
      */
     protected $fillable = [
         // Default
-        'id',
+        // 'id',                            || Laravel will automatically handle the 'id' field 
+        // 'created_at',                    || Laravel will automatically handle the 'created_at' field 
 
         // Basic
-        'user_id',
-        'reportable_type',
-        'reportable_id',
-        'type',
-        'reason',
-        'reportable_snapshot',
-        'impact_value',
+        // 'user_id',                       || Automatically created in the controller
+        // 'reportable_type',               || Automatically created in the controller
+        // 'reportable_id',                 || Automatically created in the controller
+        // 'reason',                        || Automatically created in the controller
+        // 'type',                          || Automatically created in the controller
+        // 'reportable_snapshot',           || Automatically created in the controller
+        // 'impact_value',                  || Automatically created in the controller
 
         // Update info
-        'created_at',
-        'updated_at',
+        // 'updated_at',                    || Laravel will automatically handle the 'updated_at' field 
     ];
 
     /**
