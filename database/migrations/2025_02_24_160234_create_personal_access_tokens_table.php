@@ -16,7 +16,7 @@ return new class extends Migration {
             // Basic
             $table->morphs('tokenable');
             $table->string('name');
-            $table->string('device_fingerprint');
+            $table->string('device_fingerprint')->default('ba84207fca7c910c70f1a13943c1e054fc3c864fa69cfbe1cb045d3130bd92d7'); // default fingerprint for the device
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();
 
