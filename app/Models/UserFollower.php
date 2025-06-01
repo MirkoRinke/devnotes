@@ -23,8 +23,8 @@ class UserFollower extends Model {
         // 'created_at',            || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        // 'user_id',               || Automatically created in the controller
-        // 'follower_id',           || Automatically created in the controller
+        // 'user_id',               || Explicitly set in controller from user being followed
+        // 'follower_id',           || Explicitly set in controller from authenticated user
 
         // Update info
         // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
