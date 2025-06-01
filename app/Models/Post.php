@@ -26,7 +26,7 @@ class Post extends Model {
         // 'created_at',                || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        // 'user_id',                   || Automatically created in the controller
+        // 'user_id',                   || Explicitly set in controller from authenticated user
         'title',
         'code',
         'description',
@@ -39,7 +39,7 @@ class Post extends Model {
         'technology',
         'tags',
         'status',
-        // 'external_source_previews',  || Automatically created in the controller
+        // 'external_source_previews',  || Generated in controller by ExternalSourceService
 
         // Counts
         // 'favorite_count',            || Automatically handled by the UserFavorite model
@@ -49,15 +49,15 @@ class Post extends Model {
 
         // Update info
         // 'updated_at',                || Laravel will automatically handle the 'updated_at' field
-        // 'is_updated',                || Automatically created in the controller
-        // 'updated_by_role',           || Automatically created in the controller
-        // 'last_comment_at',           || Automatically handled by the Comment model
+        // 'is_updated',                || Explicitly set in controller during update operations
+        // 'updated_by_role',           || Explicitly set in controller based on updating user's role
+        // 'last_comment_at',           || Updated by CommentController when comments are added/modified
 
         // History
-        // 'history',                   || Automatically created in the controller
+        // 'history',                   || Generated in controller by HistoryService
 
         // Moderation info
-        // 'moderation_info',           || Automatically created in the controller
+        // 'moderation_info',           || Set by ModerationService during admin/moderator actions
     ];
 
     /**
