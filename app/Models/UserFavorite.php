@@ -23,8 +23,8 @@ class UserFavorite extends Model {
         // 'created_at',        || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        // 'user_id',           || Automatically created in the controller
-        // 'post_id',           || Automatically created in the controller
+        // 'user_id',           || Explicitly set in controller from authenticated user
+        // 'post_id',           || Explicitly set in controller from post parameter
 
         // Update info
         // 'updated_at',        || Laravel will automatically handle the 'updated_at' field
