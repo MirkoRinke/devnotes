@@ -416,9 +416,13 @@ class UserLikeController extends Controller {
                 'comment' => Comment::class,
             ];
 
+            /**
+             * Map the likeable_type to the corresponding model class
+             * This is required for polymorphic relationships in the database
+             */
             $likeableType = $typeMap[$validatedData['likeable_type']];
-            $likeableId = $validatedData['likeable_id'];
 
+            $likeableId = $validatedData['likeable_id'];
             $simpleType = $validatedData['likeable_type'];
 
             $likeable = $likeableType::findOrFail($likeableId);
@@ -430,12 +434,16 @@ class UserLikeController extends Controller {
 
             // Add the like and update the likes count for the likeable entity in a transaction
             $like = DB::transaction(function () use ($user, $likeableId, $likeableType, $simpleType, $likeable) {
-                $like = UserLike::create([
-                    'user_id' => $user->id,
-                    'likeable_id' => $likeableId,
-                    'likeable_type' => $likeableType,
-                    'type' => $simpleType,
-                ]);
+
+                // Create a new UserLike
+                $like = new UserLike();
+
+                $like->user_id = $user->id;
+                $like->likeable_id = $likeableId;
+                $like->likeable_type = $likeableType;
+                $like->type = $simpleType;
+
+                $like->save();
 
                 $this->updateLikesCount($likeable, 'increment');
 
