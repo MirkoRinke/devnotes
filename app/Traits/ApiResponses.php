@@ -115,6 +115,10 @@ trait ApiResponses {
 
                     'device_name' => 'DEVICE_NAME_FIELD_REQUIRED',
                     'device_name.string' => 'DEVICE_NAME_MUST_BE_STRING',
+
+                    'device_fingerprint' => 'DEVICE_FINGERPRINT_FIELD_REQUIRED',
+                    'device_fingerprint.string' => 'DEVICE_FINGERPRINT_MUST_BE_STRING',
+                    'device_fingerprint.max' => 'DEVICE_FINGERPRINT_FIELD_MAX_LENGTH_255',
                 ];
             case 'verifyEmail':
                 return [
