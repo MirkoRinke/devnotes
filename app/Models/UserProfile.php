@@ -23,7 +23,7 @@ class UserProfile extends Model {
         // 'created_at',                        || Laravel will automatically handle the 'created_at' field 
 
         // Basic
-        // 'user_id',                           || Automatically created in the controller 
+        // 'user_id',                           || Set when profile is created during user registration
         'display_name',
         'public_email',
         'website',
@@ -37,13 +37,13 @@ class UserProfile extends Model {
 
         // Settings
         'auto_load_external_images',
-        // 'external_images_temp_until',        || Automatically created in the controller 
+        // 'external_images_temp_until',        || Explicitly set in controller via enableTemporaryExternals
 
         'auto_load_external_videos',
-        // 'external_videos_temp_until',        || Automatically created in the controller
+        // 'external_videos_temp_until',        || Explicitly set in controller via enableTemporaryExternals
 
         'auto_load_external_resources',
-        // 'external_resources_temp_until',     || Automatically created in the controller
+        // 'external_resources_temp_until',     || Explicitly set in controller via enableTemporaryExternals
 
         // Counts
         // 'reports_count',                     || Automatically handled by the UserReport model
