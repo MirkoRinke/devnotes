@@ -25,10 +25,13 @@ class UserRelationService {
      * @example | $this->userRelationService->createUserProfile($user);
      */
     public function createUserProfile(User $user): UserProfile {
-        return UserProfile::create([
-            'user_id' => $user->id,
-            'display_name' => $user->display_name ?? $user->name,
-        ]);
+        $userProfile = new UserProfile();
+        $userProfile->user_id = $user->id;
+        $userProfile->display_name = $user->display_name ?? $user->name;
+
+        $userProfile->save();
+
+        return $userProfile;
     }
 
     /**
