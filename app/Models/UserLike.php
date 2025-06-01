@@ -23,10 +23,10 @@ class UserLike extends Model {
         // 'created_at',            || Laravel will automatically handle the 'created_at' field
 
         // Basic
-        // 'user_id',               || Automatically created in the controller
-        // 'likeable_type',         || Automatically created in the controller
-        // 'likeable_id',           || Automatically created in the controller
-        // 'type',                  || Automatically created in the controller
+        // 'user_id',               || Explicitly set in controller from authenticated user
+        // 'likeable_type',         || Explicitly set in controller after $typeMap conversion
+        // 'likeable_id',           || Explicitly set in controller from validated input
+        // 'type',                  || Explicitly set in controller from simple type value
 
         // Update info
         // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
