@@ -23,13 +23,13 @@ class UserReport extends Model {
         // 'created_at',                    || Laravel will automatically handle the 'created_at' field 
 
         // Basic
-        // 'user_id',                       || Automatically created in the controller
-        // 'reportable_type',               || Automatically created in the controller
-        // 'reportable_id',                 || Automatically created in the controller
-        // 'reason',                        || Automatically created in the controller
-        // 'type',                          || Automatically created in the controller
-        // 'reportable_snapshot',           || Automatically created in the controller
-        // 'impact_value',                  || Automatically created in the controller
+        // 'user_id',                       || Explicitly set in controller from authenticated user
+        // 'reportable_type',               || Explicitly set in controller after $typeMap conversion
+        // 'reportable_id',                 || Explicitly set in controller from validated input
+        // 'reason',                        || Explicitly set in controller from optional user input
+        // 'type',                          || Explicitly set in controller from simple type value
+        // 'reportable_snapshot',           || Explicitly set in controller from SnapshotService
+        // 'impact_value',                  || Explicitly set in controller based on role & content
 
         // Update info
         // 'updated_at',                    || Laravel will automatically handle the 'updated_at' field 
