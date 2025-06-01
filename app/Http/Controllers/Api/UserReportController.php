@@ -58,7 +58,6 @@ class UserReportController extends Controller {
      */
     public function getValidationRules(): array {
         $validationRules = [
-            'user_id' => 'integer',
             'reportable_type' => 'required|in:post,userProfile,comment',
             'reportable_id' => 'required|integer',
             'reason' => 'nullable|string|max:500'
@@ -616,12 +615,21 @@ class UserReportController extends Controller {
         try {
             $user = $request->user();
 
+            $validationRules = $this->getValidationRules();
+
+            $isAdmin = $user->role === 'admin';
+
+            if ($isAdmin) {
+                $validationRules['user_id'] = 'nullable|integer';
+            }
+
             $validatedData = $request->validate(
-                $this->getValidationRules(),
+                $validationRules,
                 $this->getValidationMessages('UserReport')
             );
 
-            if ($user->role === 'admin' && isset($validatedData['user_id'])) {
+
+            if ($isAdmin && isset($validatedData['user_id'])) {
                 $user_id = $validatedData['user_id'];
             }
 
