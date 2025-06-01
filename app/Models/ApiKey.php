@@ -24,12 +24,12 @@ class ApiKey extends Model {
 
         // Basic
         'name',
-        // 'key',                           || Automatically created in the controller
-        // 'active',                        || Automatically created in the controller
+        // 'key',                           || Explicitly set in controller using Str::random(40)
+        // 'active',                        || Explicitly set in controller (default true)
 
         // Update info
         // 'updated_at',                    || Laravel will automatically handle the 'updated_at' field
-        // 'last_used_at'                   || Automatically handled by ValidateApiKey middleware
+        // 'last_used_at'                   || Updated by ValidateApiKey middleware on each API request
     ];
 
     /**
