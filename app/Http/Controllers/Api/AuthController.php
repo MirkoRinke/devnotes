@@ -277,6 +277,8 @@ class AuthController extends Controller {
      * @param Request $request
      * @param mixed $query
      * @return mixed
+     * 
+     * @example | $query = $this->setCurrentToken($request, $query);
      */
     protected function setCurrentToken(Request $request, $query): mixed {
         $currentTokenId = $request->user()->currentAccessToken()->id;
@@ -302,6 +304,8 @@ class AuthController extends Controller {
      *
      * @param mixed $query The query result containing token objects
      * @return mixed The same query with only safe fields visible
+     * 
+     * @example | $query = $this->setVisibleTokensFields($query);
      */
     protected function setVisibleTokensFields($query): mixed {
         $visibleFields = ['id', 'name', 'last_used_at', 'created_at', 'updated_at', 'is_current'];
