@@ -113,8 +113,8 @@ trait ApiResponses {
                     'password.required' => 'PASSWORD_FIELD_REQUIRED',
                     'password.string' => 'PASSWORD_MUST_BE_STRING',
 
-                    'device_name' => 'DEVICE_NAME_FIELD_REQUIRED',
-                    'device_name.string' => 'DEVICE_NAME_MUST_BE_STRING',
+                    'name' => 'NAME_FIELD_REQUIRED',
+                    'name.string' => 'NAME_MUST_BE_STRING',
 
                     'device_fingerprint' => 'DEVICE_FINGERPRINT_FIELD_REQUIRED',
                     'device_fingerprint.string' => 'DEVICE_FINGERPRINT_MUST_BE_STRING',
