@@ -82,6 +82,39 @@ trait QueryBuilder {
             ],
             'getPerPage' => 10
         ],
+        'user_tokens' => [
+            'sort' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'last_used_at']
+            ],
+            'filter' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'last_used_at']
+            ],
+            'select' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'last_used_at']
+            ],
+            'startsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'last_used_at']
+            ],
+            'endsWith' => [
+                // Default
+                ...['id', 'created_at', 'updated_at'],
+                // Basic
+                ...['name', 'last_used_at']
+            ],
+            'getPerPage' => 10
+        ],
         'user_profile' => [
             'sort' => [
                 // Default
@@ -493,7 +526,7 @@ trait QueryBuilder {
                 ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
             ],
             'getPerPage' => 10
-        ],
+        ]
     ];
 
     /**
