@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 
 use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
 
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 use Exception;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller {
@@ -25,7 +27,7 @@ class AuthController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses;
+    use ApiResponses, QueryBuilder;
 
     /**
      * User Login
@@ -40,12 +42,12 @@ class AuthController extends Controller {
      *
      * @bodyParam email string required User's email address. Example: user@example.com
      * @bodyParam password string required User's password. Example: secret123
-     * @bodyParam device_name string required Name for the device/browser creating this token. Example: iPhone 13
+     * @bodyParam name string required Name for the device/browser creating this token. Example: iPhone 13
      *
      * @bodyContent {
      *   "email": "user@example.com,
      *   "password": "secret123",
-     *   "device_name": "iPhone 13"
+     *   "name": "iPhone 13"
      * }
      *
      * @response status=200 scenario="Success" {
@@ -80,7 +82,7 @@ class AuthController extends Controller {
      *   "errors": {
      *     "email": ["EMAIL_FIELD_REQUIRED"],
      *     "password": ["PASSWORD_FIELD_REQUIRED"],
-     *     "device_name": ["DEVICE_NAME_FIELD_REQUIRED"]
+     *     "name": ["NAME_FIELD_REQUIRED"]
      *   }
      * }
      *
@@ -98,7 +100,7 @@ class AuthController extends Controller {
                 [
                     'email' => 'required|email',
                     'password' => 'required',
-                    'device_name' => 'required',
+                    'name' => 'required',
                     'device_fingerprint' => 'required|string|max:255',
                 ],
                 $this->getValidationMessages('Login')
@@ -115,12 +117,12 @@ class AuthController extends Controller {
             }
 
             // Check if the user has a Token with the same device name, if so, delete it
-            $existingTokens = $user->tokens()->where('name', $request->device_name)->get();
+            $existingTokens = $user->tokens()->where('name', $request->name)->get();
             if ($existingTokens->count() > 0) {
                 $existingTokens->each->delete();
             }
 
-            $token = $user->createToken($request->device_name);
+            $token = $user->createToken($request->name);
             $token->accessToken->expires_at = Carbon::now()->addDays(30);
             $token->accessToken->device_fingerprint = $request->device_fingerprint;
             $token->accessToken->save();
@@ -178,27 +180,54 @@ class AuthController extends Controller {
      *
      * Retrieves a list of all access tokens (active sessions) for the authenticated user.
      * This includes the device name, last used timestamp and whether it's the current session.
+     * The endpoint supports filtering, sorting, and pagination through query parameters.
      *
      * @group User Authentication
+     *
+     * @queryParam select string Comma-separated fields to include. Example: select=id,name,last_used_at
+     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: sort=-last_used_at
+     * @queryParam filter[name] string Filter tokens by name. Example: filter[name]=iPhone
+     * @queryParam page number The page number. Example: page=1
+     * @queryParam per_page number Items per page. Example: per_page=15 (default: 10)
+     * 
+     * Example URL: /tokens
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Token list retrieved",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 2,
      *   "data": [
      *     {
      *       "id": 2,
-     *       "device_name": "test_device",
+     *       "name": "test_device",
      *       "last_used_at": null,
      *       "created_at": "2025-05-13T11:13:39.000000Z",
      *       "is_current": true
      *     },
      *     {
      *       "id": 1,
-     *       "device_name": "test_device",
+     *       "name": "test_device",
      *       "last_used_at": "2025-04-29T20:16:46.000000Z",
      *       "created_at": "2025-04-29T20:15:56.000000Z",
+     *       "is_current": false
+     *     }
+     *   ]
+     * }
+     * 
+     * Example URL with filtering: /tokens?filter[name]=iPhone
+     *
+     * @response status=200 scenario="Filtered Results" {
+     *   "status": "success",
+     *   "message": "Token list retrieved",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       "id": 3,
+     *       "name": "iPhone",
+     *       "last_used_at": "2025-05-10T14:23:55.000000Z",
+     *       "created_at": "2025-05-01T08:12:30.000000Z",
      *       "is_current": false
      *     }
      *   ]
@@ -211,26 +240,83 @@ class AuthController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      * 
+     * Note: The `is_current` field indicates whether the token is the one currently being used
+     * for the API request. This field is calculated dynamically and cannot be used for filtering.
+     * 
      * @authenticated
      */
     public function getUserTokens(Request $request): JsonResponse {
         try {
-            $tokensCollection = $request->user()->tokens()->orderBy('last_used_at', 'desc')->get();
+            $tokensRelation = $request->user()->tokens()
+                ->select(['id', 'name', 'last_used_at', 'created_at', 'updated_at']);
 
-            $formattedTokens = $tokensCollection->map(function ($token) use ($request) {
-                return [
-                    'id' => $token->id,
-                    'device_name' => $token->name,
-                    'last_used_at' => $token->last_used_at,
-                    'created_at' => $token->created_at,
-                    'is_current' => $token->id === $request->user()->currentAccessToken()->id
-                ];
-            });
+            $query = $tokensRelation->getQuery();
 
-            return $this->successResponse($formattedTokens, 'Token list retrieved', 200);
+            $query = $this->buildQuery($request, $query, 'user_tokens');
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            $query = $this->setCurrentToken($request, $query);
+
+            $query = $this->setVisibleTokensFields($query);
+
+            return $this->successResponse($query, 'Token list retrieved', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
+    }
+
+
+    /**
+     * Set the current token flag for each token in the list
+     *
+     * This method marks the current access token with a flag `is_current` to indicate
+     * which token is currently active for the user.
+     *
+     * @param Request $request
+     * @param mixed $query
+     * @return mixed
+     */
+    protected function setCurrentToken(Request $request, $query): mixed {
+        $currentTokenId = $request->user()->currentAccessToken()->id;
+
+        if ($query instanceof LengthAwarePaginator) {
+            foreach ($query->items() as $token) {
+                $token->is_current = ($token->id == $currentTokenId);
+            }
+        } else {
+            foreach ($query as $token) {
+                $token->is_current = ($token->id == $currentTokenId);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Filter token objects to only include safe fields
+     *
+     * Ensures that only non-sensitive fields are included in API responses
+     * by using Laravel's built-in attribute visibility control.
+     *
+     * @param mixed $query The query result containing token objects
+     * @return mixed The same query with only safe fields visible
+     */
+    protected function setVisibleTokensFields($query): mixed {
+        $visibleFields = ['id', 'name', 'last_used_at', 'created_at', 'updated_at', 'is_current'];
+
+        if ($query instanceof LengthAwarePaginator) {
+            foreach ($query->items() as $token) {
+                $token->setVisible($visibleFields);
+            }
+        } else {
+            foreach ($query as $token) {
+                $token->setVisible($visibleFields);
+            }
+        }
+
+        return $query;
     }
 
 
