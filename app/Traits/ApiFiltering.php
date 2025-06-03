@@ -82,7 +82,7 @@ trait ApiFiltering {
                             } else if ($value === 'is:not_null') {
                                 $subQuery->orWhereNotNull($key);
                             } else {
-                                $subQuery->orWhere($key, 'LIKE', '%' . $value . '%');
+                                $subQuery->orWhereRaw('LOWER(' . $key . ') LIKE LOWER(?)', ['%' . $value . '%']);
                             }
                         }
                     });
