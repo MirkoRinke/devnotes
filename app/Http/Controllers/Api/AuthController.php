@@ -584,7 +584,7 @@ class AuthController extends Controller {
                 function ($user, $password) {
                     $user->forceFill([
                         'password' => Hash::make($password)
-                    ])->setRememberToken(Str::random(60));
+                    ]);
 
                     // Delete all tokens after password reset
                     $user->tokens()->delete();
