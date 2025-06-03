@@ -37,6 +37,7 @@ class UserFollowerController extends Controller {
     protected function setupFollowerQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'follower_id'], ['is_following_back']);
 
+        // These relationships are loaded unconditionally as they're needed for internal logic
         $query = $this->loadRelations($request, $query, [
             ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
