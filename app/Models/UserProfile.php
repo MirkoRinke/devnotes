@@ -60,6 +60,7 @@ class UserProfile extends Model {
     protected $hidden = [
         // Relationships
         'user',
+
         // Counts
         'reports_count',
     ];
