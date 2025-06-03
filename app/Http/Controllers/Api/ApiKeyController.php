@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 
 use App\Models\ApiKey;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
 use App\Traits\ApiResponses;
+use App\Traits\QueryBuilder;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +24,7 @@ class ApiKeyController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, AuthorizesRequests;
+    use ApiResponses, AuthorizesRequests, QueryBuilder;
 
     /**
      * List all API keys
@@ -81,16 +83,19 @@ class ApiKeyController extends Controller {
      *
      * @authenticated
      */
-    public function index() {
+    public function index(Request $request): JsonResponse {
         try {
             $this->authorize('viewAny', ApiKey::class);
 
             // Retrieve all API keys from the database 
-            $keys = ApiKey::select('id', 'name', 'active', 'created_at', 'last_used_at')
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $query = ApiKey::query();
 
-            return $this->successResponse($keys, 'API-Keys has been retrieved successfully', 200);
+            $query = $this->buildQuery($request, $query, 'apiKey');
+            if ($query instanceof JsonResponse) {
+                return $query;
+            }
+
+            return $this->successResponse($query, 'API-Keys has been retrieved successfully', 200);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
