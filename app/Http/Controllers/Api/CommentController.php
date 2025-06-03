@@ -117,6 +117,7 @@ class CommentController extends Controller {
 
         $this->modifyRequestSelect($request, [...['id', 'reports_count'], ...$relationKeyFields]);
 
+        // These relationships are loaded unconditionally as they're needed for internal logic
         $this->loadRelations($request, $query, [
             ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
