@@ -60,8 +60,8 @@ class UserSeeder extends Seeder {
     public function run(): void {
         // Create an admin user
         $this->createUserWithProfile([
-            'name' => 'Max Mustermann1',
-            'display_name' => 'admin',
+            'name' => 'Admin',
+            'display_name' => 'Admin',
             'email' => 'max@example1.com',
             'password' => Hash::make('sicheresPasswort123'),
             'role' => 'admin',
@@ -90,25 +90,13 @@ class UserSeeder extends Seeder {
 
         // Create a moderator user
         $this->createUserWithProfile([
-            'name' => 'Max Mustermann4',
-            'display_name' => 'Maxi4',
+            'name' => 'Moderator',
+            'display_name' => 'Moderator',
             'email' => 'max@example4.com',
             'password' => Hash::make('sicheresPasswort123'),
             'role' => 'moderator',
             'email_verified_at' => now(),
         ]);
-
-        // Create multiple regular users with incrementing names/emails
-        for ($i = 5; $i <= 10; $i++) {
-            $this->createUserWithProfile([
-                'name' => "Max Mustermann{$i}",
-                'display_name' => "Maxi{$i}",
-                'email' => "max@example{$i}.com",
-                'password' => Hash::make('sicheresPasswort123'),
-                'role' => 'user',
-                'email_verified_at' => now(),
-            ]);
-        }
 
         // Create a guest user
         $this->createUserWithProfile([
@@ -120,5 +108,22 @@ class UserSeeder extends Seeder {
             'email_verified_at' => now(),
             'account_purpose' => 'guest',
         ]);
+
+        // Create multiple regular users with incrementing names/emails
+        for ($i = 6; $i <= 10; $i++) {
+            $this->createUserWithProfile([
+                'name' => "Max Mustermann{$i}",
+                'display_name' => "Maxi{$i}",
+                'email' => "max@example{$i}.com",
+                'password' => Hash::make('sicheresPasswort123'),
+                'role' => 'user',
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        User::factory(500)->create()->each(function ($user) {
+            $this->userRelationService->createUserProfile($user);
+            $this->userRelationService->checkUsername($user);
+        });
     }
 }
