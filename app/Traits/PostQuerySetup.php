@@ -41,16 +41,32 @@ trait PostQuerySetup {
 
         $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
 
-        $query = $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-
-        ]);
+        $query = $this->loadUserRelation($request, $query);
 
         $query = $this->$methods($request, $query, 'post');
         if ($query instanceof JsonResponse) {
             return $query;
         }
 
+        return $query;
+    }
+
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadUserRelation($request, $query)
+     */
+    private function loadUserRelation(Request $request, $query): mixed {
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ]);
+        }
         return $query;
     }
 }
