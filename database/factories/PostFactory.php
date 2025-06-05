@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\PostAllowedValue;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -99,11 +100,11 @@ class PostFactory extends Factory {
                 'Cloud Computing'
             ]),
             'post_type' => fake()->randomElement([
-                'snippet',
-                'tutorial',
-                'feedback',
-                'showcase',
-                'question'
+                'Snippet',
+                'Tutorial',
+                'Feedback',
+                'Showcase',
+                'Question'
             ]),
             'technology' => fake()->randomElement([
                 'Angular',
@@ -125,20 +126,51 @@ class PostFactory extends Factory {
                 'Flask',
                 'Node.js',
             ]),
-            'tags' => fake()->randomElement([
-                ['laravel', 'php', 'backend'],
-                ['javascript', 'react', 'frontend'],
-                ['python', 'data science', 'machine learning'],
-                ['devops', 'docker', 'kubernetes'],
-                ['game development', 'unity', 'c#'],
-            ]),
             'status' => fake()->randomElement([
-                'draft',
-                'private',
-                'published',
-                'archived'
+                'Draft',
+                'Private',
+                'Published',
+                'Archived'
             ]),
             'history' => [],
         ];
+    }
+
+    /**
+     * Configure the model factory.
+     *
+     * @return $this
+     */
+    public function configure() {
+        return $this->afterCreating(function ($post) {
+            $tagNames = fake()->randomElement([
+                ['Laravel', 'PHP', 'Backend'],
+                ['JavaScript', 'React', 'Frontend'],
+                ['Python', 'Data Science', 'Machine Learning'],
+                ['DevOps', 'Docker', 'Kubernetes'],
+                ['Game Development', 'Unity', 'C#'],
+            ]);
+
+            $tagIds = [];
+
+            foreach ($tagNames as $tagName) {
+                $tagName = trim($tagName);
+
+                $tag = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$tagName, 'tag'])->first();
+
+                if (!$tag) {
+                    $tag = PostAllowedValue::create([
+                        'name' => $tagName,
+                        'type' => 'tag',
+                        'created_by_role' => 'system',
+                        'created_by_user_id' => 2,
+                    ]);
+                }
+
+                $tagIds[] = $tag->id;
+            }
+
+            $post->tags()->attach($tagIds);
+        });
     }
 }
