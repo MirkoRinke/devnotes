@@ -43,6 +43,8 @@ trait PostQuerySetup {
 
         $query = $this->loadUserRelation($request, $query);
 
+        $query = $this->loadTagsRelation($request, $query);
+
         $query = $this->$methods($request, $query, 'post');
         if ($query instanceof JsonResponse) {
             return $query;
@@ -67,6 +69,27 @@ trait PostQuerySetup {
                 ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ]);
         }
+        return $query;
+    }
+
+    /**
+     * Load the tags relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadTagsRelation($request, $query)
+     */
+    private function loadTagsRelation(Request $request, $query): mixed {
+        $defaultColumns = [
+            'post_allowed_values.id as id',
+            'post_allowed_values.name as name'
+        ];
+
+        $query = $this->loadRelations($request, $query, [
+            ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $this->getRelationFieldsFromRequest($request, 'tags', [], $defaultColumns)],
+        ]);
         return $query;
     }
 }
