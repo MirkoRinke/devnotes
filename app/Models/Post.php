@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 use App\Models\User;
 use App\Models\UserFavorite;
+use App\Models\PostAllowedValue;
 
 class Post extends Model {
 
@@ -37,7 +38,6 @@ class Post extends Model {
         'category',
         'post_type',
         'technology',
-        'tags',
         'status',
         // 'external_source_previews',  || Generated in controller by ExternalSourceService
 
@@ -90,7 +90,6 @@ class Post extends Model {
         'images' => 'array',
         'videos' => 'array',
         'external_source_previews' => 'array',
-        'tags' => 'array',
 
         // Counts
         'favorite_count' => 'integer',
@@ -169,5 +168,22 @@ class Post extends Model {
      */
     public function likes() {
         return $this->morphMany(UserLike::class, 'likeable');
+    }
+
+    /**
+     * Get all tags for this post
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * 
+     * @example | $post->tags // Access the related tags
+     * @example | Post::with('tags')->get() // Eager loading
+     */
+    public function tags() {
+        return $this->belongsToMany(
+            PostAllowedValue::class,
+            'post_tags',
+            'post_id',
+            'post_allowed_value_id'
+        )->where('type', 'tag');
     }
 }
