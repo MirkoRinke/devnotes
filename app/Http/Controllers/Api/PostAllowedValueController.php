@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Post;
 use App\Models\PostAllowedValue;
-
+use App\Models\PostTag;
 use App\Traits\ApiResponses;
 use App\Traits\QueryBuilder;
 use App\Traits\ApiInclude;
@@ -49,7 +49,7 @@ class PostAllowedValueController extends Controller {
     public function getValidationRulesCreate(): array {
         $validationRulesCreate = [
             'name' => ['required', 'string', 'min:1', 'max:255'],
-            'type' => ['required', 'string', 'in:language,category,post_type,technology,status'],
+            'type' => ['required', 'string', 'in:language,category,post_type,technology,status,tag'],
         ];
         return $validationRulesCreate;
     }
@@ -64,7 +64,7 @@ class PostAllowedValueController extends Controller {
     public function getValidationRulesUpdate(): array {
         $validationRulesUpdate = [
             'name' => ['sometimes', 'required', 'string', 'min:1', 'max:255'],
-            'type' => ['sometimes', 'required', 'string', 'in:language,category,post_type,technology,status'],
+            'type' => ['sometimes', 'required', 'string', 'in:language,category,post_type,technology,status,tag'],
         ];
         return $validationRulesUpdate;
     }
@@ -121,12 +121,12 @@ class PostAllowedValueController extends Controller {
      * Check if the Post Allowed Value is used in any posts
      * 
      * @param string $name The name of the allowed value
-     * @param string $type The type of the allowed value (language, category, post_type, technology, status)
+     * @param string $type The type of the allowed value (e.g., category, post_type, status, language, technology, tag)
      * @return bool True if the value is in use, false otherwise
      * 
-     * @example | $isInUse = $this->isPostAllowedValueInUse($name, $type);
+     * @example | $isInUse = $this->isPostAllowedValueInUse($name, $type, $id)
      */
-    protected function isPostAllowedValueInUse($name, $type) {
+    protected function isPostAllowedValueInUse($name, $type, $id) {
         $isInUse = false;
 
         switch ($type) {
@@ -144,6 +144,9 @@ class PostAllowedValueController extends Controller {
                 break;
             case 'technology':
                 $isInUse = Post::whereJsonContains('technology', $name)->exists();
+                break;
+            case 'tag':
+                $isInUse = PostTag::where('post_allowed_value_id', $id)->exists();
                 break;
         }
         return $isInUse;
@@ -377,9 +380,9 @@ class PostAllowedValueController extends Controller {
                 $this->getValidationMessages('PostAllowedValue')
             );
 
-            $existingPostAllowedValue = PostAllowedValue::where('name', $validatedData['name'])
-                ->where('type', $validatedData['type'])
-                ->first();
+            $validatedData['name'] = trim($validatedData['name']);
+
+            $existingPostAllowedValue = PostAllowedValue::whereRaw('LOWER(name) = LOWER(?) AND type = ?', [$validatedData['name'], $validatedData['type']])->first();
 
             if ($existingPostAllowedValue) {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
@@ -603,6 +606,8 @@ class PostAllowedValueController extends Controller {
                 $this->getValidationMessages('PostAllowedValue')
             );
 
+            $validatedData['name'] = trim($validatedData['name']);
+
             // Check if at least one field is provided
             if (empty($validatedData)) {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
@@ -614,10 +619,8 @@ class PostAllowedValueController extends Controller {
             $nameToCheck = $validatedData['name'] ?? $postAllowedValue->name;
             $typeToCheck = $validatedData['type'] ?? $postAllowedValue->type;
 
-            $existingPostAllowedValue = PostAllowedValue::where('name', $nameToCheck)
-                ->where('type', $typeToCheck)
-                ->where('id', '!=', $id)
-                ->first();
+
+            $existingPostAllowedValue = PostAllowedValue::whereRaw('LOWER(name) = LOWER(?) AND type = ? AND id != ?', [$nameToCheck, $typeToCheck, $id])->first();
 
 
             if ($existingPostAllowedValue) {
@@ -711,7 +714,7 @@ class PostAllowedValueController extends Controller {
             $type = $postAllowedValue->type;
 
             // Check if the Post Allowed Value is in use
-            $isInUse = $this->isPostAllowedValueInUse($name, $type);
+            $isInUse = $this->isPostAllowedValueInUse($name, $type, $id);
 
             // Prevent deletion if value is in use
             if ($isInUse) {
