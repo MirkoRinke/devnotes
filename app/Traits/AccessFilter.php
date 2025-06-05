@@ -23,11 +23,11 @@ trait AccessFilter {
     protected function applyPostAccessFilters(Request $request, $query) {
         $user = $this->getAuthenticatedUser($request);
         if (!$user) {
-            $query->where('status', 'published')->where('reports_count', '<', 5);
+            $query->where('status', 'Published')->where('reports_count', '<', 5);
         } elseif ($user->role !== 'admin' && $user->role !== 'moderator') {
             $query->where(function ($subQuery) use ($user) {
                 $subQuery->where('user_id', $user->id)->orWhere(function ($subsubQuery) {
-                    $subsubQuery->where('status', 'published')->where('reports_count', '<', 5);
+                    $subsubQuery->where('status', 'Published')->where('reports_count', '<', 5);
                 });
             });
         }
