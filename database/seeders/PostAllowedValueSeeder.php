@@ -39,11 +39,11 @@ class PostAllowedValueSeeder extends Seeder {
                 'Cloud Computing'
             ],
             'post_type' => [
-                'snippet',
-                'tutorial',
-                'feedback',
-                'showcase',
-                'question'
+                'Snippet',
+                'Tutorial',
+                'Feedback',
+                'Showcase',
+                'Question'
             ],
             'technology' => [
                 'Angular',
@@ -67,10 +67,10 @@ class PostAllowedValueSeeder extends Seeder {
 
             ],
             'status' => [
-                'draft',
-                'private',
-                'published',
-                'archived'
+                'Draft',
+                'Private',
+                'Published',
+                'Archived'
             ],
         ];
     }
