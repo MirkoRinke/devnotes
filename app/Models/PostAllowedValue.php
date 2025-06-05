@@ -39,7 +39,8 @@ class PostAllowedValue extends Model {
      */
     protected $hidden = [
         // Relationships
-        'user'
+        'user',
+        'pivot'
     ];
 
     /**
