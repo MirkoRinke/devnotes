@@ -55,12 +55,16 @@ class ValidPostValue implements ValidationRule {
             return;
         }
 
+        $value = strtolower(trim($value));
+
         $cacheKey = $this->generateSimpleCacheKey('post_allowed_values_' . $this->type);
 
         $allowedValues = $this->cacheData($cacheKey, 3600, function () {
-            return PostAllowedValue::where('type', $this->type)
+            $values = PostAllowedValue::where('type', $this->type)
                 ->pluck('name')
                 ->toArray();
+
+            return array_map(fn($value) => strtolower(trim($value)), $values);
         });
 
         if (!in_array($value, $allowedValues)) {
