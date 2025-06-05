@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 use App\Models\Post;
+use App\Models\PostAllowedValue;
 
 use App\Rules\SafeUrl;
 use App\Rules\ValidPostValue;
@@ -134,15 +135,53 @@ class PostController extends Controller {
      */
     protected function generateExternalSourcePreviews(array $validatedData, ?Post $existingPost = null): array {
         if (array_key_exists('images', $validatedData) || array_key_exists('resources', $validatedData) || array_key_exists('videos', $validatedData)) {
-
             $externalSourcePreviews = $this->externalSourceService->generatePreviews([
                 'images' => $validatedData['images'] ?? $existingPost?->images ?? [],
                 'videos' => $validatedData['videos'] ?? $existingPost?->videos ?? [],
                 'resources' => $validatedData['resources'] ?? $existingPost?->resources ?? []
             ]);
+
+            return $externalSourcePreviews;
         }
 
-        return $externalSourcePreviews;
+        return $existingPost->external_source_previews ?? [];
+    }
+
+
+    /**
+     * Synchronize tags for a post
+     * 
+     * This method finds or creates tags in the PostAllowedValue table
+     * and associates them with the given post using the pivot table.
+     * 
+     * @param Post $post The post to synchronize tags for
+     * @param array $tagNames Array of tag names
+     * @param mixed $user The user performing the action (for created_by_role and created_by_user_id)
+     * @return void
+     * 
+     */
+    protected function syncTags(Post $post, array $tagNames, $user): void {
+        $tagIds = [];
+
+        foreach ($tagNames as $tagName) {
+            $tagName = trim($tagName);
+
+            $tag = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$tagName, 'tag'])->first();
+
+            if (!$tag) {
+                $tag = new PostAllowedValue();
+                $tag->name = $tagName;
+                $tag->type = 'tag';
+                $tag->created_by_role = $user->role;
+                $tag->created_by_user_id = $user->id;
+                $tag->save();
+            }
+
+            $tagIds[] = $tag->id;
+        }
+
+        // Sync the tags with the post
+        $post->tags()->sync($tagIds);
     }
 
 
@@ -300,7 +339,6 @@ class PostController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
-
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
@@ -443,12 +481,23 @@ class PostController extends Controller {
 
             $user = $request->user();
 
+            // Get the tags from the validated data and remove them from the main data array
+            $tagNames = $validatedData['tags'] ?? [];
+            unset($validatedData['tags']);
+
+
             // Create a new post
             $post = new Post($validatedData);
             $post->user_id = $user->id;
             $post->history = [];
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
             $post->save();
+
+            // Synchronize tags with the post
+            $this->syncTags($post, $tagNames, $user);
+
+            // Load the tags relation
+            $post->load('tags:id,name');
 
             return $this->successResponse($post, 'Post created successfully', 201);
         } catch (ValidationException $e) {
@@ -795,6 +844,20 @@ class PostController extends Controller {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
 
+            /**
+             * Get the tags from the validated data and remove them from the main data array
+             * This is necessary because tags are handled separately.
+             */
+            $tagNames = [];
+
+            $relationChanges = [];
+
+            if (isset($validatedData['tags'])) {
+                $relationChanges['tags'] = $validatedData['tags'];
+                $tagNames = $validatedData['tags'];
+                unset($validatedData['tags']);
+            }
+
             /** 
              * Check if the user is an admin or moderator and if they are not the owner of the post
              * If so, handle the moderation update
@@ -806,15 +869,29 @@ class PostController extends Controller {
                     $post,
                     $validatedData,
                     $request,
-                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'tags', 'status'],
-                    'post'
+                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'status'],
+                    'post',
+                    ['tags' => 'name'],
+                    $relationChanges
                 );
 
                 $post->is_updated = true;
                 $post->updated_by_role = $user->role;
                 $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-                $post->save();
+                DB::transaction(function () use ($post, $tagNames, $user) {
+                    $post->save();
+
+                    // Synchronize tags if present
+                    if ($tagNames) {
+                        $this->syncTags($post, $tagNames, $user);
+                    }
+
+                    return $post;
+                });
+
+                // Load the tags relation
+                $post->load('tags:id,name');
 
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
@@ -827,9 +904,21 @@ class PostController extends Controller {
             $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-            $post->save();
+            DB::transaction(function () use ($post, $tagNames, $user) {
+                $post->save();
+
+                // Synchronize tags if present
+                if (!empty($tagNames)) {
+                    $this->syncTags($post, $tagNames, $user);
+                }
+
+                return $post;
+            });
 
             $post = $this->managePostsFieldVisibility($request, $post);
+
+            // Load the tags relation
+            $post->load('tags:id,name');
 
             return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
