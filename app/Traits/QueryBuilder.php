@@ -562,33 +562,102 @@ trait QueryBuilder {
         ]
     ];
 
+
     /**
-     * Predefined relation filters for different model types
+     * Get relation filters based on the request and model type
      * 
-     * This array defines which fields can be used for filtering on related models.
-     * The structure is: modelType => relation => allowed fields
+     * @param Request $request The HTTP request containing all query parameters
+     * @param string $modelType The model type to get relation filters for
+     * @return array The relation filters for the specified model type
+     * 
+     * @example | $filters = $this->getRelationFilters($request, 'post');
      */
-    protected  $relationFilters = [
-        'post' => [
-            'tags' => [
-                'name',
+    protected function getRelationFilters(Request $request, $modelType): array {
+
+        /**
+         * Predefined relation filters for different model types
+         */
+        $relationFilters = [
+            'post' => [
+                'tags' => [
+                    'name',
+                ],
+                // 'language' => [
+                //     'name',
+                // ],
+                // 'technology' => [
+                //     'name',
+                // ],
             ],
-            // 'language' => [
-            //     'name',
-            // ],
-            // 'technology' => [
-            //     'name',
-            // ],
+        ];
+
+        /**
+         * Dynamic relations that can be included based on the request
+         */
+        $dynamicRelations = [
+            'post' => [
+                'user' => [
+                    'display_name',
+                    'role',
+                    'created_at',
+                    'updated_at',
+                    'is_banned',
+                    'was_ever_banned',
+                    'moderation_info'
+                ]
+            ],
             'user' => [
-                'display_name',
-                'role',
-                'created_at',
-                'updated_at',
-                'is_banned',
-                'was_ever_banned',
+                'profile' => [
+                    'user_id',
+                    'display_name',
+                    'public_email',
+                    'website',
+                    'avatar_path',
+                    'is_public',
+                    'location',
+                    'biography',
+                    'skills',
+                    'social_links',
+                    'contact_channels',
+                    'auto_load_external_images',
+                    'external_images_temp_until',
+                    'auto_load_external_videos',
+                    'external_videos_temp_until',
+                    'auto_load_external_resources',
+                    'external_resources_temp_until',
+                    'reports_count',
+                    'created_at',
+                    'updated_at'
+                ]
             ]
-        ]
-    ];
+        ];
+
+        /**
+         * Check if the request has 'include' parameter and if 'user' is included
+         */
+        $userRelationModels = ['post'];
+        if ($request->has('include') && in_array('user', explode(',', $request->input('include'))) && in_array($modelType, $userRelationModels)) {
+            if (!isset($relationFilters[$modelType])) {
+                $relationFilters[$modelType] = [];
+            }
+            $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
+        }
+
+
+        /**
+         * Check if the request has 'include' parameter and if 'profile' is included
+         */
+        $profileRelationModels = ['user'];
+        if ($request->has('include') && in_array('profile', explode(',', $request->input('include'))) && in_array($modelType, $profileRelationModels)) {
+            if (!isset($relationFilters[$modelType])) {
+                $relationFilters[$modelType] = [];
+            }
+            $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
+        }
+
+        return $relationFilters[$modelType] ?? [];
+    }
+
 
     /**
      * Build the query based on the request
@@ -606,7 +675,7 @@ trait QueryBuilder {
         }
 
         $methods = $this->queryConfigurations[$modelType] ?? [];
-        $relations = $this->relationFilters[$modelType] ?? [];
+        $relations = $this->getRelationFilters($request, $modelType);
 
         foreach ($methods as $method => $params) {
             if (in_array($method, ['filter'])) {
