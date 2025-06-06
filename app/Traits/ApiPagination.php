@@ -31,6 +31,12 @@ trait ApiPagination {
      * @example | $this->getPerPage($request, $query, (int) $config);
      */
     public function getPerPage(Request $request, Builder $query, int $perPage = 10): JsonResponse|Collection|LengthAwarePaginator {
+
+        // If query logging is enabled, return the query results without pagination
+        if (env('QUERY_LOGGING_ENABLED', false)) {
+            return $query->get();
+        }
+
         // Get the page parameter from the request or default to 1
         $page = $request->get('page', 1);
 
