@@ -563,12 +563,40 @@ trait QueryBuilder {
     ];
 
     /**
+     * Predefined relation filters for different model types
+     * 
+     * This array defines which fields can be used for filtering on related models.
+     * The structure is: modelType => relation => allowed fields
+     */
+    protected  $relationFilters = [
+        'post' => [
+            'tags' => [
+                'name',
+            ],
+            // 'language' => [
+            //     'name',
+            // ],
+            // 'technology' => [
+            //     'name',
+            // ],
+            'user' => [
+                'display_name',
+                'role',
+                'created_at',
+                'updated_at',
+                'is_banned',
+                'was_ever_banned',
+            ]
+        ]
+    ];
+
+    /**
      * Build the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param string $modelType
-     * @return JsonResponse|Collection|LengthAwarePaginator
+     * @param Request $request The HTTP request containing all query parameters
+     * @param Builder $query The query builder to modify
+     * @param string $modelType The model type to build the query for
+     * @return JsonResponse|Collection|LengthAwarePaginator The query result or error response
      * 
      * @example | $query = $this->buildQuery($request, $query, 'user');
      */
@@ -577,10 +605,16 @@ trait QueryBuilder {
             return $this->errorResponse("Query configuration for '{$modelType}' is not defined", 'QUERY_CONFIG_NOT_DEFINED', 500);
         }
 
-        $methods = $this->queryConfigurations[$modelType];
+        $methods = $this->queryConfigurations[$modelType] ?? [];
+        $relations = $this->relationFilters[$modelType] ?? [];
 
         foreach ($methods as $method => $params) {
-            $query = $this->$method($request, $query, $params);
+            if (in_array($method, ['filter'])) {
+                $query = $this->$method($request, $query, $params, $relations);
+            } else {
+                $query = $this->$method($request, $query, $params);
+            }
+
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -590,12 +624,11 @@ trait QueryBuilder {
     }
 
     /**
-     * Select fields to include in the response
+     * Get the query configuration for a specific model type and method
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param array $fields
-     * @return Builder
+     * @param string $modelType The model type to get the configuration for
+     * @param string|null $methodName The specific method to get configuration for (null for all methods)
+     * @return array|int|JsonResponse The configuration or an error response
      * 
      * @example | $config = $this->getQueryConfig('user', 'select');
      */
@@ -613,15 +646,16 @@ trait QueryBuilder {
         return $this->queryConfigurations[$modelType];
     }
 
+
     /**
-     * Select fields to include in the response
+     * Select specific fields in the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param array $fields
-     * @return Builder
+     * @param Request $request The HTTP request containing select parameters
+     * @param Builder $query The query builder to apply selection to
+     * @param string $modelType The model type to get the select configuration for
+     * @return Builder|JsonResponse The query with selection applied or an error response
      * 
-     * @example | $query = $this->select($request, $query, 'user');
+     * @example | $query = $this->buildQuerySelect($request, $query, 'post');
      */
     protected function buildQuerySelect(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'select');
@@ -631,33 +665,37 @@ trait QueryBuilder {
         return $this->select($request, $query, (array) $config);
     }
 
+
     /**
      * Filter the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param array $fields
-     * @return Builder
+     * @param Request $request The HTTP request containing filter parameters
+     * @param Builder $query The query builder to apply filters to
+     * @param string $modelType The model type to get the filter configuration for
+     * @return Builder|JsonResponse The filtered query or an error response
      * 
-     * @example | $query = $this->filter($request, $query, 'user');
+     * @example | $query = $this->buildQueryFilter($request, $query, 'post');
      */
     protected function buildQueryFilter(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'filter');
+        $relations = $this->relationFilters[$modelType] ?? [];
+
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->filter($request, $query, (array) $config);
+        return $this->filter($request, $query, (array) $config, $relations);
     }
+
 
     /**
      * Sort the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param array $fields
-     * @return Builder
+     * @param Request $request The HTTP request containing sort parameters
+     * @param Builder $query The query builder to apply sorting to
+     * @param string $modelType The model type to get the sort configuration for
+     * @return Builder|JsonResponse The sorted query or an error response
      * 
-     * @example | $query = $this->sort($request, $query, 'user');
+     * @example | $query = $this->buildQuerySort($request, $query, 'post');
      */
     protected function buildQuerySort(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'sort');
@@ -669,14 +707,14 @@ trait QueryBuilder {
 
 
     /**
-     * startWith the query based on the request
+     * Apply "starts with" filtering to the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param array $fields
-     * @return Builder
+     * @param Request $request The HTTP request containing startsWith parameters
+     * @param Builder $query The query builder to apply filters to
+     * @param string $modelType The model type to get the configuration for
+     * @return Builder|JsonResponse The filtered query or an error response
      * 
-     * @example | $query = $this->startsWith($request, $query, 'user');
+     * @example | $query = $this->buildQueryStartsWith($request, $query, 'post');
      */
     protected function buildQueryStartsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'startsWith');
@@ -688,14 +726,14 @@ trait QueryBuilder {
 
 
     /**
-     * endWith the query based on the request
+     * Apply "ends with" filtering to the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param array $fields
-     * @return Builder
+     * @param Request $request The HTTP request containing endsWith parameters
+     * @param Builder $query The query builder to apply filters to
+     * @param string $modelType The model type to get the configuration for
+     * @return Builder|JsonResponse The filtered query or an error response
      * 
-     * @example | $query = $this->endsWith($request, $query, 'user');
+     * @example | $query = $this->buildQueryEndsWith($request, $query, 'post');
      */
     protected function buildQueryEndsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'endsWith');
@@ -706,14 +744,14 @@ trait QueryBuilder {
     }
 
     /**
-     * Paginate the query based on the request
+     * Apply pagination to the query based on the request
      * 
-     * @param Request $request
-     * @param Builder $query
-     * @param int $perPage
-     * @return Builder
+     * @param Request $request The HTTP request containing pagination parameters
+     * @param Builder $query The query builder to apply pagination to
+     * @param string $modelType The model type to get the pagination configuration for
+     * @return Builder|JsonResponse The paginated query or an error response
      * 
-     * @example | $query = $this->paginate($request, $query, 'user');
+     * @example | $query = $this->buildQueryPaginate($request, $query, 'post');
      */
     protected function buildQueryPaginate(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
         $config = $this->getQueryConfig($modelType, 'getPerPage');
