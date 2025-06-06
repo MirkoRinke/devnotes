@@ -82,13 +82,17 @@ trait PostQuerySetup {
      * @example | $this->loadTagsRelation($request, $query)
      */
     private function loadTagsRelation(Request $request, $query): mixed {
+        /**
+         * Explicit table.column AS alias format is used for many-to-many relationships
+         * This is to avoid ambiguity in the result set, especially when joining multiple tables.
+         */
         $defaultColumns = [
             'post_allowed_values.id as id',
             'post_allowed_values.name as name'
         ];
 
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $this->getRelationFieldsFromRequest($request, 'tags', [], $defaultColumns)],
+            ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $defaultColumns],
         ]);
         return $query;
     }
