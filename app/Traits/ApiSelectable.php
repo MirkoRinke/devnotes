@@ -148,7 +148,8 @@ trait ApiSelectable {
      * Apply field visibility to a model and its relations
      * 
      * This helper method applies visibility rules to a single model
-     * and its parent/children relations.
+     * and its parent/children relations. It processes field visibility
+     * in a structured way across multiple related entities.
      * 
      * Like the TARDIS in Doctor Who, this method travels through time:
      * - It visits the present (the current model)
@@ -158,6 +159,14 @@ trait ApiSelectable {
      * because each model instance exists only once in memory, even if
      * it appears in multiple places in the relationship timeline.
      * 
+     * The method works with up to three levels of nesting:
+     * 1. The main model itself
+     * 2. Its immediate children and parent
+     * 3. For each child, it processes its parent reference
+     * 
+     * This approach ensures consistent field visibility across
+     * the entire comment thread hierarchy.
+     * 
      * @param Request $request The HTTP request
      * @param array|null $originalSelectFields The original select fields
      * @param mixed $model The model to process
@@ -165,16 +174,42 @@ trait ApiSelectable {
      * @example | $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $model);
      */
     private function applyFieldsToModelAndRelations(Request $request, $originalSelectFields, $model): void {
+        // Process the current model
         $this->applyVisibleFields($request, $originalSelectFields, $model);
 
+        // Process children (if they exist)
         if (isset($model->children) && $model->children) {
+            // Process the children collection
             $this->applyVisibleFields($request, $originalSelectFields, $model->children);
 
+            // Process each child individually
             foreach ($model->children as $child) {
-                $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $child);
+                $this->applyVisibleFields($request, $originalSelectFields, $child);
+
+                // Process the grandchildren (if they exist)
+                if (isset($child->children) && $child->children) {
+                    // Process the grandchildren collection
+                    $this->applyVisibleFields($request, $originalSelectFields, $child->children);
+
+                    // Process each grandchild individually
+                    foreach ($child->children as $grandchild) {
+                        $this->applyVisibleFields($request, $originalSelectFields, $grandchild);
+
+                        // Process the grandchild's parent (if it exists and isn't already processed)
+                        if (isset($grandchild->parent) && $grandchild->parent) {
+                            $this->applyVisibleFields($request, $originalSelectFields, $grandchild->parent);
+                        }
+                    }
+                }
+
+                // Process the child's parent (if it exists and isn't already processed)
+                if (isset($child->parent) && $child->parent) {
+                    $this->applyVisibleFields($request, $originalSelectFields, $child->parent);
+                }
             }
         }
 
+        // Process parent (if it exists)
         if (isset($model->parent) && $model->parent) {
             $this->applyVisibleFields($request, $originalSelectFields, $model->parent);
         }
