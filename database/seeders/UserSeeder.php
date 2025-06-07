@@ -60,8 +60,10 @@ class UserSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding users...');
 
-        $userCount = 500;
-        $progressInterval = 10;
+        $multiplier = (int) 1;
+
+        $userCount = (int) 500;
+
 
         // Create an admin user
         $this->createUserWithProfile([
@@ -140,17 +142,14 @@ class UserSeeder extends Seeder {
 
 
         // Create a specified number of users
-        for ($i = 0; $i < $userCount; $i++) {
-            $user =  User::factory(1)->create();
+        for ($i = 0; $i < $multiplier; $i++) {
+            $user =  User::factory($userCount)->create();
 
             foreach ($user as $createdUser) {
                 $this->userRelationService->createUserProfile($createdUser);
                 $this->userRelationService->checkUsername($createdUser);
             }
-
-            if ($i % $progressInterval == 0) {
-                $this->command->info('Users created successfully! ' . ($progressInterval + $i));
-            }
+            $this->command->info("Created " . ($userCount * $multiplier) . " users. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
     }
 }
