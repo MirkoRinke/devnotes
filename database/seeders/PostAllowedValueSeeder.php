@@ -80,16 +80,18 @@ class PostAllowedValueSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
+        $this->command->info('Seeding allowed values for post fields...');
 
         $allowedValues = $this->getAllowedPostValues();
 
         foreach ($allowedValues as $field => $values) {
             foreach ($values as $value) {
-                PostAllowedValue::create([
+                PostAllowedValue::firstOrCreate([
                     'name' => $value,
                     'type' => $field,
                 ]);
             }
+            $this->command->info("Allowed values for field '{$field}' have been seeded.");
         }
     }
 }
