@@ -14,9 +14,9 @@ class PostSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding posts...');
 
-        $multiplier = (int) 1;
+        $multiplier = (int) 10;
 
-        $postsCount = (int) 500;
+        $postsCount = (int) 50;
 
         /**
          * Create posts in the database.

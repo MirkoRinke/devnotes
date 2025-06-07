@@ -30,12 +30,12 @@ class CommentSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding comments...');
 
-        $multiplier = (int) 1;
+        $multiplier = (int) 10;
 
-        $firstComments = (int) 500;
-        $commentsWithReply = (int) 150;
-        $commentsWithReplyToReply = (int) 100;
-        $deletedComments = (int) 20;
+        $firstComments = (int) 50;
+        $commentsWithReply = (int) 15;
+        $commentsWithReplyToReply = (int) 10;
+        $deletedComments = (int) 5;
 
         /**
          * Create first comments

@@ -60,9 +60,9 @@ class UserSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding users...');
 
-        $multiplier = (int) 1;
+        $multiplier = (int) 10;
 
-        $userCount = (int) 500;
+        $userCount = (int) 50;
 
 
         // Create an admin user
