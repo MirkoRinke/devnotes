@@ -30,70 +30,62 @@ class CommentSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding comments...');
 
-        $firstComments = 500;
-        $commentsWithReply = 150;
-        $commentsWithReplyToReply = 100;
-        $deletedComments = 20;
-        $progressInterval = 10;
+        $multiplier = (int) 1;
 
+        $firstComments = (int) 500;
+        $commentsWithReply = (int) 150;
+        $commentsWithReplyToReply = (int) 100;
+        $deletedComments = (int) 20;
 
         /**
          * Create first comments
          */
-        for ($i = 0; $i < $firstComments; $i++) {
-            $comments = Comment::factory()->count(1)->create();
+        for ($i = 0; $i < $multiplier; $i++) {
+            $comments = Comment::factory()->count($firstComments)->create();
             foreach ($comments as $comment) {
                 $this->commentRelationService->updateLastCommentAt($comment);
                 $this->commentRelationService->updateCommentsCount($comment, 'increment');
             }
-            if ($i % $progressInterval == 0) {
-                $this->command->info('Comments created successfully! ' . ($progressInterval + $i));
-            }
+            $this->command->info("Created " . ($firstComments * $multiplier) . " comments. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
 
 
         /**
          * Create reply comments, 
          */
-        for ($i = 0; $i < $commentsWithReply; $i++) {
-            $comments = Comment::factory()->count(1)->reply()->create();
+        for ($i = 0; $i < $multiplier; $i++) {
+            $comments = Comment::factory()->count($commentsWithReply)->reply()->create();
             foreach ($comments as $reply) {
                 $this->commentRelationService->updateLastCommentAt($reply);
                 $this->commentRelationService->updateCommentsCount($reply, 'increment');
             }
-            if ($i % $progressInterval == 0) {
-                $this->command->info('Reply comments created successfully! ' . ($progressInterval + $i));
-            }
+            $this->command->info("Created " . ($commentsWithReply * $multiplier) . " reply comments. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
 
 
         /**
          * Create reply to reply comments
          */
-        for ($i = 0; $i < $commentsWithReplyToReply; $i++) {
-            $comments = Comment::factory()->count(1)->replyToReply()->create();
+        for ($i = 0; $i < $multiplier; $i++) {
+            $comments = Comment::factory()->count($commentsWithReplyToReply)->replyToReply()->create();
             foreach ($comments as $replyToReply) {
                 $this->commentRelationService->updateLastCommentAt($replyToReply);
                 $this->commentRelationService->updateCommentsCount($replyToReply, 'increment');
             }
-            if ($i % $progressInterval == 0) {
-                $this->command->info('Reply to reply comments created successfully! ' . ($progressInterval + $i));
-            }
+            $this->command->info("Created " . ($commentsWithReplyToReply * $multiplier) . " reply to reply comments. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
 
 
         /**
          * Create deleted comments
          */
-        for ($i = 0; $i < $deletedComments; $i++) {
-            $comments = Comment::factory()->count(1)->deleted()->create();
+        for ($i = 0; $i < $multiplier; $i++) {
+            $comments = Comment::factory()->count($deletedComments)->deleted()->create();
             foreach ($comments as $deleted) {
                 $this->commentRelationService->updateLastCommentAt($deleted);
                 $this->commentRelationService->updateCommentsCount($deleted, 'increment');
             }
-            if ($i % $progressInterval == 0) {
-                $this->command->info('Deleted comments created successfully! ' . ($progressInterval + $i));
-            }
+            $this->command->info("Created " . ($deletedComments * $multiplier) . " deleted comments. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
     }
 }
