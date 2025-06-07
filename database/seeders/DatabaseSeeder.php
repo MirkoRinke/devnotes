@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\CriticalTerm;
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,8 +11,8 @@ class DatabaseSeeder extends Seeder {
      */
     public function run(): void {
         $this->call([
-            UserSeeder::class,
             ApiKeySeeder::class,
+            UserSeeder::class,
             PostSeeder::class,
             CommentSeeder::class,
             LikeSeeder::class,
@@ -23,5 +21,6 @@ class DatabaseSeeder extends Seeder {
             PostAllowedValueSeeder::class,
             CriticalTermSeeder::class,
         ]);
+        $this->command->info('Database seeding completed successfully!');
     }
 }
