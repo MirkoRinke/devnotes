@@ -28,27 +28,33 @@ class LikeSeeder extends Seeder {
      * @example | $this->createPostLikes();
      */
     private function createPostLikes(): void {
+        $this->command->info('Seeding likes for posts...');
+
         // Get all posts with their author IDs
         $posts = Post::select('id', 'user_id')->get();
 
-        // Get all user IDs dynamically
+        // Get all user IDs
         $allUserIds = User::pluck('id')->toArray();
 
         foreach ($posts as $post) {
             // Get IDs of users who aren't the post author
             $likerIds = array_diff($allUserIds, [$post->user_id]);
 
-            // Randomly determine how many users will like this post (0-2)
-            $numLikers = rand(0, min(2, count($likerIds)));
+            /**
+             * Randomly select a number of users to like this post
+             * This number is between 0 and 5, but will never exceed the number of eligible likers.
+             */
+            $numLikers = rand(0, min(5, count($likerIds)));
 
-            // If we'll have likers, select them randomly
             if ($numLikers > 0) {
+
                 // Shuffle potential liker IDs to randomize selection
                 shuffle($likerIds);
+
                 $selectedLikers = array_slice($likerIds, 0, $numLikers);
 
+                // Create likes for each selected liker
                 foreach ($selectedLikers as $likerId) {
-                    // Use firstOrCreate to prevent duplicates efficiently
                     UserLike::firstOrCreate(
                         [
                             'user_id' => $likerId,
@@ -57,13 +63,12 @@ class LikeSeeder extends Seeder {
                         ],
                         [
                             'type' => 'post',
-                            'created_at' => now(),
-                            'updated_at' => now()
                         ]
                     );
                 }
             }
         }
+        $this->command->info('Likes for posts have been seeded successfully.');
     }
 
     /**
@@ -72,27 +77,32 @@ class LikeSeeder extends Seeder {
      * @example | $this->createCommentLikes();
      */
     private function createCommentLikes(): void {
+        $this->command->info('Seeding likes for comments...');
+
         // Get all comments with their author IDs
         $comments = Comment::select('id', 'user_id')->get();
 
-        // Get all user IDs dynamically
+        // Get all user IDs
         $allUserIds = User::pluck('id')->toArray();
 
         foreach ($comments as $comment) {
             // Get IDs of users who aren't the comment author
             $likerIds = array_diff($allUserIds, [$comment->user_id]);
 
-            // Randomly determine how many users will like this comment (0-2)
-            $numLikers = rand(0, min(2, count($likerIds)));
+            /**
+             * Randomly select a number of users to like this comment
+             * This number is between 0 and 5, but will never exceed the number of eligible likers.
+             */
+            $numLikers = rand(0, min(5, count($likerIds)));
 
-            // If we'll have likers, select them randomly
             if ($numLikers > 0) {
+
                 // Shuffle potential liker IDs to randomize selection
                 shuffle($likerIds);
+
                 $selectedLikers = array_slice($likerIds, 0, $numLikers);
 
                 foreach ($selectedLikers as $likerId) {
-                    // Use firstOrCreate to prevent duplicates efficiently
                     UserLike::firstOrCreate(
                         [
                             'user_id' => $likerId,
@@ -101,13 +111,12 @@ class LikeSeeder extends Seeder {
                         ],
                         [
                             'type' => 'comment',
-                            'created_at' => now(),
-                            'updated_at' => now()
                         ]
                     );
                 }
             }
         }
+        $this->command->info('Likes for comments have been seeded successfully.');
     }
 
     /**
@@ -116,6 +125,8 @@ class LikeSeeder extends Seeder {
      * @example | $this->updatePostLikesCounts();
      */
     private function updatePostLikesCounts(): void {
+        $this->command->info('Updating likes count for posts...');
+
         // Get all likes for posts
         $postLikesCollection = UserLike::where('likeable_type', Post::class)->select('likeable_id')->get();
 
@@ -140,6 +151,8 @@ class LikeSeeder extends Seeder {
      * @example | $this->updateCommentLikesCounts();
      */
     private function updateCommentLikesCounts(): void {
+        $this->command->info('Updating likes count for comments...');
+
         // Get all likes for comments
         $commentLikesCollection = UserLike::where('likeable_type', Comment::class)->select('likeable_id')->get();
 
