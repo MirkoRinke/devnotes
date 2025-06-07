@@ -58,6 +58,11 @@ class UserSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
+        $this->command->info('Seeding users...');
+
+        $userCount = 500;
+        $progressInterval = 10;
+
         // Create an admin user
         $this->createUserWithProfile([
             'name' => 'Admin',
@@ -67,6 +72,8 @@ class UserSeeder extends Seeder {
             'role' => 'admin',
             'email_verified_at' => now(),
         ]);
+
+        $this->command->info('Admin user created successfully!');
 
         // Create a system user for deleted accounts
         $this->createUserWithProfile([
@@ -78,6 +85,8 @@ class UserSeeder extends Seeder {
             'email_verified_at' => now(),
         ]);
 
+        $this->command->info('System user created successfully!');
+
         // Create a system user for deleted accounts
         $this->createUserWithProfile([
             'name' => 'System Deleted User',
@@ -87,6 +96,8 @@ class UserSeeder extends Seeder {
             'role' => 'system',
             'email_verified_at' => now(),
         ]);
+
+        $this->command->info('System deleted user created successfully!');
 
         // Create a moderator user
         $this->createUserWithProfile([
@@ -98,6 +109,8 @@ class UserSeeder extends Seeder {
             'email_verified_at' => now(),
         ]);
 
+        $this->command->info('Moderator user created successfully!');
+
         // Create a guest user
         $this->createUserWithProfile([
             'name' => 'Guest',
@@ -108,6 +121,8 @@ class UserSeeder extends Seeder {
             'email_verified_at' => now(),
             'account_purpose' => 'guest',
         ]);
+
+        $this->command->info('Guest user created successfully!');
 
         // Create multiple regular users with incrementing names/emails
         for ($i = 6; $i <= 10; $i++) {
@@ -121,9 +136,21 @@ class UserSeeder extends Seeder {
             ]);
         }
 
-        User::factory(500)->create()->each(function ($user) {
-            $this->userRelationService->createUserProfile($user);
-            $this->userRelationService->checkUsername($user);
-        });
+        $this->command->info('Multiple custom regular users created successfully!');
+
+
+        // Create a specified number of users
+        for ($i = 0; $i < $userCount; $i++) {
+            $user =  User::factory(1)->create();
+
+            foreach ($user as $createdUser) {
+                $this->userRelationService->createUserProfile($createdUser);
+                $this->userRelationService->checkUsername($createdUser);
+            }
+
+            if ($i % $progressInterval == 0) {
+                $this->command->info('Users created successfully! ' . ($progressInterval + $i));
+            }
+        }
     }
 }
