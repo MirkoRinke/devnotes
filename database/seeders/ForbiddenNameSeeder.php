@@ -19,6 +19,8 @@ class ForbiddenNameSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
+        $this->command->info('Seeding forbidden names...');
+
         $totalImported = 0;
 
         foreach ($this->files as $file => $matchType) {
