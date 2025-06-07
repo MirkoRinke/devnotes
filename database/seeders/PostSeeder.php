@@ -12,8 +12,21 @@ class PostSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
+        $this->command->info('Seeding posts...');
 
-        // Create 500 posts using the PostFactory
-        Post::factory(500)->create();
+        $postsCount = 500;
+        $progressInterval = 10;
+
+
+        /**
+         * Create posts in the database.
+         */
+        for ($i = 0; $i < $postsCount; $i++) {
+            Post::factory(1)->create();
+
+            if ($i % $progressInterval == 0) {
+                $this->command->info('Posts created successfully! ' . ($progressInterval + $i));
+            }
+        }
     }
 }
