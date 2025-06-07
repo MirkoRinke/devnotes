@@ -14,19 +14,17 @@ class PostSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding posts...');
 
-        $postsCount = 500;
-        $progressInterval = 10;
+        $multiplier = (int) 1;
 
+        $postsCount = (int) 500;
 
         /**
          * Create posts in the database.
          */
-        for ($i = 0; $i < $postsCount; $i++) {
-            Post::factory(1)->create();
+        for ($i = 0; $i < $multiplier; $i++) {
+            Post::factory($postsCount)->create();
 
-            if ($i % $progressInterval == 0) {
-                $this->command->info('Posts created successfully! ' . ($progressInterval + $i));
-            }
+            $this->command->info("Created " . ($postsCount * $multiplier) . " posts. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
     }
 }
