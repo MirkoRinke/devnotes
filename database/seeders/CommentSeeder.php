@@ -28,32 +28,72 @@ class CommentSeeder extends Seeder {
      * Run the database seeds.
      */
     public function run(): void {
+        $this->command->info('Seeding comments...');
 
-        $comments = Comment::factory()->count(200)->create();
-        foreach ($comments as $comment) {
-            $this->commentRelationService->updateLastCommentAt($comment);
-            $this->commentRelationService->updateCommentsCount($comment, 'increment');
+        $firstComments = 500;
+        $commentsWithReply = 150;
+        $commentsWithReplyToReply = 100;
+        $deletedComments = 20;
+        $progressInterval = 10;
+
+
+        /**
+         * Create first comments
+         */
+        for ($i = 0; $i < $firstComments; $i++) {
+            $comments = Comment::factory()->count(1)->create();
+            foreach ($comments as $comment) {
+                $this->commentRelationService->updateLastCommentAt($comment);
+                $this->commentRelationService->updateCommentsCount($comment, 'increment');
+            }
+            if ($i % $progressInterval == 0) {
+                $this->command->info('Comments created successfully! ' . ($progressInterval + $i));
+            }
         }
 
 
-        $replyComments = Comment::factory()->count(75)->reply()->create();
-        foreach ($replyComments as $reply) {
-            $this->commentRelationService->updateLastCommentAt($reply);
-            $this->commentRelationService->updateCommentsCount($reply, 'increment');
+        /**
+         * Create reply comments, 
+         */
+        for ($i = 0; $i < $commentsWithReply; $i++) {
+            $comments = Comment::factory()->count(1)->reply()->create();
+            foreach ($comments as $reply) {
+                $this->commentRelationService->updateLastCommentAt($reply);
+                $this->commentRelationService->updateCommentsCount($reply, 'increment');
+            }
+            if ($i % $progressInterval == 0) {
+                $this->command->info('Reply comments created successfully! ' . ($progressInterval + $i));
+            }
         }
 
 
-        $replyToReplyComments = Comment::factory()->count(50)->replyToReply()->create();
-        foreach ($replyToReplyComments as $replyToReply) {
-            $this->commentRelationService->updateLastCommentAt($replyToReply);
-            $this->commentRelationService->updateCommentsCount($replyToReply, 'increment');
+        /**
+         * Create reply to reply comments
+         */
+        for ($i = 0; $i < $commentsWithReplyToReply; $i++) {
+            $comments = Comment::factory()->count(1)->replyToReply()->create();
+            foreach ($comments as $replyToReply) {
+                $this->commentRelationService->updateLastCommentAt($replyToReply);
+                $this->commentRelationService->updateCommentsCount($replyToReply, 'increment');
+            }
+            if ($i % $progressInterval == 0) {
+                $this->command->info('Reply to reply comments created successfully! ' . ($progressInterval + $i));
+            }
         }
 
 
-        $deletedComments = Comment::factory()->count(40)->deleted()->create();
-        foreach ($deletedComments as $deleted) {
-            $this->commentRelationService->updateLastCommentAt($deleted);
-            $this->commentRelationService->updateCommentsCount($deleted, 'increment');
+        /**
+         * Create deleted comments
+         */
+        for ($i = 0; $i < $deletedComments; $i++) {
+            $comments = Comment::factory()->count(1)->deleted()->create();
+            foreach ($comments as $deleted) {
+                $this->commentRelationService->updateLastCommentAt($deleted);
+                $this->commentRelationService->updateCommentsCount($deleted, 'increment');
+            }
+            if ($i % $progressInterval == 0) {
+                $this->command->info('Deleted comments created successfully! ' . ($progressInterval + $i));
+            }
         }
     }
 }
