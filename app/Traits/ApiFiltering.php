@@ -94,6 +94,10 @@ trait ApiFiltering {
                     $allowedColumns = $relationFilters[$key];
                     $targetField = $targetField ?? null;
 
+                    if (!in_array($targetField, $allowedColumns)) {
+                        return $this->errorResponse('Invalid target field: ' . $targetField . ' for relation: ' . $key, ['filter' => 'INVALID_TARGET_FIELD'], 400);
+                    }
+
                     $query = $this->filterRelations($query, $key, $value, $allowedColumns, $targetField);
                     unset($filterArray[$key]);
                 }
@@ -171,7 +175,7 @@ trait ApiFiltering {
                     $valueGroupQuery->orWhere(function ($fieldQuery) use ($allowedColumns, $trimmedValue, $targetField) {
 
                         // If a target field is specified, search for the value in that specific field
-                        if ($targetField !== null && in_array($targetField, $allowedColumns)) {
+                        if ($targetField !== null) {
                             if ($trimmedValue === 'is:null') {
                                 $fieldQuery->whereNull($targetField);
                             } else if ($trimmedValue === 'is:not_null') {
