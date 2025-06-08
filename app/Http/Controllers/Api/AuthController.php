@@ -117,10 +117,7 @@ class AuthController extends Controller {
             }
 
             // Check if the user has a Token with the same device name, if so, delete it
-            $existingTokens = $user->tokens()->where('name', $request->name)->get();
-            if ($existingTokens->count() > 0) {
-                $existingTokens->each->delete();
-            }
+            $user->tokens()->where('name', $request->name)->delete();
 
             $token = $user->createToken($request->name);
             $token->accessToken->expires_at = Carbon::now()->addDays(30);
