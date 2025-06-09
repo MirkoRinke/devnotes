@@ -62,6 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail {
 
         // Default
         'password',
+        'remember_token',
 
         // Ban info
         'is_banned',
