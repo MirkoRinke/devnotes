@@ -13,21 +13,17 @@ use App\Traits\ApiSorting;
 use App\Traits\ApiFiltering;
 use App\Traits\ApiSelectable;
 use App\Traits\ApiPagination;
-use App\Traits\ApiStartsWith;
-use App\Traits\ApiEndsWith;
 
 /**
  * This QueryBuilder Trait provides methods to build queries for different models
- * based on the request parameters. It includes methods for sorting,
- * filtering, selecting fields, starting with, ending with, and pagination.
- * 
+ * based on the request parameters. It includes methods for sorting, filtering, selecting fields, and pagination.
  */
 trait QueryBuilder {
 
     /**
      *  The traits used in the Trait
      */
-    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiStartsWith, ApiEndsWith;
+    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination;
 
     /**
      * Predefined query methods for different model types
@@ -60,26 +56,6 @@ trait QueryBuilder {
                 // Moderation info
                 ...['moderation_info'],
             ],
-            'startsWith' => [
-                // Default
-                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
-                // Basic
-                ...['display_name', 'role'],
-                // Ban info
-                ...['is_banned', 'was_ever_banned'],
-                // Moderation info
-                ...['moderation_info'],
-            ],
-            'endsWith' => [
-                // Default
-                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
-                // Basic
-                ...['display_name', 'role'],
-                // Ban info
-                ...['is_banned', 'was_ever_banned'],
-                // Moderation info
-                ...['moderation_info'],
-            ],
             'getPerPage' => 10
         ],
         'user_tokens' => [
@@ -96,18 +72,6 @@ trait QueryBuilder {
                 ...['name', 'last_used_at']
             ],
             'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'last_used_at']
-            ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'last_used_at']
-            ],
-            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -133,26 +97,6 @@ trait QueryBuilder {
                 ...['reports_count'],
             ],
             'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
-                // Settings
-                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
-                // Counts
-                ...['reports_count'],
-            ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
-                // Settings
-                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
-                // Counts
-                ...['reports_count'],
-            ],
-            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -190,34 +134,6 @@ trait QueryBuilder {
                 ...['moderation_info']
             ],
             'select' => [
-                // Default 
-                ...['id', 'created_at'],
-                // Basic
-                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
-                // Counts
-                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
-                // History
-                ...['history'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'startsWith' => [
-                // Default 
-                ...['id', 'created_at'],
-                // Basic
-                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
-                // Counts
-                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
-                // History
-                ...['history'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'endsWith' => [
                 // Default 
                 ...['id', 'created_at'],
                 // Basic
@@ -270,30 +186,6 @@ trait QueryBuilder {
                 // Moderation info
                 ...['moderation_info']
             ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at'],
-                // Basic
-                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
-                // Counts
-                ...['likes_count', 'reports_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'endsWith' => [
-                // Default
-                ...['id', 'created_at'],
-                // Basic
-                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
-                // Counts
-                ...['likes_count', 'reports_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
-                // Moderation info
-                ...['moderation_info']
-            ],
             'getPerPage' => 10
         ],
         'user_favorites' => [
@@ -310,18 +202,6 @@ trait QueryBuilder {
                 ...['user_id', 'post_id'],
             ],
             'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'post_id'],
-            ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'post_id'],
-            ],
-            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -348,18 +228,6 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'likeable_id', 'likeable_type', 'type'],
             ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
-            ],
-            'endsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
-            ],
             'getPerPage' => 10
         ],
         'user_reports' => [
@@ -376,18 +244,6 @@ trait QueryBuilder {
                 ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
             ],
             'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
-            ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
-            ],
-            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -414,18 +270,6 @@ trait QueryBuilder {
                 // Basic
                 ...['user_id', 'follower_id'],
             ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'follower_id'],
-            ],
-            'endsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'follower_id'],
-            ],
             'getPerPage' => 10
         ],
         'forbidden_names' => [
@@ -442,18 +286,6 @@ trait QueryBuilder {
                 ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
             'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
-            ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
-            ],
-            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -480,18 +312,6 @@ trait QueryBuilder {
                 // Basic
                 ...['name', 'type', 'created_by_role', 'created_by_user_id']
             ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'type', 'created_by_role', 'created_by_user_id']
-            ],
-            'endsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'type', 'created_by_role', 'created_by_user_id']
-            ],
             'getPerPage' => 10
         ],
         'critical_terms' => [
@@ -513,18 +333,6 @@ trait QueryBuilder {
                 // Basic
                 ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
             ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
-            ],
-            'endsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
-            ],
             'getPerPage' => 10
         ],
         'apiKey' => [
@@ -541,18 +349,6 @@ trait QueryBuilder {
                 ...['name', 'active', 'last_used_at']
             ],
             'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'active', 'last_used_at']
-            ],
-            'startsWith' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'active', 'last_used_at']
-            ],
-            'endsWith' => [
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
@@ -774,43 +570,6 @@ trait QueryBuilder {
         return $this->sort($request, $query, (array)$config);
     }
 
-
-    /**
-     * Apply "starts with" filtering to the query based on the request
-     * 
-     * @param Request $request The HTTP request containing startsWith parameters
-     * @param Builder $query The query builder to apply filters to
-     * @param string $modelType The model type to get the configuration for
-     * @return Builder|JsonResponse The filtered query or an error response
-     * 
-     * @example | $query = $this->buildQueryStartsWith($request, $query, 'post');
-     */
-    protected function buildQueryStartsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($modelType, 'startsWith');
-        if ($config instanceof JsonResponse) {
-            return $config;
-        }
-        return $this->startsWith($request, $query, (array) $config);
-    }
-
-
-    /**
-     * Apply "ends with" filtering to the query based on the request
-     * 
-     * @param Request $request The HTTP request containing endsWith parameters
-     * @param Builder $query The query builder to apply filters to
-     * @param string $modelType The model type to get the configuration for
-     * @return Builder|JsonResponse The filtered query or an error response
-     * 
-     * @example | $query = $this->buildQueryEndsWith($request, $query, 'post');
-     */
-    protected function buildQueryEndsWith(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($modelType, 'endsWith');
-        if ($config instanceof JsonResponse) {
-            return $config;
-        }
-        return $this->endsWith($request, $query, (array) $config);
-    }
 
     /**
      * Apply pagination to the query based on the request
