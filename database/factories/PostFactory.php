@@ -17,7 +17,7 @@ class PostFactory extends Factory {
      */
     public function definition(): array {
         return [
-            'user_id' => User::inRandomOrder()->first()->id,
+            'user_id' => User::whereNotIn('role', ['system'])->inRandomOrder()->first()?->id ?? User::factory(),
             'title' => fake()->sentence(6, true),
             'code' => fake()->text(300),
             'description' => fake()->paragraph(3, true),
