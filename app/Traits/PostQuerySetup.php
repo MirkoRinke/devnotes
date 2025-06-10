@@ -86,9 +86,13 @@ trait PostQuerySetup {
          * Explicit table.column AS alias format is used for many-to-many relationships
          * This is to avoid ambiguity in the result set, especially when joining multiple tables.
          */
+
+        // Get the table name for the tags relation
+        $tableName = $query->getModel()->tags()->getRelated()->getTable();
+
         $defaultColumns = [
-            'post_allowed_values.id as id',
-            'post_allowed_values.name as name'
+            "$tableName.id as id",
+            "$tableName.name as name"
         ];
 
         $query = $this->loadRelations($request, $query, [
