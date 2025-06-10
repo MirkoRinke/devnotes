@@ -38,7 +38,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                 // Basic
                 ...['display_name', 'role'],
                 // Ban info
@@ -90,7 +90,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['user_id', 'display_name', 'is_public', 'location',],
                 // Counts
@@ -123,7 +123,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default 
-                ...['created_at'],
+                ...['id', 'created_at'],
                 // Basic
                 ...['user_id', 'title', 'code', 'description', 'language', 'category', 'post_type', 'technology', 'status'],
                 // Counts
@@ -164,7 +164,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at'],
+                ...['id', 'created_at'],
                 // Basic
                 ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
                 // Counts
@@ -197,7 +197,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['user_id', 'post_id'],
             ],
@@ -218,7 +218,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['user_id', 'likeable_id', 'likeable_type', 'type'],
             ],
@@ -239,7 +239,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
             ],
@@ -260,7 +260,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['user_id', 'follower_id'],
             ],
@@ -281,7 +281,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
             ],
@@ -302,7 +302,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['name', 'type', 'created_by_role', 'created_by_user_id']
             ],
@@ -323,7 +323,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
             ],
@@ -344,7 +344,7 @@ trait QueryBuilder {
             ],
             'filter' => [
                 // Default
-                ...['created_at', 'updated_at'],
+                ...['id', 'created_at', 'updated_at'],
                 // Basic
                 ...['name', 'active', 'last_used_at']
             ],
@@ -372,16 +372,20 @@ trait QueryBuilder {
 
         /**
          * Predefined relation filters for different model types
+         * 
          */
         $relationFilters = [
             'post' => [
                 'tags' => [
+                    'id',
                     'name',
                 ],
                 // 'language' => [
+                //     'id',
                 //     'name',
                 // ],
                 // 'technology' => [
+                //     'id',
                 //     'name',
                 // ],
             ],
@@ -393,6 +397,7 @@ trait QueryBuilder {
         $dynamicRelations = [
             'post' => [
                 'user' => [
+                    'id',
                     'display_name',
                     'role',
                     'created_at',
@@ -404,6 +409,7 @@ trait QueryBuilder {
             ],
             'user' => [
                 'profile' => [
+                    'id',
                     'user_id',
                     'display_name',
                     'public_email',
