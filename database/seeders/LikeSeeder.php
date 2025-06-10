@@ -34,7 +34,7 @@ class LikeSeeder extends Seeder {
         $posts = Post::select('id', 'user_id')->get();
 
         // Get all user IDs
-        $allUserIds = User::pluck('id')->toArray();
+        $allUserIds = User::whereNotIn('role', ['system'])->pluck('id')->toArray();
 
         foreach ($posts as $post) {
             // Get IDs of users who aren't the post author
