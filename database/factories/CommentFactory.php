@@ -21,7 +21,7 @@ class CommentFactory extends Factory {
         return [
             'content' => fake()->paragraph(rand(1, 3)),
             'post_id' => Post::inRandomOrder()->first()?->id ?? Post::factory(),
-            'user_id' => User::inRandomOrder()->first()?->id ?? User::factory(),
+            'user_id' => User::whereNotIn('role', ['system'])->inRandomOrder()->first()?->id ?? User::factory(),
             'parent_id' => null,
             'parent_content' => null,
             'is_deleted' => false,
@@ -84,6 +84,7 @@ class CommentFactory extends Factory {
     public function deleted(): static {
         return $this->state(function (array $attributes) {
             return [
+                'user_id' => 3, // Assuming user with ID 3 is the System Deleted User
                 'content' => 'Content deleted (Factory)',
                 'is_deleted' => true,
             ];
