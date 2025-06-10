@@ -47,6 +47,7 @@ trait ApiFiltering {
     public function filter(Request $request, Builder $query, array $allowedFilterColumns = [], array $relationFilters = []): JsonResponse|Builder {
 
         $filterArray = $request->query('filter');
+        $operatorsMap = [];
 
         if ($filterArray) {
 
@@ -66,7 +67,8 @@ trait ApiFiltering {
                 }
 
                 [$key, $filterArray, $targetField] = $this->extractRelationField($key, $filterArray);
-                [$filterArray[$key], $operators] = $this->extractOperators($filterArray[$key]);
+                [$filterArray[$key], $fieldOperators] = $this->extractOperators($filterArray[$key]);
+                $operatorsMap[$key] = $fieldOperators;
 
                 if (!in_array($key, $allowedFilterColumns) && !in_array($key, $relationKeys)) {
                     return $this->errorResponse('Invalid filter column: ' . $key, ['filter' => 'INVALID_FILTER_COLUMN'], 400);
@@ -106,23 +108,28 @@ trait ApiFiltering {
                         return $this->errorResponse('Invalid target field: ' . $targetField . ' for relation: ' . $key, ['filter' => 'INVALID_TARGET_FIELD'], 400);
                     }
 
-                    $query = $this->filterRelations($query, $key, $targetField, $value, $operators);
+                    /**
+                     * Ensure the target field is fully qualified with the table name
+                     */
+                    $targetField = $query->getModel()->$key()->getRelated()->getTable() . '.' . $targetField;
+
+                    $query = $this->filterRelations($query, $key, $targetField, $value, $operatorsMap[$key]);
                     unset($filterArray[$key]);
+                    unset($operatorsMap[$key]);
                 }
             }
-
 
             /**
              * Process remaining non-relation filters
              */
-            $query->where(function ($queryBuilder) use ($filterArray, $operators) {
+            $query->where(function ($queryBuilder) use ($filterArray, $operatorsMap) {
                 foreach ($filterArray as $key => $values) {
 
                     // Group conditions for each column to maintain proper SQL structure
-                    $queryBuilder->where(function ($valueGroupQuery) use ($key, $values, $operators) {
+                    $queryBuilder->where(function ($valueGroupQuery) use ($key, $values, $operatorsMap) {
 
                         // For each filter value, add appropriate condition with OR logic
-                        $this->handleOperators($valueGroupQuery, $key, $values, $operators);
+                        $this->handleOperators($valueGroupQuery, $key, $values, $operatorsMap[$key]);
                     });
                 }
             });
@@ -278,6 +285,7 @@ trait ApiFiltering {
      * @example | $this->handleOperators($query, $key, $values, $operators);
      */
     protected function handleOperators($query, $key, $values, $operators) {
+
         foreach ($values as $index => $value) {
             $trimmedValue = trim($value);
             $operator = $operators[$index];
