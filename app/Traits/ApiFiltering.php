@@ -210,8 +210,11 @@ trait ApiFiltering {
      * - lt: Less than (<)
      * - gte: Greater than or equal to (>=)
      * - lte: Less than or equal to (<=)
-     * - is: Special operator for NULL checks (is:null, is:not_null)
      * - between: Range search (between:1,10)
+     * - is: Special operator for NULL checks (is:null, is:not_null)
+     * - not: Not equal (!=)
+     * - not_in: Not in list of values (not_in:[a,b,c])
+     * - bool: Boolean value (true/false)
      *
      * @param mixed $values The filter values (string or array)
      * @return array [values, operators]
@@ -229,8 +232,12 @@ trait ApiFiltering {
             'lt', // Less than
             'gte', // Greater than or equal to
             'lte', // Less than or equal to
+            'between', // Range search (e.g., between:1,10)
             'is', // Special operator for NULL checks
-            'between' // Range search (e.g., between:1,10)
+            'not', // Not equal
+            'not_in', // Not in list of values
+            'bool', // Boolean value (true/false)
+            'and_contains' // Contains all values (AND logic)
         ];
 
         if (!is_array($values)) {
@@ -295,10 +302,10 @@ trait ApiFiltering {
                     $query->orWhere($key, '=', $trimmedValue);
                     break;
                 case 'starts': // Starts with
-                    $query->orWhereRaw("LOWER({$key}) LIKE LOWER(?)", [$trimmedValue . '%']);
+                    $query->orWhereRaw("$key LIKE ?", [$trimmedValue . '%']);
                     break;
                 case 'ends': // Ends with
-                    $query->orWhereRaw("LOWER({$key}) LIKE LOWER(?)", ['%' . $trimmedValue]);
+                    $query->orWhereRaw("$key LIKE ?", ['%' . $trimmedValue]);
                     break;
                 case 'gt': // Greater than
                     $query->orWhere($key, '>', $trimmedValue);
@@ -325,9 +332,29 @@ trait ApiFiltering {
                         $query->orWhereNotNull($key);
                     }
                     break;
+                case 'not': // Not equal
+                    $query->orWhere($key, '!=', $trimmedValue);
+                    break;
+                case 'not_in': // Not in list of values
+                    $valueList = explode(',', $trimmedValue);
+                    $query->orWhereNotIn($key, $valueList);
+                    break;
+                case 'bool': // Boolean value
+                    if ($trimmedValue === 'true' || $trimmedValue === '1') {
+                        $query->orWhere($key, '=', 1);
+                    } else if ($trimmedValue === 'false' || $trimmedValue === '0') {
+                        $query->orWhere($key, '=', 0);
+                    }
+                    break;
+                case 'and_contains': // Contains all values (AND logic)
+                    $valueList = explode(',', $trimmedValue);
+                    foreach ($valueList as $item) {
+                        $query->whereRaw("{$key} LIKE ?", ['%' . trim($item) . '%']);
+                    }
+                    break;
                 case 'contains': // Default case-insensitive partial match
                 default:
-                    $query->orWhereRaw("LOWER({$key}) LIKE LOWER(?)", ['%' . $trimmedValue . '%']);
+                    $query->orWhereRaw("{$key} LIKE ?", ['%' . $trimmedValue . '%']);
                     break;
             }
         }
