@@ -324,8 +324,6 @@ trait ApiFiltering {
                     } else {
                         $query->orWhere($key, '=', $trimmedValue);
                     }
-                    // dump($query->toSql());
-                    // dd($query->getBindings());
                     break;
                 case 'starts': // Starts with
                     $valueList = explode(',', $trimmedValue);
@@ -399,7 +397,5 @@ trait ApiFiltering {
                     break;
             }
         }
-        // dump($query->toSql());
-        // dump($query->getBindings());
     }
 }
