@@ -215,6 +215,8 @@ trait ApiFiltering {
      * - not: Not equal (!=)
      * - not_in: Not in list of values (not_in:[a,b,c])
      * - bool: Boolean value (true/false)
+     * - and_contains: Contains all values (AND logic)
+     * - not_contains: Not contains (NOT LIKE '%value%')
      *
      * @param mixed $values The filter values (string or array)
      * @return array [values, operators]
@@ -237,7 +239,8 @@ trait ApiFiltering {
             'not', // Not equal
             'not_in', // Not in list of values
             'bool', // Boolean value (true/false)
-            'and_contains' // Contains all values (AND logic)
+            'and_contains', // Contains all values (AND logic)
+            'not_contains' // Not contains
         ];
 
         if (!is_array($values)) {
@@ -350,6 +353,12 @@ trait ApiFiltering {
                     $valueList = explode(',', $trimmedValue);
                     foreach ($valueList as $item) {
                         $query->whereRaw("{$key} LIKE ?", ['%' . trim($item) . '%']);
+                    }
+                    break;
+                case 'not_contains': // Not contains
+                    $valueList = explode(',', $trimmedValue);
+                    foreach ($valueList as $item) {
+                        $query->whereRaw("{$key} NOT LIKE ?", ['%' . trim($item) . '%']);
                     }
                     break;
                 case 'contains': // Default case-insensitive partial match
