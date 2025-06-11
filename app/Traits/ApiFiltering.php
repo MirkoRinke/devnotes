@@ -43,6 +43,9 @@ trait ApiFiltering {
      * @example | // Filter with operators: filter[created_at]=gte:2023-01-01
      * @example | // Special operators: filter[deleted_at]=is:null (find only records where deleted_at is NULL)
      * @example | // Multiple values: filter[tags.name]=PHP,JavaScript (finds records matching ANY value)
+     * @example | // Multiple values with bracket notation: filter[status]=eq:[Draft,Published]
+     * @example | // AND logic for contains: filter[title]=and_contains:[Laravel,API] (finds records containing ALL values)
+     * @example | // Exclude values: filter[title]=not_contains:[Deprecated,Legacy] (excludes records containing ANY listed values)
      */
     public function filter(Request $request, Builder $query, array $allowedFilterColumns = [], array $relationFilters = []): JsonResponse|Builder {
 
@@ -203,9 +206,13 @@ trait ApiFiltering {
      *
      * Supported operators:
      * - contains: (default) Case-insensitive partial match (%value%)
+     *   - Supports multiple values: contains:[Laravel,API] → OR logic
      * - eq: Exact match (=)
+     *   - Supports multiple values: eq:[Draft,Published] → IN SQL statement
      * - starts: Starts with (LIKE 'value%')
+     *   - Supports multiple values: starts:[La,Ap] → OR logic
      * - ends: Ends with (LIKE '%value')
+     *   - Supports multiple values: ends:[API,Framework] → OR logic
      * - gt: Greater than (>)
      * - lt: Less than (<)
      * - gte: Greater than or equal to (>=)
@@ -214,14 +221,23 @@ trait ApiFiltering {
      * - is: Special operator for NULL checks (is:null, is:not_null)
      * - not: Not equal (!=)
      * - not_in: Not in list of values (not_in:[a,b,c])
-     * - bool: Boolean value (true/false)
-     * - and_contains: Contains all values (AND logic)
+     * - bool: Boolean value (true/false/1/0)
+     * - and_contains: Contains all values with AND logic
+     *   - and_contains:[Laravel,API] finds only entries containing BOTH values
      * - not_contains: Not contains (NOT LIKE '%value%')
+     *   - not_contains:[Laravel,API] finds only entries containing NONE of the values
+     *
+     * Bracket Notation:
+     * Most operators can use bracket notation for multiple values: 
+     * operator:[value1,value2,value3]
      *
      * @param mixed $values The filter values (string or array)
      * @return array [values, operators]
      * 
      * @example | $this->extractOperators($values);
+     * @example | filter[status]=eq:[Draft,Published] → Status is exactly "Draft" OR "Published"
+     * @example | filter[title]=contains:[Laravel,API] → Title contains "Laravel" OR "API"
+     * @example | filter[title]=and_contains:[Laravel,API] → Title contains "Laravel" AND "API"
      */
     protected function extractOperators($values): array {
         $operators = [];
@@ -302,13 +318,26 @@ trait ApiFiltering {
 
             switch ($operator) {
                 case 'eq': // Exact match
-                    $query->orWhere($key, '=', $trimmedValue);
+                    $valueList = explode(',', $trimmedValue);
+                    if (count($valueList) > 1) {
+                        $query->orWhereIn($key, $valueList);
+                    } else {
+                        $query->orWhere($key, '=', $trimmedValue);
+                    }
+                    // dump($query->toSql());
+                    // dd($query->getBindings());
                     break;
                 case 'starts': // Starts with
-                    $query->orWhereRaw("$key LIKE ?", [$trimmedValue . '%']);
+                    $valueList = explode(',', $trimmedValue);
+                    foreach ($valueList as $item) {
+                        $query->orWhereRaw("$key LIKE ?", [$item . '%']);
+                    }
                     break;
                 case 'ends': // Ends with
-                    $query->orWhereRaw("$key LIKE ?", ['%' . $trimmedValue]);
+                    $valueList = explode(',', $trimmedValue);
+                    foreach ($valueList as $item) {
+                        $query->orWhereRaw("$key LIKE ?", ['%' . $item]);
+                    }
                     break;
                 case 'gt': // Greater than
                     $query->orWhere($key, '>', $trimmedValue);
@@ -352,20 +381,25 @@ trait ApiFiltering {
                 case 'and_contains': // Contains all values (AND logic)
                     $valueList = explode(',', $trimmedValue);
                     foreach ($valueList as $item) {
-                        $query->whereRaw("{$key} LIKE ?", ['%' . trim($item) . '%']);
+                        $query->whereRaw("{$key} LIKE ?", ['%' . $item . '%']);
                     }
                     break;
                 case 'not_contains': // Not contains
                     $valueList = explode(',', $trimmedValue);
                     foreach ($valueList as $item) {
-                        $query->whereRaw("{$key} NOT LIKE ?", ['%' . trim($item) . '%']);
+                        $query->whereRaw("{$key} NOT LIKE ?", ['%' . $item . '%']);
                     }
                     break;
                 case 'contains': // Default case-insensitive partial match
                 default:
-                    $query->orWhereRaw("{$key} LIKE ?", ['%' . $trimmedValue . '%']);
+                    $valueList = explode(',', $trimmedValue);
+                    foreach ($valueList as $item) {
+                        $query->orWhereRaw("{$key} LIKE ?", ['%' . $item . '%']);
+                    }
                     break;
             }
         }
+        // dump($query->toSql());
+        // dump($query->getBindings());
     }
 }
