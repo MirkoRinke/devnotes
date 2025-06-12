@@ -54,6 +54,11 @@ trait ApiFiltering {
 
         if ($filterArray) {
 
+            /**
+             * Sorts filter keys to ensure direct fields are processed before relation fields.
+             */
+            $filterArray = $this->sortFilterArray($filterArray);
+
             $relationKeys = []; // Initialize an empty array to hold relation keys
             if (!empty($relationFilters) && is_array($relationFilters)) {
                 $relationKeys = array_keys($relationFilters); // Get the relation keys (e.g., 'tags', 'language', 'technology', 'user')
@@ -152,9 +157,15 @@ trait ApiFiltering {
      * The search behavior depends on the operator used (default: contains).
      * Supports advanced filtering with multiple operators.
      * 
+     * Special cases:
+     * - When filtering with 'is:null' on a relation, uses whereDoesntHave to find records
+     *   without the relation
+     * - When filtering with 'is:not_null' on a relation, uses whereHas to find records
+     *   that have the relation ( We use 'id' as the default target for the not_null check)
+     * 
      * @param Builder $query The query builder to apply the relation filter to
      * @param string $relation The name of the relation to filter on (e.g., 'tags', 'language', 'user')
-     * @param string $targetField The field in the related model to filter on
+     * @param string|null $targetField The field in the related model to filter on
      * @param mixed $values Single value or array/comma-separated list of values to filter by
      * @param array $operators Array of operators to apply to each value
      * 
@@ -187,6 +198,45 @@ trait ApiFiltering {
         });
 
         return $query;
+    }
+
+
+    /**
+     * Sorts filter keys to ensure direct fields are processed before relation fields.
+     * 
+     * This method rearranges the filter array so that keys without dots (direct model fields)
+     * come before keys with dots (relation.field notation).
+     * 
+     * The original order within each group (with/without dots) is preserved.
+     * 
+     * @param array $filterArray The filter array to sort
+     * @return array The sorted filter array with preserved values
+     * 
+     * @example | $filterArray = $this->sortFilterArray($filterArray);
+     * @example | // Input: ['user.name' => 'John', 'status' => 'active', 'tag' => 'php', 'user.id' => '5']
+     * @example | // Output: ['status' => 'active', 'tag' => 'php', 'user.name' => 'John', 'user.id' => '5']
+     */
+    protected function sortFilterArray(array $filterArray): array {
+        $keys = array_keys($filterArray);
+        $keysWithoutDots = [];
+        $keysWithDots = [];
+
+        foreach ($keys as $key) {
+            if (strpos($key, '.') !== false) {
+                $keysWithDots[] = $key;
+            } else {
+                $keysWithoutDots[] = $key;
+            }
+        }
+
+        $sortedKeys = array_merge($keysWithoutDots, $keysWithDots);
+
+        $sortedArray = [];
+        foreach ($sortedKeys as $key) {
+            $sortedArray[$key] = $filterArray[$key];
+        }
+
+        return $sortedArray;
     }
 
     /**
@@ -255,21 +305,21 @@ trait ApiFiltering {
     protected function extractOperators($values): array {
         $operators = [];
         $allowedOperators = [
-            'eq', // Exact match
-            'contains', // Default case-insensitive partial match
-            'starts', // Starts with
-            'ends', // Ends with
-            'gt', // Greater than
-            'lt', // Less than
-            'gte', // Greater than or equal to
-            'lte', // Less than or equal to
-            'between', // Range search (e.g., between:1,10)
-            'is', // Special operator for NULL checks
-            'not', // Not equal
-            'not_in', // Not in list of values
-            'bool', // Boolean value (true/false)
-            'and_contains', // Contains all values (AND logic)
-            'not_contains' // Not contains
+            'eq',
+            'contains',
+            'starts',
+            'ends',
+            'gt',
+            'lt',
+            'gte',
+            'lte',
+            'between',
+            'is',
+            'not',
+            'not_in',
+            'bool',
+            'and_contains',
+            'not_contains'
         ];
 
         if (!is_array($values)) {
