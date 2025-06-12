@@ -35,6 +35,8 @@ trait QueryBuilder {
                 ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                 // Basic
                 ...['display_name', 'role'],
+                // Ban info
+                ...['is_banned', 'was_ever_banned'],
             ],
             'filter' => [
                 // Default
@@ -92,7 +94,9 @@ trait QueryBuilder {
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['user_id', 'display_name', 'is_public', 'location',],
+                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                // Settings
+                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
                 // Counts
                 ...['reports_count'],
             ],
@@ -118,18 +122,18 @@ trait QueryBuilder {
                 ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
                 ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
-                // Moderation info
-                ...['moderation_info']
             ],
             'filter' => [
                 // Default 
                 ...['id', 'created_at'],
                 // Basic
-                ...['user_id', 'title', 'code', 'description', 'language', 'category', 'post_type', 'technology', 'status'],
+                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
                 // Counts
                 ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
                 // Update info
                 ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                // History
+                ...['history'],
                 // Moderation info
                 ...['moderation_info']
             ],
@@ -159,8 +163,6 @@ trait QueryBuilder {
                 ...['likes_count', 'reports_count'],
                 // Update info
                 ...['updated_at', 'is_updated', 'updated_by_role'],
-                // Moderation info
-                ...['moderation_info']
             ],
             'filter' => [
                 // Default
@@ -235,7 +237,7 @@ trait QueryBuilder {
                 // Default
                 ...['id', 'created_at', 'updated_at'],
                 // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
+                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'impact_value'],
             ],
             'filter' => [
                 // Default
@@ -395,49 +397,27 @@ trait QueryBuilder {
          * Dynamic relations that can be included based on the request
          */
         $dynamicRelations = [
-            'post' => [
-                'user' => [
-                    'id',
-                    'display_name',
-                    'role',
-                    'created_at',
-                    'updated_at',
-                    'is_banned',
-                    'was_ever_banned',
-                    'moderation_info'
-                ]
-            ],
             'user' => [
-                'profile' => [
-                    'id',
-                    'user_id',
-                    'display_name',
-                    'public_email',
-                    'website',
-                    'avatar_path',
-                    'is_public',
-                    'location',
-                    'biography',
-                    'skills',
-                    'social_links',
-                    'contact_channels',
-                    'auto_load_external_images',
-                    'external_images_temp_until',
-                    'auto_load_external_videos',
-                    'external_videos_temp_until',
-                    'auto_load_external_resources',
-                    'external_resources_temp_until',
-                    'reports_count',
-                    'created_at',
-                    'updated_at'
-                ]
-            ]
+                'profile' => $this->getQueryConfig('user_profile', 'filter'),
+            ],
+            'user_profile' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+            ],
+            'post' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+            ],
+            'comment' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+                'parent' => $this->getQueryConfig('comment', 'filter'),
+                'children' => $this->getQueryConfig('comment', 'filter'),
+            ],
         ];
+
 
         /**
          * Check if the request has 'include' parameter and if 'user' is included
          */
-        $userRelationModels = ['post'];
+        $userRelationModels = ['post', 'user_profile', 'comment',];
         if ($request->has('include') && in_array('user', explode(',', $request->input('include'))) && in_array($modelType, $userRelationModels)) {
             if (!isset($relationFilters[$modelType])) {
                 $relationFilters[$modelType] = [];
@@ -456,6 +436,29 @@ trait QueryBuilder {
             }
             $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
         }
+
+        /**
+         * Check if the request has 'include' parameter and if 'parent' is included
+         */
+        $parentRelationModels = ['comment'];
+        if ($request->has('include') && in_array('parent', explode(',', $request->input('include'))) && in_array($modelType, $parentRelationModels)) {
+            if (!isset($relationFilters[$modelType])) {
+                $relationFilters[$modelType] = [];
+            }
+            $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
+        }
+
+        /**
+         * Check if the request has 'include' parameter and if 'children' is included
+         */
+        $childrenRelationModels = ['comment'];
+        if ($request->has('include') && in_array('children', explode(',', $request->input('include'))) && in_array($modelType, $childrenRelationModels)) {
+            if (!isset($relationFilters[$modelType])) {
+                $relationFilters[$modelType] = [];
+            }
+            $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
+        }
+
 
         return $relationFilters[$modelType] ?? [];
     }
