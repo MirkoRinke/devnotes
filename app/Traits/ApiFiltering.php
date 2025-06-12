@@ -103,18 +103,20 @@ trait ApiFiltering {
                     $value = $filterArray[$key];
                     $allowedColumns = $relationFilters[$key];
 
-                    if ($targetField === null) {
+                    if (str_contains($key, '.') && $targetField === null) {
                         return $this->errorResponse('Target field is required for relation: ' . $key, ['filter' => 'MISSING_TARGET_FIELD'], 400);
                     }
 
-                    if (!in_array($targetField, $allowedColumns)) {
+                    if (str_contains($key, '.') && !in_array($targetField, $allowedColumns)) {
                         return $this->errorResponse('Invalid target field: ' . $targetField . ' for relation: ' . $key, ['filter' => 'INVALID_TARGET_FIELD'], 400);
                     }
 
                     /**
                      * Ensure the target field is fully qualified with the table name
                      */
-                    $targetField = $query->getModel()->$key()->getRelated()->getTable() . '.' . $targetField;
+                    if (str_contains($key, '.')) {
+                        $targetField = $query->getModel()->$key()->getRelated()->getTable() . '.' . $targetField;
+                    }
 
                     $query = $this->filterRelations($query, $key, $targetField, $value, $operatorsMap[$key]);
                     unset($filterArray[$key]);
@@ -160,7 +162,18 @@ trait ApiFiltering {
      * 
      * @example | $this->filterRelations($query, $relation, $targetField, $values, $operators);
      */
-    protected function filterRelations(Builder $query, string $relation, string $targetField, mixed $values, array $operators): Builder {
+    protected function filterRelations(Builder $query, string $relation, ?string $targetField, mixed $values, array $operators): Builder {
+
+        /**
+         * If the target field is not specified, we will use 'id' as the default
+         */
+        if (!$targetField) {
+            $targetField = 'id';
+            if (str_contains($targetField, 'id') && $values[0] === 'null' && $operators[0] === 'is') {
+                // If the target field is a relation ID and we are checking for null, we can use whereDoesntHave
+                return $query->whereDoesntHave($relation);
+            }
+        }
 
         // Use whereHas to filter by related models that match the condition
         $query->whereHas($relation, function ($relationBuilder) use ($targetField, $values, $operators) {
