@@ -89,6 +89,44 @@ trait ApiSelectable {
         }
     }
 
+    /**
+     * Modify the request select fields
+     * This method modifies the request select fields to remove the specified field
+     * 
+     * @param Request $request
+     * @param string $field The field to remove from the select
+     * @return void
+     * 
+     * @example | $this->removeFromSelect($request, 'tags');
+     */
+    protected function removeFromSelect(Request $request, string $field): void {
+        if ($request->has('select') && in_array($field, $request->input('select'))) {
+            $request->merge(['select' => array_diff($request->input('select'), [$field])]);
+        }
+    }
+
+
+    /**
+     * This method checks if the specified field is selected in the request
+     * 
+     * @param Request $request
+     * @param string $field The field to check
+     * @return bool Returns true if the field is selected, false otherwise
+     * 
+     * @example | $this->isSelected($request, 'tags');
+     */
+    protected function isSelected(Request $request, string $field): bool {
+        if ($request->has('select')) {
+            $select = $request->input('select');
+            $selectArray = is_array($select) ? $select : explode(',', $select);
+
+            if (!in_array($field, $selectArray)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     /**
      * Get select fields from request and parse them into an array
