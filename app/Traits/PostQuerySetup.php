@@ -6,6 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Traits\AccessFilter;
+use App\Traits\ApiSelectable;
+
+use function PHPUnit\Framework\isEmpty;
 
 /**
  * Trait for setting up post queries with access filters and relations.
@@ -17,7 +20,7 @@ trait PostQuerySetup {
     /**
      *  The traits used in the controller
      */
-    use AccessFilter;
+    use AccessFilter, ApiSelectable;
 
     /**
      * Setup the post query
@@ -82,13 +85,27 @@ trait PostQuerySetup {
      * @example | $this->loadTagsRelation($request, $query)
      */
     private function loadTagsRelation(Request $request, $query): mixed {
+
         /**
+         * Check if the 'tags' relation is not selected in the request
+         * If it is not selected, we skip loading the tags relation.
+         */
+        if (!$this->isSelected($request, 'tags')) {
+            return $query;
+        }
+
+        /**
+         * If tags have been set in the request, we remove it from the select fields
+         */
+        $this->removeFromSelect($request, 'tags');
+
+        /**
+         * Load the tags relation by Default
+         * 
          * Explicit table.column AS alias format is used for many-to-many relationships
          * This is to avoid ambiguity in the result set, especially when joining multiple tables.
          */
-
-        // Get the table name for the tags relation
-        $tableName = $query->getModel()->tags()->getRelated()->getTable();
+        $tableName = $query->getModel()->tags()->getRelated()->getTable(); // Get the table name of the tags relation
 
         $defaultColumns = [
             "$tableName.id as id",
@@ -98,6 +115,7 @@ trait PostQuerySetup {
         $query = $this->loadRelations($request, $query, [
             ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $defaultColumns],
         ]);
+
         return $query;
     }
 }
