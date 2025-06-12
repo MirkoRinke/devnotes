@@ -87,34 +87,35 @@ trait PostQuerySetup {
     private function loadTagsRelation(Request $request, $query): mixed {
 
         /**
-         * Check if the 'tags' relation is not selected in the request
-         * If it is not selected, we skip loading the tags relation.
+         * If the request does not have the 'select' parameter or if 'tags' is selected,
+         * we will load the tags relation by default.
          */
-        if (!$this->isSelected($request, 'tags')) {
+        if (!$request->has('select') || $this->isSelected($request, 'tags')) {
+
+            /**
+             * If tags have been set in the request, we remove it from the select fields
+             */
+            $this->removeFromSelect($request, 'tags');
+
+            /**
+             * Load the tags relation by Default
+             * 
+             * Explicit table.column AS alias format is used for many-to-many relationships
+             * This is to avoid ambiguity in the result set, especially when joining multiple tables.
+             */
+            $tableName = $query->getModel()->tags()->getRelated()->getTable(); // Get the table name of the tags relation
+
+            $defaultColumns = [
+                "$tableName.id as id",
+                "$tableName.name as name"
+            ];
+
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $defaultColumns],
+            ]);
+
             return $query;
         }
-
-        /**
-         * If tags have been set in the request, we remove it from the select fields
-         */
-        $this->removeFromSelect($request, 'tags');
-
-        /**
-         * Load the tags relation by Default
-         * 
-         * Explicit table.column AS alias format is used for many-to-many relationships
-         * This is to avoid ambiguity in the result set, especially when joining multiple tables.
-         */
-        $tableName = $query->getModel()->tags()->getRelated()->getTable(); // Get the table name of the tags relation
-
-        $defaultColumns = [
-            "$tableName.id as id",
-            "$tableName.name as name"
-        ];
-
-        $query = $this->loadRelations($request, $query, [
-            ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $defaultColumns],
-        ]);
 
         return $query;
     }
