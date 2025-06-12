@@ -120,11 +120,9 @@ trait ApiSelectable {
             $select = $request->input('select');
             $selectArray = is_array($select) ? $select : explode(',', $select);
 
-            if (!in_array($field, $selectArray)) {
-                return false;
-            }
+            return in_array($field, $selectArray);
         }
-        return true;
+        return false;
     }
 
 
