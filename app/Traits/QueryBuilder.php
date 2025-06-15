@@ -411,13 +411,16 @@ trait QueryBuilder {
                 'parent' => $this->getQueryConfig('comment', 'filter'),
                 'children' => $this->getQueryConfig('comment', 'filter'),
             ],
+            'user_reports' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+                // 'reportable' The polymorphic relation is not supported in this context.
+            ]
         ];
-
 
         /**
          * Check if the request has 'include' parameter and if 'user' is included
          */
-        $userRelationModels = ['post', 'user_profile', 'comment',];
+        $userRelationModels = ['post', 'user_profile', 'comment', 'user_reports'];
         if ($request->has('include') && in_array('user', explode(',', $request->input('include'))) && in_array($modelType, $userRelationModels)) {
             if (!isset($relationFilters[$modelType])) {
                 $relationFilters[$modelType] = [];
@@ -458,7 +461,6 @@ trait QueryBuilder {
             }
             $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
         }
-
 
         return $relationFilters[$modelType] ?? [];
     }
