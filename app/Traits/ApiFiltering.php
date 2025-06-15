@@ -79,9 +79,11 @@ trait ApiFiltering {
                 $operatorsMap[$key] = $fieldOperators;
 
                 if (!in_array($key, $allowedFilterColumns) && !in_array($key, $relationKeys)) {
+                    if ($key === 'reportable') {
+                        return $this->errorResponse('The polymorphic relation is not supported in this context.', ['filter' => 'UNSUPPORTED_RELATION'], 400);
+                    }
                     return $this->errorResponse('Invalid filter column: ' . $key, ['filter' => 'INVALID_FILTER_COLUMN'], 400);
                 }
-
 
                 /**
                  * Check if the filter value is an array
@@ -107,19 +109,20 @@ trait ApiFiltering {
                 if (in_array($key, $relationKeys)) {
                     $value = $filterArray[$key];
                     $allowedColumns = $relationFilters[$key];
+                    $filterKeyPath = $key . ($targetField ? '.' . $targetField : '');
 
-                    if (str_contains($key, '.') && $targetField === null) {
+                    if (str_contains($filterKeyPath, '.') && $targetField === null) {
                         return $this->errorResponse('Target field is required for relation: ' . $key, ['filter' => 'MISSING_TARGET_FIELD'], 400);
                     }
 
-                    if (str_contains($key, '.') && !in_array($targetField, $allowedColumns)) {
+                    if (str_contains($filterKeyPath, '.') && !in_array($targetField, $allowedColumns)) {
                         return $this->errorResponse('Invalid target field: ' . $targetField . ' for relation: ' . $key, ['filter' => 'INVALID_TARGET_FIELD'], 400);
                     }
 
                     /**
                      * Ensure the target field is fully qualified with the table name
                      */
-                    if (str_contains($key, '.')) {
+                    if (str_contains($filterKeyPath, '.')) {
                         $targetField = $query->getModel()->$key()->getRelated()->getTable() . '.' . $targetField;
                     }
 
