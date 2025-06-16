@@ -79,7 +79,7 @@ trait ApiFiltering {
                 $operatorsMap[$key] = $fieldOperators;
 
                 if (!in_array($key, $allowedFilterColumns) && !in_array($key, $relationKeys)) {
-                    if ($key === 'reportable') {
+                    if ($key === 'reportable' || $key === 'likeable') {
                         return $this->errorResponse('The polymorphic relation is not supported in this context.', ['filter' => 'UNSUPPORTED_RELATION'], 400);
                     }
                     return $this->errorResponse('Invalid filter column: ' . $key, ['filter' => 'INVALID_FILTER_COLUMN'], 400);
