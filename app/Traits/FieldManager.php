@@ -145,6 +145,7 @@ trait FieldManager {
 
         $fieldMap = [
             'user' => ['is_banned', 'was_ever_banned', 'moderation_info'],
+            'follower' => ['is_banned', 'was_ever_banned', 'moderation_info'],
             'post' => ['moderation_info', 'reports_count'],
             'comment' => ['moderation_info', 'reports_count'],
             'profile' => ['reports_count']
