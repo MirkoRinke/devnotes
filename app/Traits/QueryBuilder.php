@@ -423,13 +423,22 @@ trait QueryBuilder {
                 'user' => $this->getQueryConfig('user', 'filter'),
                 'follower' => $this->getQueryConfig('user', 'filter'),
             ],
+            'forbidden_names' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+            ],
+            'post_allowed_values' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+            ],
+            'critical_terms' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+            ],
         ];
 
 
         /**
          * Check if the request has 'include' parameter and if 'user' is included
          */
-        $userRelationModels = ['post', 'user_profile', 'comment', 'user_reports', 'like', 'user_followers'];
+        $userRelationModels = ['post', 'user_profile', 'comment', 'user_reports', 'like', 'user_followers', 'forbidden_names', 'post_allowed_values', 'critical_terms'];
         if ($request->has('include') && in_array('user', explode(',', $request->input('include'))) && in_array($modelType, $userRelationModels)) {
             if (!isset($relationFilters[$modelType])) {
                 $relationFilters[$modelType] = [];
