@@ -419,14 +419,30 @@ trait QueryBuilder {
                 'user' => $this->getQueryConfig('user', 'filter'),
                 // 'likeable' The polymorphic relation is not supported in this context.
             ],
+            'user_followers' => [
+                'user' => $this->getQueryConfig('user', 'filter'),
+                'follower' => $this->getQueryConfig('user', 'filter'),
+            ],
         ];
 
 
         /**
          * Check if the request has 'include' parameter and if 'user' is included
          */
-        $userRelationModels = ['post', 'user_profile', 'comment', 'user_reports', 'like'];
+        $userRelationModels = ['post', 'user_profile', 'comment', 'user_reports', 'like', 'user_followers'];
         if ($request->has('include') && in_array('user', explode(',', $request->input('include'))) && in_array($modelType, $userRelationModels)) {
+            if (!isset($relationFilters[$modelType])) {
+                $relationFilters[$modelType] = [];
+            }
+            $relationFilters[$modelType] = array_merge_recursive($relationFilters[$modelType], $dynamicRelations[$modelType]);
+        }
+
+
+        /**
+         * Check if the request has 'include' parameter and if 'follower' is included
+         */
+        $followerRelationModels = ['user_followers'];
+        if ($request->has('include') && in_array('follower', explode(',', $request->input('include'))) && in_array($modelType, $followerRelationModels)) {
             if (!isset($relationFilters[$modelType])) {
                 $relationFilters[$modelType] = [];
             }
