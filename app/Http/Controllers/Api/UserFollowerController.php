@@ -14,6 +14,7 @@ use App\Traits\ApiResponses;
 use App\Traits\ApiInclude;
 use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
+use App\Traits\FieldManager;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,7 +24,7 @@ class UserFollowerController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader;
+    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader, FieldManager;
 
     /**
      * Setup the query for followers
@@ -225,7 +226,10 @@ class UserFollowerController extends Controller {
 
             $query = $this->addMutualFollowStatus($request, $query, $user, $originalSelectFields, 'followers');
 
+            $query = $this->manageUsersFieldVisibility($request, $query);
+
             $query = $this->checkForIncludedRelations($request, $query);
+
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Followers retrieved successfully', 200);
@@ -374,7 +378,10 @@ class UserFollowerController extends Controller {
 
             $query = $this->addMutualFollowStatus($request, $query, $user, $originalSelectFields, 'following');
 
+            $query = $this->manageUsersFieldVisibility($request, $query);
+
             $query = $this->checkForIncludedRelations($request, $query);
+
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Following retrieved successfully', 200);
