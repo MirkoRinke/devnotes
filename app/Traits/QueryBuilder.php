@@ -13,6 +13,8 @@ use App\Traits\ApiSorting;
 use App\Traits\ApiFiltering;
 use App\Traits\ApiSelectable;
 use App\Traits\ApiPagination;
+use App\Traits\AuthHelper;
+use App\Traits\PolicyChecks;
 
 /**
  * This QueryBuilder Trait provides methods to build queries for different models
@@ -23,343 +25,358 @@ trait QueryBuilder {
     /**
      *  The traits used in the Trait
      */
-    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination;
+    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, AuthHelper, PolicyChecks;
+
 
     /**
-     * Predefined query methods for different model types
+     * The query configurations for different models
      */
-    protected $queryConfigurations = [
-        'user' => [
-            'sort' => [
-                // Default
-                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
-                // Basic
-                ...['display_name', 'role'],
-                // Ban info
-                ...['is_banned', 'was_ever_banned'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
-                // Basic
-                ...['display_name', 'role'],
-                // Ban info
-                ...['is_banned', 'was_ever_banned'],
-                // Moderation info
-                ...['moderation_info'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
-                // Basic
-                ...['display_name', 'role'],
-                // Ban info
-                ...['is_banned', 'was_ever_banned'],
-                // Moderation info
-                ...['moderation_info'],
-            ],
-            'getPerPage' => 10
-        ],
-        'user_tokens' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'last_used_at']
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'last_used_at']
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'last_used_at']
-            ],
-            'getPerPage' => 10
-        ],
-        'user_profile' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'display_name', 'is_public', 'location'],
-                // Counts
-                ...['reports_count'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
-                // Settings
-                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
-                // Counts
-                ...['reports_count'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
-                // Settings
-                ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
-                // Counts
-                ...['reports_count'],
-            ],
-            'getPerPage' => 10
-        ],
-        'post' => [
-            'sort' => [
-                // Default 
-                ...['id', 'created_at'],
-                // Basic
-                ...['user_id', 'title', 'language', 'category', 'post_type', 'technology', 'status'],
-                // Counts
-                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
-            ],
-            'filter' => [
-                // Default 
-                ...['id', 'created_at'],
-                // Basic
-                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
-                // Counts
-                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
-                // History
-                ...['history'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'select' => [
-                // Default 
-                ...['id', 'created_at'],
-                // Basic
-                ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
-                // Counts
-                ...['favorite_count', 'reports_count', 'likes_count', 'comments_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
-                // History
-                ...['history'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'getPerPage' => 10
-        ],
-        'comment' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at'],
-                // Basic
-                ...['post_id', 'user_id', 'parent_id', 'is_deleted', 'depth'],
-                // Counts
-                ...['likes_count', 'reports_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at'],
-                // Basic
-                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
-                // Counts
-                ...['likes_count', 'reports_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at'],
-                // Basic
-                ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
-                // Counts
-                ...['likes_count', 'reports_count'],
-                // Update info
-                ...['updated_at', 'is_updated', 'updated_by_role'],
-                // Moderation info
-                ...['moderation_info']
-            ],
-            'getPerPage' => 10
-        ],
-        'user_favorites' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'post_id'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'post_id'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'post_id'],
-            ],
-            'getPerPage' => 10
-        ],
-        'like' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'likeable_id', 'likeable_type', 'type'],
-            ],
-            'getPerPage' => 10
-        ],
-        'user_reports' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'impact_value'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
-            ],
-            'getPerPage' => 10
-        ],
-        'user_followers' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'follower_id'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'follower_id'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['user_id', 'follower_id'],
-            ],
-            'getPerPage' => 10
-        ],
-        'forbidden_names' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
-            ],
-            'getPerPage' => 10
-        ],
-        'post_allowed_values' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'type', 'created_by_role', 'created_by_user_id']
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'type', 'created_by_role', 'created_by_user_id']
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'type', 'created_by_role', 'created_by_user_id']
-            ],
-            'getPerPage' => 10
-        ],
-        'critical_terms' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
-            ],
-            'getPerPage' => 10
-        ],
-        'apiKey' => [
-            'sort' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'active', 'last_used_at']
-            ],
-            'filter' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'active', 'last_used_at']
-            ],
-            'select' => [
-                // Default
-                ...['id', 'created_at', 'updated_at'],
-                // Basic
-                ...['name', 'active', 'last_used_at']
-            ],
-            'getPerPage' => 10
-        ]
-    ];
+    protected function queryConfigurations(Request $request, $modelType, $methodName = null): array {
+        $hasModeratorPrivileges = $this->hasModeratorPrivileges($this->getAuthenticatedUser($request));
 
+        $queryConfigurations = [
+            'user' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                    // Basic
+                    ...['display_name', 'role'],
+                    // Ban info
+                    ...($hasModeratorPrivileges ? ['is_banned', 'was_ever_banned'] : []),
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                    // Basic
+                    ...['display_name', 'role'],
+                    // Ban info
+                    ...($hasModeratorPrivileges ? ['is_banned', 'was_ever_banned'] : []),
+                    // Moderation info
+                    ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
+                    // Basic
+                    ...['display_name', 'role'],
+                    // Ban info
+                    ...($hasModeratorPrivileges ? ['is_banned', 'was_ever_banned'] : []),
+                    // Moderation info
+                    ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                ],
+                'getPerPage' => 10
+            ],
+            'user_tokens' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'last_used_at']
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'last_used_at']
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'last_used_at']
+                ],
+                'getPerPage' => 10
+            ],
+            'user_profile' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'display_name', 'is_public', 'location'],
+                    // Counts
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                    // Settings
+                    ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
+                    // Counts
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                    // Settings
+                    ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
+                    // Counts
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                ],
+                'getPerPage' => 10
+            ],
+            'post' => [
+                'sort' => [
+                    // Default 
+                    ...['id', 'created_at'],
+                    // Basic
+                    ...['user_id', 'title', 'language', 'category', 'post_type', 'technology', 'status'],
+                    // Counts
+                    ...['favorite_count', 'likes_count', 'comments_count'],
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Update info
+                    ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                ],
+                'filter' => [
+                    // Default 
+                    ...['id', 'created_at'],
+                    // Basic
+                    ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
+                    // Counts
+                    ...['favorite_count', 'likes_count', 'comments_count'],
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Update info
+                    ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                    // History
+                    ...['history'],
+                    // Moderation info
+                    ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                ],
+                'select' => [
+                    // Default 
+                    ...['id', 'created_at'],
+                    // Basic
+                    ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'language', 'category', 'post_type', 'technology', 'status'],
+                    // Counts
+                    ...['favorite_count', 'likes_count', 'comments_count'],
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Update info
+                    ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                    // History
+                    ...['history'],
+                    // Moderation info
+                    ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                ],
+                'getPerPage' => 10
+            ],
+            'comment' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at'],
+                    // Basic
+                    ...['post_id', 'user_id', 'parent_id', 'is_deleted', 'depth'],
+                    // Counts
+                    ...['likes_count'],
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Update info
+                    ...['updated_at', 'is_updated', 'updated_by_role'],
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at'],
+                    // Basic
+                    ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
+                    // Counts
+                    ...['likes_count'],
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Update info
+                    ...['updated_at', 'is_updated', 'updated_by_role'],
+                    // Moderation info
+                    ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at'],
+                    // Basic
+                    ...['post_id', 'user_id', 'content', 'parent_content', 'parent_id', 'is_deleted', 'depth'],
+                    // Counts
+                    ...['likes_count'],
+                    ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Update info
+                    ...['updated_at', 'is_updated', 'updated_by_role'],
+                    // Moderation info
+                    ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                ],
+                'getPerPage' => 10
+            ],
+            'user_favorites' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'post_id'],
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'post_id'],
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'post_id'],
+                ],
+                'getPerPage' => 10
+            ],
+            'like' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'likeable_id', 'likeable_type', 'type'],
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'likeable_id', 'likeable_type', 'type'],
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'likeable_id', 'likeable_type', 'type'],
+                ],
+                'getPerPage' => 10
+            ],
+            'user_reports' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'reportable_id', 'reportable_type', 'type', 'impact_value'],
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
+                ],
+                'getPerPage' => 10
+            ],
+            'user_followers' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'follower_id'],
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'follower_id'],
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['user_id', 'follower_id'],
+                ],
+                'getPerPage' => 10
+            ],
+            'forbidden_names' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
+                ],
+                'getPerPage' => 10
+            ],
+            'post_allowed_values' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'type', 'created_by_role', 'created_by_user_id']
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'type', 'created_by_role', 'created_by_user_id']
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'type', 'created_by_role', 'created_by_user_id']
+                ],
+                'getPerPage' => 10
+            ],
+            'critical_terms' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
+                ],
+                'getPerPage' => 10
+            ],
+            'apiKey' => [
+                'sort' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'active', 'last_used_at']
+                ],
+                'filter' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'active', 'last_used_at']
+                ],
+                'select' => [
+                    // Default
+                    ...['id', 'created_at', 'updated_at'],
+                    // Basic
+                    ...['name', 'active', 'last_used_at']
+                ],
+                'getPerPage' => 10
+            ]
+        ];
+
+        if ($methodName) {
+            return $queryConfigurations[$modelType][$methodName] ?? [];
+        }
+        return $queryConfigurations[$modelType] ?? [];
+    }
 
     /**
      * Get relation filters based on the request and model type
@@ -398,39 +415,39 @@ trait QueryBuilder {
          */
         $dynamicRelations = [
             'user' => [
-                'profile' => $this->getQueryConfig('user_profile', 'filter'),
+                'profile' => $this->queryConfigurations($request, 'user_profile', 'filter'),
             ],
             'user_profile' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
             ],
             'post' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
             ],
             'comment' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
-                'parent' => $this->getQueryConfig('comment', 'filter'),
-                'children' => $this->getQueryConfig('comment', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
+                'parent' => $this->queryConfigurations($request, 'comment', 'filter'),
+                'children' => $this->queryConfigurations($request, 'comment', 'filter'),
             ],
             'user_reports' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
                 // 'reportable' The polymorphic relation is not supported in this context.
             ],
             'like' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
                 // 'likeable' The polymorphic relation is not supported in this context.
             ],
             'user_followers' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
-                'follower' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
+                'follower' => $this->queryConfigurations($request, 'user', 'filter'),
             ],
             'forbidden_names' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
             ],
             'post_allowed_values' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
             ],
             'critical_terms' => [
-                'user' => $this->getQueryConfig('user', 'filter'),
+                'user' => $this->queryConfigurations($request, 'user', 'filter'),
             ],
         ];
 
@@ -507,11 +524,11 @@ trait QueryBuilder {
      * @example | $query = $this->buildQuery($request, $query, 'user');
      */
     private function buildQuery(Request $request, Builder $query, string $modelType): JsonResponse|Collection|LengthAwarePaginator {
-        if (!isset($this->queryConfigurations[$modelType])) {
-            return $this->errorResponse("Query configuration for '{$modelType}' is not defined", 'QUERY_CONFIG_NOT_DEFINED', 500);
+        $methods = $this->getQueryConfig($request, $modelType);
+        if ($methods instanceof JsonResponse) {
+            return $methods; // Return error response if configuration is not defined
         }
 
-        $methods = $this->queryConfigurations[$modelType] ?? [];
         $relations = $this->getRelationFilters($request, $modelType);
 
         foreach ($methods as $method => $params) {
@@ -538,18 +555,18 @@ trait QueryBuilder {
      * 
      * @example | $config = $this->getQueryConfig('user', 'select');
      */
-    protected function getQueryConfig(string $modelType, ?string $methodName = null): array|int|JsonResponse {
-        if (!isset($this->queryConfigurations[$modelType])) {
+    protected function getQueryConfig(Request $request, string $modelType, ?string $methodName = null): array|int|JsonResponse {
+        if ($this->queryConfigurations($request, $modelType) === []) {
             return $this->errorResponse("Query configuration for '{$modelType}' is not defined", 'QUERY_CONFIG_NOT_DEFINED', 500);
         }
 
         if ($methodName !== null) {
-            if (!isset($this->queryConfigurations[$modelType][$methodName])) {
+            if ($this->queryConfigurations($request, $modelType, $methodName) === []) {
                 return $this->errorResponse("Query configuration for '{$modelType}' with method '{$methodName}' is not defined", 'QUERY_CONFIG_NOT_DEFINED', 500);
             }
-            return $this->queryConfigurations[$modelType][$methodName];
+            return $this->queryConfigurations($request, $modelType, $methodName);
         }
-        return $this->queryConfigurations[$modelType];
+        return $this->queryConfigurations($request, $modelType);
     }
 
 
@@ -564,7 +581,7 @@ trait QueryBuilder {
      * @example | $query = $this->buildQuerySelect($request, $query, 'post');
      */
     protected function buildQuerySelect(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($modelType, 'select');
+        $config = $this->getQueryConfig($request, $modelType, 'select');
         if ($config instanceof JsonResponse) {
             return $config;
         }
@@ -583,7 +600,7 @@ trait QueryBuilder {
      * @example | $query = $this->buildQueryFilter($request, $query, 'post');
      */
     protected function buildQueryFilter(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($modelType, 'filter');
+        $config = $this->getQueryConfig($request, $modelType, 'filter');
         $relations = $this->relationFilters[$modelType] ?? [];
 
         if ($config instanceof JsonResponse) {
@@ -604,7 +621,7 @@ trait QueryBuilder {
      * @example | $query = $this->buildQuerySort($request, $query, 'post');
      */
     protected function buildQuerySort(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($modelType, 'sort');
+        $config = $this->getQueryConfig($request, $modelType, 'sort');
         if ($config instanceof JsonResponse) {
             return $config;
         }
@@ -623,7 +640,7 @@ trait QueryBuilder {
      * @example | $query = $this->buildQueryPaginate($request, $query, 'post');
      */
     protected function buildQueryPaginate(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($modelType, 'getPerPage');
+        $config = $this->getQueryConfig($request, $modelType, 'getPerPage');
         if ($config instanceof JsonResponse) {
             return $config;
         }
