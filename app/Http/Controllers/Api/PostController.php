@@ -320,6 +320,8 @@ class PostController extends Controller {
                 return $this->successResponse([], 'No posts exist in the database', 200);
             }
 
+            $user = $this->getAuthenticatedUser($request);
+
             $query = Post::query();
 
             $originalSelectFields = $this->getSelectFields($request);
@@ -338,6 +340,9 @@ class PostController extends Controller {
             $query = $this->checkForIncludedRelations($request, $query);
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            $query = $this->postRelationService->isPostFavorited($user, $query);
+
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -621,6 +626,8 @@ class PostController extends Controller {
         try {
             $query = Post::query()->where('id', $id);
 
+            $user = $this->getAuthenticatedUser($request);
+
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupPostQuery($request, $query, 'buildQuerySelect');
@@ -635,6 +642,8 @@ class PostController extends Controller {
             $post = $this->checkForIncludedRelations($request, $post);
 
             $post = $this->controlVisibleFields($request, $originalSelectFields, $post);
+
+            $post  = $this->postRelationService->isPostFavorited($user, $post);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
