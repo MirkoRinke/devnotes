@@ -341,7 +341,7 @@ class PostController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
-            $query = $this->postRelationService->isPostFavorited($user, $query);
+            $query = $this->isPostFavorited($user, $query);
 
 
             return $this->successResponse($query, 'Posts retrieved successfully');
@@ -643,7 +643,7 @@ class PostController extends Controller {
 
             $post = $this->controlVisibleFields($request, $originalSelectFields, $post);
 
-            $post  = $this->postRelationService->isPostFavorited($user, $post);
+            $post  = $this->isPostFavorited($user, $post);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
