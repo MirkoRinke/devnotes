@@ -134,9 +134,9 @@ trait PostQuerySetup {
      * @param Builder|Collection|LengthAwarePaginator|Post $query
      * @return Builder|Collection|LengthAwarePaginator|Post
      * 
-     * @example | $this->postRelationService->isPostFavorited($user, $query);
+     * @example | $this->postRelationService->isFavorited($user, $query);
      */
-    public function isPostFavorited($user, $query): Builder|Collection|LengthAwarePaginator|Post {
+    public function isFavorited($user, $query): Builder|Collection|LengthAwarePaginator|Post {
         if ($query instanceof Post) {
             if (!$user) {
                 $query->is_favorited = false;
@@ -151,7 +151,7 @@ trait PostQuerySetup {
         $postIds = $query->pluck('id')->toArray();
         $favoritedPosts = [];
 
-        if ($user) {
+        if ($user && !empty($postIds)) {
             $favoritedPosts = $user->favorites()
                 ->whereIn('post_id', $postIds)
                 ->pluck('post_id')
