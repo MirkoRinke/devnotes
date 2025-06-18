@@ -18,6 +18,7 @@ use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
 use App\Traits\AccessFilter;
+use App\Traits\LikeHelper;
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -30,7 +31,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, LikeHelper;
 
     /**
      * The validation rule for the like entity
@@ -126,40 +127,6 @@ class UserLikeController extends Controller {
         return $query;
     }
 
-
-    /**
-     * Check if the user can like the content
-     * 
-     * @param mixed $user The authenticated user
-     * @param string $likeableType The type of entity to like (Post or Comment)
-     * @param mixed $likeable The likeable entity
-     * @param int $likeableId The ID of the entity to like
-     * @param string $simpleType The simple type of the entity (post or comment)
-     * @return JsonResponse|null
-     * 
-     * @example | $likeableResult = $this->checkIfUserCanLike($user, $likeableType, $likeable, $likeableId, $simpleType);
-     *            if ($likeableResult !== null) {
-     *              return $likeableResult;
-     *            }
-     */
-    private function checkIfUserCanLike($user, $likeableType, $likeable, $likeableId, $simpleType) {
-        if ($likeableType === Post::class && $likeable->user_id == $user->id) {
-            return $this->errorResponse('You cannot like your own post', 'CANNOT_LIKE_OWN_POST', 403);
-        } else if ($likeableType === Comment::class && $likeable->user_id == $user->id) {
-            return $this->errorResponse('You cannot like your own comment', 'CANNOT_LIKE_OWN_COMMENT', 403);
-        }
-
-        $existingLike = UserLike::where([
-            'user_id' => $user->id,
-            'likeable_id' => $likeableId,
-            'likeable_type' => $likeableType
-        ])->first();
-
-        if ($existingLike) {
-            return $this->errorResponse('You have already liked this ' . $simpleType, 'ALREADY_LIKED', 403);
-        }
-        return null;
-    }
 
 
     /**
