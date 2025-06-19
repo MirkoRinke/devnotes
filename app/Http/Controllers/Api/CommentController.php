@@ -16,6 +16,7 @@ use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\LikeHelper;
+use App\Traits\FollowerHelper;
 
 use App\Services\ModerationService;
 use App\Services\CommentRelationService;
@@ -41,7 +42,7 @@ class CommentController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper, FollowerHelper;
 
     /**
      *  The Service used in the controller
@@ -306,6 +307,8 @@ class CommentController extends Controller {
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             $query = $this->isLiked($user, $query, 'comment');
+
+            $query = $this->isFollowing($request, $query);
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -639,6 +642,8 @@ class CommentController extends Controller {
             $comment = $this->controlVisibleFields($request, $originalSelectFields, $comment);
 
             $comment = $this->isLiked($user, $comment, 'comment');
+
+            $comment = $this->isFollowing($request, $comment);
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
