@@ -21,6 +21,7 @@ use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\PostQuerySetup;
 use App\Traits\LikeHelper;
+use App\Traits\FollowerHelper;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
@@ -40,7 +41,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, LikeHelper;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, LikeHelper, FollowerHelper;
 
 
     /**
@@ -346,6 +347,7 @@ class PostController extends Controller {
 
             $query = $this->isFavorited($user, $query);
 
+            $query = $this->isFollowing($request, $query);
 
             return $this->successResponse($query, 'Posts retrieved successfully');
         } catch (Exception $e) {
@@ -649,6 +651,8 @@ class PostController extends Controller {
             $post = $this->isLiked($user, $post, 'post');
 
             $post = $this->isFavorited($user, $post);
+
+            $post = $this->isFollowing($request, $post);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
