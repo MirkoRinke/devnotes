@@ -276,8 +276,9 @@ trait ApiSelectable {
         if ($request->has('select')) {
             $select = $this->getSelectFields($request);
             $visibleFields = array_merge($originalSelectFields ?? [], ['id']);
-            $fieldsOnlyInSelect = array_diff($select, $visibleFields);
-            foreach ($fieldsOnlyInSelect as $field) {
+            $fieldsToHide = array_diff($select, $visibleFields);
+
+            foreach ($fieldsToHide as $field) {
                 $model->makeHidden($field);
             }
         }
