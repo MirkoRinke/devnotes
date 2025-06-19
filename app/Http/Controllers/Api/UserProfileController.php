@@ -20,6 +20,7 @@ use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
+use App\Traits\FollowerHelper;
 
 use App\Services\UserRelationService;
 
@@ -35,7 +36,7 @@ class UserProfileController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude, FieldManager;
+    use ApiResponses, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude, FieldManager, FollowerHelper;
 
 
     /**
@@ -283,6 +284,8 @@ class UserProfileController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
+            $query = $this->isFollowing($request, $query);
+
             return $this->successResponse($query, 'User Profiles retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
@@ -395,6 +398,8 @@ class UserProfileController extends Controller {
             $query = $this->checkForIncludedRelations($request, $query);
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            $query = $this->isFollowing($request, $query);
 
             return $this->successResponse($query, 'User Profile retrieved successfully');
         } catch (ModelNotFoundException $e) {
