@@ -20,6 +20,7 @@ use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\PostQuerySetup;
+use App\Traits\LikeHelper;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
@@ -39,7 +40,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, LikeHelper;
 
 
     /**
@@ -341,7 +342,9 @@ class PostController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
-            $query = $this->isPostFavorited($user, $query);
+            $query = $this->isLiked($user, $query, 'post');
+
+            $query = $this->isFavorited($user, $query);
 
 
             return $this->successResponse($query, 'Posts retrieved successfully');
@@ -643,7 +646,9 @@ class PostController extends Controller {
 
             $post = $this->controlVisibleFields($request, $originalSelectFields, $post);
 
-            $post  = $this->isPostFavorited($user, $post);
+            $post = $this->isLiked($user, $post, 'post');
+
+            $post = $this->isFavorited($user, $post);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
