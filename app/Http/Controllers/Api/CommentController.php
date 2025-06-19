@@ -15,6 +15,7 @@ use App\Traits\QueryBuilder;
 use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
+use App\Traits\LikeHelper;
 
 use App\Services\ModerationService;
 use App\Services\CommentRelationService;
@@ -40,7 +41,7 @@ class CommentController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper;
 
     /**
      *  The Service used in the controller
@@ -285,6 +286,8 @@ class CommentController extends Controller {
         try {
             $query = Comment::query();
 
+            $user = $this->getAuthenticatedUser($request);
+
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupCommentQuery($request, $query, 'buildQuery');
@@ -301,6 +304,8 @@ class CommentController extends Controller {
             $query = $this->checkForIncludedRelations($request, $query);
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+
+            $query = $this->isLiked($user, $query, 'comment');
 
             return $this->successResponse($query, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
@@ -615,6 +620,8 @@ class CommentController extends Controller {
         try {
             $query = Comment::where('id', $id);
 
+            $user = $this->getAuthenticatedUser($request);
+
             $originalSelectFields = $this->getSelectFields($request);
 
             $query = $this->setupCommentQuery($request, $query, 'buildQuerySelect');
@@ -630,6 +637,8 @@ class CommentController extends Controller {
             $comment = $this->checkForIncludedRelations($request, $comment);
 
             $comment = $this->controlVisibleFields($request, $originalSelectFields, $comment);
+
+            $comment = $this->isLiked($user, $comment, 'comment');
 
             return $this->successResponse($comment, 'Comment retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
