@@ -56,7 +56,7 @@ class CommentModerationService {
         /**
          * Check if the comment has been reported too many times
          */
-        if ($comment->reports_count >= 5) {
+        if ($comment->reports_count >= 5 && array_key_exists('content', $comment->getAttributes())) {
             $comment->content = "This comment has been reported too many times and is no longer available";
         }
 
@@ -65,7 +65,7 @@ class CommentModerationService {
          */
         if ($comment->parent_id !== null) {
             $parentComment = $comment->parent;
-            if ($parentComment && $parentComment->reports_count >= 5) {
+            if ($parentComment && $parentComment->reports_count >= 5 && array_key_exists('parent_content', $comment->getAttributes())) {
                 $comment->parent_content = "This comment has been reported too many times and is no longer available";
             }
         }
@@ -77,8 +77,12 @@ class CommentModerationService {
         if ($comment->children && $comment->children->isNotEmpty()) {
             foreach ($comment->children as $child) {
                 if ($comment->reports_count >= 5) {
-                    $child->parent_content = "This comment has been reported too many times and is no longer available";
-                    $child->parent->content = "This comment has been reported too many times and is no longer available";
+                    if (array_key_exists('parent_content', $child->getAttributes())) {
+                        $child->parent_content = "This comment has been reported too many times and is no longer available";
+                    }
+                    if ($child->parent && array_key_exists('content', $child->parent->getAttributes())) {
+                        $child->parent->content = "This comment has been reported too many times and is no longer available";
+                    }
                 }
             }
         }
