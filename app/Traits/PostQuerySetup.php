@@ -93,7 +93,7 @@ trait PostQuerySetup {
             /**
              * If tags have been set in the request, we remove it from the select fields
              */
-            $this->removeFromSelect($request, 'tags');
+            $this->removeFromSelect($request, ['tags']);
 
             /**
              * Load the tags relation by Default
