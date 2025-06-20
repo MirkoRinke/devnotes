@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Http\Request;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -58,38 +60,47 @@ trait LikeHelper {
      * 
      * @example | $isLiked = $this->isLiked($user, $query, 'post');
      */
-    public function isLiked($user, $query, string $modelType): Builder|Collection|LengthAwarePaginator|Post|Comment {
-        $className = $modelType === 'post' ? Post::class : Comment::class;
+    public function isLiked(Request $request, $user, $query, string $modelType, $originalSelectFields): Builder|Collection|LengthAwarePaginator|Post|Comment {
 
-        if ($query instanceof $className) {
-            if (!$user) {
-                $query->is_liked = false;
+        /**
+         * If the request does not have 'select' or if 'is_liked' is included in 'select',
+         * we will check if the authenticated user has liked the post or comment in the query.
+         * and we will add the 'is_liked' field to the post or comment relation.
+         */
+        if (!$request->has('select') || in_array('is_liked', $originalSelectFields)) {
+            $className = $modelType === 'post' ? Post::class : Comment::class;
+
+            if ($query instanceof $className) {
+                if (!$user) {
+                    $query->is_liked = false;
+                    return $query;
+                }
+
+                $query->is_liked = $user->likes()
+                    ->where('likeable_type', $className)
+                    ->where('likeable_id', $query->id)
+                    ->exists();
+
                 return $query;
             }
 
-            $query->is_liked = $user->likes()
-                ->where('likeable_type', $className)
-                ->where('likeable_id', $query->id)
-                ->exists();
+            $ids = $query->pluck('id')->toArray();
+            $likedItems = [];
+
+            if ($user && !empty($ids)) {
+                $likedItems = $user->likes()
+                    ->where('likeable_type', $className)
+                    ->whereIn('likeable_id', $ids)
+                    ->pluck('likeable_id')
+                    ->toArray();
+            }
+
+            $query->each(function ($item) use ($likedItems) {
+                $item->is_liked = in_array($item->id, $likedItems);
+            });
 
             return $query;
         }
-
-        $ids = $query->pluck('id')->toArray();
-        $likedItems = [];
-
-        if ($user && !empty($ids)) {
-            $likedItems = $user->likes()
-                ->where('likeable_type', $className)
-                ->whereIn('likeable_id', $ids)
-                ->pluck('likeable_id')
-                ->toArray();
-        }
-
-        $query->each(function ($item) use ($likedItems) {
-            $item->is_liked = in_array($item->id, $likedItems);
-        });
-
         return $query;
     }
 }
