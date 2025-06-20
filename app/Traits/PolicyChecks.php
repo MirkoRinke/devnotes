@@ -23,38 +23,48 @@ trait PolicyChecks {
     /**
      * Check if user has admin or moderator role
      * 
-     * @param User $user
+     * @param User|null $user
      * @return bool
      * 
      * @example | $this->hasModeratorPrivileges($user)
      */
-    protected function hasModeratorPrivileges(User $user): bool {
+    protected function hasModeratorPrivileges(?User $user): bool {
+        if (!$user) {
+            return false;
+        }
         return $user->role === 'admin' || $user->role === 'system' || $user->role === 'moderator';
     }
 
     /**
      * Check if user owns the model
      * 
-     * @param User $user
+     * @param User|null $user
      * @param mixed $model Any model with user_id
      * @return bool
      * 
      * @example | $this->isOwner($user, $model)
      */
-    protected function isOwner(User $user, $model): bool {
+    protected function isOwner(?User $user, $model): bool {
+        if (!$user) {
+            return false;
+        }
+
         return $user->id === $model->user_id;
     }
 
     /**
      * Check if user does NOT own the model
      * 
-     * @param User $user
+     * @param User|null $user
      * @param mixed $model Any model with user_id
      * @return bool
      * 
      * @example | $this->isNotOwner($user, $model)
      */
-    protected function isNotOwner(User $user, $model): bool {
+    protected function isNotOwner(?User $user, $model): bool {
+        if (!$user) {
+            return true;
+        }
         return $user->id !== $model->user_id;
     }
 }
