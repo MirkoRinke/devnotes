@@ -41,8 +41,10 @@ trait ApiResponses {
             $queryLog = DB::getQueryLog();
             $response['meta'] = [
                 'total_queries' => count($queryLog),
-                'queries' => $queryLog
             ];
+            if (env('QUERY_LOGGING_QUERIES_ENABLED', false)) {
+                $response['meta']['queries'] =  $queryLog;
+            }
         }
 
         $response['data'] = $data;
@@ -74,8 +76,10 @@ trait ApiResponses {
             $queryLog = DB::getQueryLog();
             $response['meta'] = [
                 'total_queries' => count($queryLog),
-                'queries' => $queryLog
             ];
+            if (env('QUERY_LOGGING_QUERIES_ENABLED', false)) {
+                $response['meta']['queries'] =  $queryLog;
+            }
         }
 
         return response()->json($response, $code);
