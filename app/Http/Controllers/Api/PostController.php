@@ -20,6 +20,7 @@ use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\PostQuerySetup;
+use App\Traits\FavoriteHelper;
 use App\Traits\LikeHelper;
 use App\Traits\FollowerHelper;
 
@@ -41,7 +42,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, LikeHelper, FollowerHelper;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, FavoriteHelper, LikeHelper, FollowerHelper;
 
 
     /**
@@ -343,9 +344,9 @@ class PostController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
-            $query = $this->isLiked($user, $query, 'post');
-
             $query = $this->isFavorited($user, $query);
+
+            $query = $this->isLiked($user, $query, 'post');
 
             $query = $this->isFollowing($request, $query);
 
@@ -648,9 +649,9 @@ class PostController extends Controller {
 
             $post = $this->controlVisibleFields($request, $originalSelectFields, $post);
 
-            $post = $this->isLiked($user, $post, 'post');
-
             $post = $this->isFavorited($user, $post);
+
+            $post = $this->isLiked($user, $post, 'post');
 
             $post = $this->isFollowing($request, $post);
 
