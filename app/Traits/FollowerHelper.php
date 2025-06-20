@@ -32,47 +32,57 @@ trait FollowerHelper {
      */
     public function isFollowing($request, $query): Builder|Collection|LengthAwarePaginator|Post|Comment|UserProfile {
         if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
-            $user = $this->getAuthenticatedUser($request);
 
-            if ($query instanceof Model) {
-                if (!$query->relationLoaded('user') || !$query->user) {
+            /**
+             * If the request does not have 'user_fields' or if 'is_following' is included in 'user_fields',
+             * we will check if the authenticated user is following the user in the query.
+             * and we will add the 'is_following' field to the user relation.
+             */
+            if (!$request->has('user_fields') || in_array('is_following', explode(',', $request->input('user_fields')))) {
+
+                $user = $this->getAuthenticatedUser($request);
+
+                if ($query instanceof Model) {
+                    if (!$query->relationLoaded('user') || !$query->user) {
+                        return $query;
+                    }
+
+                    if (!$user) {
+                        $query->user->is_following = false;
+                        return $query;
+                    }
+
+                    $query->user->is_following = $user->followingRelations()
+                        ->where('user_id', $query->user->id)
+                        ->exists();
+
                     return $query;
                 }
 
-                if (!$user) {
-                    $query->user->is_following = false;
-                    return $query;
+                $userIds = [];
+
+                $query->each(function ($item) use (&$userIds) {
+                    if ($item->relationLoaded('user') && $item->user) {
+                        $userIds[] = $item->user->id;
+                    }
+                });
+
+                $followedIds = [];
+                if ($user && !empty($userIds)) {
+                    $followedIds = $user->followingRelations()
+                        ->whereIn('user_id', array_unique($userIds))
+                        ->pluck('user_id')
+                        ->toArray();
                 }
 
-                $query->user->is_following = $user->followingRelations()
-                    ->where('user_id', $query->user->id)
-                    ->exists();
+                $query->each(function ($item) use ($followedIds) {
+                    if ($item->relationLoaded('user') && $item->user) {
+                        $item->user->is_following = in_array($item->user->id, $followedIds);
+                    }
+                });
 
                 return $query;
             }
-
-            $userIds = [];
-
-            $query->each(function ($item) use (&$userIds) {
-                if ($item->relationLoaded('user') && $item->user) {
-                    $userIds[] = $item->user->id;
-                }
-            });
-
-            $followedIds = [];
-            if ($user && !empty($userIds)) {
-                $followedIds = $user->followingRelations()
-                    ->whereIn('user_id', array_unique($userIds))
-                    ->pluck('user_id')
-                    ->toArray();
-            }
-
-            $query->each(function ($item) use ($followedIds) {
-                if ($item->relationLoaded('user') && $item->user) {
-                    $item->user->is_following = in_array($item->user->id, $followedIds);
-                }
-            });
-
             return $query;
         }
         return $query;
