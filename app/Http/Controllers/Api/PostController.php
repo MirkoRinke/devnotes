@@ -329,6 +329,8 @@ class PostController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
+            $this->removeFromSelect($request, ['is_favorited', 'is_liked']);
+
             $query = $this->setupPostQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -344,9 +346,9 @@ class PostController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
-            $query = $this->isFavorited($user, $query);
+            $query = $this->isFavorited($request, $user, $query, $originalSelectFields);
 
-            $query = $this->isLiked($user, $query, 'post');
+            $query = $this->isLiked($request, $user, $query, 'post', $originalSelectFields);
 
             $query = $this->isFollowing($request, $query);
 
@@ -636,6 +638,8 @@ class PostController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
+            $this->removeFromSelect($request, ['is_favorited', 'is_liked']);
+
             $query = $this->setupPostQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -649,9 +653,9 @@ class PostController extends Controller {
 
             $post = $this->controlVisibleFields($request, $originalSelectFields, $post);
 
-            $post = $this->isFavorited($user, $post);
+            $post = $this->isFavorited($request, $user, $post, $originalSelectFields);
 
-            $post = $this->isLiked($user, $post, 'post');
+            $post = $this->isLiked($request, $user, $post, 'post', $originalSelectFields);
 
             $post = $this->isFollowing($request, $post);
 
