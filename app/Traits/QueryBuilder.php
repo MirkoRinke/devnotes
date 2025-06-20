@@ -159,6 +159,8 @@ trait QueryBuilder {
                     ...['history'],
                     // Moderation info
                     ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                    // Relationship Status Flags
+                    ...['is_favorited', 'is_liked'],
                 ],
                 'getPerPage' => 10
             ],
