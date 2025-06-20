@@ -16,7 +16,7 @@ use App\Traits\ApiSelectable;
 trait PostQuerySetup {
 
     /**
-     *  The traits used in the controller
+     *  The traits used in the Trait
      */
     use AccessFilter, ApiSelectable;
 
