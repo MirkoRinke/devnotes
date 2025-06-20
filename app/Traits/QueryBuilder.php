@@ -201,6 +201,8 @@ trait QueryBuilder {
                     ...['updated_at', 'is_updated', 'updated_by_role'],
                     // Moderation info
                     ...($hasModeratorPrivileges ? ['moderation_info'] : []),
+                    // Relationship Status Flags
+                    ...['is_liked'],
                 ],
                 'getPerPage' => 10
             ],
