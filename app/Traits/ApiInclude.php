@@ -99,15 +99,8 @@ trait ApiInclude {
         if ($request->has('include')) {
             $relations = explode(',', $request->input('include'));
             $select = $this->getSelectFields($request) ?? [];
-            if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
-                foreach ($data as $item) {
-                    $this->applyRelationVisibility($request, $item, $relations, $select);
-                }
-                return $data;
-            } else if ($data instanceof Model) {
-                $this->applyRelationVisibility($request, $data, $relations, $select);
-                return $data;
-            }
+            $this->applyRelationVisibility($request, $data, $relations, $select);
+            return $data;
         }
         return $data;
     }
