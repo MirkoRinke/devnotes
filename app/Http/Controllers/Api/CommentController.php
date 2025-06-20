@@ -291,6 +291,8 @@ class CommentController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
+            $this->removeFromSelect($request, ['is_liked']);
+
             $query = $this->setupCommentQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
@@ -306,7 +308,7 @@ class CommentController extends Controller {
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
-            $query = $this->isLiked($user, $query, 'comment');
+            $query = $this->isLiked($request, $user, $query, 'comment', $originalSelectFields);
 
             $query = $this->isFollowing($request, $query);
 
@@ -627,6 +629,8 @@ class CommentController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
+            $this->removeFromSelect($request, ['is_liked']);
+
             $query = $this->setupCommentQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
                 return $query;
@@ -641,7 +645,7 @@ class CommentController extends Controller {
 
             $comment = $this->controlVisibleFields($request, $originalSelectFields, $comment);
 
-            $comment = $this->isLiked($user, $comment, 'comment');
+            $comment = $this->isLiked($request, $user, $comment, 'comment', $originalSelectFields);
 
             $comment = $this->isFollowing($request, $comment);
 
