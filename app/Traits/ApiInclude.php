@@ -105,6 +105,23 @@ trait ApiInclude {
         return $data;
     }
 
+    // public function checkForIncludedRelations(Request $request, $data): mixed {
+    //     if ($request->has('include')) {
+    //         $relations = explode(',', $request->input('include'));
+    //         $select = $this->getSelectFields($request) ?? [];
+    //         if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
+    //             foreach ($data as $item) {
+    //                 $this->applyRelationVisibility($request, $item, $relations, $select);
+    //             }
+    //             return $data;
+    //         } else if ($data instanceof Model) {
+    //             $this->applyRelationVisibility($request, $data, $relations, $select);
+    //             return $data;
+    //         }
+    //     }
+    //     return $data;
+    // }
+
 
 
     /**
@@ -123,6 +140,14 @@ trait ApiInclude {
      * @example | $this->applyRelationVisibility($request, $data, $relations, $select);
      */
     protected function applyRelationVisibility(Request $request, $model, array $relations, array $select): void {
+
+        if ($model instanceof Collection || $model instanceof LengthAwarePaginator) {
+            foreach ($model as $item) {
+                $this->applyRelationVisibility($request, $item, $relations, $select);
+            }
+            return;
+        }
+
         $model->makeVisible($relations);
 
         // If 'children' relation is requested, apply recursive visibility rules to all nested comments
@@ -181,12 +206,10 @@ trait ApiInclude {
     protected function applyChildrenRelationFieldsVisibility(Request $request, $comment, array $relations, array $select): void {
         $input = $request->input('children_fields');
         $allowedFields = $this->resolveFieldSelection($input, $select);
-
         $childrenVisibleFields = $this->getRelationFieldsFromRequest($request, 'children', [], $allowedFields);
-
         $childRelations = $relations;
 
-        if (isset($comment->children) && $comment->children) {
+        if (isset($comment->children) && $comment->relationLoaded('children')) {
             foreach ($comment->children as $child) {
                 $childrenVisibleFields = $childrenVisibleFields == ['*'] ? array_keys($child->getAttributes()) : $childrenVisibleFields;
 
@@ -196,12 +219,13 @@ trait ApiInclude {
 
                 $child->makeVisible($childRelations);
 
-                if (isset($child->children) && $child->children) {
+                if ($child->relationLoaded('children')) {
                     $this->applyChildrenRelationFieldsVisibility($request, $child, $relations, $select);
                 }
             }
         }
     }
+
 
     /**
      * Apply visibility rules to parent fields in comments
@@ -225,11 +249,11 @@ trait ApiInclude {
 
         $this->applyParentVisibilityToComment($comment, $parentVisibleFields, $relations);
 
-        if (isset($comment->children) && $comment->children) {
+        if (isset($comment->children) && $comment->relationLoaded('children')) {
             foreach ($comment->children as $child) {
                 $this->applyParentVisibilityToComment($child, $parentVisibleFields, $relations);
 
-                if (isset($child->children) && $child->children) {
+                if ($child->relationLoaded('children')) {
                     $this->applyParentFieldsVisibilityInComments($request, $child, $relations, $select);
                 }
             }
