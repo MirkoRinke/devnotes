@@ -152,39 +152,44 @@ class PostController extends Controller {
 
 
     /**
-     * Synchronize tags for a post
+     * Synchronize a relation for a post
      * 
-     * This method finds or creates tags in the PostAllowedValue table
-     * and associates them with the given post using the pivot table.
-     * 
-     * @param Post $post The post to synchronize tags for
-     * @param array $tagNames Array of tag names
-     * @param mixed $user The user performing the action (for created_by_role and created_by_user_id)
+     * @param Post $post The post to synchronize the relation for
+     * @param mixed $user The user performing the action
+     * @param array $values The values to synchronize
+     * @param string $type The type of relation (e.g., 'tag', 'language', 'technology')
      * @return void
      * 
+     * @example | $this->syncRelation($post, $user, $values, 'tag');
      */
-    protected function syncTags(Post $post, array $tagNames, $user): void {
-        $tagIds = [];
+    protected function syncRelation(Post $post, $user, array $values, string $type): void {
+        $relationIds = [];
 
-        foreach ($tagNames as $tagName) {
-            $tagName = trim($tagName);
+        foreach ($values as $value) {
+            $value = trim($value);
 
-            $tag = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$tagName, 'tag'])->first();
+            $relation = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$value, $type])->first();
 
-            if (!$tag) {
-                $tag = new PostAllowedValue();
-                $tag->name = $tagName;
-                $tag->type = 'tag';
-                $tag->created_by_role = $user->role;
-                $tag->created_by_user_id = $user->id;
-                $tag->save();
+            if (!$relation) {
+                $relation = new PostAllowedValue();
+                $relation->name = $value;
+                $relation->type = $type;
+                $relation->created_by_role = $user->role;
+                $relation->created_by_user_id = $user->id;
+                $relation->save();
             }
 
-            $tagIds[] = $tag->id;
+            $relationIds[] = $relation->id;
         }
 
-        // Sync the tags with the post
-        $post->tags()->sync($tagIds);
+        $relationMap = [
+            'tag' => 'tags',
+            'language' => 'languages',
+            'technology' => 'technologies',
+        ];
+
+        // Sync the relation IDs with the post
+        $post->{$relationMap[$type]}()->sync($relationIds);
     }
 
 
@@ -507,7 +512,7 @@ class PostController extends Controller {
             $post->save();
 
             // Synchronize tags with the post
-            $this->syncTags($post, $tagNames, $user);
+            $this->syncRelation($post, $user, $tagNames, 'tag');
 
             // Load the tags relation
             $post->load('tags:id,name');
@@ -907,7 +912,7 @@ class PostController extends Controller {
 
                     // Synchronize tags if present
                     if ($tagNames) {
-                        $this->syncTags($post, $tagNames, $user);
+                        $this->syncRelation($post, $user, $tagNames, 'tag');
                     }
 
                     return $post;
@@ -932,7 +937,7 @@ class PostController extends Controller {
 
                 // Synchronize tags if present
                 if (!empty($tagNames)) {
-                    $this->syncTags($post, $tagNames, $user);
+                    $this->syncRelation($post, $user, $tagNames, 'tag');
                 }
 
                 return $post;
