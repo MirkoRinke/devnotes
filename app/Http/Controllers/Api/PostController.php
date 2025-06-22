@@ -461,8 +461,10 @@ class PostController extends Controller {
             // Get the tags from the validated data and remove them from the main data array
             $tagNames = $validatedData['tags'] ?? [];
             $languageNames = $validatedData['language'] ?? [];
+            $technologyNames = $validatedData['technology'] ?? [];
             unset($validatedData['tags']);
             unset($validatedData['language']);
+            unset($validatedData['technology']);
 
 
             // Create a new post
@@ -475,11 +477,12 @@ class PostController extends Controller {
             // Sync the relations for the post
             $this->syncMultipleRelations($post, $user, [
                 'tag' => $tagNames,
-                'language' => $languageNames
+                'language' => $languageNames,
+                'technology' => $technologyNames,
             ]);
 
             // Load the relations for the post
-            $post->load(['tags:id,name', 'languages:id,name']);
+            $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
             return $this->successResponse($post, 'Post created successfully', 201);
         } catch (ValidationException $e) {
@@ -842,6 +845,7 @@ class PostController extends Controller {
              */
             $tagNames = [];
             $languageNames = [];
+            $technologyNames = [];
 
             $relationChanges = [];
 
@@ -855,6 +859,12 @@ class PostController extends Controller {
                 $relationChanges['language'] = $validatedData['language'];
                 $languageNames = $validatedData['language'];
                 unset($validatedData['language']);
+            }
+
+            if (isset($validatedData['technology'])) {
+                $relationChanges['technology'] = $validatedData['technology'];
+                $technologyNames = $validatedData['technology'];
+                unset($validatedData['technology']);
             }
 
             /** 
@@ -878,20 +888,21 @@ class PostController extends Controller {
                 $post->updated_by_role = $user->role;
                 $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-                DB::transaction(function () use ($post, $tagNames, $languageNames, $user) {
+                DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
                     $post->save();
 
                     // Sync the relations for the post
                     $this->syncMultipleRelations($post, $user, [
                         'tag' => $tagNames,
-                        'language' => $languageNames
+                        'language' => $languageNames,
+                        'technology' => $technologyNames
                     ]);
 
                     return $post;
                 });
 
                 // Load the relations for the post
-                $post->load(['tags:id,name', 'languages:id,name']);
+                $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
@@ -904,13 +915,14 @@ class PostController extends Controller {
             $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-            DB::transaction(function () use ($post, $tagNames, $languageNames, $user) {
+            DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
                 $post->save();
 
                 // Sync the relations for the post
                 $this->syncMultipleRelations($post, $user, [
                     'tag' => $tagNames,
-                    'language' => $languageNames
+                    'language' => $languageNames,
+                    'technology' => $technologyNames
                 ]);
 
                 return $post;
@@ -919,7 +931,7 @@ class PostController extends Controller {
             $post = $this->managePostsFieldVisibility($request, $post);
 
             // Load the relations for the post
-            $post->load(['tags:id,name', 'languages:id,name']);
+            $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
             return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
