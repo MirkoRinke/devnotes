@@ -34,10 +34,8 @@ class Post extends Model {
         'images',
         'videos',
         'resources',
-        'language',
         'category',
         'post_type',
-        'technology',
         'status',
         // 'external_source_previews',  || Generated in controller by ExternalSourceService
 
@@ -85,8 +83,6 @@ class Post extends Model {
     protected $casts = [
         // Basic
         'resources' => 'array',
-        'language' => 'array',
-        'technology' => 'array',
         'images' => 'array',
         'videos' => 'array',
         'external_source_previews' => 'array',
@@ -202,5 +198,22 @@ class Post extends Model {
             'post_id',
             'post_allowed_value_id'
         )->where('type', 'language');
+    }
+
+    /**
+     * Get all technologies for this post
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * 
+     * @example | $post->technologies // Access the related technologies
+     * @example | Post::with('technologies')->get() // Eager loading
+     */
+    public function technologies() {
+        return $this->belongsToMany(
+            PostAllowedValue::class,
+            'post_technologies',
+            'post_id',
+            'post_allowed_value_id'
+        )->where('type', 'technology');
     }
 }
