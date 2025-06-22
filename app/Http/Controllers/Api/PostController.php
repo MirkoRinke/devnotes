@@ -23,6 +23,7 @@ use App\Traits\PostQuerySetup;
 use App\Traits\FavoriteHelper;
 use App\Traits\LikeHelper;
 use App\Traits\FollowerHelper;
+use App\Traits\PostAttributeRelationManager;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
@@ -42,7 +43,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, FavoriteHelper, LikeHelper, FollowerHelper;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, FavoriteHelper, LikeHelper, FollowerHelper, PostAttributeRelationManager;
 
 
     /**
@@ -148,48 +149,6 @@ class PostController extends Controller {
         }
 
         return $existingPost->external_source_previews ?? [];
-    }
-
-
-    /**
-     * Synchronize a relation for a post
-     * 
-     * @param Post $post The post to synchronize the relation for
-     * @param mixed $user The user performing the action
-     * @param array $values The values to synchronize
-     * @param string $type The type of relation (e.g., 'tag', 'language', 'technology')
-     * @return void
-     * 
-     * @example | $this->syncRelation($post, $user, $values, 'tag');
-     */
-    protected function syncRelation(Post $post, $user, array $values, string $type): void {
-        $relationIds = [];
-
-        foreach ($values as $value) {
-            $value = trim($value);
-
-            $relation = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$value, $type])->first();
-
-            if (!$relation) {
-                $relation = new PostAllowedValue();
-                $relation->name = $value;
-                $relation->type = $type;
-                $relation->created_by_role = $user->role;
-                $relation->created_by_user_id = $user->id;
-                $relation->save();
-            }
-
-            $relationIds[] = $relation->id;
-        }
-
-        $relationMap = [
-            'tag' => 'tags',
-            'language' => 'languages',
-            'technology' => 'technologies',
-        ];
-
-        // Sync the relation IDs with the post
-        $post->{$relationMap[$type]}()->sync($relationIds);
     }
 
 
@@ -501,7 +460,9 @@ class PostController extends Controller {
 
             // Get the tags from the validated data and remove them from the main data array
             $tagNames = $validatedData['tags'] ?? [];
+            $languageNames = $validatedData['language'] ?? [];
             unset($validatedData['tags']);
+            unset($validatedData['language']);
 
 
             // Create a new post
@@ -511,11 +472,14 @@ class PostController extends Controller {
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
             $post->save();
 
-            // Synchronize tags with the post
-            $this->syncRelation($post, $user, $tagNames, 'tag');
+            // Sync the relations for the post
+            $this->syncMultipleRelations($post, $user, [
+                'tag' => $tagNames,
+                'language' => $languageNames
+            ]);
 
-            // Load the tags relation
-            $post->load('tags:id,name');
+            // Load the relations for the post
+            $post->load(['tags:id,name', 'languages:id,name']);
 
             return $this->successResponse($post, 'Post created successfully', 201);
         } catch (ValidationException $e) {
@@ -877,6 +841,7 @@ class PostController extends Controller {
              * This is necessary because tags are handled separately.
              */
             $tagNames = [];
+            $languageNames = [];
 
             $relationChanges = [];
 
@@ -884,6 +849,12 @@ class PostController extends Controller {
                 $relationChanges['tags'] = $validatedData['tags'];
                 $tagNames = $validatedData['tags'];
                 unset($validatedData['tags']);
+            }
+
+            if (isset($validatedData['language'])) {
+                $relationChanges['language'] = $validatedData['language'];
+                $languageNames = $validatedData['language'];
+                unset($validatedData['language']);
             }
 
             /** 
@@ -907,19 +878,20 @@ class PostController extends Controller {
                 $post->updated_by_role = $user->role;
                 $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-                DB::transaction(function () use ($post, $tagNames, $user) {
+                DB::transaction(function () use ($post, $tagNames, $languageNames, $user) {
                     $post->save();
 
-                    // Synchronize tags if present
-                    if ($tagNames) {
-                        $this->syncRelation($post, $user, $tagNames, 'tag');
-                    }
+                    // Sync the relations for the post
+                    $this->syncMultipleRelations($post, $user, [
+                        'tag' => $tagNames,
+                        'language' => $languageNames
+                    ]);
 
                     return $post;
                 });
 
-                // Load the tags relation
-                $post->load('tags:id,name');
+                // Load the relations for the post
+                $post->load(['tags:id,name', 'languages:id,name']);
 
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
@@ -932,21 +904,22 @@ class PostController extends Controller {
             $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-            DB::transaction(function () use ($post, $tagNames, $user) {
+            DB::transaction(function () use ($post, $tagNames, $languageNames, $user) {
                 $post->save();
 
-                // Synchronize tags if present
-                if (!empty($tagNames)) {
-                    $this->syncRelation($post, $user, $tagNames, 'tag');
-                }
+                // Sync the relations for the post
+                $this->syncMultipleRelations($post, $user, [
+                    'tag' => $tagNames,
+                    'language' => $languageNames
+                ]);
 
                 return $post;
             });
 
             $post = $this->managePostsFieldVisibility($request, $post);
 
-            // Load the tags relation
-            $post->load('tags:id,name');
+            // Load the relations for the post
+            $post->load(['tags:id,name', 'languages:id,name']);
 
             return $this->successResponse($post, 'Post updated successfully', 200);
         } catch (ModelNotFoundException $e) {
