@@ -186,4 +186,21 @@ class Post extends Model {
             'post_allowed_value_id'
         )->where('type', 'tag');
     }
+
+    /**
+     * Get all languages for this post
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * 
+     * @example | $post->languages // Access the related languages
+     * @example | Post::with('languages')->get() // Eager loading
+     */
+    public function languages() {
+        return $this->belongsToMany(
+            PostAllowedValue::class,
+            'post_languages',
+            'post_id',
+            'post_allowed_value_id'
+        )->where('type', 'language');
+    }
 }
