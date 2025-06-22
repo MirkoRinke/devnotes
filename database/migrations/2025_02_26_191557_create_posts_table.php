@@ -22,7 +22,6 @@ return new class extends Migration {
             $table->json('videos')->nullable();
             $table->json('resources')->nullable();
             $table->json('external_source_previews')->nullable();
-            $table->json('language'); // programming language used (e.g., HTML, CSS, JavaScript, etc.)
             $table->string('category'); // category of the post (e.g., Frontend, Backend, etc.)
             $table->string('post_type')->default('Snippet'); // Snippet, Tutorial, Feedback, Showcase, Question, etc.
             $table->json('technology')->nullable();; // technology used (e.g., Angular, React, etc.)
