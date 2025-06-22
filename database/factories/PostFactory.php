@@ -79,16 +79,6 @@ class PostFactory extends Factory {
 
                 return $previews;
             },
-            'language' => fake()->randomElement([
-                'HTML',
-                'CSS',
-                'SCSS',
-                'JavaScript',
-                'TypeScript',
-                'PHP',
-                'Python',
-                'Shell'
-            ]),
             'category' => fake()->randomElement([
                 'Frontend',
                 'Backend',
@@ -151,26 +141,50 @@ class PostFactory extends Factory {
                 ['Game Development', 'Unity', 'C#'],
             ]);
 
-            $tagIds = [];
+            $languageNames = fake()->randomElement([
+                ['PHP', 'JavaScript'],
+                ['Python', 'SQL'],
+                ['Java', 'C#', 'TypeScript'],
+                ['Go', 'Rust'],
+                ['HTML', 'CSS', 'JavaScript'],
+            ]);
 
-            foreach ($tagNames as $tagName) {
-                $tagName = trim($tagName);
+            // Sync tags
+            $this->syncRelation($post, $tagNames, 'tag');
 
-                $tag = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$tagName, 'tag'])->first();
+            // Sync languages
+            $this->syncRelation($post, $languageNames, 'language');
+        });
+    }
 
-                if (!$tag) {
-                    $tag = PostAllowedValue::create([
-                        'name' => $tagName,
-                        'type' => 'tag',
-                        'created_by_role' => 'system',
-                        'created_by_user_id' => 2,
-                    ]);
-                }
 
-                $tagIds[] = $tag->id;
+    protected function syncRelation($post, array $values, string $type): void {
+        $relationIds = [];
+
+        foreach ($values as $value) {
+            $value = trim($value);
+
+            $relation = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$value, $type])->first();
+
+            if (!$relation) {
+                $relation = new PostAllowedValue();
+                $relation->name = $value;
+                $relation->type = $type;
+                $relation->created_by_role = 'system';
+                $relation->created_by_user_id = 2; // Assuming 2 is the ID of the system user
+                $relation->save();
             }
 
-            $post->tags()->attach($tagIds);
-        });
+            $relationIds[] = $relation->id;
+        }
+
+        $relationMap = [
+            'tag' => 'tags',
+            'language' => 'languages',
+            'technology' => 'technologies',
+        ];
+
+        // Sync the relation IDs with the post
+        $post->{$relationMap[$type]}()->sync($relationIds);
     }
 }
