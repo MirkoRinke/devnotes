@@ -46,6 +46,8 @@ trait PostQuerySetup {
 
         $query = $this->loadTagsRelation($request, $query);
 
+        $query = $this->loadLanguagesRelation($request, $query);
+
         $query = $this->$methods($request, $query, 'post');
         if ($query instanceof JsonResponse) {
             return $query;
@@ -110,6 +112,52 @@ trait PostQuerySetup {
 
             $query = $this->loadRelations($request, $query, [
                 ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $defaultColumns],
+            ]);
+
+            return $query;
+        }
+
+        return $query;
+    }
+
+
+    /**
+     * Load the languages relation
+     * 
+     * @param Request $request
+     * @param mixed $query Builder|LengthAwarePaginator|Collection
+     * @return mixed Builder|LengthAwarePaginator|Collection
+     * 
+     * @example | $this->loadLanguagesRelation($request, $query)
+     */
+    private function loadLanguagesRelation(Request $request, $query): mixed {
+
+        /**
+         * If the request does not have the 'select' parameter or if 'languages' is selected,
+         * we will load the languages relation by default.
+         */
+        if (!$request->has('select') || $this->isSelected($request, 'languages')) {
+
+            /**
+             * If languages have been set in the request, we remove it from the select fields
+             */
+            $this->removeFromSelect($request, ['languages']);
+
+            /**
+             * Load the languages relation by Default
+             * 
+             * Explicit table.column AS alias format is used for many-to-many relationships
+             * This is to avoid ambiguity in the result set, especially when joining multiple tables.
+             */
+            $tableName = $query->getModel()->languages()->getRelated()->getTable(); // Get the table name of the languages relation
+
+            $defaultColumns = [
+                "$tableName.id as id",
+                "$tableName.name as name"
+            ];
+
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'languages', 'foreignKey' => 'id', 'columns' => $defaultColumns],
             ]);
 
             return $query;
