@@ -6,10 +6,18 @@ use App\Models\PostAllowedValue;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+use App\Traits\PostAttributeRelationManager;
+
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Post>
  */
 class PostFactory extends Factory {
+
+    /**
+     *  The traits used in the Factory
+     */
+    use PostAttributeRelationManager;
+
     /**
      * Define the model's default state.
      *
@@ -96,26 +104,6 @@ class PostFactory extends Factory {
                 'Showcase',
                 'Question'
             ]),
-            'technology' => fake()->randomElement([
-                'Angular',
-                'Laravel',
-                'Django',
-                'Spring',
-                'Express',
-                'React',
-                'Vue',
-                'Svelte',
-                'jQuery',
-                'Pandas',
-                'Bootstrap',
-                'TailwindCSS',
-                'Redux',
-                'Next.js',
-                'Vite',
-                'Webpack',
-                'Flask',
-                'Node.js',
-            ]),
             'status' => fake()->randomElement([
                 'Draft',
                 'Private',
@@ -149,42 +137,25 @@ class PostFactory extends Factory {
                 ['HTML', 'CSS', 'JavaScript'],
             ]);
 
-            // Sync tags
-            $this->syncRelation($post, $tagNames, 'tag');
+            $technologyNames = fake()->randomElement([
+                ['Angular', 'React', 'Vue'],
+                ['Laravel', 'Django', 'Flask'],
+                ['Spring', 'Express', 'Node.js'],
+                ['Pandas', 'NumPy', 'SciPy'],
+                ['Bootstrap', 'TailwindCSS', 'Material UI'],
+            ]);
 
-            // Sync languages
-            $this->syncRelation($post, $languageNames, 'language');
+            // Create a placeholder user for system relations
+            $systemUser = (object)[
+                'role' => 'system',
+                'id' => 2
+            ];
+
+            $this->syncMultipleRelations($post, $systemUser, [
+                'tag' => $tagNames,
+                'language' => $languageNames,
+                'technology' => $technologyNames
+            ]);
         });
-    }
-
-
-    protected function syncRelation($post, array $values, string $type): void {
-        $relationIds = [];
-
-        foreach ($values as $value) {
-            $value = trim($value);
-
-            $relation = PostAllowedValue::whereRaw('LOWER(TRIM(name)) = LOWER(?) AND type = ?', [$value, $type])->first();
-
-            if (!$relation) {
-                $relation = new PostAllowedValue();
-                $relation->name = $value;
-                $relation->type = $type;
-                $relation->created_by_role = 'system';
-                $relation->created_by_user_id = 2; // Assuming 2 is the ID of the system user
-                $relation->save();
-            }
-
-            $relationIds[] = $relation->id;
-        }
-
-        $relationMap = [
-            'tag' => 'tags',
-            'language' => 'languages',
-            'technology' => 'technologies',
-        ];
-
-        // Sync the relation IDs with the post
-        $post->{$relationMap[$type]}()->sync($relationIds);
     }
 }
