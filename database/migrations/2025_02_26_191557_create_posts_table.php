@@ -24,7 +24,6 @@ return new class extends Migration {
             $table->json('external_source_previews')->nullable();
             $table->string('category'); // category of the post (e.g., Frontend, Backend, etc.)
             $table->string('post_type')->default('Snippet'); // Snippet, Tutorial, Feedback, Showcase, Question, etc.
-            $table->json('technology')->nullable();; // technology used (e.g., Angular, React, etc.)
             $table->string('status')->default('Draft'); // status of the post (e.g., Draft, Private, Published, Archived)
 
             // Counts
