@@ -88,6 +88,10 @@ class UserStatsController extends Controller {
      */
     public function getUserPostsInteractions(Request $request, string $id) {
         try {
+            /**
+             * Check if the user has any posts only for ModelNotFoundException
+             * This will throw an exception if no posts are found
+             */
             $hasPosts = Post::where('user_id', $id)->firstOrFail();
 
             $validatedData = $request->validate(
