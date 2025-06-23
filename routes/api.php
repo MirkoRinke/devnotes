@@ -165,8 +165,10 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for reports
      */
+    Route::post('/reports', [UserReportController::class, 'store']);
+
     Route::middleware(['auth:sanctum', 'device-fingerprint', 'email-verified'])->group(function () {
-        Route::apiResource('reports', UserReportController::class)->only(['index', 'store']);
+        Route::get('/reports', [UserReportController::class, 'index']);
         Route::delete('/reports', [UserReportController::class, 'destroy']);
     });
 
