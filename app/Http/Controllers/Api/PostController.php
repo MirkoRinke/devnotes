@@ -293,8 +293,6 @@ class PostController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
-            $this->removeFromSelect($request, ['is_favorited', 'is_liked']);
-
             $query = $this->setupPostQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
@@ -609,8 +607,6 @@ class PostController extends Controller {
             $user = $this->getAuthenticatedUser($request);
 
             $originalSelectFields = $this->getSelectFields($request);
-
-            $this->removeFromSelect($request, ['is_favorited', 'is_liked']);
 
             $query = $this->setupPostQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse) {
