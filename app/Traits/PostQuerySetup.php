@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Traits\AccessFilter;
 use App\Traits\ApiSelectable;
+use App\Traits\RelationLoader;
 
 /**
  * Trait for setting up post queries with access filters and relations.
@@ -18,7 +19,7 @@ trait PostQuerySetup {
     /**
      *  The traits used in the Trait
      */
-    use AccessFilter, ApiSelectable;
+    use AccessFilter, ApiSelectable, RelationLoader;
 
     /**
      * Setup the post query
@@ -42,7 +43,7 @@ trait PostQuerySetup {
 
         $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields], ['is_favorited', 'is_liked']);
 
-        $query = $this->loadUserRelation($request, $query);
+        $query = $this->loadUserRelation($request, $query, 'user_id');
 
         $query = $this->loadTagsRelation($request, $query);
 
@@ -58,24 +59,6 @@ trait PostQuerySetup {
         return $query;
     }
 
-
-    /**
-     * Load the user relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
-     * 
-     * @example | $this->loadUserRelation($request, $query)
-     */
-    private function loadUserRelation(Request $request, $query): mixed {
-        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
-        }
-        return $query;
-    }
 
     /**
      * Load the tags relation
