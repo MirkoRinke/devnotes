@@ -117,7 +117,7 @@ class CommentController extends Controller {
 
         $relationKeyFields = $this->getRelationKeyFields($request, ['children' => 'id', 'parent' => 'parent_id',  'user' => 'user_id']);
 
-        $this->modifyRequestSelect($request, [...['id', 'parent_id', 'reports_count'], ...$relationKeyFields]);
+        $this->modifyRequestSelect($request, [...['id', 'parent_id', 'reports_count'], ...$relationKeyFields], ['is_liked']);
 
         // These relationships are loaded unconditionally as they're needed for internal logic
         $this->loadRelations($request, $query, [
@@ -290,8 +290,6 @@ class CommentController extends Controller {
             $user = $this->getAuthenticatedUser($request);
 
             $originalSelectFields = $this->getSelectFields($request);
-
-            $this->removeFromSelect($request, ['is_liked']);
 
             $query = $this->setupCommentQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
@@ -628,8 +626,6 @@ class CommentController extends Controller {
             $user = $this->getAuthenticatedUser($request);
 
             $originalSelectFields = $this->getSelectFields($request);
-
-            $this->removeFromSelect($request, ['is_liked']);
 
             $query = $this->setupCommentQuery($request, $query, 'buildQuerySelect');
             if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
