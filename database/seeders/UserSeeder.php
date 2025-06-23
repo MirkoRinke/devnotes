@@ -37,6 +37,7 @@ class UserSeeder extends Seeder {
         return DB::transaction(function () use ($data) {
             $user = new User();
 
+            $user->id = $data['id'] ?? null;
             $user->name = $data['name'];
             $user->email = $data['email'];
             $user->password = $data['password'];
@@ -67,6 +68,7 @@ class UserSeeder extends Seeder {
 
         // Create an admin user
         $this->createUserWithProfile([
+            'id' => 1,
             'name' => 'Admin',
             'display_name' => 'Admin',
             'email' => 'max@example1.com',
@@ -79,6 +81,7 @@ class UserSeeder extends Seeder {
 
         // Create a system user for deleted accounts
         $this->createUserWithProfile([
+            'id' => 2,
             'name' => 'System',
             'display_name' => 'System',
             'email' => 'system@system.local',
@@ -91,6 +94,7 @@ class UserSeeder extends Seeder {
 
         // Create a system user for deleted accounts
         $this->createUserWithProfile([
+            'id' => 3,
             'name' => 'System Deleted User',
             'display_name' => 'Deleted User',
             'email' => 'deleted@system.local',
@@ -101,8 +105,21 @@ class UserSeeder extends Seeder {
 
         $this->command->info('System deleted user created successfully!');
 
+        $this->createUserWithProfile([
+            'id' => 4,
+            'name' => 'Guest Report',
+            'display_name' => 'Guest Report',
+            'email' => 'guestreport@system.local',
+            'password' => Hash::make(Str::random(32)),
+            'role' => 'system',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->command->info('Guest report user created successfully!');
+
         // Create a moderator user
         $this->createUserWithProfile([
+            'id' => 5,
             'name' => 'Moderator',
             'display_name' => 'Moderator',
             'email' => 'max@example4.com',
@@ -113,22 +130,11 @@ class UserSeeder extends Seeder {
 
         $this->command->info('Moderator user created successfully!');
 
-        // Create a guest user
-        $this->createUserWithProfile([
-            'name' => 'Guest',
-            'display_name' => 'Guest',
-            'email' => 'guest@system.local',
-            'password' => Hash::make('sicheresPasswort123'),
-            'role' => 'user',
-            'email_verified_at' => now(),
-            'account_purpose' => 'guest',
-        ]);
-
-        $this->command->info('Guest user created successfully!');
 
         // Create multiple regular users with incrementing names/emails
-        for ($i = 6; $i <= 10; $i++) {
+        for ($i = 20; $i <= 30; $i++) {
             $this->createUserWithProfile([
+                'id' => $i,
                 'name' => "Max Mustermann{$i}",
                 'display_name' => "Maxi{$i}",
                 'email' => "max@example{$i}.com",
@@ -140,6 +146,19 @@ class UserSeeder extends Seeder {
 
         $this->command->info('Multiple custom regular users created successfully!');
 
+        // Create a guest user
+        $this->createUserWithProfile([
+            'id' => 101,
+            'name' => 'Guest',
+            'display_name' => 'Guest',
+            'email' => 'guest@system.local',
+            'password' => Hash::make('sicheresPasswort123'),
+            'role' => 'user',
+            'email_verified_at' => now(),
+            'account_purpose' => 'guest',
+        ]);
+
+        $this->command->info('Guest user created successfully!');
 
         // Create a specified number of users
         for ($i = 0; $i < $multiplier; $i++) {
