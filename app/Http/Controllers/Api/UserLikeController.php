@@ -19,6 +19,8 @@ use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
 use App\Traits\AccessFilter;
 use App\Traits\LikeHelper;
+use App\Traits\PostQuerySetup;
+use App\Traits\CommentQuerySetup;
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -31,7 +33,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, LikeHelper;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, LikeHelper, PostQuerySetup, CommentQuerySetup;
 
     /**
      * The validation rule for the like entity
@@ -74,31 +76,12 @@ class UserLikeController extends Controller {
     protected function setupLikeQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'likeable_type', 'likeable_id', 'type']);
 
-        $query = $this->loadUserRelation($request, $query);
+        $query = $this->loadUserRelation($request, $query, 'user_id');
 
         $query = $this->buildQuery($request, $query, 'like');
 
         $query = $this->loadLikeableRelation($request, $query);
 
-        return $query;
-    }
-
-
-    /**
-     * Load the user relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
-     * 
-     * @example | $this->loadUserRelation($request, $query)
-     */
-    private function loadUserRelation(Request $request, $query): mixed {
-        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
-        }
         return $query;
     }
 
@@ -126,7 +109,6 @@ class UserLikeController extends Controller {
         }
         return $query;
     }
-
 
 
     /**
@@ -831,12 +813,9 @@ class UserLikeController extends Controller {
 
             $query = Post::whereIn('id', $likedPostIds);
 
-            $query = $this->loadUserRelation($request, $query);
+            $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->applyPostAccessFilters($request, $query);
-
-            $query = $this->buildQuery($request, $query, 'post');
-
+            $query = $this->setupPostQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -848,6 +827,8 @@ class UserLikeController extends Controller {
             $query = $this->managePostsFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Liked posts retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
@@ -1014,10 +995,9 @@ class UserLikeController extends Controller {
 
             $query = Comment::whereIn('id', $likedCommentIds);
 
-            $query = $this->loadUserRelation($request, $query);
+            $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->buildQuery($request, $query, 'comment');
-
+            $query = $this->setupCommentQuery($request, $query, 'buildQuery');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
@@ -1029,6 +1009,8 @@ class UserLikeController extends Controller {
             $query = $this->manageCommentsFieldVisibility($request, $query);
 
             $query = $this->checkForIncludedRelations($request, $query);
+
+            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
             return $this->successResponse($query, 'Liked comments retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
