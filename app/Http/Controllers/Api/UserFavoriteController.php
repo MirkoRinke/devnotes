@@ -190,17 +190,10 @@ class UserFavoriteController extends Controller {
      * }
      * 
      * @response status=200 scenario="Post already in favorites" {
-     *   "status": "success",
-     *   "message": "Post already in favorites",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": {
-     *     "id": 8,
-     *     "user_id": 2,
-     *     "post_id": 12,
-     *     "created_at": "2025-04-15T09:22:41.000000Z",
-     *     "updated_at": "2025-04-15T09:22:41.000000Z"
-     *   }
+     *  "status": "error",
+     *  "message": "Post already in favorites",
+     *  "code": 200,
+     *  "errors": "POST_ALREADY_IN_FAVORITES",
      * }
      *
      * @response status=404 scenario="Post not found" {
@@ -243,9 +236,7 @@ class UserFavoriteController extends Controller {
                 });
                 return $this->successResponse($favorite, 'Post successfully added to favorites', 201);
             } else {
-                $favorite = UserFavorite::where('user_id', $user->id)->where('post_id', $post->id)->first();
-
-                return $this->successResponse($favorite, 'Post already in favorites', 200);
+                return $this->errorResponse('Post already in favorites', 'POST_ALREADY_IN_FAVORITES', 200);
             }
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
