@@ -88,7 +88,7 @@ class CriticalTermController extends Controller {
 
         $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
 
-        $this->loadUserRelation($request, $query);
+        $this->loadUserRelation($request, $query, 'created_by_user_id');
 
         $query = $this->$methods($request, $query, 'critical_terms');
         if ($query instanceof JsonResponse) {
@@ -98,24 +98,6 @@ class CriticalTermController extends Controller {
         return $query;
     }
 
-
-    /**
-     * Load the user relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
-     * 
-     * @example | $this->loadUserRelation($request, $query)
-     */
-    private function loadUserRelation(Request $request, $query): mixed {
-        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'created_by_user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
-        }
-        return $query;
-    }
 
     /**
      * Get All Critical Terms
