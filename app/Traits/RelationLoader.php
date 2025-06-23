@@ -22,12 +22,31 @@ trait RelationLoader {
      * @param mixed $query Builder|LengthAwarePaginator|Collection
      * @return mixed Builder|LengthAwarePaginator|Collection
      * 
-     * @example | $this->loadUserRelation($request, $query)
+     * @example | $this->loadUserRelation($request, $query, 'user_id');
      */
     private function loadUserRelation(Request $request, $query, string $foreignKey): mixed {
         if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
             $query = $this->loadRelations($request, $query, [
                 ['relation' => 'user', 'foreignKey' => $foreignKey, 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ]);
+        }
+        return $query;
+    }
+
+
+    /**
+     * Load the user relation
+     * 
+     * @param Request $request
+     * @param mixed $query 
+     * @return mixed
+     * 
+     * @example | $query = $this->loadProfileRelation($request, $query, 'id');
+     */
+    private function loadProfileRelation(Request $request, $query, string $foreignKey): mixed {
+        if ($request->has('include') && in_array('profile', explode(',', $request->input('include')))) {
+            $query = $this->loadRelations($request, $query, [
+                ['relation' => 'profile', 'foreignKey' =>  $foreignKey, 'columns' => $this->getRelationFieldsFromRequest($request, 'profile', [], ['*'])],
             ]);
         }
         return $query;
