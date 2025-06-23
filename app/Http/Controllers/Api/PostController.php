@@ -17,7 +17,6 @@ use App\Rules\ValidPostValue;
 use App\Traits\ApiResponses;
 use App\Traits\ApiInclude;
 use App\Traits\QueryBuilder;
-use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\PostQuerySetup;
 use App\Traits\FavoriteHelper;
@@ -43,7 +42,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, FieldManager, AuthorizesRequests, PostQuerySetup, FavoriteHelper, LikeHelper, FollowerHelper, PostAttributeRelationManager;
+    use ApiResponses, QueryBuilder, ApiInclude, FieldManager, AuthorizesRequests, PostQuerySetup, FavoriteHelper, LikeHelper, FollowerHelper, PostAttributeRelationManager;
 
 
     /**
