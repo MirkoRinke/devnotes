@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Models\UserReport;
 use App\Models\Post;
 use App\Models\Comment;
+use App\Models\User;
 use App\Models\UserProfile;
 
 use App\Traits\ApiResponses;
@@ -383,14 +384,15 @@ class UserReportController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      * 
-     * Note: Only authenticated users can create reports.
      * Admin/moderator reports have higher impact values.
      *
-     * @authenticated
      */
     public function store(Request $request) {
         try {
-            $user = $request->user();
+            $fallbackUserId = 4; // Fallback user ID ( Guest Report )
+
+            $user = $this->getAuthenticatedUser($request) ?? User::query()->where('id', $fallbackUserId)->get()->first();
+
             $validatedData = $request->validate(
                 $this->getValidationRules(),
                 $this->getValidationMessages('UserReport')
@@ -413,12 +415,14 @@ class UserReportController extends Controller {
                 return $validationResult;
             }
 
-            $report = DB::transaction(function () use ($request, $user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData) {
+            $report = DB::transaction(function () use ($user, $reportableId, $reportableType, $simpleType, $reportable, $validatedData, $fallbackUserId) {
                 $reason = $validatedData['reason'] ?? null;
                 $value = 1;
 
                 if ($user->role === 'admin' || $user->role === 'moderator') {
                     $value = 5;
+                } else if ($user->id === $fallbackUserId) {
+                    $value = 1; // Guest Report value
                 } else if ($reason) {
                     $value = $this->checkCriticalTerms($reason);
                 }
