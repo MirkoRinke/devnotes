@@ -127,7 +127,7 @@ class UserReportController extends Controller {
     protected function setupReportQuery(Request $request, $query) {
         $this->modifyRequestSelect($request, ['id', 'user_id', 'reportable_type', 'reportable_id', 'type']);
 
-        $query = $this->loadUserRelation($request, $query);
+        $query = $this->loadUserRelation($request, $query, 'user_id');
 
         $query = $this->buildQuery($request, $query, 'user_reports');
 
@@ -135,25 +135,6 @@ class UserReportController extends Controller {
 
         return $query;
     }
-
-    /**
-     * Load the user relation
-     * 
-     * @param Request $request
-     * @param mixed $query Builder|LengthAwarePaginator|Collection
-     * @return mixed Builder|LengthAwarePaginator|Collection
-     * 
-     * @example | $this->loadUserRelation($request, $query);
-     */
-    private function loadUserRelation(Request $request, $query): mixed {
-        if ($request->has('include') && in_array('user', explode(',', $request->input('include')))) {
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ]);
-        }
-        return $query;
-    }
-
 
     /**
      * Load the reportable polymorphic relation
