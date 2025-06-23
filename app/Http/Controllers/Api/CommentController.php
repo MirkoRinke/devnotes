@@ -17,6 +17,7 @@ use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\LikeHelper;
 use App\Traits\FollowerHelper;
+use App\Traits\CommentQuerySetup;
 
 use App\Services\ModerationService;
 use App\Services\CommentRelationService;
@@ -42,7 +43,7 @@ class CommentController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper, FollowerHelper;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper, FollowerHelper, CommentQuerySetup;
 
     /**
      *  The Service used in the controller
@@ -98,51 +99,6 @@ class CommentController extends Controller {
      * Example: If the maxCommentDepth is 2, then a comment can be a reply to another comment, but a reply to a reply is not allowed
      */
     private $maxCommentDepth = 2;
-
-
-    /**
-     * Setup the comment query
-     * This method is used to set up the query for the comments
-     * It applies sorting, filtering, selecting, and pagination
-     * It also loads the relations for the comments
-     * 
-     * @param Request $request
-     * @param $query The query builder instance (used for both collections and single models)
-     * @param $methods The query builder method to use ('buildQuery' or 'buildQuerySelect')
-     * @return mixed The modified query builder instance
-     * 
-     * @example | $query = $this->setupCommentQuery($request, $query, 'buildQuery');
-     */
-    protected function setupCommentQuery(Request $request, $query, $methods): mixed {
-
-        $relationKeyFields = $this->getRelationKeyFields($request, ['children' => 'id', 'parent' => 'parent_id',  'user' => 'user_id']);
-
-        $this->modifyRequestSelect($request, [...['id', 'parent_id', 'reports_count'], ...$relationKeyFields], ['is_liked']);
-
-        // These relationships are loaded unconditionally as they're needed for internal logic
-        $this->loadRelations($request, $query, [
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-
-            ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-
-            ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-        ]);
-
-
-        /**
-         * Use the query builder methods to build the query
-         */
-        $query = $this->$methods($request, $query, 'comment');
-        if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-            return $query;
-        }
-        return $query;
-    }
 
 
     /**
