@@ -86,29 +86,10 @@ class UserController extends Controller {
     protected function setupUserQuery(Request $request, $query, $methods) {
         $this->modifyRequestSelect($request, ['id']);
 
-        $query = $this->loadProfileRelation($request, $query);
+        $query = $this->loadProfileRelation($request, $query, 'id');
 
         $query = $this->$methods($request, $query, 'user');
 
-        return $query;
-    }
-
-
-    /**
-     * Load the user relation
-     * 
-     * @param Request $request
-     * @param mixed $query 
-     * @return mixed
-     * 
-     * @example | $query = $this->loadProfileRelation($request, $query);
-     */
-    private function loadProfileRelation(Request $request, $query): mixed {
-        if ($request->has('include') && in_array('profile', explode(',', $request->input('include')))) {
-            $query = $this->loadRelations($request, $query, [
-                ['relation' => 'profile', 'foreignKey' => 'id', 'columns' => $this->getRelationFieldsFromRequest($request, 'profile', [], ['*'])],
-            ]);
-        }
         return $query;
     }
 
