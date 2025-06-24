@@ -15,6 +15,7 @@ use App\Traits\ApiSelectable;
 use App\Traits\ApiPagination;
 use App\Traits\AuthHelper;
 use App\Traits\PolicyChecks;
+use App\Traits\ApiLimit;
 
 /**
  * This QueryBuilder Trait provides methods to build queries for different models
@@ -25,7 +26,7 @@ trait QueryBuilder {
     /**
      *  The traits used in the Trait
      */
-    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, AuthHelper, PolicyChecks;
+    use  ApiResponses, ApiSorting, ApiFiltering, ApiSelectable, ApiPagination, ApiLimit, AuthHelper, PolicyChecks;
 
 
     /**
@@ -64,6 +65,7 @@ trait QueryBuilder {
                     // Moderation info
                     ...($hasModeratorPrivileges ? ['moderation_info'] : []),
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'user_tokens' => [
@@ -85,6 +87,7 @@ trait QueryBuilder {
                     // Basic
                     ...['name', 'last_used_at']
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'user_profile' => [
@@ -116,6 +119,7 @@ trait QueryBuilder {
                     // Counts
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'post' => [
@@ -162,6 +166,7 @@ trait QueryBuilder {
                     // Relationship Status Flags
                     ...['is_favorited', 'is_liked'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'comment' => [
@@ -204,6 +209,7 @@ trait QueryBuilder {
                     // Relationship Status Flags
                     ...['is_liked'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'user_favorites' => [
@@ -225,6 +231,7 @@ trait QueryBuilder {
                     // Basic
                     ...['user_id', 'post_id'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'like' => [
@@ -246,6 +253,7 @@ trait QueryBuilder {
                     // Basic
                     ...['user_id', 'likeable_id', 'likeable_type', 'type'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'user_reports' => [
@@ -267,6 +275,7 @@ trait QueryBuilder {
                     // Basic
                     ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'user_followers' => [
@@ -288,6 +297,7 @@ trait QueryBuilder {
                     // Basic
                     ...['user_id', 'follower_id'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'forbidden_names' => [
@@ -309,6 +319,7 @@ trait QueryBuilder {
                     // Basic
                     ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'post_allowed_values' => [
@@ -330,6 +341,7 @@ trait QueryBuilder {
                     // Basic
                     ...['name', 'type', 'created_by_role', 'created_by_user_id']
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'critical_terms' => [
@@ -351,6 +363,7 @@ trait QueryBuilder {
                     // Basic
                     ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ],
             'apiKey' => [
@@ -372,6 +385,7 @@ trait QueryBuilder {
                     // Basic
                     ...['name', 'active', 'last_used_at']
                 ],
+                'setLimit' => 10,
                 'getPerPage' => 10
             ]
         ];
