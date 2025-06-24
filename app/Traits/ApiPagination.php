@@ -32,6 +32,11 @@ trait ApiPagination {
      */
     public function getPerPage(Request $request, Builder $query, int $perPage = 10): JsonResponse|Collection|LengthAwarePaginator {
 
+        // If the request has a 'setLimit' parameter, return the query results without pagination
+        if ($request->get('setLimit')) {
+            return $query->get();
+        }
+
         // If query logging is enabled, return the query results without pagination
         if (env('QUERY_LOGGING_ENABLED', false)) {
             return $query->get();
