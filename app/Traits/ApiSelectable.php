@@ -45,9 +45,19 @@ trait ApiSelectable {
              * This is done by checking if the select parameter contains any 'count:' prefix.
              * If it does, it will return a JsonResponse with the count of those columns.
              */
-            $isCountSelect = $this->getCountSelect($query, $select);
+            $isCountSelect = $this->countSelect($query, $select);
             if ($isCountSelect) {
                 return $isCountSelect;
+            }
+
+            /**
+             * Check if the select parameter is a sum select
+             * This is done by checking if the select parameter contains any 'sum:' prefix.
+             * If it does, it will return a JsonResponse with the sum of those columns.
+             */
+            $isSumSelect = $this->sumSelect($query, $select);
+            if ($isSumSelect) {
+                return $isSumSelect;
             }
 
             // Check if the select parameter is an array
@@ -72,8 +82,6 @@ trait ApiSelectable {
         return $query;
     }
 
-
-
     /**
      * Get the count select from the query
      * This method checks if the select parameter contains any count: columns
@@ -82,8 +90,10 @@ trait ApiSelectable {
      * @param Builder $query The query builder instance
      * @param array $select The select parameters from the request
      * @return JsonResponse|null Returns a JsonResponse with count results or null if no count columns are found
+     * 
+     * @example | $this->countSelect($query, $select);
      */
-    protected function getCountSelect($query, $select): JsonResponse|null {
+    protected function countSelect($query, $select): JsonResponse|null {
         $countSelect = [];
         foreach ($select as $value) {
             if (str_starts_with($value, 'count:')) {
@@ -103,6 +113,35 @@ trait ApiSelectable {
         return null;
     }
 
+    /**
+     * Get the sum select from the query
+     * This method checks if the select parameter contains any sum: columns
+     * If it does, it returns a JsonResponse with the sum of those columns
+     *
+     * @param Builder $query The query builder instance
+     * @param array $select The select parameters from the request
+     * @return JsonResponse|null Returns a JsonResponse with sum results or null if no sum columns are found
+     * 
+     * @example | $this->sumSelect($query, $select);
+     */
+    protected function sumSelect($query, $select): JsonResponse|null {
+        $sumSelect = [];
+        foreach ($select as $value) {
+            if (str_starts_with($value, 'sum:')) {
+                $sumSelect[] = str_replace('sum:', '', $value);
+            }
+        }
+
+        if (!empty($sumSelect)) {
+            $result = [];
+            foreach ($sumSelect as $column) {
+                $result[$column] = $query->sum($column);
+            }
+            return $this->successResponse($result, 'Sum retrieved successfully');
+        }
+
+        return null;
+    }
 
     /**
      * Modify the request select parameter
