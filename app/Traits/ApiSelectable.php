@@ -33,30 +33,74 @@ trait ApiSelectable {
      * @example | $this->select($request, $query, (array) $config);
      */
     public function select(Request $request, Builder $query, array $allowedAttributes = []): JsonResponse|Builder {
-        // Get the select string or array from the request
         $select = $request->query('select');
 
         if ($select) {
-            // If the select parameter is a string, convert it to an array
             if (is_string($select)) {
                 $select = explode(',', $select);
             }
+
+            /**
+             * Check if the select parameter is a count select
+             * This is done by checking if the select parameter contains any 'count:' prefix.
+             * If it does, it will return a JsonResponse with the count of those columns.
+             */
+            $isCountSelect = $this->getCountSelect($query, $select);
+            if ($isCountSelect) {
+                return $isCountSelect;
+            }
+
             // Check if the select parameter is an array
             $validAttributes = array_intersect($select, $allowedAttributes);
+
             // Check if there are any invalid attributes
             $invalidAttributes = array_diff($select, $allowedAttributes);
+
             // If there are invalid attributes, return an error response
             if (empty($validAttributes) || !empty($invalidAttributes)) {
                 $invalidAttributesString = implode(', ', $invalidAttributes);
                 return $this->errorResponse("Invalid select column: $invalidAttributesString", ['select' => 'INVALID_SELECT_COLUMN'], 400);
             }
+
             // If the id column is allowed and not in the valid attributes, add it to the beginning of the valid attributes array
             if (in_array('id', $allowedAttributes) && !in_array('id', $validAttributes)) {
                 array_unshift($validAttributes, 'id');
             }
+
             return $query->select($validAttributes);
         }
         return $query;
+    }
+
+
+
+    /**
+     * Get the count select from the query
+     * This method checks if the select parameter contains any count: columns
+     * If it does, it returns a JsonResponse with the count of those columns
+     *
+     * @param Builder $query The query builder instance
+     * @param array $select The select parameters from the request
+     * @return JsonResponse|null Returns a JsonResponse with count results or null if no count columns are found
+     */
+    protected function getCountSelect($query, $select): JsonResponse|null {
+        $countSelect = [];
+        foreach ($select as $value) {
+            if (str_starts_with($value, 'count:')) {
+                $countSelect[] = str_replace('count:', '', $value);
+            }
+        }
+        if (count($countSelect) > 1) {
+            return $this->errorResponse('Multiple counts are not supported.', ['select' => 'MULTIPLE_COUNTS_NOT_SUPPORTED'], 400);
+        }
+
+        if (!empty($countSelect)) {
+            $column = $countSelect[0];
+            $count = $query->count($column);
+            return $this->successResponse([$column => $count], 'Count retrieved successfully');
+        }
+
+        return null;
     }
 
 
