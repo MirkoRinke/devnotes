@@ -95,7 +95,7 @@ trait ApiInclude {
      * 
      * @example | $user = $this->checkForIncludedRelations($request, $user);
      */
-    public function checkForIncludedRelations(Request $request, $data): mixed {
+    protected function checkForIncludedRelations(Request $request, $data): mixed {
         if ($request->has('include')) {
             $relations = explode(',', $request->input('include'));
             $select = $this->getSelectFields($request) ?? [];
@@ -120,7 +120,7 @@ trait ApiInclude {
      * 
      * @example | $this->applyRelationVisibility($request, $data, $relations, $select);
      */
-    protected function applyRelationVisibility(Request $request, $model, array $relations, array $select): void {
+    private function applyRelationVisibility(Request $request, $model, array $relations, array $select): void {
 
         if ($model instanceof Collection || $model instanceof LengthAwarePaginator) {
             foreach ($model as $item) {
@@ -184,7 +184,7 @@ trait ApiInclude {
      * 
      * @example | $this->applyChildrenRelationFieldsVisibility($request, $comment, $relations, $select);
      */
-    protected function applyChildrenRelationFieldsVisibility(Request $request, $comment, array $relations, array $select): void {
+    private function applyChildrenRelationFieldsVisibility(Request $request, $comment, array $relations, array $select): void {
         $input = $request->input('children_fields');
         $allowedFields = $this->resolveFieldSelection($input, $select);
         $childrenVisibleFields = $this->getRelationFieldsFromRequest($request, 'children', [], $allowedFields);
@@ -223,7 +223,7 @@ trait ApiInclude {
      * 
      * @example | $this->applyParentFieldsVisibilityInComments($request, $comment, $relations, $select);
      */
-    protected function applyParentFieldsVisibilityInComments(Request $request, $comment, array $relations = [], array $select = []): void {
+    private function applyParentFieldsVisibilityInComments(Request $request, $comment, array $relations = [], array $select = []): void {
         $input = $request->input('parent_fields');
         $allowedFields = $this->resolveFieldSelection($input, $select);
         $parentVisibleFields = $this->getRelationFieldsFromRequest($request, 'parent', [], $allowedFields);
