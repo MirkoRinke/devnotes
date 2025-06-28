@@ -30,6 +30,7 @@ class UserFactory extends Factory {
             'role' => 'user',
             'account_purpose' => 'regular',
             // 'remember_token' => Str::random(10),
+            'moderation_info' => [],
         ];
     }
 
