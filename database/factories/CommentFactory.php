@@ -26,6 +26,7 @@ class CommentFactory extends Factory {
             'parent_content' => null,
             'is_deleted' => false,
             'depth' => 0,
+            'moderation_info' => [],
         ];
     }
 
