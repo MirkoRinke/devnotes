@@ -47,7 +47,7 @@ trait ApiFiltering {
      * @example | // AND logic for contains: filter[title]=and_contains:[Laravel,API] (finds records containing ALL values)
      * @example | // Exclude values: filter[title]=not_contains:[Deprecated,Legacy] (excludes records containing ANY listed values)
      */
-    public function filter(Request $request, Builder $query, array $allowedFilterColumns = [], array $relationFilters = []): JsonResponse|Builder {
+    protected function filter(Request $request, Builder $query, array $allowedFilterColumns = [], array $relationFilters = []): JsonResponse|Builder {
 
         $filterArray = $request->query('filter');
         $operatorsMap = [];
@@ -176,7 +176,7 @@ trait ApiFiltering {
      * 
      * @example | $this->filterRelations($query, $relation, $targetField, $values, $operators);
      */
-    protected function filterRelations(Builder $query, string $relation, ?string $targetField, mixed $values, array $operators): Builder {
+    private function filterRelations(Builder $query, string $relation, ?string $targetField, mixed $values, array $operators): Builder {
 
         /**
          * If the target field is not specified, we will use 'id' as the default
@@ -219,7 +219,7 @@ trait ApiFiltering {
      * @example | // Input: ['user.name' => 'John', 'status' => 'active', 'tag' => 'php', 'user.id' => '5']
      * @example | // Output: ['status' => 'active', 'tag' => 'php', 'user.name' => 'John', 'user.id' => '5']
      */
-    protected function sortFilterArray(array $filterArray): array {
+    private function sortFilterArray(array $filterArray): array {
         $keys = array_keys($filterArray);
         $keysWithoutDots = [];
         $keysWithDots = [];
@@ -251,7 +251,7 @@ trait ApiFiltering {
      * 
      * @example | $this->extractRelationField($key, $filterArray);
      */
-    protected function extractRelationField(string $key, array $filterArray): array {
+    private function extractRelationField(string $key, array $filterArray): array {
         $targetField = null;
 
         if (strpos($key, '.') !== false) {
@@ -305,7 +305,7 @@ trait ApiFiltering {
      * @example | filter[title]=contains:[Laravel,API] → Title contains "Laravel" OR "API"
      * @example | filter[title]=and_contains:[Laravel,API] → Title contains "Laravel" AND "API"
      */
-    protected function extractOperators($values): array {
+    private function extractOperators($values): array {
         $operators = [];
         $allowedOperators = [
             'eq',
@@ -376,7 +376,7 @@ trait ApiFiltering {
      * 
      * @example | $this->handleOperators($query, $key, $values, $operators);
      */
-    protected function handleOperators($query, $key, $values, $operators) {
+    private function handleOperators($query, $key, $values, $operators) {
 
         foreach ($values as $index => $value) {
             $trimmedValue = trim($value);
