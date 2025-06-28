@@ -111,6 +111,7 @@ class PostFactory extends Factory {
                 'Archived'
             ]),
             'history' => [],
+            'moderation_info' => [],
         ];
     }
 
@@ -152,9 +153,9 @@ class PostFactory extends Factory {
             ];
 
             $this->syncMultipleRelations($post, $systemUser, [
-                'tag' => $tagNames,
-                'language' => $languageNames,
-                'technology' => $technologyNames
+                'tags' => $tagNames,
+                'languages' => $languageNames,
+                'technologies' => $technologyNames
             ]);
         });
     }
