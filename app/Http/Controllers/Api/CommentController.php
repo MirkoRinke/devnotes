@@ -421,6 +421,7 @@ class CommentController extends Controller {
                 $comment->user_id = $user->id;
                 $comment->parent_content = $parentComment->content ?? null;
                 $comment->depth = $depth;
+                $comment->moderation_info = [];
 
                 // Save the comment
                 $comment->save();
