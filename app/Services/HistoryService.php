@@ -59,7 +59,7 @@ class HistoryService {
         $newHistory = array_merge(
             $newHistory,
             [
-                'created_at' => now(),
+                'history_created_at' => now(),
             ]
         );
 
