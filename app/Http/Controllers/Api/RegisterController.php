@@ -129,6 +129,7 @@ class RegisterController extends Controller {
                 $user->email = $validatedData['email'];
                 $user->password = bcrypt($validatedData['password']);
                 $user->email_verified_at = config('app.features.email_verification', true) ? null : now();
+                $user->moderation_info = [];
 
                 $user->save();
 
