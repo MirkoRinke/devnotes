@@ -24,7 +24,7 @@ trait ApiLimit {
      * @param int $limit
      * @return JsonResponse|Builder
      */
-    public function setLimit(Request $request, Builder $query, int $limit = 10): JsonResponse|Collection|LengthAwarePaginator|Builder {
+    protected function setLimit(Request $request, Builder $query, int $limit = 10): JsonResponse|Collection|LengthAwarePaginator|Builder {
         // If query logging is enabled, return the query results without limiting
         if (env('QUERY_LOGGING_ENABLED', false)) {
             return $query;
