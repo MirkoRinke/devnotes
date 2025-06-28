@@ -77,6 +77,30 @@ class SnapshotService {
      * @example | $this->postSnapshot($reportable, true);
      */
     public function postSnapshot($post, $user_data = false): array {
+        $technologies = [];
+        foreach ($post->technologies as $technology) {
+            $technologies[] = [
+                'id' => $technology->id,
+                'name' => $technology->name,
+            ];
+        }
+
+        $languages = [];
+        foreach ($post->languages as $language) {
+            $languages[] = [
+                'id' => $language->id,
+                'name' => $language->name,
+            ];
+        }
+
+        $tags = [];
+        foreach ($post->tags as $tag) {
+            $tags[] = [
+                'id' => $tag->id,
+                'name' => $tag->name,
+            ];
+        }
+
         $post_data = [
             'user_id' => $post->user_id,
             'title' => $post->title,
@@ -86,12 +110,14 @@ class SnapshotService {
             'videos' => $post->videos,
             'resources' => $post->resources,
             'external_source_previews' => $post->external_source_previews,
-            'language' => $post->language,
             'category' => $post->category,
             'post_type' => $post->post_type,
-            'technology' => $post->technology,
-            'tags' => $post->tags,
             'status' => $post->status,
+            'created_at' => $post->created_at,
+            'updated_at' => $post->updated_at,
+            'tags' => $tags,
+            'languages' => $languages,
+            'technologies' => $technologies,
         ];
 
         if ($user_data) {
