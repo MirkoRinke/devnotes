@@ -28,9 +28,9 @@ trait ApiPagination {
      * @param int $perPage
      * @return JsonResponse|Collection|LengthAwarePaginator
      * 
-     * @example | $this->getPerPage($request, $query, (int) $config);
+     * @example | $this->paginate($request, $query, (int) $config);
      */
-    public function getPerPage(Request $request, Builder $query, int $perPage = 10): JsonResponse|Collection|LengthAwarePaginator {
+    protected function paginate(Request $request, Builder $query, int $perPage = 10): JsonResponse|Collection|LengthAwarePaginator {
 
         // If the request has a 'setLimit' parameter, return the query results without pagination
         if ($request->get('setLimit')) {
