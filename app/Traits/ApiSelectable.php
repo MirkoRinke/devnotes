@@ -93,7 +93,7 @@ trait ApiSelectable {
      * 
      * @example | $this->countSelect($query, $select);
      */
-    protected function countSelect($query, $select): JsonResponse|null {
+    private function countSelect($query, $select): JsonResponse|null {
         $countSelect = [];
         foreach ($select as $value) {
             if (str_starts_with($value, 'count:')) {
@@ -124,7 +124,7 @@ trait ApiSelectable {
      * 
      * @example | $this->sumSelect($query, $select);
      */
-    protected function sumSelect($query, $select): JsonResponse|null {
+    private function sumSelect($query, $select): JsonResponse|null {
         $sumSelect = [];
         foreach ($select as $value) {
             if (str_starts_with($value, 'sum:')) {
@@ -154,7 +154,7 @@ trait ApiSelectable {
      * 
      * @example | $this->modifyRequestSelect($request, ['id'], []);
      */
-    public function modifyRequestSelect(Request $request, $requiredFields = [], $removeFields = []): void {
+    protected function modifyRequestSelect(Request $request, $requiredFields = [], $removeFields = []): void {
         if ($request->has('select')) {
             $select = $this->getSelectFields($request);
 
@@ -228,7 +228,7 @@ trait ApiSelectable {
      * 
      * @example | $this->getSelectFields($request);
      */
-    public function getSelectFields(Request $request): array|null {
+    protected function getSelectFields(Request $request): array|null {
         if ($request->has('select')) {
             $select = $request->query('select');
             if (is_string($select)) {
@@ -256,7 +256,7 @@ trait ApiSelectable {
      * 
      * @example | $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
      */
-    public function controlVisibleFields(Request $request, $originalSelectFields, $data): mixed {
+    protected function controlVisibleFields(Request $request, $originalSelectFields, $data): mixed {
         if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
             foreach ($data as $model) {
                 $this->applyFieldsToModelAndRelations($request, $originalSelectFields, $model);
@@ -360,7 +360,7 @@ trait ApiSelectable {
      * 
      * @example | $this->applyVisibleFields($request, $originalSelectFields, $model);
      */
-    protected function applyVisibleFields(Request $request, $originalSelectFields, $model): mixed {
+    private function applyVisibleFields(Request $request, $originalSelectFields, $model): mixed {
         if ($request->has('select')) {
             $select = $this->getSelectFields($request);
             $visibleFields = array_merge($originalSelectFields ?? [], ['id']);
