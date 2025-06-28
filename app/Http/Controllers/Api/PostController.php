@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 use App\Models\Post;
-use App\Models\PostAllowedValue;
 
 use App\Rules\SafeUrl;
 use App\Rules\ValidPostValue;
@@ -87,12 +86,12 @@ class PostController extends Controller {
             'videos.*' => ['max:2048', new SafeUrl()],
             'resources' => 'nullable|array',
             'resources.*' => ['max:2048', new SafeUrl()],
-            'language' => 'required|array|min:1',
-            'language.*' => ['required', new ValidPostValue('language')],
+            'languages' => 'required|array|min:1',
+            'languages.*' => ['required', new ValidPostValue('language')],
             'category' => ['required', 'string', new ValidPostValue('category')],
             'post_type' => ['required', 'string', new ValidPostValue('post_type')],
-            'technology' => 'required|array|min:1',
-            'technology.*' => ['required', 'string', new ValidPostValue('technology')],
+            'technologies' => 'required|array|min:1',
+            'technologies.*' => ['required', 'string', new ValidPostValue('technology')],
             'tags' => 'required|array',
             'status' => ['required', 'string', new ValidPostValue('status')],
         ];
@@ -117,12 +116,12 @@ class PostController extends Controller {
             'videos.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'resources' => 'sometimes|nullable|array',
             'resources.*' => ['sometimes', 'max:2048', new SafeUrl()],
-            'language' => 'sometimes|required|array|min:1',
-            'language.*' => ['sometimes', 'required', new ValidPostValue('language')],
+            'languages' => 'sometimes|required|array|min:1',
+            'languages.*' => ['sometimes', 'required', new ValidPostValue('language')],
             'category' => ['sometimes', 'required', 'string', new ValidPostValue('category')],
             'post_type' => ['sometimes', 'required', 'string', new ValidPostValue('post_type')],
-            'technology' => 'sometimes|required|array|min:1',
-            'technology.*' => ['sometimes', 'required', 'string', new ValidPostValue('technology')],
+            'technologies' => 'sometimes|required|array|min:1',
+            'technologies.*' => ['sometimes', 'required', 'string', new ValidPostValue('technology')],
             'tags' => 'sometimes|required|array',
             'status' => ['sometimes', 'required', 'string', new ValidPostValue('status')],
         ];
@@ -135,41 +134,64 @@ class PostController extends Controller {
      * 
      * Endpoint: GET /posts
      *
-     * Retrieves a list of posts with support for filtering, sorting, field selection,
-     * and relation inclusion. Results are filtered based on user permissions.
+     * Retrieves a list of posts with support for filtering, sorting, field selection, relation inclusion, and pagination.  
+     * **By default, results are paginated.** 
+     *
+     * The relations `tags`, `languages`, and `technologies` are always included in the response and do not require the `include` parameter.
+     * Other relations (e.g. `user`) can be included using the `include` parameter.
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`, `tags_fields`, `languages_fields`, `technologies_fields`)
+     * to specify which fields should be returned for each relation.
+     * 
+     * Example: `/posts/?include=user&user_fields=id,display_name&tags_fields=name`
      *
      * @group Posts
      *
-     * @queryParam select string Comma-separated fields to include. Example: select=id,title,user_id
-     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: sort=-created_at
-     * @queryParam filter[category] string Filter posts by category. Example: filter[category]=Frontend
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. 
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith string Filter where field starts with given string. Format: field:value. Example: startsWith[title]:Svelte
-     * @queryParam endsWith string Filter where field ends with given string. Format: field:value. Example: endsWith[title]:Management
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. Example: user_fields=id,display_name
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details. 
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam page number The page number. Example: page=1
-     * @queryParam per_page number Items per page. Example: per_page=15 (default: 10)
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user). 
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     * @see \App\Traits\PostQuerySetup::getSelectRelationFields() for always-included relations
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination). 
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
      * Example URL: /posts
-     * 
+     *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Posts retrieved successfully",
      *   "code": 200,
-     *   "count": 11,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "user_id": 1,
-     *       "title": "Svelte Store: Simple State Management",
-     *       "code": "import { writable } from 'svelte/store';",
-     *       "description": "Svelte Store is a simple and efficient way to manage state in Svelte applications. It allows you to create reactive variables that can be shared across components.",
-     *       "images": [],              || Empty by default - requires user consent or owner access
-     *       "videos": [],              || Empty by default - requires user consent or owner access
-     *       "resources": [],           || Empty by default - requires user consent or owner access
+     *       "user_id": 42,
+     *       "title": "Example Post Title",
+     *       "code": "...",
+     *       "description": "...",
+     *       "images": [],                                  || Empty by default - requires user consent or owner access
+     *       "videos": [                                    || Empty by default - requires user consent or owner access
+     *         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *         "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     *       ],                                
+     *       "resources": [],                               || Empty by default - requires user consent or owner access
      *       "external_source_previews": [
      *         {
      *           "url": "https://picsum.photos/200",
@@ -182,50 +204,76 @@ class PostController extends Controller {
      *           "domain": "www.youtube.com"
      *         },
      *         {
+     *           "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *           "type": "videos",
+     *           "domain": "www.youtube.com"
+     *         },
+     *         {
      *           "url": "https://svelte.dev/docs#run-time-store",
      *           "type": "resources",
      *           "domain": "svelte.dev"
      *         }
      *       ],
-     *       "language": ["HTML", "JavaScript"],
-     *       "category": "Frontend",
-     *       "post_type": "tutorial",
-     *       "technology": ["Svelte"],
-     *       "tags": ["svelte", "store", "state-management"],
-     *       "status": "published",
-     *       "favorite_count": 3,
+     *       "category": "Machine Learning",                || See /post-allowed-values/?filter[type]=category for valid values.
+     *       "post_type": "Feedback",                       || See /post-allowed-values/?filter[type]=post_type for valid values.
+     *       "status": "Published",                         || See /post-allowed-values/?filter[type]=status for valid values. 
+     *       "favorite_count": 1,
      *       "likes_count": 0,
-     *       "reports_count": 0,            || Admin and Moderator only
-     *       "comments_count": 2,
+     *       "reports_count": 0,                            || Admin and Moderator only
+     *       "comments_count": 0,
      *       "is_updated": false,
      *       "updated_by_role": null,
-     *       "last_comment_at": "2025-05-04T22:00:44.000000Z",
-     *       "history": null,
-     *       "moderation_info": null        || Admin and Moderator only
-     *       "created_at": "2025-05-04T22:00:44.000000Z",
-     *       "updated_at": "2025-05-04T22:00:45.000000Z",
+     *       "last_comment_at": null,
+     *       "history": [],
+     *       "moderation_info": [],                         || Admin and Moderator only
+     *       "created_at": "2025-06-23T22:52:38.000000Z",
+     *       "updated_at": "2025-06-23T22:53:53.000000Z",
+     *       "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
+     *       "is_liked": false,                             || Virtual field, true if the authenticated user has liked this post
+     *       "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
+     *         { "id": 1, "name": "Laravel" },              || Note: Users can create new tags when posting; other allowed values are admin-only.
+     *         { "id": 2, "name": "PHP" },
+     *         { "id": 3, "name": "Backend" }
+     *       ],
+     *       "languages": [                                 || See /post-allowed-values/?filter[type]=language for valid values.
+     *         { "id": 4, "name": "Java" },
+     *         { "id": 5, "name": "C#" },
+     *         { "id": 6, "name": "TypeScript" }
+     *       ],
+     *       "technologies": [                              || See /post-allowed-values/?filter[type]=technology for valid values.
+     *         { "id": 7, "name": "Bootstrap" },
+     *         { "id": 8, "name": "TailwindCSS" },
+     *         { "id": 9, "name": "Material UI" }
+     *       ]
      *     }
      *   ]
      * }
      * 
-     * Example URL: /posts/?select=title&include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="Success with select and include" {
+     * Example URL: /posts/?include=user
+     *
+     * @response status=200 scenario="Success with user include" {
      *   "status": "success",
      *   "message": "Posts retrieved successfully",
      *   "code": 200,
-     *   "count": 11,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "title": "Svelte Store: Einfaches State Management",
+     *      .....
      *       "user": {
-     *         "id": 1,
-     *         "display_name": "admin"
-     *       }
+     *          "id": 42,
+     *          "display_name": "John Doe",
+     *          "role": "user",
+     *          "created_at": "2025-06-23T22:52:35.000000Z",
+     *          "updated_at": "2025-06-23T22:52:35.000000Z",
+     *          "is_banned": null,                      || Admin and Moderator only
+     *          "was_ever_banned": false,               || Admin and Moderator only
+     *          "moderation_info": [],                  || Admin and Moderator only
+     *          "is_following": false                   || Virtual field, true if the authenticated user follows this user
+     *        },
      *     }
      *   ]
      * }
+     * 
      *
      * @response status=200 scenario="No posts found with filters" {
      *   "status": "success",
@@ -249,14 +297,14 @@ class PostController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
+     *
      * Note: External content (images, videos, resources) is not displayed by default for privacy reasons.
      * To view this content, one of the following conditions must be met:
      * 1. You are the owner of the post (automatically shows all content)
      * 2. For non-authenticated users: Send header X-Show-External-Images: true (similarly for videos/resources)
      * 3. For authenticated users: Either have auto_load_external_images set to true in user profile,
      *    or have a valid temporary permission (external_images_temp_until date is in the future)
-     * 
+     *
      * @authenticated
      */
     public function index(Request $request) {
@@ -307,20 +355,22 @@ class PostController extends Controller {
      * authenticated user who creates them. External URLs are automatically processed
      * to generate previews.
      *
+     * The relations `tags`, `languages`, and `technologies` are always included in the response.
+     * For fields like `category`, `post_type`, `status`, `language`, and `technology`, only allowed values can be used.
+     * Allowed values can be retrieved via the `/post-allowed-values` endpoint. Only tags can be created by users during post creation; all other allowed values are managed by admins/moderators.
+     *
      * @group Posts
      *
      * @bodyParam title string required The title of the post. Example: "Understanding JavaScript Promises"
      * @bodyParam code string The code snippet to include in the post. Example: "const promise = new Promise((resolve, reject) => {});"
      * @bodyParam description string required Description of the post. Example: "A comprehensive guide to JavaScript Promises"
-     * 
      * @bodyParam images array Optional array of image URLs. Example: ["https://example.com/image.jpg"]
      * @bodyParam videos array Optional array of video URLs. Example: ["https://youtube.com/watch?v=example"]
      * @bodyParam resources array Optional array of resource URLs. Example: ["https://mdn.io/promise"]
-     * 
-     * @bodyParam language array required Array of programming languages. Example: ["JavaScript"]
+     * @bodyParam languages array required Array of programming languages. Example: ["JavaScript"]
      * @bodyParam category string required Category of the post. Example: "Frontend"
      * @bodyParam post_type string required Type of the post. Example: "tutorial"
-     * @bodyParam technology array required Array of technologies used. Example: ["Node.js"]
+     * @bodyParam technologies array required Array of technologies used. Example: ["Node.js"]
      * @bodyParam tags array required Array of tags for the post. Example: ["promises", "async", "javascript"]
      * @bodyParam status string required Publication status. Example: "published"
      * 
@@ -331,30 +381,39 @@ class PostController extends Controller {
      *   "images": ["https://example.com/image.jpg"],                       || optional, array of URLs
      *   "videos": ["https://youtube.com/watch?v=example"],                 || optional, array of URLs
      *   "resources": ["https://mdn.io/promise"],                           || optional, array of URLs
-     *   "language": ["JavaScript"],                                        || required, array, min:1, valid language values only
+     *   "languages": ["JavaScript"],                                       || required, array, min:1, valid language values only
      *   "category": "Frontend",                                            || required, string, valid category value
      *   "post_type": "tutorial",                                           || required, string, valid post_type value
-     *   "technology": ["Node.js"],                                         || required, array, min:1, valid technology values only
+     *   "technologies": ["Node.js"],                                       || required, array, min:1, valid technology values only
      *   "tags": ["promises", "async", "javascript"],                       || required, array
      *   "status": "published"                                              || required, string, valid status value
      * }
      * 
      * Example URL: /posts
-     * 
+     *
      * @response status=201 scenario="Success" {
      *   "status": "success",
      *   "message": "Post created successfully",
      *   "code": 201,
      *   "count": 1,
      *   "data": {
-     *     "id": 12
+     *     "id": 501,
      *     "user_id": 1,
-     *     "title": "Understanding JavaScript Promises",
+     *     "title": "Angular Understanding JavaScript Promises",
      *     "code": "const promise = new Promise((resolve, reject) => {});",
      *     "description": "A comprehensive guide to JavaScript Promises",
-     *     "images": ["https://example.com/image.jpg"],
-     *     "videos": ["https://youtube.com/watch?v=example"],
-     *     "resources": ["https://mdn.io/promise"],
+     *     "images": [
+     *       "https://example.com/image.jpg",
+     *       "https://example.com/image2.jpg",
+     *     ],
+     *     "videos": [
+     *       "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *       "https://vimeo.com/123456789"
+     *     ],
+     *     "resources": [
+     *       "https://mdn.io/promise",
+     *       "https://github.com/tc39/proposal-promise-finally"
+     *     ],
      *     "external_source_previews": [
      *       {
      *         "type": "images",
@@ -362,25 +421,52 @@ class PostController extends Controller {
      *         "domain": "example.com"
      *       },
      *       {
+     *         "type": "images",
+     *         "url": "https://example.com/image2.jpg",
+     *         "domain": "example.com"
+     *       },
+     *       {
      *         "type": "videos",
-     *         "url": "https://youtube.com/watch?v=example",
-     *         "domain": "youtube.com"
+     *         "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *         "domain": "www.youtube.com"
+     *       },
+     *       {
+     *         "type": "videos",
+     *         "url": "https://vimeo.com/123456789",
+     *         "domain": "vimeo.com"
      *       },
      *       {
      *         "type": "resources",
      *         "url": "https://mdn.io/promise",
      *         "domain": "mdn.io"
+     *       },
+     *       {
+     *         "type": "resources",
+     *         "url": "https://github.com/tc39/proposal-promise-finally",
+     *         "domain": "github.com"
      *       }
      *     ],
-     *     "language": ["JavaScript"],
-     *     "category": "Frontend",
-     *     "post_type": "tutorial",
-     *     "technology": ["Node.js"],
-     *     "tags": ["promises", "async", "javascript"],
-     *     "status": "published",
+     *     "category": "Frontend",                        || See /post-allowed-values/?filter[type]=category for valid values.
+     *     "post_type": "tutorial",                       || See /post-allowed-values/?filter[type]=post_type for valid values.
+     *     "status": "published",                         || See /post-allowed-values/?filter[type]=status for valid values.
      *     "history": [],
-     *     "updated_at": "2025-05-05T17:16:53.000000Z",
-     *     "created_at": "2025-05-05T17:16:53.000000Z",
+     *     "created_at": "2025-06-28T17:12:00.000000Z",
+     *     "updated_at": "2025-06-28T17:12:00.000000Z",
+     *     "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
+     *       { "id": 67, "name": "promises" },            || Note: Users can create new tags when posting; other allowed values are admin-only.
+     *       { "id": 68, "name": "async" },
+     *       { "id": 69, "name": "javascript" }
+     *     ],
+     *     "languages": [                                 || See /post-allowed-values/?filter[type]=language for valid values.
+     *       { "id": 4, "name": "Java" },
+     *       { "id": 32, "name": "Python" },
+     *       { "id": 43, "name": "Shell" }
+     *     ],
+     *     "technologies": [                              || See /post-allowed-values/?filter[type]=technology for valid values.
+     *       { "id": 7, "name": "Bootstrap" },
+     *       { "id": 23, "name": "Angular" },
+     *       { "id": 41, "name": "Node.js" }
+     *     ]
      *   }
      * }
      *
@@ -409,7 +495,7 @@ class PostController extends Controller {
      *     "post_type": ["VALUE_IS_FORBIDDEN"],
      *     "status": ["VALUE_IS_FORBIDDEN"],
      *     "language.0": ["VALUE_IS_FORBIDDEN"],
-     *     "technology.0": ["VALUE_IS_FORBIDDEN"],
+     *     "technology.0": ["VALUE_IS_FORBIDDEN"]
      *   }
      * }
      *
@@ -422,7 +508,9 @@ class PostController extends Controller {
      * 
      * Note: When creating a post with external URLs (images, videos, resources), these will be processed
      * to generate preview information that is stored in the external_source_previews field.
-     * 
+     * For allowed values of category, post_type, status, language, and technology, see the /post-allowed-values endpoint.
+     * Only tags can be created by users; all other allowed values are managed by admins/moderators.
+     *
      * @authenticated
      */
     public function store(Request $request): JsonResponse {
@@ -436,17 +524,18 @@ class PostController extends Controller {
 
             // Get the tags from the validated data and remove them from the main data array
             $tagNames = $validatedData['tags'] ?? [];
-            $languageNames = $validatedData['language'] ?? [];
-            $technologyNames = $validatedData['technology'] ?? [];
+            $languageNames = $validatedData['languages'] ?? [];
+            $technologyNames = $validatedData['technologies'] ?? [];
             unset($validatedData['tags']);
-            unset($validatedData['language']);
-            unset($validatedData['technology']);
+            unset($validatedData['languages']);
+            unset($validatedData['technologies']);
 
 
             // Create a new post
             $post = new Post($validatedData);
             $post->user_id = $user->id;
             $post->history = [];
+            $post->moderation_info = [];
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
             $post->save();
 
@@ -474,33 +563,45 @@ class PostController extends Controller {
      * 
      * Endpoint: GET /posts/{id}
      *
-     * Retrieves a single post by its ID with support for field selection and relation inclusion.
-     * External content visibility is controlled by user settings or explicit consent headers.
+     * Retrieves a single post by its ID with support for filtering, field selection, relation inclusion, and dynamic field selection for relations.
+     *
+     * The relations `tags`, `languages`, and `technologies` are always included in the response and do not require the `include` parameter.
+     * Other relations (e.g. `user`) can be included using the `include` parameter.
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`, `tags_fields`, `languages_fields`, `technologies_fields`)
+     * to specify which fields should be returned for each relation.
+     * 
+     * Example: `/posts/1?include=user&user_fields=id,display_name&tags_fields=name`
      *
      * @group Posts
      *
      * @urlParam id required The ID of the post to retrieve. Example: 1
+     *
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. 
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam select string Comma-separated fields to include. Example: select=id,title,user_id
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user). 
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. Example: user_fields=id,display_name
-     * 
+     * @queryParam *_fields string When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     * @see \App\Traits\PostQuerySetup::getSelectRelationFields() for always-included relations
+     *
      * Example URL: /posts/1
-     * 
+     *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Post retrieved successfully",
      *   "code": 200,
      *   "data": {
      *     "id": 1,
-     *     "user_id": 1,
+     *     "user_id": 42,
      *     "title": "Svelte Store: Simple State Management",
      *     "code": "import { writable } from 'svelte/store';",
      *     "description": "Svelte Store is a simple and efficient way to manage state in Svelte applications. It allows you to create reactive variables that can be shared across components.",
-     *     "images": [],                || Empty by default - requires user consent or owner access
-     *     "videos": [],                || Empty by default - requires user consent or owner access
-     *     "resources": [],             || Empty by default - requires user consent or owner access
+     *     "images": [],                                  || Empty by default - requires user consent or owner access
+     *     "videos": [],                                  || Empty by default - requires user consent or owner access
+     *     "resources": [],                               || Empty by default - requires user consent or owner access
      *     "external_source_previews": [
      *       {
      *         "url": "https://picsum.photos/200",
@@ -518,41 +619,57 @@ class PostController extends Controller {
      *         "domain": "svelte.dev"
      *       }
      *     ],
-     *     "language": ["HTML", "JavaScript"],
-     *     "category": "Frontend",
-     *     "post_type": "tutorial",
-     *     "technology": ["Svelte"],
-     *     "tags": ["svelte", "store", "state-management"],
-     *     "status": "published",
+     *     "category": "Frontend",                        || See /post-allowed-values/?filter[type]=category for valid values.
+     *     "post_type": "tutorial",                       || See /post-allowed-values/?filter[type]=post_type for valid values.
+     *     "status": "published",                         || See /post-allowed-values/?filter[type]=status for valid values.
      *     "favorite_count": 3,
      *     "likes_count": 0,
-     *     "reports_count": 0,          || Admin and Moderator only
+     *     "reports_count": 0,                            || Admin and Moderator only
      *     "comments_count": 2,
      *     "is_updated": false,
      *     "updated_by_role": null,
      *     "last_comment_at": "2025-05-04T22:00:44.000000Z",
-     *     "history": null,
-     *     "moderation_info": null,     || Admin and Moderator only
+     *     "history": [],
+     *     "moderation_info": [],                         || Admin and Moderator only
      *     "created_at": "2025-05-04T22:00:44.000000Z",
-     *     "updated_at": "2025-05-04T22:00:45.000000Z"
+     *     "updated_at": "2025-05-04T22:00:45.000000Z",
+     *     "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values. Users can create new tags when posting; other allowed values are admin-only.
+     *       { "id": 1, "name": "svelte" },
+     *       { "id": 2, "name": "store" },
+     *       { "id": 3, "name": "state-management" }
+     *     ],
+     *     "languages": [                                 || See /post-allowed-values/?filter[type]=language for valid values.
+     *       { "id": 1, "name": "HTML" },
+     *       { "id": 2, "name": "JavaScript" }
+     *     ],
+     *     "technologies": [                              || See /post-allowed-values/?filter[type]=technology for valid values.
+     *       { "id": 1, "name": "Svelte" }
+     *     ]
      *   }
      * }
      * 
-     * Example URL with select and include: /posts/1/?select=title,description&include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="Success with select and include" {
+     * Example URL: /posts/1?include=user
+     *
+     * @response status=200 scenario="Success with user include" {
      *   "status": "success",
      *   "message": "Post retrieved successfully",
      *   "code": 200,
-     *   "data": {
-     *     "id": 1,
-     *     "title": "Svelte Store: Simple State Management",
-     *     "description": "Svelte Store is a simple and efficient way to manage state in Svelte applications. It allows you to create reactive variables that can be shared across components.",
-     *     "user": {
-     *       "id": 1,
-     *       "display_name": "admin"
+     *   "data": [
+     *     {
+     *      .....
+     *       "user": {
+     *          "id": 42,
+     *          "display_name": "John Doe",
+     *          "role": "user",
+     *          "created_at": "2025-06-23T22:52:35.000000Z",
+     *          "updated_at": "2025-06-23T22:52:35.000000Z",
+     *          "is_banned": null,                      || Admin and Moderator only
+     *          "was_ever_banned": false,               || Admin and Moderator only
+     *          "moderation_info": [],                  || Admin and Moderator only
+     *          "is_following": false                   || Virtual field, true if the authenticated user follows this user
+     *        },
      *     }
-     *   }
+     *   ]
      * }
      *
      * @response status=404 scenario="Not Found" {
@@ -568,14 +685,14 @@ class PostController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
+     *
      * Note: External content (images, videos, resources) is not displayed by default for privacy reasons.
      * To view this content, one of the following conditions must be met:
      * 1. You are the owner of the post (automatically shows all content)
      * 2. For non-authenticated users: Send header X-Show-External-Images: true (similarly for videos/resources)
      * 3. For authenticated users: Either have auto_load_external_images set to true in user profile,
      *    or have a valid temporary permission (external_images_temp_until date is in the future)
-     * 
+     *
      * @authenticated
      */
     public function show(string $id, Request $request): JsonResponse {
@@ -620,28 +737,25 @@ class PostController extends Controller {
      * Endpoint: PATCH /posts/{id}
      *
      * Updates a post with the provided data. The user must be the owner of the post or an admin/moderator.
-     * When a post is updated, a history record is created to track changes.
-     * Admin/moderator updates require a moderation_reason.
+     * When a post is updated, a history record is created to track changes – but only if the owner updates the post and the last change was at least 2 hours ago.
+     * Admins/Moderators must provide a moderation_reason when updating a post they do not own.
      *
      * @group Posts
      *
-     * @urlParam id required The ID of the post to update. Example: 14
+     * @urlParam id required The ID of the post to update. Example: 501
      * 
-     * @bodyParam title string The title of the post. Example: "Understanding JavaScript Promises - Updated"
-     * @bodyParam code string The code snippet to include in the post. "Example: const promise = new Promise((resolve, reject) => {});"
-     * @bodyParam description string Description of the post. Example: "A comprehensive guide to JavaScript Promises!"
-     * 
-     * @bodyParam images array Array of image URLs. Example: ["https://example.com/image2.jpg"]
+     * @bodyParam title string The title of the post. Example: "Angular Understanding JavaScript Promises"
+     * @bodyParam code string The code snippet to include in the post. Example: "const promise = new Promise((resolve, reject) => {});"
+     * @bodyParam description string Description of the post. Example: "A comprehensive guide to JavaScript Promises"
+     * @bodyParam images array Array of image URLs. Example: ["https://example.com/image.jpg"]
      * @bodyParam videos array Array of video URLs. Example: ["https://youtube.com/watch?v=example"]
      * @bodyParam resources array Array of resource URLs. Example: ["https://mdn.io/promise"]
-     * 
-     * @bodyParam language array Array of programming languages. Example: ["JavaScript"]
+     * @bodyParam languages array Array of programming languages. Example: ["JavaScript"]
      * @bodyParam category string Category of the post. Example: "Frontend"
      * @bodyParam post_type string Type of the post. Example: "tutorial"
-     * @bodyParam technology array Array of technologies used. Example: ["Node.js"]
+     * @bodyParam technologies array Array of technologies used. Example: ["Node.js"]
      * @bodyParam tags array Array of tags for the post. Example: ["promises", "async", "javascript"]
      * @bodyParam status string Publication status. Example: "published"
-     * 
      * @bodyParam moderation_reason string Admin/moderator only: Reason for moderation action. Example: "Fixed code formatting"
      * 
      * @bodyContent {
@@ -655,7 +769,7 @@ class PostController extends Controller {
      *   "moderation_reason": "Fixed code formatting"                     || Admin and Moderator only
      * }
      * 
-     * Example URL: /posts/14
+     * Example URL: /posts/501
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -663,35 +777,61 @@ class PostController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 14,
+     *     "id": 501,
      *     "user_id": 1,
-     *     "title": "Understanding JavaScript Promises",
+     *     "title": "Angular Understanding JavaScript Promises",
      *     "code": "const promise = new Promise((resolve, reject) => {});",
-     *     "description": "A comprehensive guide to JavaScript Promises!",
-     *     "images": [],
-     *     "videos": ["https://youtube.com/watch?v=example"],
-     *     "resources": ["https://mdn.io/promise"],
+     *     "description": "A comprehensive guide to JavaScript Promises",
+     *     "images": [
+     *       "https://example.com/image.jpg",
+     *       "https://example.com/image2.jpg"
+     *     ],
+     *     "videos": [
+     *       "https://www.youtube.com/watch?v=dQr4w7WgXfQ",
+     *       "https://vimeo.com/123456789"
+     *     ],
+     *     "resources": [
+     *       "https://mdn.io/promise",
+     *       "https://github.com/tc39/proposal-promise-finally"
+     *     ],
      *     "external_source_previews": [
      *       {
+     *         "type": "images",
+     *         "url": "https://example.com/image.jpg",
+     *         "domain": "example.com"
+     *       },
+     *       {
+     *         "type": "images",
+     *         "url": "https://example.com/image2.jpg",
+     *         "domain": "example.com"
+     *       },
+     *       {
      *         "type": "videos",
-     *         "url": "https://youtube.com/watch?v=example",
-     *         "domain": "youtube.com"
+     *         "url": "https://www.youtube.com/watch?v=dQr4w7WgXfQ",
+     *         "domain": "www.youtube.com"
+     *       },
+     *       {
+     *         "type": "videos",
+     *         "url": "https://vimeo.com/123456789",
+     *         "domain": "vimeo.com"
      *       },
      *       {
      *         "type": "resources",
      *         "url": "https://mdn.io/promise",
      *         "domain": "mdn.io"
+     *       },
+     *       {
+     *         "type": "resources",
+     *         "url": "https://github.com/tc39/proposal-promise-finally",
+     *         "domain": "github.com"
      *       }
      *     ],
-     *     "language": ["JavaScript"],
-     *     "category": "Frontend",
-     *     "post_type": "tutorial",
-     *     "technology": ["Node.js"],
-     *     "tags": ["promises", "async", "javascript"],
-     *     "status": "published",
+     *     "category": "Frontend",                        || See /post-allowed-values/?filter[type]=category for valid values.
+     *     "post_type": "tutorial",                       || See /post-allowed-values/?filter[type]=post_type for valid values.
+     *     "status": "published",                         || See /post-allowed-values/?filter[type]=status for valid values.
      *     "favorite_count": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,          || Admin and Moderator only
+     *     "reports_count": 0,                            || Admin and Moderator only
      *     "comments_count": 0,
      *     "is_updated": true,
      *     "updated_by_role": "admin",
@@ -699,41 +839,135 @@ class PostController extends Controller {
      *     "history": [
      *       {
      *         "user_id": 1,
-     *         "title": "Understanding JavaScript Promises",
+     *         "title": "Angular Understanding JavaScript Promises",
      *         "code": "const promise = new Promise((resolve, reject) => {});",
      *         "description": "A comprehensive guide to JavaScript Promises",
-     *         "images": ["https://example.com/image.jpg"],
-     *         "videos": ["https://youtube.com/watch?v=example"],
-     *         "resources": ["https://mdn.io/promise"],
+     *         "images": [
+     *           "https://example.com/image.jpg",
+     *           "https://example.com/image2.jpg"
+     *         ],
+     *         "videos": [
+     *           "https://www.youtube.com/watch?v=dQr4d&gfnQ",
+     *           "https://vimeo.com/123456789"
+     *         ],
+     *         "resources": [
+     *           "https://mdn.io/promise",
+     *           "https://github.com/tc39/proposal-promise-finally"
+     *         ],
      *         "external_source_previews": [
      *           {
-     *             "url": "https://example.com/image.jpg",
      *             "type": "images",
+     *             "url": "https://example.com/image.jpg",
      *             "domain": "example.com"
      *           },
      *           {
-     *             "url": "https://youtube.com/watch?v=example",
-     *             "type": "videos",
-     *             "domain": "youtube.com"
+     *             "type": "images",
+     *             "url": "https://example.com/image2.jpg",
+     *             "domain": "example.com"
      *           },
      *           {
-     *             "url": "https://mdn.io/promise",
+     *             "type": "videos",
+     *             "url": "https://www.youtube.com/watch?v=dQr4d&gfnQ",
+     *             "domain": "www.youtube.com"
+     *           },
+     *           {
+     *             "type": "videos",
+     *             "url": "https://vimeo.com/123456789",
+     *             "domain": "vimeo.com"
+     *           },
+     *           {
      *             "type": "resources",
+     *             "url": "https://mdn.io/promise",
      *             "domain": "mdn.io"
+     *           },
+     *           {
+     *             "type": "resources",
+     *             "url": "https://github.com/tc39/proposal-promise-finally",
+     *             "domain": "github.com"
      *           }
      *         ],
-     *         "language": ["JavaScript"],
      *         "category": "Frontend",
      *         "post_type": "tutorial",
-     *         "technology": ["Node.js"],
-     *         "tags": ["promises", "async", "javascript"],
      *         "status": "published",
-     *         "created_at": "2025-05-05T17:39:44.856399Z"
+     *         "created_at": "2025-06-28T19:33:32.000000Z",
+     *         "updated_at": "2025-06-28T19:33:32.000000Z",
+     *         "tags": [
+     *           { "id": 29, "name": "JavaScript" },
+     *           { "id": 71, "name": "promises" },
+     *           { "id": 72, "name": "async" }
+     *         ],
+     *         "languages": [
+     *           { "id": 4, "name": "Java" },
+     *           { "id": 32, "name": "Python" },
+     *           { "id": 43, "name": "Shell" }
+     *         ],
+     *         "technologies": [
+     *           { "id": 7, "name": "Bootstrap" },
+     *           { "id": 23, "name": "Angular" },
+     *           { "id": 41, "name": "Node.js" }
+     *         ],
+     *         "history_created_at": "2025-06-28T19:33:36.168677Z"
      *       }
      *     ],
-     *     "moderation_info": null,         || Admin and Moderator only
-     *     "created_at": "2025-05-04T17:32:42.000000Z",
-     *     "updated_at": "2025-05-05T17:39:44.000000Z"
+     *     "moderation_info": [                           || Admin and Moderator only
+     *       {
+     *         "user_id": 1,
+     *         "username": "Admin",
+     *         "role": "admin",
+     *         "timestamp": "2025-06-28T22:01:46+02:00",
+     *         "reason": "Einfach ein paar dinge geändert zwecks test",
+     *         "action": "updated",
+     *         "changes": {
+     *           "videos": {
+     *             "from": [
+     *               "https://www.youtube.com/watch?v=dQr4w7WgXfQ",
+     *               "https://vimeo.com/123456789"
+     *             ],
+     *             "to": [
+     *               "https://www.youtube.com/watch?v=dQr4wWrXfQ",
+     *               "https://vimeo.com/123456789"
+     *             ]
+     *           },
+     *           "resources": {
+     *             "from": [
+     *               "https://mdn.io/promise",
+     *               "https://github.com/tc39/proposal-promise-finally"
+     *             ],
+     *             "to": [
+     *               "https://github.com/tc39/proposal-promise-finally"
+     *             ]
+     *           },
+     *           "tags": {
+     *             "from": [
+     *               "JavaScript",
+     *               "promises",
+     *               "async"
+     *             ],
+     *             "to": [
+     *               "promises",
+     *               "async"
+     *             ]
+     *           }
+     *         }
+     *       }
+     *     ],
+     *     "created_at": "2025-06-28T17:12:00.000000Z",
+     *     "updated_at": "2025-06-28T18:12:48.000000Z",
+     *     "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
+     *       { "id": 29, "name": "JavaScript" },
+     *       { "id": 71, "name": "promises" },
+     *       { "id": 72, "name": "async" }
+     *     ],
+     *     "languages": [                                 || See /post-allowed-values/?filter[type]=language for valid values.
+     *       { "id": 14, "name": "JavaScript" },
+     *       { "id": 32, "name": "Python" },
+     *       { "id": 43, "name": "Shell" }
+     *     ],
+     *     "technologies": [                              || See /post-allowed-values/?filter[type]=technology for valid values.
+     *       { "id": 7, "name": "Bootstrap" },
+     *       { "id": 23, "name": "Angular" },
+     *       { "id": 41, "name": "Node.js" }
+     *     ]
      *   }
      * }
      *
@@ -777,8 +1011,8 @@ class PostController extends Controller {
      * }
      * 
      * Note: When updating a post, a history record is created to track changes. This only happens 
-     * if the post owner makes the update and the post wasn't updated within the last 2 hours.
-     * When admin/moderators update a post they don't own, they must provide a moderation_reason.
+     * if the post owner makes the update and the last change was at least 2 hours ago (configurable).
+     * Admins/Moderators must provide a moderation_reason when updating a post they do not own.
      * 
      * @authenticated
      */
@@ -829,16 +1063,16 @@ class PostController extends Controller {
                 unset($validatedData['tags']);
             }
 
-            if (isset($validatedData['language'])) {
-                $relationChanges['language'] = $validatedData['language'];
-                $languageNames = $validatedData['language'];
-                unset($validatedData['language']);
+            if (isset($validatedData['languages'])) {
+                $relationChanges['languages'] = $validatedData['languages'];
+                $languageNames = $validatedData['languages'];
+                unset($validatedData['languages']);
             }
 
-            if (isset($validatedData['technology'])) {
-                $relationChanges['technology'] = $validatedData['technology'];
-                $technologyNames = $validatedData['technology'];
-                unset($validatedData['technology']);
+            if (isset($validatedData['technologies'])) {
+                $relationChanges['technologies'] = $validatedData['technologies'];
+                $technologyNames = $validatedData['technologies'];
+                unset($validatedData['technologies']);
             }
 
             /** 
@@ -852,9 +1086,9 @@ class PostController extends Controller {
                     $post,
                     $validatedData,
                     $request,
-                    ['title', 'code', 'description', 'images', 'resources', 'language', 'category', 'post_type', 'technology', 'status'],
+                    ['title', 'code', 'description', 'videos', 'images', 'resources', 'category', 'post_type', 'status'],
                     'post',
-                    ['tags' => 'name'],
+                    ['tags' => 'name', 'languages' => 'name', 'technologies' => 'name'],
                     $relationChanges
                 );
 
@@ -865,15 +1099,17 @@ class PostController extends Controller {
                 DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
                     $post->save();
 
-                    // Sync the relations for the post
+                    // Sync the relations for the post  
                     $this->syncMultipleRelations($post, $user, [
                         'tag' => $tagNames,
                         'language' => $languageNames,
-                        'technology' => $technologyNames
+                        'technology' => $technologyNames,
                     ]);
 
                     return $post;
                 });
+
+                $post = $this->managePostsFieldVisibility($request, $post);
 
                 // Load the relations for the post
                 $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
@@ -896,7 +1132,7 @@ class PostController extends Controller {
                 $this->syncMultipleRelations($post, $user, [
                     'tag' => $tagNames,
                     'language' => $languageNames,
-                    'technology' => $technologyNames
+                    'technology' => $technologyNames,
                 ]);
 
                 return $post;
