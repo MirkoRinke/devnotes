@@ -66,7 +66,7 @@ trait QueryBuilder {
                     ...($hasModeratorPrivileges ? ['moderation_info'] : []),
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'user_tokens' => [
                 'sort' => [
@@ -88,7 +88,7 @@ trait QueryBuilder {
                     ...['name', 'last_used_at']
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'user_profile' => [
                 'sort' => [
@@ -120,7 +120,7 @@ trait QueryBuilder {
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'post' => [
                 'sort' => [
@@ -167,7 +167,7 @@ trait QueryBuilder {
                     ...['is_favorited', 'is_liked'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'comment' => [
                 'sort' => [
@@ -210,7 +210,7 @@ trait QueryBuilder {
                     ...['is_liked'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'user_favorites' => [
                 'sort' => [
@@ -232,7 +232,7 @@ trait QueryBuilder {
                     ...['user_id', 'post_id'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'like' => [
                 'sort' => [
@@ -254,7 +254,7 @@ trait QueryBuilder {
                     ...['user_id', 'likeable_id', 'likeable_type', 'type'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'user_reports' => [
                 'sort' => [
@@ -276,7 +276,7 @@ trait QueryBuilder {
                     ...['user_id', 'reportable_id', 'reportable_type', 'type', 'reason', 'impact_value'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'user_followers' => [
                 'sort' => [
@@ -298,7 +298,7 @@ trait QueryBuilder {
                     ...['user_id', 'follower_id'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'forbidden_names' => [
                 'sort' => [
@@ -320,7 +320,7 @@ trait QueryBuilder {
                     ...['name', 'match_type', 'created_by_role', 'created_by_user_id'],
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'post_allowed_values' => [
                 'sort' => [
@@ -342,7 +342,7 @@ trait QueryBuilder {
                     ...['name', 'type', 'created_by_role', 'created_by_user_id']
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'critical_terms' => [
                 'sort' => [
@@ -364,7 +364,7 @@ trait QueryBuilder {
                     ...['name', 'language', 'severity', 'created_by_role', 'created_by_user_id']
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ],
             'apiKey' => [
                 'sort' => [
@@ -386,7 +386,7 @@ trait QueryBuilder {
                     ...['name', 'active', 'last_used_at']
                 ],
                 'setLimit' => 10,
-                'getPerPage' => 10
+                'paginate' => 10
             ]
         ];
 
@@ -658,10 +658,10 @@ trait QueryBuilder {
      * @example | $query = $this->buildQueryPaginate($request, $query, 'post');
      */
     protected function buildQueryPaginate(Request $request, Builder $query, string $modelType): Builder|JsonResponse {
-        $config = $this->getQueryConfig($request, $modelType, 'getPerPage');
+        $config = $this->getQueryConfig($request, $modelType, 'paginate');
         if ($config instanceof JsonResponse) {
             return $config;
         }
-        return $this->getPerPage($request, $query, (int) $config);
+        return $this->paginate($request, $query, (int) $config);
     }
 }
