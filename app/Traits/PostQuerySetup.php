@@ -59,6 +59,37 @@ trait PostQuerySetup {
         return $query;
     }
 
+    /**
+     * Get the selected fields for a relation from the request
+     * 
+     * @param Request $request
+     * @param string $tableName The name of the table
+     * @param array $defaultColumns The default columns to select
+     * @param string $relation The name of the relation
+     * @return array The selected fields
+     * 
+     * @example | $this->getSelectRelationFields($request, 'tags', ['id', 'name'], 'tags')
+     */
+    protected function getSelectRelationFields(Request $request, string $tableName, array $defaultColumns, string $relation): array {
+        if ($request->has("{$relation}_fields")) {
+            $selectedFields = [];
+            $fields = $request->input("{$relation}_fields");
+
+            if (!is_array($fields)) {
+                $fields = explode(',', $fields); // Convert comma-separated string to array
+            }
+
+            foreach ($fields as $key => $value) {
+                $valueCheck = "$tableName.$value as $value";
+                if (in_array($valueCheck, $defaultColumns)) {
+                    $selectedFields[$key] = "$tableName.$value as $value"; // Add the field to the selected fields
+                }
+            }
+            return $selectedFields;
+        }
+        return $defaultColumns;
+    }
+
 
     /**
      * Load the tags relation
@@ -95,8 +126,11 @@ trait PostQuerySetup {
                 "$tableName.name as name"
             ];
 
+            // If the request has 'tags_fields', we will use it to select the fields
+            $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'tags');
+
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $defaultColumns],
+                ['relation' => 'tags', 'foreignKey' => 'id', 'columns' => $selectedFields],
             ]);
 
             return $query;
@@ -141,8 +175,11 @@ trait PostQuerySetup {
                 "$tableName.name as name"
             ];
 
+            // If the request has 'languages_fields', we will use it to select the fields
+            $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'languages');
+
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'languages', 'foreignKey' => 'id', 'columns' => $defaultColumns],
+                ['relation' => 'languages', 'foreignKey' => 'id', 'columns' => $selectedFields],
             ]);
 
             return $query;
@@ -185,8 +222,11 @@ trait PostQuerySetup {
                 "$tableName.name as name"
             ];
 
+            // If the request has 'technologies_fields', we will use it to select the fields
+            $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'technologies');
+
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'technologies', 'foreignKey' => 'id', 'columns' => $defaultColumns],
+                ['relation' => 'technologies', 'foreignKey' => 'id', 'columns' => $selectedFields],
             ]);
 
             return $query;
