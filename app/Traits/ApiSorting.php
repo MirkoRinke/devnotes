@@ -29,7 +29,7 @@ trait ApiSorting {
      * 
      * @example | $this->sort($request, $query, (array)$config);
      */
-    public function sort(Request $request, Builder $query, array $allowedColumns = []): JsonResponse|Builder {
+    protected function sort(Request $request, Builder $query, array $allowedColumns = []): JsonResponse|Builder {
         $sort = $request->get('sort');
 
         /**
