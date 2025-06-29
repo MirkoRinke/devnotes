@@ -35,35 +35,36 @@ class CommentModerationService {
 
 
     /**
-     * Apply report moderation to a comment
-     * This method checks if the comment has been reported too many times
-     * If so, it replaces the content with a message
+     * Applies moderation logic to a comment and its loaded relations.
      *
-     * @param Comment $comment
-     * @return Comment
-     * 
-     * @example | $this->applyReportModeration($comment);
+     * - Replaces the "content" field if the comment has been reported too many times.
+     * - Replaces the "parent_content" field if the parent has been reported too many times.
+     * - Replaces the "parent_content" field in all children if this comment has been reported too many times.
+     * - Replaces the "content" field in the parent object of a child if the parent has been reported too many times.
+     * - Recursively applies moderation to all loaded children.
+     *
+     * @param Comment $comment The comment object (with loaded relations)
+     * @return Comment The moderated comment object
+     *
+     * @example $this->applyReportModeration($comment);
      */
     private function applyReportModeration($comment) {
-        /**
-         * Check if the comment has report attribute
-         * If not, return the comment
-         */
         if (!isset($comment->reports_count)) {
-            return $comment;
+            throw new \RuntimeException('reports_count is missing! Check query setup.');
         }
 
+
         /**
-         * Check if the comment has been reported too many times
+         * Replace content if this comment has been reported too many times
          */
         if ($comment->reports_count >= 5 && array_key_exists('content', $comment->getAttributes())) {
             $comment->content = "This comment has been reported too many times and is no longer available";
         }
 
         /**
-         * Check if the comment has a parent and if the parent has been reported too many times
+         * Replace parent_content if the parent has been reported too many times
          */
-        if ($comment->parent_id !== null) {
+        if ($comment->parent_id !== null && $comment->relationLoaded('parent')) {
             $parentComment = $comment->parent;
             if ($parentComment && $parentComment->reports_count >= 5 && array_key_exists('parent_content', $comment->getAttributes())) {
                 $comment->parent_content = "This comment has been reported too many times and is no longer available";
@@ -71,19 +72,23 @@ class CommentModerationService {
         }
 
         /**
-         * Check if the comment has children and if the children have been reported too many times
-         * If so, replace the parent_content in the children with a message and the content in the parent with a message
+         * Replace parent_content if this comment has been reported too many times
+         * Replace content in the parent object of the child if the parent has been reported too many times
+         * 
+         * Recursively apply moderation to the child
          */
-        if ($comment->children && $comment->children->isNotEmpty()) {
+        if ($comment->relationLoaded('children') && $comment->children && $comment->children->isNotEmpty()) {
             foreach ($comment->children as $child) {
-                if ($comment->reports_count >= 5) {
-                    if (array_key_exists('parent_content', $child->getAttributes())) {
-                        $child->parent_content = "This comment has been reported too many times and is no longer available";
-                    }
-                    if ($child->parent && array_key_exists('content', $child->parent->getAttributes())) {
-                        $child->parent->content = "This comment has been reported too many times and is no longer available";
-                    }
+
+                if ($comment->reports_count >= 5 && array_key_exists('parent_content', $child->getAttributes())) {
+                    $child->parent_content = "This comment has been reported too many times and is no longer available";
                 }
+
+                if ($child->relationLoaded('parent') && $child->parent && $comment->reports_count >= 5 && array_key_exists('content', $child->parent->getAttributes())) {
+                    $child->parent->content = "This comment has been reported too many times and is no longer available";
+                }
+
+                $this->applyReportModeration($child);
             }
         }
         return $comment;
