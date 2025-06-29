@@ -319,28 +319,28 @@ class PostController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->setupPostQuery($request, $query, 'buildQuery');
-            if ($query instanceof JsonResponse) {
-                return $query;
+            $posts = $this->setupPostQuery($request, $query, 'buildQuery');
+            if ($posts instanceof JsonResponse) {
+                return $posts;
             }
 
-            if ($query->isEmpty()) {
-                return $this->successResponse($query, 'No posts found with the given filters', 200);
+            if ($posts->isEmpty()) {
+                return $this->successResponse($posts, 'No posts found with the given filters', 200);
             }
 
-            $query = $this->managePostsFieldVisibility($request, $query);
+            $posts = $this->managePostsFieldVisibility($request, $posts);
 
-            $query = $this->checkForIncludedRelations($request, $query);
+            $posts = $this->checkForIncludedRelations($request, $posts);
 
-            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+            $posts = $this->controlVisibleFields($request, $originalSelectFields, $posts);
 
-            $query = $this->isFavorited($request, $user, $query, $originalSelectFields);
+            $posts = $this->isFavorited($request, $user, $posts, $originalSelectFields);
 
-            $query = $this->isLiked($request, $user, $query, 'post', $originalSelectFields);
+            $posts = $this->isLiked($request, $user, $posts, 'post', $originalSelectFields);
 
-            $query = $this->isFollowing($request, $query);
+            $posts = $this->isFollowing($request, $posts);
 
-            return $this->successResponse($query, 'Posts retrieved successfully');
+            return $this->successResponse($posts, 'Posts retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -599,7 +599,7 @@ class PostController extends Controller {
      *     "title": "Svelte Store: Simple State Management",
      *     "code": "import { writable } from 'svelte/store';",
      *     "description": "Svelte Store is a simple and efficient way to manage state in Svelte applications. It allows you to create reactive variables that can be shared across components.",
-     *     "images": [],                                  || Empty by default - requires user consent or owner access
+     *     "images": ["https://picsum.photos/200"],       || Empty by default - requires user consent or owner access
      *     "videos": [],                                  || Empty by default - requires user consent or owner access
      *     "resources": [],                               || Empty by default - requires user consent or owner access
      *     "external_source_previews": [
@@ -633,6 +633,8 @@ class PostController extends Controller {
      *     "moderation_info": [],                         || Admin and Moderator only
      *     "created_at": "2025-05-04T22:00:44.000000Z",
      *     "updated_at": "2025-05-04T22:00:45.000000Z",
+     *     "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
+     *     "is_liked": false,                             || Virtual field, true if the authenticated user has liked this post
      *     "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values. Users can create new tags when posting; other allowed values are admin-only.
      *       { "id": 1, "name": "svelte" },
      *       { "id": 2, "name": "store" },
