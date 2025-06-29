@@ -491,11 +491,11 @@ class PostController extends Controller {
      *   "message": "Validation failed",
      *   "code": 422,
      *   "errors": {
-     *     "category": ["VALUE_IS_FORBIDDEN"],
-     *     "post_type": ["VALUE_IS_FORBIDDEN"],
-     *     "status": ["VALUE_IS_FORBIDDEN"],
-     *     "language.0": ["VALUE_IS_FORBIDDEN"],
-     *     "technology.0": ["VALUE_IS_FORBIDDEN"]
+     *     "category": ["FRONTEND_IS_FORBIDDEN"],
+     *     "post_type": ["TUTORIAL_IS_FORBIDDEN"],
+     *     "status": ["PUBLISHED_IS_FORBIDDEN"],
+     *     "language.0": ["JAVA_IS_FORBIDDEN"],
+     *     "technology.0": ["ANGULAR_IS_FORBIDDEN"]
      *   }
      * }
      *
@@ -998,7 +998,7 @@ class PostController extends Controller {
      *   "code": 422,
      *   "errors": {
      *     "title": ["TITLE_MUST_BE_STRING"],
-     *     "category": ["VALUE_IS_FORBIDDEN"],
+     *     "category": ["FRONTEND_IS_FORBIDDEN"],
      *     "moderation_reason": ["MODERATION_REASON_FIELD_REQUIRED"]
      *   }
      * }
@@ -1211,7 +1211,7 @@ class PostController extends Controller {
 
             $this->authorize('delete', $post);
 
-            $post = DB::transaction(function () use ($post) {
+            DB::transaction(function () use ($post) {
                 // Delete all comments associated with the post
                 $this->postRelationService->deleteComments($post);
 
