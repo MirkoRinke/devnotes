@@ -148,6 +148,8 @@ trait FieldManager {
             'follower' => ['is_banned', 'was_ever_banned', 'moderation_info'],
             'post' => ['moderation_info', 'reports_count'],
             'comment' => ['moderation_info', 'reports_count'],
+            'parent' => ['moderation_info', 'reports_count'],
+            'children' => ['moderation_info', 'reports_count'],
             'profile' => ['reports_count']
         ];
 
