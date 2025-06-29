@@ -153,9 +153,9 @@ class PostFactory extends Factory {
             ];
 
             $this->syncMultipleRelations($post, $systemUser, [
-                'tags' => $tagNames,
-                'languages' => $languageNames,
-                'technologies' => $technologyNames
+                'tag' => $tagNames,
+                'language' => $languageNames,
+                'technology' => $technologyNames
             ]);
         });
     }
