@@ -70,7 +70,7 @@ trait PostQuerySetup {
      * 
      * @example | $this->getSelectRelationFields($request, 'tags', ['id', 'name'], 'tags')
      */
-    protected function getSelectRelationFields(Request $request, string $tableName, array $defaultColumns, string $relation): array {
+    private function getSelectRelationFields(Request $request, string $tableName, array $defaultColumns, string $relation): array {
         if ($request->has("{$relation}_fields")) {
             $selectedFields = [];
             $fields = $request->input("{$relation}_fields");
