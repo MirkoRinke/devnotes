@@ -68,7 +68,7 @@ class ValidPostValue implements ValidationRule {
         });
 
         if (!in_array($value, $allowedValues)) {
-            $fail(strtoupper($this->type) . '_' . strtoupper($value) . '_IS_FORBIDDEN');
+            $fail(strtoupper($value) . '_IS_FORBIDDEN');
             return;
         }
     }
