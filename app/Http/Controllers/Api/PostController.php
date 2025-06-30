@@ -159,7 +159,7 @@ class PostController extends Controller {
      * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user). 
      * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam *_fields string When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
      * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
      * @see \App\Traits\PostQuerySetup::getSelectRelationFields() for always-included relations
      *
@@ -304,8 +304,6 @@ class PostController extends Controller {
      * 2. For non-authenticated users: Send header X-Show-External-Images: true (similarly for videos/resources)
      * 3. For authenticated users: Either have auto_load_external_images set to true in user profile,
      *    or have a valid temporary permission (external_images_temp_until date is in the future)
-     *
-     * @authenticated
      */
     public function index(Request $request) {
         try {
@@ -583,7 +581,7 @@ class PostController extends Controller {
      * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user). 
      * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam *_fields string When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
      * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
      * @see \App\Traits\PostQuerySetup::getSelectRelationFields() for always-included relations
      *
@@ -694,8 +692,6 @@ class PostController extends Controller {
      * 2. For non-authenticated users: Send header X-Show-External-Images: true (similarly for videos/resources)
      * 3. For authenticated users: Either have auto_load_external_images set to true in user profile,
      *    or have a valid temporary permission (external_images_temp_until date is in the future)
-     *
-     * @authenticated
      */
     public function show(string $id, Request $request): JsonResponse {
         try {
