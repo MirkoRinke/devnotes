@@ -62,22 +62,23 @@ class RegisterController extends Controller {
      * Endpoint: POST /register
      * 
      * Creates a new user account with the provided information. Upon successful registration,
-     * a user profile is automatically generated and the username is checked against forbidden names.
+     * a user profile is automatically generated (with user_id and display_name), and the user receives an email for verification.
+     * The fields name and display_name are checked against a blacklist (FORBIDDEN_NAME).
      *
      * @group Authentication
      *
-     * @bodyParam name string required The full name of the user (2-255 characters). Example: John Doe
-     * @bodyParam display_name string required A unique username for display (2-255 characters). Example: johndoe
+     * @bodyParam name string required The full name of the user (2-255 characters, forbidden names not allowed). Example: John Doe
+     * @bodyParam display_name string required A unique username for display (2-255 characters, forbidden names not allowed). Example: johndoe
      * @bodyParam email string required A valid, unique email address. Example: john@example.com
      * @bodyParam password string required Password (min 8 characters). Example: secret123
      * @bodyParam password_confirmation string required Must match the password field. Example: secret123
      *
-     * @requestBody {
-     *   "name": "John Doe",
-     *   "display_name": "johndoe",
-     *   "email": "john@example.com",
-     *   "password": "secret123",
-     *   "password_confirmation": "secret123"
+     * @bodyContent {
+     *   "name": "John Doe",                        || required, string, min:2, max:255, forbidden names not allowed
+     *   "display_name": "johndoe",                 || required, string, unique, min:2, max:255, forbidden names not allowed
+     *   "email": "john@example.com",               || required, string, email, unique
+     *   "password": "secret123",                   || required, string, min:8, confirmed
+     *   "password_confirmation": "secret123"       || required, string, must match password
      * }
      * 
      * @response status=201 scenario="Success" {
@@ -86,13 +87,13 @@ class RegisterController extends Controller {
      *   "code": 201,
      *   "count": 1,
      *   "data": {
+     *     "id": 10
      *     "name": "John Doe",
      *     "display_name": "johndoe", 
      *     "email": "john@example.com",
-     *     "email_verified_at": "2025-04-29T18:35:29.000000Z",
+     *     "email_verified_at": "null", // or current timestamp if email verification is disabled
      *     "updated_at": "2025-04-29T18:35:29.000000Z",
      *     "created_at": "2025-04-29T18:35:29.000000Z",
-     *     "id": 10
      *   }
      * }
      *
@@ -101,6 +102,8 @@ class RegisterController extends Controller {
      *   "message": "Validation failed",
      *   "code": 422,
      *   "errors": {
+     *     "name": ["FORBIDDEN_NAME"],
+     *     "display_name": ["FORBIDDEN_NAME"],
      *     "email": ["EMAIL_ALREADY_IN_USE"],
      *     "display_name": ["DISPLAY_NAME_ALREADY_IN_USE"]
      *   }
@@ -112,6 +115,12 @@ class RegisterController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
+     *
+     * Note:
+     * - The fields name and display_name are checked against a blacklist (forbidden names).
+     * - After registration, a verification email is sent and the user must verify their email before logging in.
+     * - A user profile is automatically created with user_id and display_name.
+     * - Only the shown fields are returned in the response.
      */
     public function register(Request $request): JsonResponse {
         try {
