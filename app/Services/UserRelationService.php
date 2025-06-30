@@ -24,8 +24,10 @@ class UserRelationService {
      * 
      * @example | $this->userRelationService->createUserProfile($user);
      */
-    public function createUserProfile(User $user): UserProfile {
+    public function createUserProfile(User $user, $id = null): UserProfile {
         $userProfile = new UserProfile();
+        $userProfile->id = $id; // Allow passing a specific ID or let it auto-increment
+
         $userProfile->user_id = $user->id;
         $userProfile->display_name = $user->display_name ?? $user->name;
 
