@@ -49,7 +49,7 @@ class UserSeeder extends Seeder {
 
             $user->save();
 
-            $this->userRelationService->createUserProfile($user);
+            $this->userRelationService->createUserProfile($user, $data['id'] ?? null);
             $this->userRelationService->checkUsername($user);
 
             return $user;
