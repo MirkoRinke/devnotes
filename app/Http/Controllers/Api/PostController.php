@@ -258,7 +258,7 @@ class PostController extends Controller {
      *   "count": 1,
      *   "data": [
      *     {
-     *      .....
+     *      ..... || Same post data as above
      *       "user": {
      *          "id": 42,
      *          "display_name": "John Doe",
@@ -656,7 +656,7 @@ class PostController extends Controller {
      *   "code": 200,
      *   "data": [
      *     {
-     *      .....
+     *      ..... || Same post data as above
      *       "user": {
      *          "id": 42,
      *          "display_name": "John Doe",
