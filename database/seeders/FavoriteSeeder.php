@@ -17,7 +17,7 @@ class FavoriteSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding favorites...');
 
-        $userIds = User::whereNotIn('role', ['system'])->pluck('id')->toArray();
+        $userIds = User::whereNotIn('role', ['system', 'admin', 'moderator'])->pluck('id')->toArray();
 
         foreach ($userIds as $userId) {
             /**
