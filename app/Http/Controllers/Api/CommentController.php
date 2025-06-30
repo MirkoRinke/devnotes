@@ -102,51 +102,61 @@ class CommentController extends Controller {
 
 
     /**
-     * Get All Comments
+     * List All Comments
      * 
      * Endpoint: GET /comments
      *
-     * Retrieves a list of all comments, optionally filtered and sorted.
-     * Comments are nested with their replies up to the configured maximum depth.
+     * Retrieves a list of comments with support for filtering, sorting, field selection, relation inclusion, and pagination.  
+     * **By default, results are paginated.**
+     *
+     * Comments can be nested (children) up to a maximum depth.  
+     * Relations (`user`, `parent`, `children`) can be included via the `include` parameter.
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`, `parent_fields`, `children_fields`)
+     * to specify which fields should be returned for each relation.
      * 
+     * Example: `/comments?include=user,children&user_fields=id,display_name&children_fields=id,content`
+     *
      * @group Comments
      *
-     * @queryParam select string Select specific fields for the main comment(s). Example: select=id,content,user_id
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[content]=code
-     * @queryParam filter[parent_id] string Filter to show only top-level comments. Example: filter[parent_id]=null
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. 
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[content]=Thanks
-     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[content]=Stores!
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Number of items per page. Example: per_page=15 (default: 10)
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details. 
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: include=user,children,parent
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user, parent, children). 
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * Field selection parameters:
-     * @queryParam user_fields string Fields to include for user relation. Example: user_fields=id,display_name,role
-     * @queryParam parent_fields string Fields to include for parent comment relation. Example: parent_fields=id,content,updated_at
-     * @queryParam children_fields string Fields to include for child comment relation. Example: children_fields=id,content,is_deleted
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
      * 
-     * Note: If `children_fields` or `parent_fields` are not provided but `select` is, the fields from `select` 
-     * will be applied to child/parent comments as well. This provides consistent field selection across all 
-     * comment levels while still allowing precise control when needed.
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination). 
+     * @see \App\Traits\ApiPagination::paginate()
      * 
-     * Example URL: /comments
-     * 
-     * @response status=200 scenario="Comments retrieved" {
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
+     * Example URL: /comments/
+     *
+     * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Comments retrieved successfully",
      *   "code": 200,
-     *   "count": 9,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
      *       "post_id": 1,
      *       "user_id": 4,
      *       "parent_id": null,
-     *       "content": "Thanks for this helpful post about Svelte Stores!",
+     *       "content": "Great explanation! This really helped me understand Svelte Stores.",
      *       "parent_content": null,
      *       "is_deleted": false,
      *       "depth": 0,
@@ -154,67 +164,96 @@ class CommentController extends Controller {
      *       "reports_count": 0,                || Admin and Moderator only
      *       "is_updated": false,
      *       "updated_by_role": null,
-     *       "moderation_info": null,           || Admin and Moderator only
+     *       "moderation_info": [],             || Admin and Moderator only
      *       "created_at": "2025-04-30T19:34:25.000000Z",
-     *       "updated_at": "2025-04-30T19:34:25.000000Z",      
+     *       "updated_at": "2025-04-30T19:34:25.000000Z",
+     *       "is_liked": false                  || Virtual field, true if the authenticated user has liked this comment
      *     }
      *   ]
      * }
-     * 
-     * Example URL: comments/?/include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
-     * 
-     * @response status=200 scenario="Comments retrieved" {
+     *
+     * Example URL: /comments/?include=user,parent,children
+     *
+     * @response status=200 scenario="Success with includes" {
      *   "status": "success",
      *   "message": "Comments retrieved successfully",
      *   "code": 200,
-     *   "count": 9,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "post_id": 1,
-     *       "user_id": 4,
-     *       "parent_id": null,
-     *       "content": "Thanks for this helpful post about Svelte Stores!",
-     *       "parent_content": null,
-     *       "is_deleted": false,
-     *       "depth": 0,
-     *       "likes_count": 2,
-     *       "reports_count": 0,                || Admin and Moderator only
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "moderation_info": null,           || Admin and Moderator only
-     *       "created_at": "2025-04-30T19:34:25.000000Z",
-     *       "updated_at": "2025-04-30T19:34:25.000000Z",
+     *      .....
      *       "user": {
-     *         "id": 4,
-     *         "display_name": "Maxi4",
+     *         "id": 222,
+     *         "display_name": "carmine.little",
+     *         "role": "user",
+     *         "created_at": "2025-06-29T00:07:03.000000Z",
+     *         "updated_at": "2025-06-29T00:07:03.000000Z",
+     *         "is_banned": null,               || Admin and Moderator only
+     *         "was_ever_banned": false,        || Admin and Moderator only
+     *         "moderation_info": [],           || Admin and Moderator only
+     *         "is_following": false            || Virtual field, true if the authenticated user is following this user
      *       },
-     *       "parent": null,
+     *       "parent": {
+     *         "id": 801,
+     *         "post_id": 68,
+     *         "user_id": 383,
+     *         "parent_id": null,
+     *         "content": "Great explanation! This really helped me understand Svelte Stores.",
+     *         "parent_content": null,
+     *         "is_deleted": false,
+     *         "depth": 0,
+     *         "likes_count": 4,
+     *         "reports_count": 0,                || Admin and Moderator only
+     *         "is_updated": false,
+     *         "updated_by_role": null,
+     *         "moderation_info": [],             || Admin and Moderator only
+     *         "created_at": "2025-06-29T00:07:37.000000Z",
+     *         "updated_at": "2025-06-29T00:08:11.000000Z"
+     *       },
      *       "children": [
      *         {
-     *           "id": 2,
-     *           "post_id": 1,
-     *           "user_id": 7,
-     *           "parent_id": 1,
-     *           "content": "I'm glad you like it!",
-     *           "parent_content": "Thanks for this helpful post about Svelte Stores!",
+     *           "id": 821,
+     *           "post_id": 68,
+     *           "user_id": 204,
+     *           "parent_id": 802,
+     *           "content": "Thanks for the clarification! Now it makes sense.",
+     *           "parent_content": "I agree, the documentation could use more real-world examples.",
      *           "is_deleted": false,
-     *           "depth": 1,
-     *           "likes_count": 1,
+     *           "depth": 2,
+     *           "likes_count": 5,
      *           "reports_count": 0,                || Admin and Moderator only
      *           "is_updated": false,
      *           "updated_by_role": null,
-     *           "moderation_info": null,           || Admin and Moderator only
-     *           "created_at": "2025-04-30T19:34:25.000000Z",
-     *           "updated_at": "2025-04-30T19:34:25.000000Z",
+     *           "moderation_info": [],             || Admin and Moderator only
+     *           "created_at": "2025-06-29T00:07:37.000000Z",
+     *           "updated_at": "2025-06-29T00:08:11.000000Z",
      *           "user": {
-     *             "id": 7,
-     *             "display_name": "Maxi7",
+     *             "id": 204,
+     *             "display_name": "coralie89",
+     *             "role": "user",
+     *             "created_at": "2025-06-29T00:07:03.000000Z",
+     *             "updated_at": "2025-06-29T00:07:03.000000Z"
+     *             "is_banned": null,               || Admin and Moderator only
+     *             "was_ever_banned": false,        || Admin and Moderator only
+     *             "moderation_info": [],           || Admin and Moderator only
+     *             "is_following": false            || Virtual field, true if the authenticated user is following this user
      *           },
      *           "parent": {
-     *             "id": 1,
-     *             "user_id": 4,
-     *             "content": "Thanks for this helpful post about Svelte Stores!",
+     *             "id": 802,
+     *             "post_id": 68,
+     *             "user_id": 222,
+     *             "parent_id": 801,
+     *             "content": "I agree, the documentation could use more real-world examples.",
+     *             "parent_content": "Great explanation! This really helped me understand Svelte Stores.",
+     *             "is_deleted": false,
+     *             "depth": 1,
+     *             "likes_count": 3,
+     *             "reports_count": 0,                || Admin and Moderator only
+     *             "is_updated": false,
+     *             "updated_by_role": null,
+     *             "moderation_info": [],             || Admin and Moderator only
+     *             "created_at": "2025-06-29T00:07:37.000000Z",
+     *             "updated_at": "2025-06-29T00:08:11.000000Z"
      *           },
      *           "children": []
      *         }
@@ -237,7 +276,9 @@ class CommentController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
+     *
+     * Note:  
+     * - Comments are nested up to the configured maximum depth.
      */
     public function index(Request $request) {
         try {
@@ -247,26 +288,26 @@ class CommentController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->setupCommentQuery($request, $query, 'buildQuery');
-            if ($query instanceof JsonResponse && $query->getStatusCode() === 400) {
-                return $query;
+            $comments = $this->setupCommentQuery($request, $query, 'buildQuery');
+            if ($comments instanceof JsonResponse) {
+                return $comments;
             }
 
-            if ($query->isEmpty()) {
+            if ($comments->isEmpty()) {
                 return $this->successResponse([], 'No comments found', 200);
             }
 
-            $query = $this->manageCommentsFieldVisibility($request, $query);
+            $comments = $this->manageCommentsFieldVisibility($request, $comments);
 
-            $query = $this->checkForIncludedRelations($request, $query);
+            $comments = $this->checkForIncludedRelations($request, $comments);
 
-            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+            $comments = $this->controlVisibleFields($request, $originalSelectFields, $comments);
 
-            $query = $this->isLiked($request, $user, $query, 'comment', $originalSelectFields);
+            $comments = $this->isLiked($request, $user, $comments, 'comment', $originalSelectFields);
 
-            $query = $this->isFollowing($request, $query);
+            $comments = $this->isFollowing($request, $comments);
 
-            return $this->successResponse($query, 'Comments retrieved successfully', 200);
+            return $this->successResponse($comments, 'Comments retrieved successfully', 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -282,14 +323,14 @@ class CommentController extends Controller {
      * 
      * @group Comments
      * 
-     * @bodyParam content string required The content of the comment. Example: This is a really insightful post!
-     * @bodyParam post_id integer required The ID of the post this comment belongs to. Example: 5
-     * @bodyParam parent_id integer optional The ID of the parent comment (if this is a reply). Example: 12
+     * @bodyParam content string required The content of the comment. Example: This is a comment for Post (Top-Level Comment)
+     * @bodyParam post_id integer required The ID of the post this comment belongs to. Example: 8
+     * @bodyParam parent_id integer optional The ID of the parent comment (if this is a reply). Example: 1151
      * 
      * @bodyContent {
-     *   "content": "This is a really insightful post!",  // required, string, max:255
-     *   "post_id": 5,                                    // required, integer, must exist in posts table
-     *   "parent_id": 12                                  // optional, integer, must exist in comments table
+     *   "content": "This is a comment for Post (Top-Level Comment)",   || required, string, max:255
+     *   "post_id": 8,                                                  || required, integer, must exist in posts table
+     *   "parent_id": 1151                                              || optional, integer, must exist in comments table
      * }
      * 
      * @response status=201 scenario="Comment created" {
@@ -298,15 +339,14 @@ class CommentController extends Controller {
      *   "code": 201,
      *   "count": 1,
      *   "data": {
-     *     "id": 15
-     *     "post_id": 5,
+     *     "id": 1151,
+     *     "post_id": 8,
      *     "user_id": 1,
-     *     "parent_id": null,
-     *     "content": "This is a really insightful post!",
+     *     "content": "This is a comment for Post (Top-Level Comment)",
      *     "parent_content": null,
      *     "depth": 0,
-     *     "updated_at": "2025-04-30T21:46:12.000000Z",
-     *     "created_at": "2025-04-30T21:46:12.000000Z",
+     *     "updated_at": "2025-06-29T22:20:35.000000Z",
+     *     "created_at": "2025-06-29T22:20:35.000000Z"
      *   }
      * }
      * 
@@ -316,15 +356,15 @@ class CommentController extends Controller {
      *   "code": 201,
      *   "count": 1,
      *   "data": {
-     *     "id": 16
-     *     "post_id": 5,
+     *     "id": 1152,
+     *     "post_id": 8,
      *     "user_id": 1,
-     *     "parent_id": 15,
-     *     "content": "Adding my thoughts to this thread.",
-     *     "parent_content": "This is a really insightful post!",
+     *     "parent_id": 1151,
+     *     "content": "This is a comment for comment",
+     *     "parent_content": "This is a comment for Post (Top-Level Comment)",
      *     "depth": 1,
-     *     "updated_at": "2025-04-30T21:46:45.000000Z",
-     *     "created_at": "2025-04-30T21:46:45.000000Z",
+     *     "updated_at": "2025-06-29T22:22:44.000000Z",
+     *     "created_at": "2025-06-29T22:22:44.000000Z"
      *   }
      * }
      * 
@@ -383,7 +423,6 @@ class CommentController extends Controller {
      * }
      * 
      * @authenticated
-     *      
      */
     public function store(Request $request) {
         try {
@@ -456,104 +495,133 @@ class CommentController extends Controller {
      * 
      * Endpoint: GET /comments/{id}
      *
-     * Retrieves a specific comment by its ID, optionally with its relations.
-     * Relations like parent comment, user, and nested replies can be included.
+     * Retrieves a specific comment by its ID, with support for field selection and relation inclusion.
+     * Relations (`user`, `parent`, `children`) can be included via the `include` parameter.
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`, `parent_fields`, `children_fields`)
+     * to specify which fields should be returned for each relation.
      * 
+     * Example: `/comments/802?include=user,parent,children&user_fields=id,display_name&children_fields=id,content`
+     *
      * @group Comments
      *
-     * @urlParam id required The ID of the comment. Example: 1
-     * @queryParam select string Select specific fields for the main comment. Example: select=id,content,user_id
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. 
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam include string Comma-separated relations to include (user,parent,children). Example: include=user,children,parent
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user, parent, children). 
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * Field selection parameters:
-     * @queryParam user_fields string Fields to include for user relation. Example: user_fields=id,display_name,role
-     * @queryParam parent_fields string Fields to include for parent comment relation. Example: parent_fields=id,content,updated_at
-     * @queryParam children_fields string Fields to include for child comment relation. Example: children_fields=id,content,is_deleted
-     * 
-     * Note: If `children_fields` or `parent_fields` are not provided but `select` is, the fields from `select` 
-     * will be applied to child/parent comments as well. This provides consistent field selection across all 
-     * comment levels while still allowing precise control when needed.
-     * 
-     * Example URL: /comments/1
-     * 
-     * @response status=200 scenario="Comment retrieved" {
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
+     * Example URL: /comments/802
+     *
+     * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Comment retrieved successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "post_id": 1,
-     *     "user_id": 4,
-     *     "parent_id": null,
-     *     "content": "Thanks for this helpful post about Svelte Stores!",
-     *     "parent_content": null,
+     *     "id": 802,
+     *     "post_id": 68,
+     *     "user_id": 222,
+     *     "parent_id": 801,
+     *     "content": "Great explanation! This really helped me understand Svelte Stores.",
+     *     "parent_content": "Thanks for this helpful post about Svelte Stores!",
      *     "is_deleted": false,
-     *     "depth": 0,
-     *     "likes_count": 2,
-     *     "reports_count": 0,                  || Admin and Moderator only
+     *     "depth": 1,
+     *     "likes_count": 3,
+     *     "reports_count": 0,                || Admin and Moderator only
      *     "is_updated": false,
      *     "updated_by_role": null,
-     *     "moderation_info": null,             || Admin and Moderator only
-     *     "created_at": "2025-04-30T19:34:25.000000Z",
-     *     "updated_at": "2025-04-30T19:34:25.000000Z",       
+     *     "moderation_info": [],             || Admin and Moderator only
+     *     "created_at": "2025-06-29T00:07:37.000000Z",
+     *     "updated_at": "2025-06-29T19:30:30.000000Z",
+     *     "is_liked": false                  || Virtual field, true if the authenticated user has liked this comment
      *   }
      * }
-     * 
-     * Example URL: /comments/1/?include=children,user,parent&user_fields=display_name&parent_fields=user_id,content
-     * 
-     * @response status=200 scenario="Comment retrieved" {
+     *
+     * Example URL: /comments/802?include=user,parent,children
+     *
+     * @response status=200 scenario="Success with includes" {
      *   "status": "success",
      *   "message": "Comment retrieved successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "post_id": 1,
-     *     "user_id": 4,
-     *     "parent_id": null,
-     *     "content": "Thanks for this helpful post about Svelte Stores!",
-     *     "parent_content": null,
-     *     "is_deleted": false,
-     *     "depth": 0,
-     *     "likes_count": 2,
-     *     "reports_count": 0,                  || Admin and Moderator only
-     *     "is_updated": false,
-     *     "updated_by_role": null,
-     *     "moderation_info": null,             || Admin and Moderator only
-     *     "created_at": "2025-04-30T19:34:25.000000Z",
-     *     "updated_at": "2025-04-30T19:34:25.000000Z",
+     *    .....
      *     "user": {
-     *       "id": 4,
-     *       "display_name": "Maxi4"
+     *       "id": 222,
+     *       "display_name": "carmine.little",
+     *       "role": "user",
+     *       "created_at": "2025-06-29T00:07:03.000000Z",
+     *       "updated_at": "2025-06-29T00:07:03.000000Z",
+     *       "is_banned": null,               || Admin and Moderator only
+     *       "was_ever_banned": false,        || Admin and Moderator only
+     *       "moderation_info": [],           || Admin and Moderator only
+     *       "is_following": false            || Virtual field, true if the authenticated user is following this user
      *     },
-     *     "parent": null,
+     *     "parent": {
+     *       "id": 801,
+     *       "post_id": 68,
+     *       "user_id": 383,
+     *       "parent_id": null,
+     *       "content": "Thanks for this helpful post about Svelte Stores!",
+     *       "parent_content": null,
+     *       "is_deleted": false,
+     *       "depth": 0,
+     *       "likes_count": 4,
+     *       "reports_count": 0,                || Admin and Moderator only
+     *       "is_updated": false,
+     *       "updated_by_role": null,
+     *       "moderation_info": [],             || Admin and Moderator only
+     *       "created_at": "2025-06-29T00:07:37.000000Z",
+     *       "updated_at": "2025-06-29T00:08:11.000000Z"
+     *     },
      *     "children": [
      *       {
-     *         "id": 2,
-     *         "post_id": 1,
-     *         "user_id": 7,
-     *         "parent_id": 1,
-     *         "content": "I'm glad you like it!",
-     *         "parent_content": "Thanks for this helpful post about Svelte Stores!",
+     *         "id": 821,
+     *         "post_id": 68,
+     *         "user_id": 204,
+     *         "parent_id": 802,
+     *         "content": "Thanks for the clarification! Now it makes sense.",
+     *         "parent_content": "Great explanation! This really helped me understand Svelte Stores.",
      *         "is_deleted": false,
-     *         "depth": 1,
-     *         "likes_count": 1,
-     *         "reports_count": 0,              || Admin and Moderator only
+     *         "depth": 2,
+     *         "likes_count": 5,
+     *         "reports_count": 0,                || Admin and Moderator only
      *         "is_updated": false,
      *         "updated_by_role": null,
-     *         "moderation_info": null,         || Admin and Moderator only
-     *         "created_at": "2025-04-30T19:34:25.000000Z",
-     *         "updated_at": "2025-04-30T19:34:25.000000Z",
+     *         "moderation_info": [],             || Admin and Moderator only
+     *         "created_at": "2025-06-29T00:07:37.000000Z",
+     *         "updated_at": "2025-06-29T00:08:11.000000Z",
      *         "user": {
-     *           "id": 7,
-     *           "display_name": "Maxi7"
+     *           "id": 204,
+     *           "display_name": "coralie89",
+     *           "role": "user",
+     *           "created_at": "2025-06-29T00:07:03.000000Z",
+     *           "updated_at": "2025-06-29T00:07:03.000000Z"
+     *           "is_banned": null,               || Admin and Moderator only
+     *           "was_ever_banned": false,        || Admin and Moderator only
+     *           "moderation_info": [],           || Admin and Moderator only
+     *           "is_following": false            || Virtual field, true if the authenticated user is following this user
      *         },
      *         "parent": {
-     *           "id": 1,
-     *           "user_id": 4,
-     *           "content": "Thanks for this helpful post about Svelte Stores!",
+     *           "id": 802,
+     *           "post_id": 68,
+     *           "user_id": 222,
+     *           "parent_id": 801,
+     *           "content": "Great explanation! This really helped me understand Svelte Stores.",
+     *           "parent_content": "Thanks for this helpful post about Svelte Stores.",
+     *           "is_deleted": false,
+     *           "depth": 1,
+     *           "likes_count": 3,
+     *           "reports_count": 0,                || Admin and Moderator only
+     *           "is_updated": false,
+     *           "updated_by_role": null,
+     *           "moderation_info": [],             || Admin and Moderator only
+     *           "created_at": "2025-06-29T00:07:37.000000Z",
+     *           "updated_at": "2025-06-29T19:30:30.000000Z"
      *         },
      *         "children": []
      *       }
@@ -574,7 +642,9 @@ class CommentController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
+     *
+     * Note:  
+     * - Comments are nested up to the configured maximum depth.
      */
     public function show(string $id, Request $request) {
         try {
@@ -616,50 +686,97 @@ class CommentController extends Controller {
      * Endpoint: PATCH /comments/{id}
      *
      * Updates the content of an existing comment.
-     * Regular users can only update their own comments.
-     * Admins/moderators can update any comment with a required moderation reason.
+     * Owners can update their own comments. Admins and moderators can update any comment (with moderation reason).
      * 
      * @group Comments
      * 
-     * @urlParam id required The ID of the comment to update. Example: 15
+     * @urlParam id required The ID of the comment to update. Example: 1151
      * 
-     * @bodyParam content string required The updated content of the comment. Example: This comment has been updated with more insights.
-     * @bodyParam moderation_reason string required only for admins/moderators. The reason for moderation. Example: Inappropriate language removed.
+     * @bodyParam content string required The updated content of the comment. Example: This is an updated for (Top-Level Comment) comment
+     * @bodyParam moderation_reason string required only for admins/moderators. The reason for moderation. Example: Content changed
      * 
      * @bodyContent {
-     *   "content": "This comment has been updated with more insights." // required, string, max:255
+     *   "content": "This is an updated for (Top-Level Comment) comment"    || required, string, max:255
      * }
      * 
      * @bodyContent scenario="Admin moderation" {
-     *   "content": "This comment has been updated with appropriate language.",  // required, string, max:255
-     *   "moderation_reason": "Inappropriate language removed"                   // required for admins/moderators, string, max:255
+     *   "content": "This is an updated for (Top-Level Comment) comment",   || required, string, max:255
+     *   "moderation_reason": "Content changed"                             || required for admins/moderators, string, max:255
      * }
      * 
-     * @response status=200 scenario="Comment updated" {
+     * @response status=200 scenario="Comment updated (own comment)" {
      *   "status": "success",
      *   "message": "Comment updated successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 15,
-     *     "post_id": 5,
+     *     "id": 1151,
+     *     "post_id": 8,
      *     "user_id": 1,
      *     "parent_id": null,
-     *     "content": "This comment has been updated with more insights.",
+     *     "content": "This is an updated for (Top-Level Comment) comment",
      *     "parent_content": null,
      *     "is_deleted": false,
      *     "depth": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,          || Admin and Moderator only
+     *     "reports_count": 0,                  || Admin and Moderator only
      *     "is_updated": true,
-     *     "updated_by_role": "user",
-     *     "moderation_info": null,     || Admin and Moderator only
-     *     "created_at": "2025-04-30T19:45:12.000000Z",
-     *     "updated_at": "2025-04-30T20:15:45.000000Z"
+     *     "updated_by_role": "admin",
+     *     "moderation_info": [],               || Admin and Moderator only
+     *     "created_at": "2025-06-29T22:20:35.000000Z",
+     *     "updated_at": "2025-06-29T22:41:24.000000Z"
      *   }
      * }
      * 
-     * @response status=200 scenario="Comment moderated by admin" {
+     * @response status=200 scenario="Comment updated (admin/moderator)" {
+     *   "status": "success",
+     *   "message": "Comment updated successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 1150,
+     *     "post_id": 307,
+     *     "user_id": 3,
+     *     "parent_id": null,
+     *     "content": "This is an updated for (Top-Level Comment) comment",
+     *     "parent_content": null,
+     *     "is_deleted": true,
+     *     "depth": 0,
+     *     "likes_count": 2,
+     *     "reports_count": 0,                  || Admin and Moderator only
+     *     "is_updated": true,
+     *     "updated_by_role": "admin",
+     *     "moderation_info": [
+     *       {
+     *         "user_id": 1,
+     *         "username": "Admin",
+     *         "role": "admin",
+     *         "timestamp": "2025-06-30T00:59:18+02:00",
+     *         "reason": "Content changed",
+     *         "action": "updated",
+     *         "changes": null
+     *       },
+     *       {
+     *         "role": "admin",
+     *         "action": "updated",
+     *         "reason": "Content changed",
+     *         "changes": {
+     *           "content": {
+     *             "to": "This is an updated for (Top-Level Comment) comment",
+     *             "from": "Content deleted (Factory)"
+     *           }
+     *         },
+     *         "user_id": 1,
+     *         "username": "Admin",
+     *         "timestamp": "2025-06-30T00:45:32+02:00"
+     *       }
+     *     ],
+     *     "created_at": "2025-06-29T00:07:44.000000Z",
+     *     "updated_at": "2025-06-29T22:59:18.000000Z"
+     *   }
+     * }
+     * 
+     * @response status=200 scenario="Comment moderated by admin (classic example)" {
      *   "status": "success",
      *   "message": "Comment updated successfully",
      *   "code": 200,
@@ -674,10 +791,10 @@ class CommentController extends Controller {
      *     "is_deleted": false,
      *     "depth": 0,
      *     "likes_count": 0,
-     *     "reports_count": 0,          || Admin and Moderator only
+     *     "reports_count": 0,                  || Admin and Moderator only
      *     "is_updated": true,
      *     "updated_by_role": "admin",
-     *     "moderation_info": [         || Admin and Moderator only
+     *     "moderation_info": [                 || Admin and Moderator only
      *       {
      *         "user_id": 1,
      *         "username": "Max Mustermann1",
@@ -749,7 +866,6 @@ class CommentController extends Controller {
      * }
      * 
      * @authenticated
-     * 
      */
     public function update(Request $request, string $id) {
         try {
@@ -800,6 +916,8 @@ class CommentController extends Controller {
 
                 $comment->save();
 
+                $comment = $this->manageCommentsFieldVisibility($request, $comment);
+
                 return $this->successResponse($comment, 'Comment updated successfully', 200);
             }
 
@@ -840,7 +958,7 @@ class CommentController extends Controller {
      *
      * Permanently removes a comment from the database, along with all associated data.
      * This action also removes all child comments, likes, and reports.
-     * This endpoint is restricted to administrators only.
+     * This endpoint is restricted to administrators and moderators only.
      * 
      * @group Comments
      *
@@ -850,7 +968,7 @@ class CommentController extends Controller {
      *   "status": "success",
      *   "message": "Comment deleted successfully",
      *   "code": 200,
-     *   "count": 0,
+     *   "count": 1,
      *   "data": null
      * }
      * 
@@ -875,6 +993,11 @@ class CommentController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      * 
+     * Note:
+     * - This endpoint deletes the comment and all its child comments (recursively), including all related likes and reports.
+     * - Use this for complete thread removal (e.g. spam or abusive content).
+     * - For soft-delete (preserving children), see `deleteComment`.
+     * 
      * @authenticated
      */
     public function destroy(string $id) {
@@ -883,7 +1006,7 @@ class CommentController extends Controller {
 
             $this->authorize('delete', $comment);
 
-            $comment = DB::transaction(function () use ($comment) {
+            DB::transaction(function () use ($comment) {
                 // Delete all reports and likes associated with the comment
                 $this->commentRelationService->deleteReports($comment);
                 $this->commentRelationService->deleteLikes($comment);
@@ -891,14 +1014,12 @@ class CommentController extends Controller {
                 // Delete all child comments
                 $this->commentRelationService->deleteChildren($comment);
 
-                // Delete the comment
-                $comment->delete();
-
                 // Update the last_comment_at timestamp of the parent post and comments_count
                 $this->commentRelationService->updateLastCommentAt($comment);
                 $this->commentRelationService->updateCommentsCount($comment, 'decrement');
 
-                return $comment;
+                // Delete the comment
+                $comment->delete();
             });
 
             return $this->successResponse(null, 'Comment deleted successfully', 200);
@@ -918,14 +1039,14 @@ class CommentController extends Controller {
      *
      * Deletes a comment using a smart approach based on its children:
      * - If the comment has children, it will be soft deleted (marked as deleted but still visible)
-     * - If the comment has no children, it will be permanently deleted
+     * - If the comment has no children, it will be permanently deleted (including all related likes and reports)
      * 
      * Regular users can only delete their own comments.
-     * Admins/moderators can delete any comment.
+     * Admins and moderators can delete any comment.
      * 
      * @group Comments
      *
-     * @urlParam id required The ID of the comment to delete. Example: 15
+     * @urlParam id required The ID of the comment to delete. Example: 501
      * 
      * @response status=200 scenario="Comment soft-deleted" {
      *   "status": "success",
@@ -933,21 +1054,21 @@ class CommentController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 15,
-     *     "post_id": 5,
-     *     "user_id": 1,
+     *     "id": 501,
+     *     "post_id": 167,
+     *     "user_id": 179,
      *     "parent_id": null,
      *     "content": "This comment has been deleted",
      *     "parent_content": null,
      *     "is_deleted": true,
      *     "depth": 0,
-     *     "likes_count": 0,
-     *     "reports_count": 0,              || Admin and Moderator only
+     *     "likes_count": 3,
+     *     "reports_count": 0,                                  || Admin and Moderator only   
      *     "is_updated": false,
      *     "updated_by_role": null,
-     *     "moderation_info": null,         || Admin and Moderator only
-     *     "created_at": "2025-04-30T19:45:12.000000Z",
-     *     "updated_at": "2025-05-01T14:26:32.000000Z"
+     *     "moderation_info": [],                               || Admin and Moderator only 
+     *     "created_at": "2025-06-29T00:07:32.000000Z",
+     *     "updated_at": "2025-06-29T23:39:05.000000Z"
      *   }
      * }
      * 
@@ -980,6 +1101,11 @@ class CommentController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      * 
+     * Note:
+     * - Soft delete: Only the `is_deleted` flag is set and the content is replaced if children exist.
+     * - Hard delete: The comment is removed including all related likes and reports if no children exist.
+     * - Regular users can only delete their own comments, admins/moderators can delete any comment.
+     * 
      * @authenticated
      */
     public function deleteComment(Request $request, string $id) {
@@ -1006,14 +1132,16 @@ class CommentController extends Controller {
 
                 return $this->successResponse($comment, "Comment marked as deleted", 200);
             } else {
-                $comment = DB::transaction(function () use ($comment) {
-                    $comment->delete();
+                DB::transaction(function () use ($comment) {
+                    // Delete all reports and likes associated with the comment
+                    $this->commentRelationService->deleteReports($comment);
+                    $this->commentRelationService->deleteLikes($comment);
 
                     // Update the last_comment_at timestamp of the parent post and comments_count
                     $this->commentRelationService->updateLastCommentAt($comment);
                     $this->commentRelationService->updateCommentsCount($comment, 'decrement');
 
-                    return $comment;
+                    $comment->delete();
                 });
                 return $this->successResponse(null, "Comment deleted successfully", 200);
             }
