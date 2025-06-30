@@ -181,7 +181,7 @@ class CommentController extends Controller {
      *   "count": 1,
      *   "data": [
      *     {
-     *      .....
+     *      ..... || Same comment data as above
      *       "user": {
      *         "id": 222,
      *         "display_name": "carmine.little",
@@ -549,7 +549,7 @@ class CommentController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *    .....
+     *    ..... || Same comment data as above
      *     "user": {
      *       "id": 222,
      *       "display_name": "carmine.little",
