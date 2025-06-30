@@ -99,180 +99,114 @@ class UserController extends Controller {
      * 
      * Endpoint: GET /users
      *
-     * Retrieves a complete list of users with all information, including moderation history.
-     * 
+     * Retrieves a list of users with support for filtering, sorting, field selection, relation inclusion, and pagination.
      * Only administrators can access this endpoint.
      *
      * @group User Management
      *
-     * @queryParam select string Comma-separated list of fields to include. Example: select=id,name,email
-     * @queryParam sort string Field to sort by (prefix with - for descending). Example: sort=-created_at
-     * @queryParam filter[name] string Filter users by exact name match. Example: filter[name]=John Doe
-     * @queryParam filter[is_banned] string Filter users by ban status. Options:
-     *        - is:null: Users who are not banned
-     *        - is:not_null: Users who are currently banned
-     *        - Date string: Match specific ban expiry date
-     *        Example: /?filter[is_banned]=is:not_null
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[name] string Filter by name starting with value. Example: startsWith[name]=John
-     * @queryParam endsWith[email] string Filter by email ending with value. Example: endsWith[email]=@example.com
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=profile
-     * @queryParam profile_fields string When including profile relation, specify fields to return. Example: profile_fields=id,user_id,display_name,public_email
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Number of users per page (5-100). Example: per_page=15 (default: 10)
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. profile).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: profile_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
      * Example URL: /users
-     * 
+     *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Users retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "name": "Admin User",
-     *       "email": "admin@example.com",
-     *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
-     *       "created_at": "2025-04-28T10:00:00.000000Z",
-     *       "updated_at": "2025-04-28T10:00:00.000000Z",
-     *       "display_name": "John Dev",
+     *       "name": "Admin",
+     *       "email_verified_at": "2025-06-30T01:01:51.000000Z",
+     *       "email": "contact@mirkorinke.dev",
+     *       "display_name": "Admin",
      *       "role": "admin",
-     *       "is_banned": null,             || Admin and Moderator only
-     *       "was_ever_banned": false,      || Admin and Moderator only
-     *       "moderation_info": null        || Admin and Moderator only
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "Regular User",
-     *       "email": "user@example.com",
-     *       "email_verified_at": "2025-04-28T10:00:00.000000Z",
-     *       "created_at": "2025-04-28T10:00:00.000000Z",
-     *       "updated_at": "2025-04-28T10:00:00.000000Z",
-     *       "display_name": "Jane Designer",
-     *       "role": "user",
-     *       "is_banned": null,             || Admin and Moderator only
-     *       "was_ever_banned": false,      || Admin and Moderator only
-     *       "moderation_info": null        || Admin and Moderator only
+     *       "is_banned": null,                             || Admin and Moderator only
+     *       "was_ever_banned": false,                      || Admin and Moderator only
+     *       "moderation_info": [],                         || Admin and Moderator only
+     *       "created_at": "2025-06-30T01:01:51.000000Z",
+     *       "updated_at": "2025-06-30T01:01:51.000000Z"
      *     }
      *   ]
      * }
-     * 
-     * Example URL: /users/?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
-     * 
-     * @response status=200 scenario="Success with select and include" {
+     *
+     * Example URL: /users/?include=profile
+     *
+     * @response status=200 scenario="Success with profile include" {
      *   "status": "success",
      *   "message": "Users retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "email": "admin@example.com",
-     *       "display_name": "John Dev",
+     *     ..... // Same user data as above
      *       "profile": {
      *         "id": 1,
      *         "user_id": 1,
-     *         "display_name": "John Dev",
-     *         "public_email": "john.public@example.com",
-     *         "website": "https://johndev.example.com",
-     *         "avatar_path": "/storage/avatars/johndev.jpg",
+     *         "display_name": "Admin",
+     *         "public_email": "contact@mirkorinke.dev",
+     *         "website": "https://mirkorinke.dev/",
+     *         "avatar_path": null,
      *         "is_public": true,
-     *         "location": "San Francisco, CA",
-     *         "biography": "Full-stack developer with 5 years of experience",
-     *         "skills": ["PHP", "Laravel", "JavaScript"],
+     *         "location": "Hildesheim, Germany",
+     *         "biography": "...",
+     *         "skills": [
+     *           "TypeScript",
+     *           "Angular",
+     *           "PHP",
+     *           "Laravel",
+     *           "MySQL"
+     *         ],
      *         "social_links": {
-     *           "github": "https://github.com/johndev",
-     *           "linkedin": "https://linkedin.com/in/john-developer"
+     *           "github": "https://github.com/MirkoRinke",
+     *           "linkedin": "https://linkedin.com/in/mirkorinke"
      *         },
-     *         "contact_channels": {"discord": "johndev#1234"},
-     *         "auto_load_external_images": false,
-     *         "external_images_temp_until": null,
-     *         "auto_load_external_videos": false,
-     *         "external_videos_temp_until": null,
-     *         "auto_load_external_resources": false,
-     *         "external_resources_temp_until": null,
-     *         "reports_count": 0,          || Admin and Moderator only
-     *         "created_at": "2023-01-15T09:24:12.000000Z",
-     *         "updated_at": "2023-02-20T14:35:47.000000Z"
-     *       }
-     *     },
-     *     {
-     *       "id": 2,
-     *       "email": "user@example.com",
-     *       "display_name": "Jane Designer",
-     *       "profile": {
-     *         "id": 2,
-     *         "user_id": 2,
-     *         "display_name": "Jane Designer",
-     *         "public_email": "jane.public@example.com",
-     *         "website": "https://janedesigner.example.com",
-     *         "avatar_path": "/storage/avatars/janedesigner.jpg",
-     *         "is_public": true,
-     *         "location": "Berlin, Germany",
-     *         "biography": "UI/UX designer focused on user experience",
-     *         "skills": ["UI/UX", "Figma", "CSS"],
-     *         "social_links": {
-     *           "github": "https://github.com/janedesigner",
-     *           "linkedin": "https://linkedin.com/in/jane-designer"
+     *         "contact_channels": {
+     *           "discord": "gallifrey87"
      *         },
-     *         "contact_channels": {"discord": "janedesigner#5678"},
      *         "auto_load_external_images": true,
      *         "external_images_temp_until": null,
-     *         "auto_load_external_videos": false,
-     *         "external_videos_temp_until": "2023-06-15T18:00:00.000000Z",
-     *         "auto_load_external_resources": false,
+     *         "auto_load_external_videos": true,
+     *         "external_videos_temp_until": null,
+     *         "auto_load_external_resources": true,
      *         "external_resources_temp_until": null,
-     *         "reports_count": 0,          || Admin and Moderator only
-     *         "created_at": "2023-02-10T11:42:23.000000Z",
-     *         "updated_at": "2023-05-18T09:15:32.000000Z"
+     *         "reports_count": 0,                          || Admin and Moderator only
+     *         "created_at": "2025-06-30T01:01:51.000000Z",
+     *         "updated_at": "2025-06-30T14:36:05.000000Z"
      *       }
      *     }
      *   ]
      * }
-     * 
-     * Example URL: /users/?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
-     * 
-     * @response status=200 scenario="Success with select, include and profile_fields" {
-     *   "status": "success",
-     *   "message": "Users retrieved successfully",
-     *   "code": 200,
-     *   "count": 2,
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "email": "admin@example.com",
-     *       "display_name": "John Dev",
-     *       "profile": {
-     *         "id": 1,
-     *         "user_id": 1,
-     *         "display_name": "John Dev",
-     *         "public_email": "john.public@example.com",
-     *       }
-     *     },
-     *     {
-     *       "id": 2,
-     *       "email": "user@example.com",
-     *       "display_name": "Jane Designer",
-     *       "profile": {
-     *         "id": 2,
-     *         "user_id": 2,
-     *         "display_name": "Jane Designer",
-     *         "public_email": "jane.public@example.com",
-     *       }
-     *     }
-     *   ]
-     * }   
-     * 
+     *
      * @response status=200 scenario="Empty database" {
      *   "status": "success",
      *   "message": "No users exist in the database",
      *   "code": 200,
      *   "data": []
      * }
-     * 
+     *
      * @response status=200 scenario="No users found" {
      *   "status": "success",
      *   "message": "No users found with the given filters",
@@ -287,7 +221,7 @@ class UserController extends Controller {
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
      * }
-     * 
+     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -295,6 +229,9 @@ class UserController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      *
+     * Note:
+     * - Only administrators can access this endpoint.
+     * 
      * @authenticated
      */
     public function index(Request $request): JsonResponse {
@@ -338,101 +275,77 @@ class UserController extends Controller {
      * Endpoint: GET /users/{id}
      *
      * Retrieves detailed information about a single user by their ID.
-     * If the requesting user is an administrator, additional information like ban status 
-     * and moderation history will be included in the response.
+     * Only administrators can access any user. Each user can access their own data.
+     * If the requesting user is an administrator or moderator, additional information like ban status and moderation history will be included in the response.
      *
      * @group User Management
      * 
-     * @urlParam id required The ID of the user to retrieve. Example: 1
+     * @urlParam id required The ID of the user to retrieve. Example: 123
      *
-     * @queryParam select string Comma-separated list of fields to include. Example: select=id,name,email
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=profile
-     * @queryParam profile_fields string When including profile relation, specify fields to return. Example: profile_fields=id,user_id,display_name,public_email
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. profile).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * Example URL: /users/1
+     * @queryParam profile_fields string See [ApiInclude](#apiinclude). When including profile relation, specify fields to return. Example: profile_fields=id,user_id,display_name,public_email
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * Example URL: /users/123
      *
-     * @response status=200 scenario="Success" {
-     *   "status": "success", 
+     * @response status=200 scenario="Success without profile include" {
+     *   "status": "success",
      *   "message": "User retrieved successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "name": "Admin User",
-     *     "email": "admin@example.com",
-     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
-     *     "created_at": "2025-04-28T10:00:00.000000Z",
-     *     "updated_at": "2025-04-28T10:00:00.000000Z",
-     *     "display_name": "John Dev",
-     *     "role": "admin",
-     *     "is_banned": null,             || Admin and Moderator only
-     *     "was_ever_banned": false,      || Admin and Moderator only
-     *     "moderation_info": null        || Admin and Moderator only
+     *     "id": 123,
+     *     "name": "Francisco Pfeffer",
+     *     "email_verified_at": "2025-06-30T01:01:54.000000Z",
+     *     "email": "trenton.mckenzie@example.com",
+     *     "display_name": "madeline.jerde",
+     *     "role": "user",
+     *     "is_banned": null,                                   || Admin and Moderator only
+     *     "was_ever_banned": false,                            || Admin and Moderator only
+     *     "moderation_info": [],                               || Admin and Moderator only
+     *     "created_at": "2025-06-30T01:01:54.000000Z",
+     *     "updated_at": "2025-06-30T01:01:54.000000Z"
      *   }
      * }
-     * 
-     * Example URL: /users/1/?include=profile
-     * 
-     * @response status=200 scenario="Success with profile relation" {
-     *   "status": "success", 
+     *
+     * Example URL: /users/123/?include=profile
+     *
+     * @response status=200 scenario="Success with profile include" {
+     *   "status": "success",
      *   "message": "User retrieved successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "name": "Admin User",
-     *     "email": "admin@example.com",
-     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
-     *     "created_at": "2025-04-28T10:00:00.000000Z",
-     *     "updated_at": "2025-04-28T10:00:00.000000Z",
-     *     "display_name": "John Dev",
-     *     "role": "admin",
-     *     "is_banned": null,             || Admin and Moderator only
-     *     "was_ever_banned": false,      || Admin and Moderator only
-     *     "moderation_info": null,       || Admin and Moderator only
+     *     ..... // Same user data as above
      *     "profile": {
-     *       "id": 1,
-     *       "user_id": 1,
-     *       "display_name": "John Dev",
-     *       "public_email": "john.public@example.com",
-     *       "website": "https://johndev.example.com",
-     *       "avatar_path": "/storage/avatars/johndev.jpg",
+     *       "id": 123,
+     *       "user_id": 123,
+     *       "display_name": "madeline.jerde",
+     *       "public_email": "madeline.jerde@example.com",
+     *       "website": null,
+     *       "avatar_path": null,
      *       "is_public": true,
-     *       "location": "San Francisco, CA",
-     *       "biography": "Full-stack developer with 5 years of experience",
-     *       "skills": ["PHP", "Laravel", "JavaScript"],
-     *       "social_links": {
-     *         "github": "https://github.com/johndev",
-     *         "linkedin": "https://linkedin.com/in/john-developer"
-     *       },
-     *       "contact_channels": {"discord": "johndev#1234"},
+     *       "location": "Berlin, Germany",
+     *       "biography": null,
+     *       "skills": "PHP, Laravel, MySQL",
+     *       "social_links": null,
+     *         "contact_channels": {
+     *           "discord": "madeline.jerde#1234"
+     *         },
      *       "auto_load_external_images": false,
      *       "external_images_temp_until": null,
      *       "auto_load_external_videos": false,
      *       "external_videos_temp_until": null,
      *       "auto_load_external_resources": false,
      *       "external_resources_temp_until": null,
-     *       "reports_count": 0,          || Admin and Moderator only
-     *       "created_at": "2023-01-15T09:24:12.000000Z",
-     *       "updated_at": "2023-02-20T14:35:47.000000Z"
-     *     }
-     *   }
-     * }
-     * 
-     * Example URL: /users/1/?select=id,email,display_name&include=profile&profile_fields=id,user_id,display_name,public_email
-     *
-     * @response status=200 scenario="Success with selected fields and profile" {
-     *   "status": "success", 
-     *   "message": "User retrieved successfully",
-     *   "code": 200,
-     *   "data": {
-     *     "id": 1,
-     *     "email": "admin@example.com",
-     *     "display_name": "John Dev",
-     *     "profile": {
-     *       "id": 1,
-     *       "user_id": 1,
-     *       "display_name": "John Dev",
-     *       "public_email": "john.public@example.com"
+     *       "reports_count": 0,                                || Admin and Moderator only
+     *       "created_at": "2025-06-30T01:01:54.000000Z",
+     *       "updated_at": "2025-06-30T01:01:54.000000Z"
      *     }
      *   }
      * }
@@ -450,7 +363,7 @@ class UserController extends Controller {
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
      * }
-     * 
+     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -458,6 +371,9 @@ class UserController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      *
+     * Note:
+     * - Only administrators can access any user. Each user can access their own data.
+     * 
      * @authenticated
      */
     public function show(string $id, Request $request): JsonResponse {
@@ -499,49 +415,44 @@ class UserController extends Controller {
      * 
      * Endpoint: PATCH /users/{id}
      *
-     * Updates the specified user's information. Users can only update their own data,
-     * while administrators can update any user.
+     * Updates the specified user's information. Users can only update their own data (name, email, password),
+     * while administrators and moderators can update any user.
+     * If the password is changed, all other tokens except the current one will be deleted (logout on other devices).
+     * Fields like is_banned, was_ever_banned, and moderation_info are only visible to admins and moderators.
      *
      * @group User Management
      *
-     * @urlParam id required The ID of the user to update. Example: 1
+     * @urlParam id required The ID of the user to update. Example: 22
      *
-     * @bodyParam name string Name of the user (2-255 characters). Example: "John Doe"
-     * @bodyParam email string Email address (must be unique). Example: "john@example.com"
-     * @bodyParam password string Password (min 8 characters). Example: "password123"
-     * @bodyParam password_confirmation string Password confirmation (must match password). Example: "password123"
+     * @bodyParam name string Name of the user (2-255 characters). Example: "Max Mustermann"
+     * @bodyParam email string Email address (must be unique). Example: "max@example.com"
+     * @bodyParam password string Password (min 8 characters). Example: "sicheresPasswort1234"
+     * @bodyParam password_confirmation string Password confirmation (must match password). Example: "sicheresPasswort1234"
      *
      * @bodyContent {
-     *   "name": "John Doe",
-     *   "email": "john@example.com",
-     *   "password": "securePassword123",
-     *   "password_confirmation": "securePassword123"
+     *   "name": "Max Mustermann99",                        || optional, string, min:2, max:255
+     *   "email": "max@example99.com",                      || optional, string, email, unique
+     *   "password": "sicheresPasswort1234",                || optional, string, min:8, confirmed
+     *   "password_confirmation": "sicheresPasswort1234"    || required if password is set, string, must match password
      * }
-     * 
-     * @bodyContent scenario="Update name only" {
-     *   "name": "John Doe"
-     * }
-     * 
-     * @bodyContent scenario="Update email only" {
-     *    "email": "john@example.com"
-     * }
-     * 
+     *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "User update successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": {
-     *     "id": 2,
-     *     "name": "John Doe",
-     *     "email": "john@example.com",
-     *     "email_verified_at": "2025-04-28T10:00:00.000000Z",
-     *     "created_at": "2025-04-28T10:00:00.000000Z",
-     *     "updated_at": "2025-04-29T15:30:45.000000Z",
-     *     "display_name": "John",
+     *     "id": 22,
+     *     "name": "Max Mustermann99",
+     *     "email_verified_at": "2025-06-30T19:09:26.000000Z",
+     *     "email": "max@example99.com",
+     *     "display_name": "Maxi22",
      *     "role": "user",
-     *     "is_banned": null,               || Admin and Moderator only
-     *     "was_ever_banned": false,        || Admin and Moderator only
-     *     "moderation_info": null          || Admin and Moderator only
+     *     "is_banned": null,                                       || Admin and Moderator only
+     *     "was_ever_banned": false,                                || Admin and Moderator only
+     *     "moderation_info": [],                                   || Admin and Moderator only
+     *     "created_at": "2025-06-30T19:09:26.000000Z",
+     *     "updated_at": "2025-06-30T19:21:03.000000Z"
      *   }
      * }
      *
@@ -575,6 +486,12 @@ class UserController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
+     *
+     * Note:
+     * - Users can only update their own data. Administrators and moderators can update any user.
+     * - Only name, email, and password can be updated.
+     * - If the password is changed, all other tokens except the current one will be deleted (logout on other devices).
+     * - Fields like is_banned, was_ever_banned, and moderation_info are only visible to admins and moderators.
      * 
      * @authenticated
      */
@@ -632,12 +549,11 @@ class UserController extends Controller {
      * 
      * Endpoint: DELETE /users/{id}
      *
-     * Permanently removes a user account. For regular users, their content (posts and comments) 
-     * will be transferred to the system user, while their reports and likes will be deleted.
-     * Guest accounts receive special handling and will be recreated after deletion.
-     * and their content (posts and comments) will be deleted.
+     * Permanently deletes a user account. For regular users, all posts and comments will be transferred to the system user ("Deleted User"), and all reports, likes, and favorites will be deleted.
+     * Guest accounts receive special handling and will be reset (recreated).
      *
-     * Only administrators can delete other users' accounts. Regular users can only delete their own account.
+     * Only administrators can delete other users' accounts. Regular users can only delete their own account.  
+     * It is not possible to delete admin, moderator, or system accounts. Guest accounts cannot delete themselves.
      *
      * @group User Management
      *
@@ -671,12 +587,22 @@ class UserController extends Controller {
      *   "errors": "UNAUTHORIZED"
      * }
      *
+     * @response status=500 scenario="Guest reset failed" {
+     *   "status": "error",
+     *   "message": "Failed to reset guest account",
+     *   "code": 500,
+     *   "errors": "GUEST_RESET_FAILED"
+     * }
+     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
+     *
+     * Note:
+     * - There is no soft-delete; the user is permanently removed.
      * 
      * @authenticated
      */
@@ -708,6 +634,15 @@ class UserController extends Controller {
                 $this->userRelationService->deleteReports($user);
                 $this->userRelationService->deleteLikes($user);
 
+                // Delete all tokens associated with the user
+                $user->tokens()->delete();
+
+                /**
+                 * Note: Favorites are automatically deleted through 
+                 * database foreign key constraints (onDelete('cascade')) 
+                 * and don't require explicit deletion here.
+                 */
+
                 $user->delete();
             });
 
@@ -727,16 +662,17 @@ class UserController extends Controller {
      * 
      * Endpoint: POST /users/{id}/ban
      *
-     * Bans a user for a specified number of days. While technically temporary,
-     * setting a very large number of days (e.g., 99999) effectively creates a
-     * permanent ban. Only administrators can ban users. Banned users cannot log in until the ban expires.
+     * Bans a user for a specified number of days. Setting a very large number of days (e.g., 99999) is effectively a permanent ban.
+     * Only administrators can ban users. Admin accounts cannot be banned.
+     * Banned users are immediately logged out on all devices and cannot log in until the ban expires.
+     * Each ban action is recorded in the moderation_info array.
      *
      * @group User Management
      *
-     * @urlParam id required The ID of the user to ban. Example: 2
+     * @urlParam id required The ID of the user to ban. Example: 138
      *
-     * @bodyParam moderation_reason string required Reason for banning the user. Example: Repeated violation of community guidelines
-     * @bodyParam days integer required Number of days to ban the user (1-99999). Use a large value like 99999 for effectively permanent bans. Example: 7
+     * @bodyParam moderation_reason string required Reason for banning the user (max 255 characters). Example: Violation of terms of service
+     * @bodyParam days integer required Number of days to ban the user (1-99999). Use a large value like 99999 for a permanent ban. Example: 7
      * 
      * @bodyContent scenario="Temporary ban (7 days)" {
      *   "moderation_reason": "Repeated violation of community guidelines",
@@ -754,16 +690,16 @@ class UserController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 6,
-     *     "name": "Max Mustermann6",
-     *     "is_banned": "2025-05-12T23:48:23.000000Z",
+     *     "id": 138,
+     *     "name": "Minnie Abernathy",
+     *     "is_banned": "2025-07-05T20:24:28.000000Z",
      *     "was_ever_banned": true,
      *     "moderation_info": [
      *       {
      *         "user_id": 1,
-     *         "username": "Max Mustermann1",
+     *         "username": "Admin",
      *         "role": "admin",
-     *         "timestamp": "2025-04-29T01:48:23+02:00",
+     *         "timestamp": "2025-06-30T22:24:28+02:00",
      *         "reason": "Violation of terms of service",
      *         "action": "ban"
      *       }
@@ -809,6 +745,12 @@ class UserController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      *
+     * Note:
+     * - Only administrators can ban users. Admin accounts cannot be banned.
+     * - Banned users are immediately logged out on all devices.
+     * - Each ban is recorded in the moderation_info array.
+     * - Use a large value for days (e.g., 99999) for a permanent ban.
+     * 
      * @authenticated
      */
     public function banUser(string $id, Request $request): JsonResponse {
@@ -886,16 +828,16 @@ class UserController extends Controller {
      * Endpoint: POST /users/{id}/unban
      *
      * Removes an active ban from a user. Only administrators can unban users.
-     * This will allow the user to log in again immediately.
+     * This will allow the user to log in again immediately. Each unban action is recorded in the moderation_info array.
      *
      * @group User Management
      *
-     * @urlParam id required The ID of the user to unban. Example: 2
+     * @urlParam id required The ID of the user to unban. Example: 138
      *
-     * @bodyParam moderation_reason string required Reason for unbanning the user. Example: Appeal approved
+     * @bodyParam moderation_reason string required Reason for unbanning the user (max 255 characters). Example: User appealed successfully
      * 
      * @bodyContent {
-     *   "moderation_reason": "Appeal approved"
+     *   "moderation_reason": "User appealed successfully"
      * }
      *
      * @response status=200 scenario="Success" {
@@ -904,24 +846,24 @@ class UserController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 6,
-     *     "name": "Max Mustermann6",
+     *     "id": 138,
+     *     "name": "Minnie Abernathy",
      *     "is_banned": null,
      *     "was_ever_banned": true,
      *     "moderation_info": [
      *       {
      *         "user_id": 1,
-     *         "username": "Max Mustermann1",
+     *         "username": "Admin",
      *         "role": "admin",
-     *         "timestamp": "2025-04-29T01:50:23+02:00",
-     *         "reason": "Appeal approved",
+     *         "timestamp": "2025-06-30T22:32:06+02:00",
+     *         "reason": "User appealed successfully",
      *         "action": "unban"
      *       },
      *       {
      *         "user_id": 1,
-     *         "username": "Max Mustermann1",
+     *         "username": "Admin",
      *         "role": "admin",
-     *         "timestamp": "2025-04-28T10:15:30+02:00",
+     *         "timestamp": "2025-06-30T22:24:28+02:00",
      *         "reason": "Violation of terms of service",
      *         "action": "ban"
      *       }
@@ -965,6 +907,11 @@ class UserController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
+     *
+     * Note:
+     * - Only administrators can unban users.
+     * - Each unban is recorded in the moderation_info array.
+     * - The user can log in again immediately after being unbanned.
      * 
      * @authenticated
      */
