@@ -110,10 +110,10 @@ class UserProfile extends Model {
      * 
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      * 
-     * @example | $userProfile->favorite_languages // Access the related favorite languages
-     * @example | UserProfile::with('favorite_languages')->get() // Eager loading
+     * @example | $userProfile->favoriteLanguages // Access the related favorite languages
+     * @example | UserProfile::with('favoriteLanguages')->get() // Eager loading
      */
-    public function favorite_languages() {
+    public function favoriteLanguages() {
         return $this->belongsToMany(
             PostAllowedValue::class,
             'user_profile_favorite_languages',
