@@ -120,13 +120,19 @@ trait ApiFiltering {
                     }
 
                     /**
+                     * Convert the relation key to camelCase for Eloquent compatibility
+                     * This is necessary because Eloquent uses camelCase for relation methods
+                     */
+                    $newKey = $this->toCamelCase($key);
+
+                    /**
                      * Ensure the target field is fully qualified with the table name
                      */
                     if (str_contains($filterKeyPath, '.')) {
-                        $targetField = $query->getModel()->$key()->getRelated()->getTable() . '.' . $targetField;
+                        $targetField = $query->getModel()->$newKey()->getRelated()->getTable() . '.' . $targetField;
                     }
 
-                    $query = $this->filterRelations($query, $key, $targetField, $value, $operatorsMap[$key]);
+                    $query = $this->filterRelations($query, $newKey, $targetField, $value, $operatorsMap[$key]);
                     unset($filterArray[$key]);
                     unset($operatorsMap[$key]);
                 }
@@ -149,6 +155,25 @@ trait ApiFiltering {
         }
 
         return $query;
+    }
+
+
+    /**
+     * Converts a string to camelCase format.
+     * This method transforms a string with underscores into camelCase.
+     * For example, 'my_string' becomes 'myString'.     * 
+     * It handles cases where the string does not contain underscores by returning it unchanged.
+     * 
+     * @param string $string The input string to convert
+     * @return string The camelCase formatted string
+     * 
+     * @example | $this->toCamelCase('my_string'); // returns 'myString'
+     */
+    private function toCamelCase(string $string): string {
+        if (strpos($string, '_') === false) {
+            return $string;
+        }
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $string))));
     }
 
 
@@ -177,7 +202,6 @@ trait ApiFiltering {
      * @example | $this->filterRelations($query, $relation, $targetField, $values, $operators);
      */
     private function filterRelations(Builder $query, string $relation, ?string $targetField, mixed $values, array $operators): Builder {
-
         /**
          * If the target field is not specified, we will use 'id' as the default
          */
