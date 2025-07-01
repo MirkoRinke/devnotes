@@ -21,6 +21,7 @@ use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
 use App\Traits\FollowerHelper;
+use App\Traits\UserProfileHelper;
 
 use App\Services\UserRelationService;
 
@@ -36,7 +37,7 @@ class UserProfileController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude, FieldManager, FollowerHelper;
+    use ApiResponses, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude, FieldManager, FollowerHelper, UserProfileHelper;
 
 
     /**
@@ -75,62 +76,12 @@ class UserProfileController extends Controller {
             'auto_load_external_images' => 'sometimes|required|boolean',
             'auto_load_external_videos' => 'sometimes|required|boolean',
             'auto_load_external_resources' => 'sometimes|required|boolean',
+            'favorite_languages' => 'sometimes|array|min:1',
+            'favorite_languages.*' =>  'sometimes|integer',
         ];
         return $validationRulesUpdate;
     }
 
-
-    /**
-     * Setup the UserProfile query
-     * This method is used to setup the query for the UserProfile model
-     * It applies sorting, filtering, selecting, and pagination
-     * It also loads the relations for the UserProfile model
-     * 
-     * @param Request $request The request object
-     * @param mixed $query The query object
-     * @param string $methods The method to call for the query
-     * @return mixed The modified query object
-     * 
-     * @example | $query = $this->setupUserProfileQuery($request, $query, 'buildQuery');
-     * 
-     */
-    protected function setupUserProfileQuery(Request $request, $query, $methods): mixed {
-        $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'user_id']);
-
-        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
-
-        $query = $this->loadUserRelation($request, $query, 'user_id');
-
-        $query = $this->$methods($request, $query, 'user_profile');
-        if ($query instanceof JsonResponse) {
-            return $query;
-        }
-
-        return $query;
-    }
-
-
-    /**
-     * Apply access filters based on user role
-     * Admins and moderators can see all profiles
-     * Regular users can only see public profiles and their own
-     * 
-     * @param Request $request The request containing the user
-     * @return \Illuminate\Database\Eloquent\Builder Query with appropriate filters
-     * 
-     * @example | $query = $this->applyProfileAccessFilters($request);
-     */
-    private function applyProfileAccessFilters(Request $request) {
-        $user = $request->user();
-
-        if ($user->role === 'admin' || $user->role === 'moderator') {
-            return UserProfile::query();
-        } else {
-            return UserProfile::query()->where(function ($subQuery) use ($user) {
-                $subQuery->where('is_public', true)->orWhere('user_id', $user->id);
-            });
-        }
-    }
 
     /**
      * List User Profiles
@@ -521,12 +472,23 @@ class UserProfileController extends Controller {
                 $this->getValidationMessages('UserProfile')
             );
 
+            if (isset($validatedData['favorite_languages']) && is_array($validatedData['favorite_languages'])) {
+                $result = $this->syncFavoriteLanguages($userProfile, $validatedData['favorite_languages']);
+                unset($validatedData['favorite_languages']);
+                if ($result instanceof JsonResponse) {
+                    return $result;
+                }
+            }
+
             $userProfile = DB::transaction(function () use ($userProfile, $validatedData) {
 
                 $userProfile->update($validatedData);
 
                 // Update Profile display name and check for forbidden words
                 $this->userRelationService->updateProfileDisplayName($userProfile);
+
+                // Load the favorite_languages relation after the update
+                $userProfile->load(['favorite_languages:id,name']);
 
                 return $userProfile;
             });
@@ -542,6 +504,7 @@ class UserProfileController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
+
 
     /**
      * Remove the specified resource from storage.
