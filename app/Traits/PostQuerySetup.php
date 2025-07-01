@@ -60,38 +60,6 @@ trait PostQuerySetup {
     }
 
     /**
-     * Get the selected fields for a relation from the request
-     * 
-     * @param Request $request
-     * @param string $tableName The name of the table
-     * @param array $defaultColumns The default columns to select
-     * @param string $relation The name of the relation
-     * @return array The selected fields
-     * 
-     * @example | $this->getSelectRelationFields($request, 'tags', ['id', 'name'], 'tags')
-     */
-    private function getSelectRelationFields(Request $request, string $tableName, array $defaultColumns, string $relation): array {
-        if ($request->has("{$relation}_fields")) {
-            $selectedFields = [];
-            $fields = $request->input("{$relation}_fields");
-
-            if (!is_array($fields)) {
-                $fields = explode(',', $fields); // Convert comma-separated string to array
-            }
-
-            foreach ($fields as $key => $value) {
-                $valueCheck = "$tableName.$value as $value";
-                if (in_array($valueCheck, $defaultColumns)) {
-                    $selectedFields[$key] = "$tableName.$value as $value"; // Add the field to the selected fields
-                }
-            }
-            return $selectedFields;
-        }
-        return $defaultColumns;
-    }
-
-
-    /**
      * Load the tags relation
      * 
      * @param Request $request
