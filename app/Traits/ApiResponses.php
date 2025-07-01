@@ -292,6 +292,12 @@ trait ApiResponses {
                     'type.required' => 'TYPE_FIELD_REQUIRED',
                     'type.in' => 'TYPE_INVALID_OPTION',
                     'type.string' => 'TYPE_MUST_BE_STRING',
+
+                    'favorite_languages.array' => 'FAVORITE_LANGUAGES_MUST_BE_ARRAY',
+                    'favorite_languages.min' => 'FAVORITE_LANGUAGES_MUST_CONTAIN_AT_LEAST_1_ITEM',
+
+                    'favorite_languages.*.integer' => 'FAVORITE_LANGUAGE_MUST_BE_INTEGER',
+                    'favorite_languages.*.exists' => 'FAVORITE_LANGUAGE_NOT_FOUND',
                 ];
             case 'UserReport':
                 return [
