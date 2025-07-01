@@ -487,8 +487,8 @@ class UserProfileController extends Controller {
                 // Update Profile display name and check for forbidden words
                 $this->userRelationService->updateProfileDisplayName($userProfile);
 
-                // Load the favorite_languages relation after the update
-                $userProfile->load(['favorite_languages:id,name']);
+                // Load the favoriteLanguages relation after the update
+                $userProfile->load(['favoriteLanguages:id,name']);
 
                 return $userProfile;
             });
