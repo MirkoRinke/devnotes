@@ -426,6 +426,12 @@ trait QueryBuilder {
                     'name',
                 ],
             ],
+            'user_profile' => [
+                'favorite_languages' => [
+                    'id',
+                    'name',
+                ],
+            ],
         ];
 
         /**
