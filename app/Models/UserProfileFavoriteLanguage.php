@@ -32,7 +32,7 @@ class UserProfileFavoriteLanguage extends Model {
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function favorite_language() {
+    public function favoriteLanguage() {
         return $this->belongsTo(PostAllowedValue::class, 'post_allowed_value_id')->where('type', 'language');
     }
 }
