@@ -94,7 +94,7 @@ trait UserProfileHelper {
              * Explicit table.column AS alias format is used for many-to-many relationships
              * This is to avoid ambiguity in the result set, especially when joining multiple tables.
              */
-            $tableName = $query->getModel()->favorite_languages()->getRelated()->getTable(); // Get the table name of the favorite_languages relation
+            $tableName = $query->getModel()->favoriteLanguages()->getRelated()->getTable(); // Get the table name of the favorite_languages relation
 
             $defaultColumns = [
                 "$tableName.id as id",
@@ -105,7 +105,7 @@ trait UserProfileHelper {
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'favorite_languages');
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'favorite_languages', 'foreignKey' => 'id', 'columns' => $selectedFields],
+                ['relation' => 'favoriteLanguages', 'foreignKey' => 'id', 'columns' => $selectedFields],
             ]);
 
             return $query;
@@ -123,7 +123,7 @@ trait UserProfileHelper {
      * @return null|JsonResponse Returns null if no changes are needed, or a JsonResponse with an error if validation fails
      */
     protected function syncFavoriteLanguages(UserProfile $userProfile, array $favoriteLanguages): null|JsonResponse {
-        $current = $userProfile->favorite_languages()->pluck('post_allowed_value_id')->toArray();
+        $current = $userProfile->favoriteLanguages()->pluck('post_allowed_value_id')->toArray();
         sort($current);
         sort($favoriteLanguages);
         if ($current !== $favoriteLanguages) {
@@ -133,7 +133,7 @@ trait UserProfileHelper {
                 return $this->errorResponse('Some favorite languages are not allowed', 'FORBIDDEN_LANGUAGE', 422);
             }
 
-            $pivotTable = $userProfile->favorite_languages()->getTable();
+            $pivotTable = $userProfile->favoriteLanguages()->getTable();
             DB::table($pivotTable)->where('user_profile_id', $userProfile->id)->delete();
 
             if (!empty($allowedIds)) {
