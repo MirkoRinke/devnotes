@@ -103,4 +103,22 @@ class UserProfile extends Model {
     public function user() {
         return $this->belongsTo(User::class);
     }
+
+
+    /**
+     * Get the favorite languages of the user profile.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * 
+     * @example | $userProfile->favorite_languages // Access the related favorite languages
+     * @example | UserProfile::with('favorite_languages')->get() // Eager loading
+     */
+    public function favorite_languages() {
+        return $this->belongsToMany(
+            PostAllowedValue::class,
+            'user_profile_favorite_languages',
+            'user_profile_id',
+            'post_allowed_value_id'
+        );
+    }
 }
