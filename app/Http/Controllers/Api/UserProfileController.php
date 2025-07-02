@@ -77,7 +77,7 @@ class UserProfileController extends Controller {
             'auto_load_external_videos' => 'sometimes|required|boolean',
             'auto_load_external_resources' => 'sometimes|required|boolean',
             'favorite_languages' => 'sometimes|array|min:1',
-            'favorite_languages.*' =>  'sometimes|integer',
+            'favorite_languages.*' =>  'sometimes|string',
         ];
         return $validationRulesUpdate;
     }
