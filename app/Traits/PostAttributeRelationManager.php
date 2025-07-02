@@ -27,7 +27,6 @@ trait PostAttributeRelationManager {
      *          ]);
      */
     protected function syncMultipleRelations(Post $post, $user, array $relationData): void {
-
         /**
          * Mapping of relation types to model relation methods
          */
@@ -37,10 +36,11 @@ trait PostAttributeRelationManager {
             'technology' => 'technologies',
         ];
 
-        $relationData = $this->filterEmptyRelations($relationData, $post, $relationMap);
+        $relationData = $this->syncEmptyAndUnchanged($relationData, $post, $relationMap);
         if (empty($relationData)) {
             return;
         }
+
 
         [$normalizedValues, $originalValueMap] = $this->normalizeRelationValues($relationData);
 
@@ -53,40 +53,75 @@ trait PostAttributeRelationManager {
          */
         foreach ($relationIds as $type => $ids) {
             if (isset($relationMap[$type])) {
+                // Get the current IDs from the pivot table
+                $currentIds = $post->{$relationMap[$type]}()->pluck('post_allowed_value_id')->toArray();
+                sort($currentIds);
+                sort($ids);
+
+                $toRemove = array_diff($currentIds, $ids);
+                $toAdd = array_diff($ids, $currentIds);
 
                 // Get the pivot table name from the relation map
                 $pivotTable = $post->{$relationMap[$type]}()->getTable();
 
-                DB::table($pivotTable)->where('post_id', $post->id)->delete();
-
-                $pivotData = [];
-                foreach ($ids as $id) {
-                    $pivotData[] = [
-                        'post_id' => $post->id,
-                        'post_allowed_value_id' => $id,
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ];
+                if (!empty($toRemove)) {
+                    DB::table($pivotTable)->where('post_id', $post->id)->whereIn('post_allowed_value_id', $toRemove)->delete();
                 }
 
-                DB::table($pivotTable)->insert($pivotData);
+                if (!empty($toAdd)) {
+                    $pivotData = [];
+                    foreach ($toAdd as $id) {
+                        $pivotData[] = [
+                            'post_id' => $post->id,
+                            'post_allowed_value_id' => $id,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ];
+                    }
+                    DB::table($pivotTable)->insert($pivotData);
+                }
             }
         }
     }
 
 
     /**
-     * Filter out empty relations from the provided relation data
-     * 
-     * @param array $relationData The relation data to filter
-     * @param Post $post The post instance
-     * @param array $relationMap Mapping of relation types to post relation methods
-     * @return array Filtered relation data without empty relations
-     * 
-     * @example | $filteredData = $this->filterEmptyRelations($relationData, $post, $relationMap);
+     * Removes empty or unchanged relations from the provided relation data
+     * and syncs (clears) relations in the database if an empty array is provided.
+     *
+     * - Relations missing in the request are ignored.
+     * - Relations with an empty array are cleared in the database (sync([])).
+     * - Relations whose values have not changed are skipped.
+     * - Only changed relations are returned for further processing.
+     *
+     * @param array $relationData The relation data to check.
+     * @param Post $post The post instance whose relations are checked
+     * @param array $relationMap Mapping of relation types to model relation methods
+     * @return array Filtered relations that actually need to be synchronized
+     *
+     * @example | $relationData = $this->syncEmptyAndUnchanged($relationData, $post, $relationMap);
      */
-    protected function filterEmptyRelations($relationData, Post $post, $relationMap): array {
+    protected function syncEmptyAndUnchanged($relationData, Post $post, $relationMap): array {
         foreach ($relationData as $type => $values) {
+            // Skip if the values are not set
+            if ($values === null) {
+                unset($relationData[$type]);
+                continue;
+            }
+
+            $current = $post->{$relationMap[$type]}()->pluck('name')->toArray();
+            $current = array_map('strtolower', $current);
+
+            $compareValues = array_map('strtolower', $values);
+            sort($compareValues);
+            sort($current);
+
+            // If the values are unchanged, remove the relation from the data
+            if ($compareValues === $current) {
+                unset($relationData[$type]);
+                continue;
+            }
+
             if (empty($values)) {
                 if (isset($relationMap[$type])) {
                     $post->{$relationMap[$type]}()->sync([]);
@@ -94,6 +129,7 @@ trait PostAttributeRelationManager {
                 unset($relationData[$type]);
             }
         }
+
         return $relationData;
     }
 
