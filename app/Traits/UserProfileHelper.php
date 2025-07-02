@@ -119,26 +119,38 @@ trait UserProfileHelper {
      * Sync favorite languages for the user profile
      * 
      * @param UserProfile $userProfile The user profile to update
-     * @param array $favoriteLanguages Array of favorite language IDs
+     * @param array $favoriteLanguages Array of favorite language names
      * @return null|JsonResponse Returns null if no changes are needed, or a JsonResponse with an error if validation fails
      */
     protected function syncFavoriteLanguages(UserProfile $userProfile, array $favoriteLanguages): null|JsonResponse {
-        $current = $userProfile->favoriteLanguages()->pluck('post_allowed_value_id')->toArray();
-        sort($current);
+        $current = $userProfile->favoriteLanguages()->pluck('post_allowed_value_id', 'name')->toArray();
+        $names = array_keys($current);
+        sort($names);
         sort($favoriteLanguages);
-        if ($current !== $favoriteLanguages) {
-            $allowedIds = PostAllowedValue::where('type', 'language')->whereIn('id', $favoriteLanguages)->pluck('id')->toArray();
+
+        if ($names !== $favoriteLanguages) {
+            $allowedIds = PostAllowedValue::where('type', 'language')->whereIn('name', $favoriteLanguages)->pluck('id')->toArray();
+            sort($allowedIds);
+            sort($current);
+
+            $removeLanguages = array_diff($current, $allowedIds);
+            $addLanguages = array_diff($allowedIds, $current);
 
             if (count($allowedIds) !== count($favoriteLanguages)) {
-                return $this->errorResponse('Some favorite languages are not allowed', 'FORBIDDEN_LANGUAGE', 422);
+                foreach ($favoriteLanguages as $langName) {
+                    if (!in_array($langName, $names)) {
+                        return $this->errorResponse("Language '$langName' is not allowed", 'FORBIDDEN_LANGUAGE', 422);
+                    }
+                }
             }
 
             $pivotTable = $userProfile->favoriteLanguages()->getTable();
-            DB::table($pivotTable)->where('user_profile_id', $userProfile->id)->delete();
+            DB::table($pivotTable)->where('user_profile_id', $userProfile->id)->whereIn('post_allowed_value_id', $removeLanguages)->delete();
 
-            if (!empty($allowedIds)) {
+
+            if (!empty($addLanguages)) {
                 $insertData = [];
-                foreach ($allowedIds as $langId) {
+                foreach ($addLanguages as $langId) {
                     $insertData[] = [
                         'user_profile_id' => $userProfile->id,
                         'post_allowed_value_id' => $langId,
