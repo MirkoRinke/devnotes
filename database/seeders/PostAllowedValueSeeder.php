@@ -26,7 +26,12 @@ class PostAllowedValueSeeder extends Seeder {
                 'TypeScript',
                 'PHP',
                 'Python',
-                'Shell'
+                'Shell',
+                'SQL',
+                'Java',
+                'C#',
+                'Go',
+                'Rust',
             ],
             'category' => [
                 'Frontend',
@@ -63,7 +68,10 @@ class PostAllowedValueSeeder extends Seeder {
                 'Vite',
                 'Webpack',
                 'Flask',
-                'Node.js'
+                'Node.js',
+                'NumPy',
+                'SciPy',
+                'Material UI',
 
             ],
             'status' => [
