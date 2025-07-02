@@ -13,12 +13,12 @@ class DatabaseSeeder extends Seeder {
         $this->call([
             ApiKeySeeder::class,
             UserSeeder::class,
+            PostAllowedValueSeeder::class,
             PostSeeder::class,
             CommentSeeder::class,
             LikeSeeder::class,
             FavoriteSeeder::class,
             ForbiddenNameSeeder::class,
-            PostAllowedValueSeeder::class,
             CriticalTermSeeder::class,
         ]);
         $this->command->info('Database seeding completed successfully!');
