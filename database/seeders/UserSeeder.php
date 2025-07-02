@@ -50,7 +50,6 @@ class UserSeeder extends Seeder {
             $user->save();
 
             $this->userRelationService->createUserProfile($user, $data['id'] ?? null);
-            $this->userRelationService->checkUsername($user);
 
             return $user;
         });
@@ -167,7 +166,6 @@ class UserSeeder extends Seeder {
 
             foreach ($user as $createdUser) {
                 $this->userRelationService->createUserProfile($createdUser);
-                $this->userRelationService->checkUsername($createdUser);
             }
             $this->command->info("Created " . ($userCount * $multiplier) . " users. Progress: " . (($i + 1) * 100 / $multiplier) . "%");
         }
