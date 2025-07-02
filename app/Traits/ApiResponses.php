@@ -202,11 +202,11 @@ trait ApiResponses {
                     'resources.*.url' => 'RESOURCES_MUST_BE_VALID_URLS',
                     'resources.*.string' => 'RESOURCES_MUST_BE_STRING',
 
-                    'language.required' => 'LANGUAGE_FIELD_REQUIRED',
-                    'language.array' => 'LANGUAGE_MUST_BE_ARRAY',
-                    'language.*.string' => 'LANGUAGE_MUST_BE_STRING',
-                    'language.*.required' => 'LANGUAGE_FIELD_REQUIRED',
-                    'language.*.ValidPostValue' => 'LANGUAGE_INVALID_OPTION',
+                    'languages.required' => 'LANGUAGE_FIELD_REQUIRED',
+                    'languages.array' => 'LANGUAGE_MUST_BE_ARRAY',
+                    'languages.*.string' => 'LANGUAGE_MUST_BE_STRING',
+                    'languages.*.required' => 'LANGUAGE_FIELD_REQUIRED',
+                    'languages.*.ValidPostValue' => 'LANGUAGE_INVALID_OPTION',
 
                     'category.required' => 'CATEGORY_FIELD_REQUIRED',
                     'category.string' => 'CATEGORY_MUST_BE_STRING',
@@ -216,14 +216,12 @@ trait ApiResponses {
                     'post_type.string' => 'POST_TYPE_MUST_BE_STRING',
                     'post_type.in' => 'POST_TYPE_INVALID_OPTION',
 
-                    'technology.required' => 'TECHNOLOGY_FIELD_REQUIRED',
-                    'technology.array' => 'TECHNOLOGY_MUST_BE_ARRAY',
-                    'technology.*.string' => 'TECHNOLOGY_MUST_BE_STRING',
-                    'technology.*.required' => 'TECHNOLOGY_FIELD_REQUIRED',
-                    'technology.*.ValidPostValue' => 'TECHNOLOGY_INVALID_OPTION',
+                    'technologies.array' => 'TECHNOLOGY_MUST_BE_ARRAY',
+                    'technologies.*.string' => 'TECHNOLOGY_MUST_BE_STRING',
+                    'technologies.*.ValidPostValue' => 'TECHNOLOGY_INVALID_OPTION',
 
-                    'tags.required' => 'TAGS_FIELD_REQUIRED',
                     'tags.array' => 'TAGS_MUST_BE_ARRAY',
+                    'tags.*.string' => 'TAG_MUST_BE_STRING',
 
                     'status.required' => 'STATUS_FIELD_REQUIRED',
                     'status.string' => 'STATUS_MUST_BE_STRING',
