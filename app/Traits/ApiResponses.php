@@ -295,9 +295,7 @@ trait ApiResponses {
 
                     'favorite_languages.array' => 'FAVORITE_LANGUAGES_MUST_BE_ARRAY',
                     'favorite_languages.min' => 'FAVORITE_LANGUAGES_MUST_CONTAIN_AT_LEAST_1_ITEM',
-
-                    'favorite_languages.*.integer' => 'FAVORITE_LANGUAGE_MUST_BE_INTEGER',
-                    'favorite_languages.*.exists' => 'FAVORITE_LANGUAGE_NOT_FOUND',
+                    'favorite_languages.*.string' => 'FAVORITE_LANGUAGE_MUST_BE_STRING',
                 ];
             case 'UserReport':
                 return [
