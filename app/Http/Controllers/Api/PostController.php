@@ -90,9 +90,10 @@ class PostController extends Controller {
             'languages.*' => ['required', new ValidPostValue('language')],
             'category' => ['required', 'string', new ValidPostValue('category')],
             'post_type' => ['required', 'string', new ValidPostValue('post_type')],
-            'technologies' => 'required|array|min:1',
-            'technologies.*' => ['required', 'string', new ValidPostValue('technology')],
-            'tags' => 'required|array',
+            'technologies' => 'nullable|array',
+            'technologies.*' => ['string', new ValidPostValue('technology')],
+            'tags' => 'nullable|array',
+            'tags.*' => ['string'],
             'status' => ['required', 'string', new ValidPostValue('status')],
         ];
         return $validationRulesCreate;
@@ -120,9 +121,10 @@ class PostController extends Controller {
             'languages.*' => ['sometimes', 'required', new ValidPostValue('language')],
             'category' => ['sometimes', 'required', 'string', new ValidPostValue('category')],
             'post_type' => ['sometimes', 'required', 'string', new ValidPostValue('post_type')],
-            'technologies' => 'sometimes|required|array|min:1',
-            'technologies.*' => ['sometimes', 'required', 'string', new ValidPostValue('technology')],
-            'tags' => 'sometimes|required|array',
+            'technologies' => 'sometimes|array',
+            'technologies.*' => ['sometimes', 'string', new ValidPostValue('technology')],
+            'tags' => 'sometimes|array',
+            'tags.*' => ['sometimes', 'string'],
             'status' => ['sometimes', 'required', 'string', new ValidPostValue('status')],
         ];
         return $validationRulesUpdate;
@@ -368,8 +370,8 @@ class PostController extends Controller {
      * @bodyParam languages array required Array of programming languages. Example: ["JavaScript"]
      * @bodyParam category string required Category of the post. Example: "Frontend"
      * @bodyParam post_type string required Type of the post. Example: "tutorial"
-     * @bodyParam technologies array required Array of technologies used. Example: ["Node.js"]
-     * @bodyParam tags array required Array of tags for the post. Example: ["promises", "async", "javascript"]
+     * @bodyParam technologies array Optional. Array of technologies used. Example: ["Node.js"] / Example: []
+     * @bodyParam tags array Optional. Array of tags for the post. Example: ["promises", "async", "javascript"] / Example: []
      * @bodyParam status string required Publication status. Example: "published"
      * 
      * @bodyContent {
@@ -382,8 +384,8 @@ class PostController extends Controller {
      *   "languages": ["JavaScript"],                                       || required, array, min:1, valid language values only
      *   "category": "Frontend",                                            || required, string, valid category value
      *   "post_type": "tutorial",                                           || required, string, valid post_type value
-     *   "technologies": ["Node.js"],                                       || required, array, min:1, valid technology values only
-     *   "tags": ["promises", "async", "javascript"],                       || required, array
+     *   "technologies": ["Node.js"],                                       || optional, array, valid technology values only
+     *   "tags": ["promises", "async", "javascript"],                       || optional, array
      *   "status": "published"                                              || required, string, valid status value
      * }
      * 
@@ -478,8 +480,6 @@ class PostController extends Controller {
      *     "language": ["LANGUAGE_FIELD_REQUIRED"],
      *     "category": ["CATEGORY_FIELD_REQUIRED"],
      *     "post_type": ["POST_TYPE_FIELD_REQUIRED"],
-     *     "technology": ["TECHNOLOGY_FIELD_REQUIRED"],
-     *     "tags": ["TAGS_FIELD_REQUIRED"],
      *     "status": ["STATUS_FIELD_REQUIRED"]
      *   }
      * }
@@ -751,8 +751,8 @@ class PostController extends Controller {
      * @bodyParam languages array Array of programming languages. Example: ["JavaScript"]
      * @bodyParam category string Category of the post. Example: "Frontend"
      * @bodyParam post_type string Type of the post. Example: "tutorial"
-     * @bodyParam technologies array Array of technologies used. Example: ["Node.js"]
-     * @bodyParam tags array Array of tags for the post. Example: ["promises", "async", "javascript"]
+     * @bodyParam technologies array Array of technologies used. Example: ["Node.js"] / Example: []
+     * @bodyParam tags array Array of tags for the post. Example: ["promises", "async", "javascript"] / Example: []
      * @bodyParam status string Publication status. Example: "published"
      * @bodyParam moderation_reason string Admin/moderator only: Reason for moderation action. Example: "Fixed code formatting"
      * 
@@ -1049,9 +1049,9 @@ class PostController extends Controller {
              * Get the tags from the validated data and remove them from the main data array
              * This is necessary because tags are handled separately.
              */
-            $tagNames = [];
-            $languageNames = [];
-            $technologyNames = [];
+            $tagNames = null;
+            $languageNames = null;
+            $technologyNames = null;
 
             $relationChanges = [];
 
