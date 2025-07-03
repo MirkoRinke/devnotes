@@ -24,6 +24,7 @@ trait PostAttributeRelationManager {
      * @example | $this->syncMultipleRelations($post, $user, [
      *              'tag' => $tagNames,
      *              'language' => $languageNames
+     *              'technology' => $technologyNames
      *          ]);
      */
     protected function syncMultipleRelations(Post $post, $user, array $relationData): void {
@@ -36,7 +37,7 @@ trait PostAttributeRelationManager {
             'technology' => 'technologies',
         ];
 
-        $relationData = $this->syncEmptyAndUnchanged($relationData, $post, $relationMap);
+        [$relationData, $exportCurrentIds] = $this->syncEmptyAndUnchanged($relationData, $post, $relationMap);
         if (empty($relationData)) {
             return;
         }
@@ -54,7 +55,8 @@ trait PostAttributeRelationManager {
         foreach ($relationIds as $type => $ids) {
             if (isset($relationMap[$type])) {
                 // Get the current IDs from the pivot table
-                $currentIds = $post->{$relationMap[$type]}()->pluck('post_allowed_value_id')->toArray();
+                $currentIds = $exportCurrentIds[$type];
+
                 sort($currentIds);
                 sort($ids);
 
@@ -102,6 +104,8 @@ trait PostAttributeRelationManager {
      * @example | $relationData = $this->syncEmptyAndUnchanged($relationData, $post, $relationMap);
      */
     protected function syncEmptyAndUnchanged($relationData, Post $post, $relationMap): array {
+        $exportCurrentIds = [];
+
         foreach ($relationData as $type => $values) {
             // Skip if the values are not set
             if ($values === null) {
@@ -109,15 +113,20 @@ trait PostAttributeRelationManager {
                 continue;
             }
 
-            $current = $post->{$relationMap[$type]}()->pluck('name')->toArray();
-            $current = array_map('strtolower', $current);
+            $currentIds = $post->{$relationMap[$type]}()->pluck('post_allowed_value_id', 'name')->toArray();
+            $exportCurrentIds[$type] = $currentIds;
+
+
+            $names = array_keys($currentIds);
+
+            $names = array_map('strtolower', $names);
 
             $compareValues = array_map('strtolower', $values);
             sort($compareValues);
-            sort($current);
+            sort($names);
 
             // If the values are unchanged, remove the relation from the data
-            if ($compareValues === $current) {
+            if ($compareValues === $names) {
                 unset($relationData[$type]);
                 continue;
             }
@@ -130,7 +139,7 @@ trait PostAttributeRelationManager {
             }
         }
 
-        return $relationData;
+        return [$relationData, $exportCurrentIds];
     }
 
 
