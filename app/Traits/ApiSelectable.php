@@ -160,7 +160,11 @@ trait ApiSelectable {
 
             foreach ($requiredFields as $field) {
                 if (!in_array($field, $select)) {
-                    $select[] = $field;
+                    if ($field === 'id') {
+                        array_unshift($select, $field);
+                    } else {
+                        $select[] = $field;
+                    }
                 }
             }
 
