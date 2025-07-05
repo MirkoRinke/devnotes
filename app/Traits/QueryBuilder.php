@@ -85,7 +85,9 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['name', 'last_used_at']
+                    ...['name', 'last_used_at'],
+                    // Status Flags
+                    ...['is_current']
                 ],
                 'setLimit' => 10,
                 'paginate' => 10
