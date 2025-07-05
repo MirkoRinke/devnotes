@@ -35,19 +35,21 @@ class AuthController extends Controller {
      * Endpoint: POST /login
      *
      * Authenticates a user and issues an access token for API requests.
-     * The token expires after 7 days and can be used for subsequent authenticated requests.
-     * If the user account is currently banned, login will be denied.
+     * The token expires after 30 days and can be used for subsequent authenticated requests.
+     * If the user account is banned or the email is not verified, login will be denied.
      *
      * @group User Authentication
      *
-     * @bodyParam email string required User's email address. Example: user@example.com
-     * @bodyParam password string required User's password. Example: secret123
-     * @bodyParam name string required Name for the device/browser creating this token. Example: iPhone 13
+     * @bodyParam email string required User's email address. Example: max@example1.com
+     * @bodyParam password string required User's password. Example: sicheresPasswort123
+     * @bodyParam name string required Name for the device/browser creating this token. Example: test_device1
+     * @bodyParam device_fingerprint string required Unique device fingerprint (SHA256 hash). Example: 9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002
      *
      * @bodyContent {
-     *   "email": "user@example.com,
-     *   "password": "secret123",
-     *   "name": "iPhone 13"
+     *   "email": "max@example1.com",
+     *   "password": "sicheresPasswort123",
+     *   "name": "test_device1",
+     *   "device_fingerprint": "9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002"
      * }
      *
      * @response status=200 scenario="Success" {
@@ -56,7 +58,7 @@ class AuthController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "accessToken": "3|Kdi93NNg0xeWkNbERRYbo7c3IZhLoVUiD1RkNhmd3d718836",
+     *     "accessToken": "1|IPlBeEcUSfTJsYLOD0GpUO0DvPKbt8kY2MpOwRez07b31185",
      *     "type": "Bearer"
      *   }
      * }
@@ -74,6 +76,13 @@ class AuthController extends Controller {
      *   "code": 403,
      *   "errors": "ACCOUNT_SUSPENDED"
      * }
+     *
+     * @response status=403 scenario="Email Not Verified" {
+     *   "status": "error",
+     *   "message": "Your email address is not verified.",
+     *   "code": 403,
+     *   "errors": "EMAIL_NOT_VERIFIED"
+     * }
      * 
      * @response status=422 scenario="Validation Error" {
      *   "status": "error",
@@ -82,7 +91,8 @@ class AuthController extends Controller {
      *   "errors": {
      *     "email": ["EMAIL_FIELD_REQUIRED"],
      *     "password": ["PASSWORD_FIELD_REQUIRED"],
-     *     "name": ["NAME_FIELD_REQUIRED"]
+     *     "name": ["NAME_FIELD_REQUIRED"],
+     *     "device_fingerprint": ["DEVICE_FINGERPRINT_FIELD_REQUIRED"]
      *   }
      * }
      *
@@ -92,7 +102,6 @@ class AuthController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
      */
     public function login(Request $request): JsonResponse {
         try {
@@ -138,9 +147,12 @@ class AuthController extends Controller {
      * Endpoint: POST /logout
      *
      * Revokes the current access token, effectively logging the user out.
-     * This invalidates only the token used for the current request.
+     * This invalidates only the token used for the current request/session.
+     * The user must be authenticated to use this endpoint.
      *
      * @group User Authentication
+     *
+     * @authenticated
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -150,14 +162,19 @@ class AuthController extends Controller {
      *   "data": null
      * }
      *
+     * @response status=404 scenario="Unauthorized" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 404,
+     *   "errors": "UNAUTHORIZED"
+     * }
+     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
-     * @authenticated
      */
     public function logout(Request $request): JsonResponse {
         try {
@@ -171,21 +188,29 @@ class AuthController extends Controller {
     }
 
     /**
-     * Get User Tokens
+     * List User Tokens (Sessions)
      * 
      * Endpoint: GET /tokens
      *
      * Retrieves a list of all access tokens (active sessions) for the authenticated user.
-     * This includes the device name, last used timestamp and whether it's the current session.
-     * The endpoint supports filtering, sorting, and pagination through query parameters.
-     *
+     * Supports filtering, sorting, field selection und pagination.
+     * 
      * @group User Authentication
      *
-     * @queryParam select string Comma-separated fields to include. Example: select=id,name,last_used_at
-     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: sort=-last_used_at
-     * @queryParam filter[name] string Filter tokens by name. Example: filter[name]=iPhone
-     * @queryParam page number The page number. Example: page=1
-     * @queryParam per_page number Items per page. Example: per_page=15 (default: 10)
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. 
+     * @see \App\Traits\ApiSelectable::select()
+     * 
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
+     * 
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details. 
+     * @see \App\Traits\ApiFiltering::filter()
+     * 
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination). 
+     * @see \App\Traits\ApiPagination::paginate()
      * 
      * Example URL: /tokens
      *
@@ -197,35 +222,17 @@ class AuthController extends Controller {
      *   "data": [
      *     {
      *       "id": 2,
-     *       "name": "test_device",
-     *       "last_used_at": null,
+     *       "name": "test_device2",
+     *       "last_used_at": "2025-05-13T11:13:39.000000Z",
      *       "created_at": "2025-05-13T11:13:39.000000Z",
-     *       "is_current": true
+     *       "is_current": true                                 || Virtual field, calculated dynamically
      *     },
      *     {
      *       "id": 1,
-     *       "name": "test_device",
+     *       "name": "test_device1",
      *       "last_used_at": "2025-04-29T20:16:46.000000Z",
      *       "created_at": "2025-04-29T20:15:56.000000Z",
-     *       "is_current": false
-     *     }
-     *   ]
-     * }
-     * 
-     * Example URL with filtering: /tokens?filter[name]=iPhone
-     *
-     * @response status=200 scenario="Filtered Results" {
-     *   "status": "success",
-     *   "message": "Token list retrieved",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": [
-     *     {
-     *       "id": 3,
-     *       "name": "iPhone",
-     *       "last_used_at": "2025-05-10T14:23:55.000000Z",
-     *       "created_at": "2025-05-01T08:12:30.000000Z",
-     *       "is_current": false
+     *       "is_current": false                                || Virtual field, calculated dynamically
      *     }
      *   ]
      * }
@@ -236,9 +243,10 @@ class AuthController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
-     * Note: The `is_current` field indicates whether the token is the one currently being used
-     * for the API request. This field is calculated dynamically and cannot be used for filtering.
+     *
+     * Note:  
+     * - The `is_current` field indicates whether the token is the one currently being used for the API request.  
+     * - This field is calculated dynamically and cannot be used for filtering.
      * 
      * @authenticated
      */
@@ -249,12 +257,16 @@ class AuthController extends Controller {
 
             $query = $tokensRelation->getQuery();
 
+            $originalSelectFields = $this->getSelectFields($request);
+
+            $this->modifyRequestSelect($request, ['id'], ['is_current']);
+
             $query = $this->buildQuery($request, $query, 'user_tokens');
             if ($query instanceof JsonResponse) {
                 return $query;
             }
 
-            $query = $this->setCurrentToken($request, $query);
+            $query = $this->setCurrentToken($request, $query, $originalSelectFields);
 
             $query = $this->setVisibleTokensFields($query);
 
@@ -277,17 +289,23 @@ class AuthController extends Controller {
      * 
      * @example | $query = $this->setCurrentToken($request, $query);
      */
-    protected function setCurrentToken(Request $request, $query): mixed {
-        $currentTokenId = $request->user()->currentAccessToken()->id;
+    protected function setCurrentToken(Request $request, $query, $originalSelectFields): mixed {
 
-        if ($query instanceof LengthAwarePaginator) {
-            foreach ($query->items() as $token) {
-                $token->is_current = ($token->id == $currentTokenId);
+        if (!$request->has('select') || in_array('is_current', $originalSelectFields)) {
+
+            $currentTokenId = $request->user()->currentAccessToken()->id;
+
+            if ($query instanceof LengthAwarePaginator) {
+                foreach ($query->items() as $token) {
+                    $token->is_current = ($token->id == $currentTokenId);
+                }
+            } else {
+                foreach ($query as $token) {
+                    $token->is_current = ($token->id == $currentTokenId);
+                }
             }
-        } else {
-            foreach ($query as $token) {
-                $token->is_current = ($token->id == $currentTokenId);
-            }
+
+            return $query;
         }
 
         return $query;
@@ -503,7 +521,7 @@ class AuthController extends Controller {
                 return $this->successResponse(null, 'Password reset link sent', 200);
             }
 
-            return $this->errorResponse(__($status), 'PASSWORD_RESET_FAILED', 400);
+            return $this->errorResponse('Password reset failed', 'PASSWORD_RESET_FAILED', 400);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
@@ -596,7 +614,7 @@ class AuthController extends Controller {
                 return $this->successResponse(null, 'Password has been reset', 200);
             }
 
-            return $this->errorResponse(__($status), 'PASSWORD_RESET_FAILED', 400);
+            return $this->errorResponse('Password reset failed', 'PASSWORD_RESET_FAILED', 400);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
