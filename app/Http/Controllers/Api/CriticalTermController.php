@@ -100,95 +100,90 @@ class CriticalTermController extends Controller {
 
 
     /**
-     * Get All Critical Terms
+     * List All Critical Terms
      * 
      * Endpoint: GET /critical-terms
+     * 
+     * Only users with the roles **admin**, or **moderator**, can access these endpoints.
      *
-     * Retrieves a list of all critical terms, optionally filtered and sorted.
-     * Critical terms are words or phrases flagged for moderation with varying severity levels.
+     * Retrieves a list of critical terms with support for filtering, sorting, field selection, relation inclusion, and pagination.  
+     * **By default, results are paginated.**
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`) to specify which fields should be returned for each relation.
      * 
      * @group CriticalTerms
      *
-     * @queryParam select string Select specific fields (id,name,language,etc). Example: select=id,name,severity
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-severity
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[language]=en
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=off
-     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=term
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=2
-     * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
      * Example URL: /critical-terms
      * 
-     * @response status=200 scenario="All Critical Terms retrieved" {
+     * @response status=200 scenario="Success without user relation" {
      *   "status": "success",
      *   "message": "Critical Terms retrieved successfully",
      *   "code": 200,
-     *   "count": 3,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "name": "inappropriate_word",
+     *       "name": "fraud",
      *       "language": "en",
      *       "severity": 3,
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2025-03-12T14:22:08.000000Z",
-     *       "updated_at": "2025-03-12T14:22:08.000000Z"
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "offensive_term",
-     *       "language": "en",
-     *       "severity": 5,
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2025-03-15T10:45:32.000000Z",
-     *       "updated_at": "2025-03-15T10:45:32.000000Z"
-     *     },
-     *     {
-     *       "id": 3,
-     *       "name": "mild_term",
-     *       "language": "de",
-     *       "severity": 1,
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2025-04-05T09:13:27.000000Z",
-     *       "updated_at": "2025-04-05T09:13:27.000000Z"
+     *       "created_by_role": "system",
+     *       "created_by_user_id": 2,
+     *       "created_at": "2025-07-05T21:40:26.000000Z",
+     *       "updated_at": "2025-07-05T21:40:26.000000Z"
      *     }
      *   ]
      * }
+     *
+     * Example URL: /critical-terms/?include=user
      * 
-     * Example URL: /critical-terms/?select=id,name,severity,language&include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="Filtered Critical Terms retrieved" {
+     * @response status=200 scenario="Success with user relation" {
      *   "status": "success",
      *   "message": "Critical Terms retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "name": "offensive_term",
-     *       "severity": 5,
+     *       "name": "fraud",
+     *       "language": "en",
+     *       "severity": 3,
+     *       "created_by_role": "system",
+     *       "created_by_user_id": 2,
+     *       "created_at": "2025-07-05T21:40:26.000000Z",
+     *       "updated_at": "2025-07-05T21:40:26.000000Z",
      *       "user": {
      *         "id": 2,
-     *         "display_name": "Maxi2"
-     *       }
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "inappropriate_word",
-     *       "severity": 3,
-     *        "user": {
-     *         "id": 2,
-     *         "display_name": "Maxi2"
+     *         "display_name": "System",
+     *         "role": "system",
+     *         "created_at": "2025-07-05T21:38:52.000000Z",
+     *         "updated_at": "2025-07-05T21:38:52.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
      *       }
      *     }
      *   ]
@@ -266,34 +261,34 @@ class CriticalTermController extends Controller {
      * Endpoint: POST /critical-terms
      *
      * Creates a new critical term in the system.
-     * Critical terms are words or phrases flagged for moderation with varying severity levels.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group CriticalTerms
      * 
-     * @bodyParam name string required The name of the critical term. Example: offensive_word
-     * @bodyParam language string required The language code of the term. Example: en
+     * @bodyParam name string required The name of the critical term. Min: 2, Max: 255. Example: phishing
+     * @bodyParam language string required The language code of the term. Min: 2, Max: 255. Example: en
      * @bodyParam severity integer required The severity level of the term (1-5). Example: 4
      * 
      * @bodyContent {
-     *   "name": "offensive_word",
-     *   "language": "en",
-     *   "severity": 4
+     *   "name": "phishing",      || required, string, min:2, max:255
+     *   "language": "en",        || required, string, min:2, max:255
+     *   "severity": 4            || required, integer, must be between 1 and 5
      * }
-     * 
+     *
      * @response status=201 scenario="Critical Term created" {
      *   "status": "success",
      *   "message": "Critical Term created successfully",
      *   "code": 201,
      *   "count": 1,
      *   "data": {
-     *     "id": 4,
-     *     "name": "offensive_word",
+     *     "id": 3,
+     *     "name": "phishing",
      *     "language": "en",
      *     "severity": 4,
      *     "created_by_role": "admin",
      *     "created_by_user_id": 1,
-     *     "created_at": "2025-05-04T15:22:43.000000Z",
-     *     "updated_at": "2025-05-04T15:22:43.000000Z"
+     *     "created_at": "2025-07-06T18:14:01.000000Z",
+     *     "updated_at": "2025-07-06T18:14:01.000000Z"
      *   }
      * }
      *
@@ -377,53 +372,68 @@ class CriticalTermController extends Controller {
      * Endpoint: GET /critical-terms/{id}
      *
      * Retrieves a specific critical term by its ID.
-     * Critical terms are words or phrases flagged for moderation with varying severity levels.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group CriticalTerms
      * 
-     * @urlParam id required integer The ID of the critical term. Example: 2
+     * @urlParam id integer required The ID of the critical term. Example: 2
      *
-     * @queryParam select string Select specific fields (id,name,language,etc). Example: select=id,name,severity
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
+     * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
      * Example URL: /critical-terms/2
-     * 
-     * @response status=200 scenario="Critical Term retrieved (full data)" {
+     *
+     * @response status=200 scenario="Success without user relation" {
      *   "status": "success",
      *   "message": "Critical Term retrieved successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
      *     "id": 2,
-     *     "name": "offensive_term",
+     *     "name": "malware",
      *     "language": "en",
-     *     "severity": 5,
-     *     "created_by_role": "admin",
-     *     "created_by_user_id": 1,
-     *     "created_at": "2025-03-15T10:45:32.000000Z",
-     *     "updated_at": "2025-03-15T10:45:32.000000Z"
+     *     "severity": 4,
+     *     "created_by_role": "system",
+     *     "created_by_user_id": 2,
+     *     "created_at": "2025-07-05T21:40:26.000000Z",
+     *     "updated_at": "2025-07-05T21:40:26.000000Z"
      *   }
      * }
      * 
-     * Example URL with select: /critical-terms/2/?select=id,name,severity,language&include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="Critical Term with selected fields and included user relation" {
+     * Example URL: /critical-terms/2/?include=user
+     *
+     * @response status=200 scenario="Success with user relation" {
      *   "status": "success",
      *   "message": "Critical Term retrieved successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
      *     "id": 2,
-     *     "name": "offensive_term",
-     *     "severity": 5,
+     *     "name": "malware",
      *     "language": "en",
+     *     "severity": 4,
+     *     "created_by_role": "system",
+     *     "created_by_user_id": 2,
+     *     "created_at": "2025-07-05T21:40:26.000000Z",
+     *     "updated_at": "2025-07-05T21:40:26.000000Z",
      *     "user": {
-     *         "id": 2,
-     *         "display_name": "Maxi2"
+     *       "id": 2,
+     *       "display_name": "System",
+     *       "role": "system",
+     *       "created_at": "2025-07-05T21:38:52.000000Z",
+     *       "updated_at": "2025-07-05T21:38:52.000000Z",
+     *       "is_banned": null,
+     *       "was_ever_banned": false,
+     *       "moderation_info": []
      *     }
      *   }
      * }
@@ -490,35 +500,36 @@ class CriticalTermController extends Controller {
      *
      * Updates an existing critical term in the system.
      * All fields are optional, but at least one field must be provided.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group CriticalTerms
      * 
-     * @urlParam id required integer The ID of the critical term to update. Example: 2
+     * @urlParam id integer required The ID of the critical term to update. Example: 4
      *
-     * @bodyParam name string optional The name of the critical term. Example: updated_offensive_term
-     * @bodyParam language string optional The language code of the term. Example: de
-     * @bodyParam severity integer optional The severity level of the term (1-5). Example: 3
+     * @bodyParam name string optional The name of the critical term. Min: 2, Max: 255. Example: malware
+     * @bodyParam language string optional The language code of the term. Min: 2, Max: 255. Example: en
+     * @bodyParam severity integer optional The severity level of the term (1-5). Example: 4
      * 
      * @bodyContent {
-     *   "name": "updated_offensive_term",  || Optional but at least one field must be provided
-     *   "language": "de",                  || Optional but at least one field must be provided 
-     *   "severity": 3                      || Optional but at least one field must be provided
+     *   "name": "malware",      || optional, string, min:2, max:255, at least one field required
+     *   "language": "en",       || optional, string, min:2, max:255, at least one field required
+     *   "severity": 4           || optional, integer, must be between 1 and 5, at least one field required
      * }
-     * 
+     *
      * @response status=200 scenario="Critical Term updated" {
      *   "status": "success",
      *   "message": "Critical Term updated successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 2,
-     *     "name": "updated_offensive_term",
+     *     "id": 4,
+     *     "name": "malware",
      *     "language": "en",
-     *     "severity": 3,
+     *     "severity": 4,
      *     "created_by_role": "admin",
      *     "created_by_user_id": 1,
-     *     "created_at": "2025-03-15T10:45:32.000000Z",
-     *     "updated_at": "2025-05-04T16:30:15.000000Z"
+     *     "created_at": "2025-07-05T21:40:26.000000Z",
+     *     "updated_at": "2025-07-06T18:23:52.000000Z"
      *   }
      * }
      * 
@@ -625,16 +636,17 @@ class CriticalTermController extends Controller {
      *
      * Permanently removes a critical term from the system.
      * This action cannot be undone.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group CriticalTerms
      * 
-     * @urlParam id required integer The ID of the critical term to delete. Example: 3
+     * @urlParam id integer required The ID of the critical term to delete. Example: 3
      * 
      * @response status=200 scenario="Critical Term deleted" {
      *   "status": "success",
-     *   "message": "Critical Term 'mild_term' in language 'de' with severity '1' deleted successfully",
+     *   "message": "Critical Term 'phishing' in language 'en' with severity '4' deleted successfully",
      *   "code": 200,
-     *   "count": 0,
+     *   "count": 1,
      *   "data": null
      * }
      *
