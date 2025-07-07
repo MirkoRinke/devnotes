@@ -103,100 +103,85 @@ class ForbiddenNameController extends Controller {
      * List All Forbidden Names
      * 
      * Endpoint: GET /forbidden-names
-     *
-     * Retrieves a list of all forbidden names configured in the system.
-     * These are names that users are not allowed to use when registering or updating their profiles.
      * 
-     * Note: This endpoint requires admin or moderator permission.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
+     *
+     * Retrieves a list of forbidden names with support for filtering, sorting, field selection, relation inclusion, and pagination.
+     * **By default, results are paginated.**
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`) to specify which fields should be returned for each relation.
      * 
      * @group ForbiddenName
      *
-     * @queryParam select string Select specific fields (id,name,match_type,etc). Example: select=id,name,match_type
-     * @queryParam sort string Field to sort by (prefix with - for DESC order). Example: sort=-created_at
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[match_type]=exact
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=ad
-     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=tor
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=2
-     * @queryParam per_page integer Number of items per page. Example: per_page=15 (Default: 10)
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
      * Example URL: /forbidden-names
      * 
-     * @response status=200 scenario="Forbidden names retrieved" {
+     * @response status=200 scenario="Success without user relation" {
      *   "status": "success",
      *   "message": "Forbidden names retrieved successfully",
      *   "code": 200,
-     *   "count": 3,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
      *       "name": "admin",
-     *       "match_type": "exact",
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2025-04-12T14:22:18.000000Z",
-     *       "updated_at": "2025-04-12T14:22:18.000000Z"
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "moderator",
-     *       "match_type": "exact",
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2025-04-12T14:22:38.000000Z",
-     *       "updated_at": "2025-04-12T14:22:38.000000Z"
-     *     },
-     *     {
-     *       "id": 3,
-     *       "name": "system",
      *       "match_type": "partial",
-     *       "created_by_role": "moderator",
+     *       "created_by_role": "system",
      *       "created_by_user_id": 2,
-     *       "created_at": "2025-04-15T09:11:23.000000Z",
-     *       "updated_at": "2025-04-15T09:11:23.000000Z"
+     *       "created_at": "2025-07-05T21:40:19.000000Z",
+     *       "updated_at": "2025-07-05T21:40:19.000000Z"
      *     }
      *   ]
      * }
+     *
+     * Example URL: /forbidden-names/?include=user
      * 
-     * Example URL: /forbidden-names/?select=id,name,match_type&include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="Forbidden names retrieved with select" {
-     *  "status": "success",
-     *  "message": "Forbidden names retrieved successfully",
-     *  "code": 200,
-     *  "count": 3,
+     * @response status=200 scenario="Success with user relation" {
+     *   "status": "success",
+     *   "message": "Forbidden names retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
      *       "name": "admin",
-     *       "match_type": "exact",
-     *      "user": {
-     *         "id": 1,
-     *         "display_name": "system"
-     *       }
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "moderator",
-     *       "match_type": "exact",
-     *       "user": {
-     *         "id": 1,
-     *         "display_name": "system"
-     *       }
-     *     },
-     *     {
-     *       "id": 3,
-     *       "name": "system",
      *       "match_type": "partial",
-     *      "user": {
-     *         "id": 1,
-     *         "display_name": "system"
+     *       "created_by_role": "system",
+     *       "created_by_user_id": 2,
+     *       "created_at": "2025-07-05T21:40:19.000000Z",
+     *       "updated_at": "2025-07-05T21:40:19.000000Z",
+     *       "user": {
+     *         "id": 2,
+     *         "display_name": "System",
+     *         "role": "system",
+     *         "created_at": "2025-07-05T21:38:52.000000Z",
+     *         "updated_at": "2025-07-05T21:38:52.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
      *       }
      *     }
      *   ]
@@ -209,7 +194,7 @@ class ForbiddenNameController extends Controller {
      *   "count": 0,
      *   "data": []
      * }
-     *
+     * 
      * @response status=404 scenario="Database empty" {
      *   "status": "error",
      *   "message": "No forbidden names found",
@@ -273,19 +258,17 @@ class ForbiddenNameController extends Controller {
      * 
      * Endpoint: POST /forbidden-names
      *
-     * Creates a new forbidden name entry that will be checked against user display names
-     * during registration and profile updates.
-     * 
-     * Note: This endpoint requires admin or moderator permission.
+     * Creates a new forbidden name entry that will be checked against user display names during registration and profile updates.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group ForbiddenName
      *
-     * @bodyParam name string required The forbidden name to add. Example: offensive
-     * @bodyParam match_type string required Type of matching to use (exact or partial). Example: partial
+     * @bodyParam name string required The forbidden name to add. Min: 2, Max: 255. Example: admin
+     * @bodyParam match_type string required Type of matching to use. Allowed values: exact, partial. Example: partial
      * 
      * @bodyContent {
-     *   "name": "offensive",
-     *   "match_type": "partial"
+     *   "name": "admin",              || required, string, min:2, max:255
+     *   "match_type": "partial"       || required, string, allowed: exact, partial
      * }
      * 
      * @response status=201 scenario="Forbidden name created" {
@@ -294,13 +277,13 @@ class ForbiddenNameController extends Controller {
      *   "code": 201,
      *   "count": 1,
      *   "data": {
-     *     "id": 4,
-     *     "name": "offensive",
+     *     "id": 1,
+     *     "name": "admin",
      *     "match_type": "partial",
      *     "created_by_role": "admin",
      *     "created_by_user_id": 1,
-     *     "created_at": "2025-05-04T20:15:34.000000Z",
-     *     "updated_at": "2025-05-04T20:15:34.000000Z"
+     *     "created_at": "2025-07-06T23:49:49.000000Z",
+     *     "updated_at": "2025-07-06T23:49:49.000000Z"
      *   }
      * }
      *
@@ -379,41 +362,28 @@ class ForbiddenNameController extends Controller {
      * 
      * Endpoint: GET /forbidden-names/{id}
      *
-     * Retrieves detailed information about a specific forbidden name by its ID.
-     * 
-     * Note: This endpoint requires admin or moderator permission.
+     * Retrieves a specific forbidden name by its ID.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group ForbiddenName
+     * 
+     * @urlParam id integer required The ID of the forbidden name. Example: 1
      *
-     * @urlParam id integer required The ID of the forbidden name to retrieve. Example: 1
-     * @queryParam select string Select specific fields to return. Example: select=id,name,match_type
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
+     * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
      * Example URL: /forbidden-names/1
-     * 
-     * @response status=200 scenario="Forbidden name retrieved" {
-     *   "status": "success",
-     *   "message": "Forbidden name retrieved successfully",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": {
-     *     "id": 1,
-     *     "name": "admin",
-     *     "match_type": "exact",
-     *     "created_by_role": "admin",
-     *     "created_by_user_id": 1,
-     *     "created_at": "2025-04-12T14:22:18.000000Z",
-     *     "updated_at": "2025-04-12T14:22:18.000000Z"
-     *   }
-     * }
-     * 
-     * Example URL: /forbidden-names/1/?select=id,name,match_type&include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="Forbidden name retrieved with select" {
+     *
+     * @response status=200 scenario="Success without user relation" {
      *   "status": "success",
      *   "message": "Forbidden name retrieved successfully",
      *   "code": 200,
@@ -422,18 +392,39 @@ class ForbiddenNameController extends Controller {
      *     "id": 1,
      *     "name": "admin",
      *     "match_type": "partial",
-     *     "user": {
-     *       "id": 2,
-     *       "display_name": "system"
-     *     }
+     *     "created_by_role": "system",
+     *     "created_by_user_id": 2,
+     *     "created_at": "2025-07-05T21:40:19.000000Z",
+     *     "updated_at": "2025-07-05T21:40:19.000000Z"
      *   }
      * }
+     * 
+     * Example URL: /forbidden-names/1/?include=user
      *
-     * @response status=403 scenario="Unauthorized access" {
-     *   "status": "error",
-     *   "message": "Unauthorized",
-     *   "code": 403,
-     *   "errors": "UNAUTHORIZED"
+     * @response status=200 scenario="Success with user relation" {
+     *   "status": "success",
+     *   "message": "Forbidden name retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 1,
+     *     "name": "admin",
+     *     "match_type": "partial",
+     *     "created_by_role": "system",
+     *     "created_by_user_id": 2,
+     *     "created_at": "2025-07-05T21:40:19.000000Z",
+     *     "updated_at": "2025-07-05T21:40:19.000000Z",
+     *     "user": {
+     *       "id": 2,
+     *       "display_name": "System",
+     *       "role": "system",
+     *       "created_at": "2025-07-05T21:38:52.000000Z",
+     *       "updated_at": "2025-07-05T21:38:52.000000Z",
+     *       "is_banned": null,
+     *       "was_ever_banned": false,
+     *       "moderation_info": []
+     *     }
+     *   }
      * }
      *
      * @response status=404 scenario="Forbidden name not found" {
@@ -441,6 +432,13 @@ class ForbiddenNameController extends Controller {
      *   "message": "Forbidden name not found",
      *   "code": 404,
      *   "errors": "NOT_FOUND"
+     * }
+     *
+     * @response status=403 scenario="Unauthorized access" {
+     *   "status": "error",
+     *   "message": "Unauthorized",
+     *   "code": 403,
+     *   "errors": "UNAUTHORIZED"
      * }
      *
      * @response status=500 scenario="Server Error" {
@@ -489,18 +487,20 @@ class ForbiddenNameController extends Controller {
      * Endpoint: PATCH /forbidden-names/{id}
      *
      * Updates an existing forbidden name entry with new information.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
-     * Note: This endpoint requires admin or moderator permission.
+     * **Note:** Because only `name` and `match_type` can be changed, updating a forbidden name is practically the same as creating a new one.
      * 
      * @group ForbiddenName
      *
-     * @urlParam id integer required The ID of the forbidden name to update. Example: 1
-     * @bodyParam name string The new name to use. Example: offensive_term
-     * @bodyParam match_type string Type of matching to use (exact or partial). Example: exact
+     * @urlParam id integer required The ID of the forbidden name to update. Example: 3
+     * 
+     * @bodyParam name string optional The new forbidden name. Min: 2, Max: 255. Example: root
+     * @bodyParam match_type string optional Type of matching to use. Allowed values: exact, partial. Example: exact
      * 
      * @bodyContent {
-     *   "name": "offensive_term",
-     *   "match_type": "exact"
+     *   "name": "root",                || optional, string, min:2, max:255
+     *   "match_type": "exact"          || optional, string, allowed: exact, partial
      * }
      * 
      * @response status=200 scenario="Forbidden name updated" {
@@ -509,13 +509,13 @@ class ForbiddenNameController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "name": "offensive_term",
+     *     "id": 3,
+     *     "name": "root",
      *     "match_type": "exact",
      *     "created_by_role": "admin",
      *     "created_by_user_id": 1,
-     *     "created_at": "2025-04-15T09:11:23.000000Z",
-     *     "updated_at": "2025-05-04T21:30:12.000000Z"
+     *     "created_at": "2025-07-06T23:49:49.000000Z",
+     *     "updated_at": "2025-07-07T00:01:27.000000Z"
      *   }
      * }
      * 
@@ -620,18 +620,17 @@ class ForbiddenNameController extends Controller {
      * Endpoint: DELETE /forbidden-names/{id}
      *
      * Permanently removes a forbidden name from the system.
-     * 
-     * Note: This endpoint requires admin or moderator permission.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * 
      * @group ForbiddenName
      *
-     * @urlParam id integer required The ID of the forbidden name to delete. Example: 1
+     * @urlParam id integer required The ID of the forbidden name to delete. Example: 3
      * 
      * @response status=200 scenario="Forbidden name deleted" {
      *   "status": "success",
-     *   "message": "Forbidden name: admin with match type: partial deleted successfully",
+     *   "message": "Forbidden name: administrator with match type: partial deleted successfully",
      *   "code": 200,
-     *   "count": 0,
+     *   "count": 1,
      *   "data": null
      * }
      *
