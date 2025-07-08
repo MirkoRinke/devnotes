@@ -675,8 +675,7 @@ class PostAllowedValueController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
         } catch (Exception $e) {
-            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
-            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
 
