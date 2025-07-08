@@ -105,9 +105,9 @@ class PostAllowedValueController extends Controller {
      * @param string $type The type of the allowed value (e.g., category, post_type, status, language, technology, tag)
      * @return bool True if the value is in use, false otherwise
      * 
-     * @example | $isInUse = $this->isPostAllowedValueInUse($name, $type, $id)
+     * @example | $isInUse = $this->isPostAllowedValueInUse($name, $type)
      */
-    protected function isPostAllowedValueInUse($name, $type, $id) {
+    protected function isPostAllowedValueInUse($name, $type) {
         $isInUse = false;
 
         switch ($type) {
@@ -121,13 +121,19 @@ class PostAllowedValueController extends Controller {
                 $isInUse = Post::where('status', $name)->exists();
                 break;
             case 'language':
-                $isInUse = Post::whereJsonContains('language', $name)->exists();
+                $isInUse = Post::with('languages')->whereHas('languages', function ($query) use ($name) {
+                    $query->where('name', $name);
+                })->exists();
                 break;
             case 'technology':
-                $isInUse = Post::whereJsonContains('technology', $name)->exists();
+                $isInUse = Post::with('technologies')->whereHas('technologies', function ($query) use ($name) {
+                    $query->where('name', $name);
+                })->exists();
                 break;
             case 'tag':
-                $isInUse = PostTag::where('post_allowed_value_id', $id)->exists();
+                $isInUse = Post::with('tags')->whereHas('tags', function ($query) use ($name) {
+                    $query->where('name', $name);
+                })->exists();
                 break;
         }
         return $isInUse;
@@ -138,87 +144,89 @@ class PostAllowedValueController extends Controller {
      * 
      * Endpoint: GET /post-allowed-values
      *
-     * Retrieves a paginated list of all allowed values that can be used in posts.
-     * These values define the acceptable options for post languages, categories, types,
-     * technologies, and status settings.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      *
-     * Results can be filtered, sorted, and paginated using query parameters.
+     * Retrieves a list of allowed values that can be used in posts, with support for filtering, sorting, field selection, relation inclusion, and pagination.
+     * **By default, results are paginated.**
      *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`) to specify which fields should be returned for each relation.
+     * 
      * @group PostAllowedValue
      *
-     * @queryParam select string Comma-separated list of fields to include in the response. Example: select=id,name,type
-     * @queryParam sort string Sort by field. Prefix with - for descending order. Example: sort-created_at
-     * @queryParam filter[type] string Filter by value type (language, category, post_type, technology, status). Example: filter[type]=language
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Filter by fields that start with a specific value. Example: startsWith[name]=Java
-     * @queryParam endsWith[field] string Filter by fields that end with a specific value. Example: endsWith[name]=Script
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page number The page number. Example: page=1
-     * @queryParam per_page number Number of items per page. Example: per_page=15 (default: 10)
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
      * Example URL: /post-allowed-values
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Post Allowed Values retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "name": "PHP",
+     *       "name": "HTML",
      *       "type": "language",
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2023-09-15T14:25:10.000000Z",
-     *       "updated_at": "2023-09-15T14:25:10.000000Z"
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "JavaScript",
-     *       "type": "language",
-     *       "created_by_role": "admin",
-     *       "created_by_user_id": 1,
-     *       "created_at": "2023-09-15T14:25:32.000000Z",
-     *       "updated_at": "2023-09-15T14:25:32.000000Z"
+     *       "created_by_role": "system",
+     *       "created_by_user_id": 2,
+     *       "created_at": "2025-07-05T21:38:59.000000Z",
+     *       "updated_at": "2025-07-05T21:38:59.000000Z"
      *     }
-     *   ],
+     *   ]
      * }
-     * 
-     * Example URL: /post-allowed-values/?select=id,name,type&include=user&user_fields=id,display_name
      *
-     * @response status=200 scenario="Success with select and include" {
+     * Example URL: /post-allowed-values/?include=user
+     * 
+     * @response status=200 scenario="Success with user relation" {
      *   "status": "success",
      *   "message": "Post Allowed Values retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "name": "PHP",
+     *       "name": "HTML",
      *       "type": "language",
+     *       "created_by_role": "system",
+     *       "created_by_user_id": 2,
+     *       "created_at": "2025-07-05T21:38:59.000000Z",
+     *       "updated_at": "2025-07-05T21:38:59.000000Z",
      *       "user": {
-     *          "id": 1,
-     *          "display_name": "Maxi1",
-     *        }
-     *     },
-     *     {
-     *       "id": 2,
-     *       "name": "JavaScript",
-     *       "type": "language",
-     *       "user": {
-     *          "id": 1,
-     *          "display_name": "Maxi1",
-     *        }
+     *         "id": 2,
+     *         "display_name": "System",
+     *         "role": "system",
+     *         "created_at": "2025-07-05T21:38:52.000000Z",
+     *         "updated_at": "2025-07-05T21:38:52.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
+     *       }
      *     }
-     *   ],
+     *   ]
      * }
-     * 
+     *
      * @response status=200 scenario="No Post Allowed Values found" {
      *   "status": "success",
      *   "message": "No Post Allowed Values found",
@@ -240,6 +248,7 @@ class PostAllowedValueController extends Controller {
      *   "code": 403,
      *   "errors": "UNAUTHORIZED"
      * }
+     *
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
      *   "message": "An unexpected error occurred",
@@ -290,30 +299,31 @@ class PostAllowedValueController extends Controller {
      * Endpoint: POST /post-allowed-values
      *
      * Creates a new allowed value that can be used in posts.
-     * This endpoint requires admin privileges.
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      *
      * @group PostAllowedValue
      *
-     * @bodyParam name string required The name of the allowed value. Example: Rust
-     * @bodyParam type string required The type of the allowed value (language, category, post_type, technology, status). Example: language
+     * @bodyParam name string required The name of the allowed value. Example: Assembler
+     * @bodyParam type string required The type of the allowed value. Must be one of: language, category, post_type, technology, status, tag. Example: language
      * 
      * @bodyContent {
-     *   "name": "Rust",                  // required, string, min:1, max:255
-     *   "type": "language"               // required, string, must be one of: language, category, post_type, technology, status
+     *   "name": "Assembler",                  || required, string, min:1, max:255
+     *   "type": "language"                    || required, string, must be one of: language, category, post_type, technology, status, tag
      * }
      * 
      * @response status=201 scenario="Success" {
      *   "status": "success",
      *   "message": "Post Allowed Value created successfully",
      *   "code": 201,
+     *   "count": 1,
      *   "data": {
-     *     "id": 3,
-     *     "name": "Rust",
+     *     "name": "Assembler",
      *     "type": "language",
      *     "created_by_role": "admin",
      *     "created_by_user_id": 1,
-     *     "created_at": "2023-09-15T15:42:10.000000Z",
-     *     "updated_at": "2023-09-15T15:42:10.000000Z"
+     *     "updated_at": "2025-07-08T20:52:38.000000Z",
+     *     "created_at": "2025-07-08T20:52:38.000000Z",
+     *     "id": 70
      *   }
      * }
      *
@@ -395,48 +405,66 @@ class PostAllowedValueController extends Controller {
      * Endpoint: GET /post-allowed-values/{id}
      *
      * Retrieves a specific post allowed value by its ID.
+     * 
+     * Only users with the roles **admin** or **moderator** can access this endpoint.
      * Returns complete details of the requested value that can be used in posts.
      *
      * @group PostAllowedValue
      *
-     * @urlParam id required The ID of the post allowed value. Example: 1
-     * @queryParam select string Comma-separated list of fields to include in the response. Example: select=id,name,type
+     * @urlParam id integer required The ID of the post allowed value. Example: 1
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id,display_name,role,created_at,updated_at,is_banned,was_ever_banned,moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
+     * 
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
+     * 
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
+     * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
      *
      * Example URL: /post-allowed-values/1
      *
-     * @response status=200 scenario="Success" {
+     * @response status=200 scenario="Success without user relation" {
      *   "status": "success",
      *   "message": "Post Allowed Value retrieved successfully",
      *   "code": 200,
      *   "data": {
      *     "id": 1,
-     *     "name": "PHP",
+     *     "name": "HTML",
      *     "type": "language",
-     *     "created_by_role": "admin",
-     *     "created_by_user_id": 1,
-     *     "created_at": "2023-09-15T14:25:10.000000Z",
-     *     "updated_at": "2023-09-15T14:25:10.000000Z"
+     *     "created_by_role": "system",
+     *     "created_by_user_id": 2,
+     *     "created_at": "2025-07-05T21:38:59.000000Z",
+     *     "updated_at": "2025-07-05T21:38:59.000000Z"
      *   }
      * }
      *
-     * Example URL with select: /post-allowed-values/1/?select=id,name,type&include=user&user_fields=id,display_name
-     * display_name
-     * @response status=200 scenario="Success with select and include" {
+     * Example URL: /post-allowed-values/1/?include=user
+     *
+     * @response status=200 scenario="Success with user relation" {
      *   "status": "success",
      *   "message": "Post Allowed Value retrieved successfully",
      *   "code": 200,
      *   "data": {
      *     "id": 1,
-     *     "name": "PHP",
+     *     "name": "HTML",
      *     "type": "language",
+     *     "created_by_role": "system",
+     *     "created_by_user_id": 2,
+     *     "created_at": "2025-07-05T21:38:59.000000Z",
+     *     "updated_at": "2025-07-05T21:38:59.000000Z",
      *     "user": {
-     *         "id": 2,
-     *         "display_name": "Maxi2"
+     *       "id": 2,
+     *       "display_name": "System",
+     *       "role": "system",
+     *       "created_at": "2025-07-05T21:38:52.000000Z",
+     *       "updated_at": "2025-07-05T21:38:52.000000Z",
+     *       "is_banned": null,
+     *       "was_ever_banned": false,
+     *       "moderation_info": []
      *     }
      *   }
      * }
@@ -500,32 +528,35 @@ class PostAllowedValueController extends Controller {
      * 
      * Endpoint: PATCH /post-allowed-values/{id}
      *
-     * Updates an existing post allowed value. This endpoint can be used to change the
-     * name and/or type of an allowed value. Only admin users can update values.
+     * Updates an existing post allowed value. Only users with the roles **admin** or **moderator** can update values.
+     * 
+     * At least one of the fields (`name`, `type`) must be provided.
+     * Changing the `type` is only allowed if the value is not currently in use.
      *
      * @group PostAllowedValue
      *
-     * @urlParam id required The ID of the post allowed value to update. Example: 1
-     * @bodyParam name string The new name for the allowed value. Example: TypeScript
-     * @bodyParam type string The new type for the allowed value (language, category, post_type, technology, status). Example: language
+     * @urlParam id integer required The ID of the post allowed value to update. Example: 70
+     * @bodyParam name string The new name for the allowed value. Example: Assembler
+     * @bodyParam type string The new type for the allowed value. Must be one of: language, category, post_type, technology, status, tag. Example: language
      * 
      * @bodyContent {
-     *   "name": "TypeScript",           || Optional but at least one field must be provided
-     *   "type": "language"              || Optional but at least one field must be provided
+     *   "name": "Assembler",           || optional, string, min:1, max:255
+     *   "type": "language"             || optional, string, must be one of: language, category, post_type, technology, status, tag
      * }
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Post Allowed Value updated successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "name": "TypeScript",
+     *     "id": 70,
+     *     "name": "Assembler",
      *     "type": "language",
      *     "created_by_role": "admin",
      *     "created_by_user_id": 1,
-     *     "created_at": "2023-09-15T14:25:10.000000Z",
-     *     "updated_at": "2023-09-15T15:30:22.000000Z"
+     *     "created_at": "2025-07-08T20:52:38.000000Z",
+     *     "updated_at": "2025-07-08T21:45:08.000000Z"
      *   }
      * }
      *
@@ -560,6 +591,13 @@ class PostAllowedValueController extends Controller {
      *   "errors": "POST_ALLOWED_VALUE_EXISTS"
      * }
      *
+     * @response status=409 scenario="Value in Use" {
+     *   "status": "error",
+     *   "message": "Post Allowed Value 'Assembler' is used in posts and its type cannot be changed",
+     *   "code": 409,
+     *   "errors": "POST_ALLOWED_VALUE_IN_USE"
+     * }
+     *
      * @response status=404 scenario="Not Found" {
      *   "status": "error",
      *   "message": "Post Allowed Value not found",
@@ -587,15 +625,23 @@ class PostAllowedValueController extends Controller {
                 $this->getValidationMessages('PostAllowedValue')
             );
 
+            // Find the Post Allowed Value by ID
+            $postAllowedValue = PostAllowedValue::findOrFail($id);
+
             $validatedData['name'] = trim($validatedData['name']);
+
+            // If type is provided, check if the Post Allowed Value is in use
+            if (isset($validatedData['type']) && $validatedData['type'] !== $postAllowedValue->type) {
+                $isInUse = $this->isPostAllowedValueInUse($postAllowedValue->name, $postAllowedValue->type, $id);
+                if ($isInUse) {
+                    return $this->errorResponse("Post Allowed Value '{$postAllowedValue->name}' is used in posts and its type cannot be changed", 'POST_ALLOWED_VALUE_IN_USE', 409);
+                }
+            }
 
             // Check if at least one field is provided
             if (empty($validatedData)) {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
-
-            // Find the Post Allowed Value by ID
-            $postAllowedValue = PostAllowedValue::findOrFail($id);
 
             $nameToCheck = $validatedData['name'] ?? $postAllowedValue->name;
             $typeToCheck = $validatedData['type'] ?? $postAllowedValue->type;
@@ -629,7 +675,8 @@ class PostAllowedValueController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post Allowed Value not found', 'POST_ALLOWED_VALUE_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            // return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse($e->getMessage(), 'SERVER_ERROR', 500);
         }
     }
 
@@ -640,22 +687,24 @@ class PostAllowedValueController extends Controller {
      *
      * Permanently removes a post allowed value from the system.
      * A value cannot be deleted if it is currently in use by any posts.
-     * Only admin users can delete values.
+     * 
+     * Only users with the roles **admin** or **moderator** can delete values.
      *
      * @group PostAllowedValue
      *
-     * @urlParam id required The ID of the post allowed value to delete. Example: 3
+     * @urlParam id integer required The ID of the post allowed value to delete. Example: 70
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
-     *   "message": "Post Allowed Value: Rust with type: language deleted successfully",
+     *   "message": "Post Allowed Value: Assembler with type: language deleted successfully",
      *   "code": 200,
+     *   "count": 1,
      *   "data": null
      * }
      *
      * @response status=409 scenario="Value in Use" {
      *   "status": "error",
-     *   "message": "Post Allowed Value 'PHP' is used in posts and cannot be deleted",
+     *   "message": "Post Allowed Value 'Assembler' is used in posts and cannot be deleted",
      *   "code": 409,
      *   "errors": "POST_ALLOWED_VALUE_IN_USE"
      * }
@@ -695,7 +744,7 @@ class PostAllowedValueController extends Controller {
             $type = $postAllowedValue->type;
 
             // Check if the Post Allowed Value is in use
-            $isInUse = $this->isPostAllowedValueInUse($name, $type, $id);
+            $isInUse = $this->isPostAllowedValueInUse($name, $type);
 
             // Prevent deletion if value is in use
             if ($isInUse) {
