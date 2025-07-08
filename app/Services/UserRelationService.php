@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Post;
 use App\Models\Comment;
+use App\Models\PostAllowedValue;
 use App\Models\UserLike;
 use App\Models\UserProfile;
 use App\Models\UserReport;
@@ -112,6 +113,32 @@ class UserRelationService {
                 $updated = DB::table('comments')
                     ->whereIn('id', $ids)
                     ->update(['user_id' => $systemUserId]);
+                $totalTransferred += $updated;
+            });
+
+        return $totalTransferred;
+    }
+
+    /**
+     * Transfer all post allowed values from a user to the system user
+     * 
+     * @param User $user
+     * @param int $systemUserId Default: 3
+     * @return int Number of transferred post allowed values
+     * 
+     * @example | $this->userRelationService->transferPostAllowedValues($user);
+     */
+    public function transferPostAllowedValues(User $user, int $systemUserId = 3): int {
+        $totalTransferred = 0;
+        PostAllowedValue::where('created_by_user_id', $user->id)
+            ->chunkById(100, function ($values) use ($systemUserId, &$totalTransferred) {
+                $ids = $values->pluck('id')->toArray();
+                $updated = DB::table('post_allowed_values')
+                    ->whereIn('id', $ids)
+                    ->update([
+                        'created_by_user_id' => $systemUserId,
+                        'created_by_role' => 'system'
+                    ]);
                 $totalTransferred += $updated;
             });
 
