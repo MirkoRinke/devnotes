@@ -629,6 +629,7 @@ class UserController extends Controller {
                 // Transfer all posts and comments to the system user (ID 3)
                 $this->userRelationService->transferPosts($user);
                 $this->userRelationService->transferComments($user);
+                $this->userRelationService->transferPostAllowedValues($user);
 
                 // Delete all reports and likes associated with the user
                 $this->userRelationService->deleteReports($user);
