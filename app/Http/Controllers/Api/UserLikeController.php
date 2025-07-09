@@ -431,7 +431,7 @@ class UserLikeController extends Controller {
      *   "status": "success",
      *   "message": "Like removed successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *

@@ -563,6 +563,7 @@ class UserController extends Controller {
      *   "status": "success",
      *   "message": "User deleted successfully",
      *   "code": 200,
+     *   "count": 0,
      *   "data": null
      * }
      *
@@ -570,6 +571,7 @@ class UserController extends Controller {
      *   "status": "success",
      *   "message": "Guest account reset successfully",
      *   "code": 200,
+     *   "count": 0,
      *   "data": null
      * }
      *

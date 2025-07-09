@@ -968,7 +968,7 @@ class CommentController extends Controller {
      *   "status": "success",
      *   "message": "Comment deleted successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      * 
@@ -1076,7 +1076,7 @@ class CommentController extends Controller {
      *   "status": "success",
      *   "message": "Comment deleted successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      * 

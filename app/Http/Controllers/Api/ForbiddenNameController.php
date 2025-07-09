@@ -630,7 +630,7 @@ class ForbiddenNameController extends Controller {
      *   "status": "success",
      *   "message": "Forbidden name: administrator with match type: partial deleted successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *

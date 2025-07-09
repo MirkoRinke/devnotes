@@ -646,7 +646,7 @@ class CriticalTermController extends Controller {
      *   "status": "success",
      *   "message": "Critical Term 'phishing' in language 'en' with severity '4' deleted successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *

@@ -244,7 +244,7 @@ class UserFavoriteController extends Controller {
      *   "status": "success",
      *   "message": "Post successfully removed from favorites",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      * 

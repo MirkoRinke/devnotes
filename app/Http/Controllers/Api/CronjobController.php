@@ -65,7 +65,7 @@ class CronjobController extends Controller {
      *   "status": "success",
      *   "message": "Guest account reset successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      * 

@@ -697,7 +697,7 @@ class PostAllowedValueController extends Controller {
      *   "status": "success",
      *   "message": "Post Allowed Value: Assembler with type: language deleted successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *

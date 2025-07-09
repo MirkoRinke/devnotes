@@ -1173,7 +1173,7 @@ class PostController extends Controller {
      *   "status": "success",
      *   "message": "Post deleted successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *

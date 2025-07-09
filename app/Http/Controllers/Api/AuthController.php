@@ -158,7 +158,7 @@ class AuthController extends Controller {
      *   "status": "success",
      *   "message": "Logout successful",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *
@@ -355,7 +355,7 @@ class AuthController extends Controller {
      *   "status": "success",
      *   "message": "Device logged out successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *
@@ -428,7 +428,7 @@ class AuthController extends Controller {
      *   "status": "success",
      *   "message": "All other devices logged out successfully",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      *
@@ -486,7 +486,7 @@ class AuthController extends Controller {
      *   "status": "success",
      *   "message": "Password reset link sent",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      * 
@@ -554,7 +554,7 @@ class AuthController extends Controller {
      *   "status": "success",
      *   "message": "Password has been reset",
      *   "code": 200,
-     *   "count": 1,
+     *   "count": 0,
      *   "data": null
      * }
      * 

@@ -483,6 +483,7 @@ class UserReportController extends Controller {
      *   "status": "success",
      *   "message": "Comment Report removed successfully",
      *   "code": 200,
+     *   "count": 0,
      *   "data": null
      * }
      *

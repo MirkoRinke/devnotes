@@ -183,6 +183,7 @@ class RegisterController extends Controller {
      *   "status": "success",
      *   "message": "Verification link sent",
      *   "code": 200,
+     *   "count": 0,
      *   "data": null
      * }
      * 
@@ -190,6 +191,7 @@ class RegisterController extends Controller {
      *   "status": "success",
      *   "message": "Email already verified",
      *   "code": 200,
+     *   "count": 0,
      *   "data": null
      * }
      * 
@@ -239,6 +241,7 @@ class RegisterController extends Controller {
      *   "status": "success",
      *   "message": "Email verified successfully",
      *   "code": 200,
+     *   "count": 0,
      *   "data": null
      * }
      * 
