@@ -87,100 +87,90 @@ class UserFollowerController extends Controller {
         return $query;
     }
 
-
     /**
      * Get User's Followers
      * 
      * Endpoint: GET /followers
      *
-     * Retrieves a list of users who follow the authenticated user.
+     * Retrieves a paginated list of users who follow the authenticated user.
      * Also indicates if the authenticated user follows back each follower (mutual follow).
      *
      * @group Users - Followers
      *
-     * @queryParam select string Optional. Select specific fields. Example: select=id,follower_id
-     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: sort=-created_at
-     * @queryParam filter string Optional. Filter by fields (prefix with - for descending). Example: filter=[is_following_back]=true
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[name] string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: startsWith[created_at]:2025-05
-     * @queryParam endsWith[email] string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: endsWith:[created_at]:Z
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page int Optional. Page number for pagination. Example: page=1
-     * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=10 (default: 15)
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user,follower
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, name, display_name, role, created_at, updated_at
-     *                              Example: user_fields=id,name,display_name
-     * @queryParam follower_fields string When including follower relation, specify fields to return.
-     *                              Available fields: id, name, display_name, role, created_at, updated_at
-     *                              Example: follower_fields=id,name,display_name
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user, follower).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: follower_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     *
      * Example URL: /followers
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Followers retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
-     *     {
-     *       "id": 3,
-     *       "user_id": 1,
-     *       "follower_id": 6,
-     *       "created_at": "2025-05-06T17:23:24.000000Z",
-     *       "updated_at": "2025-05-06T17:23:24.000000Z",
-     *       "is_following_back": false
-     *     },
      *     {
      *       "id": 4,
      *       "user_id": 1,
-     *       "follower_id": 7,
-     *       "created_at": "2025-05-06T17:23:32.000000Z",
-     *       "updated_at": "2025-05-06T17:23:32.000000Z",
-     *       "is_following_back": false
+     *       "follower_id": 21,
+     *       "created_at": "2025-07-09T16:37:32.000000Z",
+     *       "updated_at": "2025-07-09T16:37:32.000000Z",
+     *       "is_following_back": true                      || Virtual field: true if the authenticated user follows this follower
      *     }
      *   ]
      * }
      * 
      * Example URL: /followers/?include=user,follower
-     * 
-     * @response status=200 scenario="Success with Included User and Follower Data" {
+     *
+     * @response status=200 scenario="Success (with includes)" {
      *   "status": "success",
      *   "message": "Followers retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
-     *     {
-     *       "id": 3,
-     *       "user_id": 1,
-     *       "follower_id": 6,
-     *       "created_at": "2025-05-06T17:23:24.000000Z",
-     *       "updated_at": "2025-05-06T17:23:24.000000Z",
-     *       "is_following_back": false,
-     *       "follower": {
-     *         "id": 6,
-     *         "name": "Max Mustermann6"
-     *       }
-     *       "user": {
-     *        "id": 1,
-     *        "name": "Max Mustermann1"
-     *      }
-     *     },
      *     {
      *       "id": 4,
      *       "user_id": 1,
-     *       "follower_id": 7,
-     *       "created_at": "2025-05-06T17:23:32.000000Z",
-     *       "updated_at": "2025-05-06T17:23:32.000000Z",
-     *       "is_following_back": false,
+     *       "follower_id": 21,
+     *       "created_at": "2025-07-09T16:37:32.000000Z",
+     *       "updated_at": "2025-07-09T16:37:32.000000Z",
+     *       "is_following_back": true,                     || Virtual field: true if the authenticated user follows this follower
      *       "follower": {
-     *         "id": 7,
-     *         "name": "Max Mustermann7"
-     *       }
+     *         "id": 21,
+     *         "display_name": "Maxi21",
+     *         "role": "user",
+     *         "created_at": "2025-07-05T21:38:52.000000Z",
+     *         "updated_at": "2025-07-05T21:38:52.000000Z",
+     *         "is_banned": null,                           || Admin and Moderator only
+     *         "was_ever_banned": false,                    || Admin and Moderator only
+     *         "moderation_info": []                        || Admin and Moderator only
+     *       },
      *       "user": {
      *         "id": 1,
-     *         "name": "Max Mustermann1"
+     *         "display_name": "Admin",
+     *         "role": "admin",
+     *         "created_at": "2025-07-05T21:38:51.000000Z",
+     *         "updated_at": "2025-07-05T21:38:51.000000Z",
+     *         "is_banned": null,                           || Admin and Moderator only
+     *         "was_ever_banned": false,                    || Admin and Moderator only
+     *         "moderation_info": []                        || Admin and Moderator only
      *       }
      *     }
      *   ]
@@ -200,10 +190,9 @@ class UserFollowerController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
-     * Note: The "is_following_back" field indicates if the authenticated user 
-     * follows back the follower (mutual follow relationship).
-     * 
+     *
+     * Note: The "is_following_back" field is a virtual field and indicates if the authenticated user follows back the follower (mutual follow relationship).
+     *
      * @authenticated
      */
     public function getFollowers(Request $request): JsonResponse {
@@ -245,94 +234,85 @@ class UserFollowerController extends Controller {
      * 
      * Endpoint: GET /following
      *
-     * Retrieves a list of users that the authenticated user follows.
+     * Retrieves a paginated list of users that the authenticated user follows.
      * Also indicates if those users follow back the authenticated user (mutual follow).
      *
      * @group Users - Followers
      *
-     * @queryParam select string Optional. Select specific fields. Example: select=id,follower_id
-     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: sort=-created_at
-     * @queryParam filter string Optional. Filter by fields (prefix with - for descending). Example: filter=[is_following_back]=true
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[name] string Optional. Filter records where a field starts with a specific value. Format: field:value. Example: startsWith[created_at]:2025-05
-     * @queryParam endsWith[email] string Optional. Filter records where a field ends with a specific value. Format: field:value. Example: endsWith:[created_at]:Z
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page int Optional. Page number for pagination. Example: page=1
-     * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=10 (default: 15)
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details.
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Optional. Include related resources: follower, user. Example: include=user,follower
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, name, display_name, role, created_at, updated_at
-     *                              Example: user_fields=id,name,display_name
-     * @queryParam follower_fields string When including follower relation, specify fields to return.
-     *                              Available fields: id, name, display_name, role, created_at, updated_at
-     *                              Example: follower_fields=id,name,display_name
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user, follower).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     *
      * Example URL: /following
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Following retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 5,
-     *       "user_id": 8,
+     *       "id": 1,
+     *       "user_id": 5,
      *       "follower_id": 1,
-     *       "created_at": "2025-05-06T17:24:15.000000Z",
-     *       "updated_at": "2025-05-06T17:24:15.000000Z",
-     *       "is_following_back": true
-     *     },
-     *     {
-     *       "id": 6,
-     *       "user_id": 9,
-     *       "follower_id": 1,
-     *       "created_at": "2025-05-06T17:24:22.000000Z",
-     *       "updated_at": "2025-05-06T17:24:22.000000Z",
-     *       "is_following_back": false
+     *       "created_at": "2025-07-09T16:37:06.000000Z",
+     *       "updated_at": "2025-07-09T16:37:06.000000Z",
+     *       "is_following_back": false // Virtual field: true if the user being followed also follows the authenticated user
      *     }
      *   ]
      * }
      * 
-     * Example URL: /following/?include=user,follower
-     * 
-     * @response status=200 scenario="Success with Included User and Follower Data" {
+     * Example URL: /following/?include=follower,user
+     *
+     * @response status=200 scenario="Success (with includes)" {
      *   "status": "success",
      *   "message": "Following retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 5,
-     *       "user_id": 8,
+     *       "id": 1,
+     *       "user_id": 5,
      *       "follower_id": 1,
-     *       "created_at": "2025-05-06T17:24:15.000000Z",
-     *       "updated_at": "2025-05-06T17:24:15.000000Z",
-     *       "is_following_back": true,
+     *       "created_at": "2025-07-09T16:37:06.000000Z",
+     *       "updated_at": "2025-07-09T16:37:06.000000Z",
+     *       "is_following_back": false,                                || Virtual field: true if the user being followed also follows the authenticated user
      *       "follower": {
      *         "id": 1,
-     *         "name": "Max Mustermann1"
+     *         "display_name": "Admin",
+     *         "role": "admin",
+     *         "created_at": "2025-07-05T21:38:51.000000Z",
+     *         "updated_at": "2025-07-05T21:38:51.000000Z",
+     *         "is_banned": null,                                       || Admin and Moderator only
+     *         "was_ever_banned": false,                                || Admin and Moderator only
+     *         "moderation_info": []                                    || Admin and Moderator only
      *       },
      *       "user": {
-     *         "id": 8,
-     *         "name": "Max Mustermann8"
-     *       }
-     *     },
-     *     {
-     *       "id": 6,
-     *       "user_id": 9,
-     *       "follower_id": 1,
-     *       "created_at": "2025-05-06T17:24:22.000000Z",
-     *       "updated_at": "2025-05-06T17:24:22.000000Z",
-     *       "is_following_back": false,
-     *       "follower": {
-     *         "id": 1,
-     *         "name": "Max Mustermann1"
-     *       },
-     *       "user": {
-     *         "id": 9,
-     *         "name": "Max Mustermann9"
+     *         "id": 5,
+     *         "display_name": "Moderator",
+     *         "role": "moderator",
+     *         "created_at": "2025-07-05T21:38:52.000000Z",
+     *         "updated_at": "2025-07-05T21:38:52.000000Z",
+     *         "is_banned": null,                                       || Admin and Moderator only
+     *         "was_ever_banned": false,                                || Admin and Moderator only
+     *         "moderation_info": []                                    || Admin and Moderator only
      *       }
      *     }
      *   ]
@@ -352,10 +332,9 @@ class UserFollowerController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
-     * Note: The "is_following_back" field indicates if the user being followed
-     * also follows the authenticated user (mutual follow relationship).
-     * 
+     *
+     * Note: The "is_following_back" field is a virtual field and indicates if the user being followed also follows the authenticated user (mutual follow relationship).
+     *
      * @authenticated
      */
     public function getFollowing(Request $request): JsonResponse {
@@ -488,6 +467,7 @@ class UserFollowerController extends Controller {
         }
     }
 
+
     /**
      * Unfollow a User
      * 
@@ -498,7 +478,7 @@ class UserFollowerController extends Controller {
      *
      * @group Users - Followers
      *
-     * @urlParam userId required The ID of the user to unfollow. Example: 5
+     * @urlParam userId integer required The ID of the user to unfollow. Example: 5
      * 
      * @response status=200 scenario="Success" {
      *   "status": "success",
@@ -528,7 +508,7 @@ class UserFollowerController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
+     *
      * @authenticated
      */
     public function unfollow(Request $request, $userId): JsonResponse {
