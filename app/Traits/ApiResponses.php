@@ -23,7 +23,10 @@ trait ApiResponses {
      * @example | return $this->successResponse($query, 'Users retrieved successfully', 200);
      */
     protected function successResponse($data, $message = null, $code = 200): JsonResponse {
-        if ($data instanceof Collection) {
+
+        if ($data === null || (is_array($data) && empty($data)) || (is_string($data) && trim($data) === '')) {
+            $count = 0;
+        } else if ($data instanceof Collection) {
             $count = $data->count();
         } else {
             $count = 1;
