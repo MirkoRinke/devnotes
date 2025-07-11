@@ -140,7 +140,7 @@ trait QueryBuilder {
                     // Default 
                     ...['id', 'created_at'],
                     // Basic
-                    ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'category', 'post_type', 'status'],
+                    ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'videos', 'external_source_previews', 'category', 'post_type', 'status'],
                     // Counts
                     ...['favorite_count', 'likes_count', 'comments_count'],
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
@@ -155,7 +155,7 @@ trait QueryBuilder {
                     // Default 
                     ...['id', 'created_at'],
                     // Basic
-                    ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'external_source_previews', 'category', 'post_type', 'status'],
+                    ...['user_id', 'title', 'code', 'description', 'resources', 'images', 'videos', 'external_source_previews', 'category', 'post_type', 'status'],
                     // Counts
                     ...['favorite_count', 'likes_count', 'comments_count'],
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
