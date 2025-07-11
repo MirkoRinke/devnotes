@@ -53,9 +53,9 @@ trait FieldManager {
      * 
      * @example | $query = $this->managePostsFieldVisibility($request, $query);
      */
-    protected function managePostsFieldVisibility(Request $request, $data): mixed {
+    protected function managePostsFieldVisibility(Request $request, $data, $selectedRelationFields = []): mixed {
         $data = $this->moderationFieldsVisibility($request, $data, ['moderation_info', 'reports_count']);
-        $data = $this->filterExternalContent($request, $data);
+        $data = $this->filterExternalContent($request, $data, $selectedRelationFields);
 
         return $data;
     }
@@ -189,15 +189,15 @@ trait FieldManager {
      * 
      * @example | $data = $this->filterExternalContent($request, $data);
      */
-    protected function filterExternalContent(Request $request, $data): mixed {
+    protected function filterExternalContent(Request $request, $data, $selectedRelationFields): mixed {
         $user = $this->getAuthenticatedUser($request);
 
         $types = ['images', 'videos', 'resources'];
 
-        $selectedFields = $this->getSelectFields($request);
+        $selectedFields = !empty($selectedRelationFields) ? $selectedRelationFields : $this->getSelectFields($request);
 
         foreach ($types as $type) {
-            if (!$selectedFields || in_array($type, $selectedFields)) {
+            if (!$selectedFields || in_array($type, $selectedFields) || in_array('*', $selectedFields)) {
                 if (!$this->getExternalSourceService()->shouldDisplayExternals($request, $user, $type)) {
                     if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
                         foreach ($data as $post) {
