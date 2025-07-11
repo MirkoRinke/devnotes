@@ -117,8 +117,8 @@ class UserReportController extends Controller {
                 $query,
                 'reportable',
                 [
-                    Post::class => $this->getRelationFieldsFromRequest($request, 'reportable_post', [], ['*']),
-                    Comment::class => $this->getRelationFieldsFromRequest($request, 'reportable_comment', [], ['*']),
+                    Post::class => $this->getRelationFieldsFromRequest($request, 'reportable_post', ['user_id'], ['*']),
+                    Comment::class => $this->getRelationFieldsFromRequest($request, 'reportable_comment', ['reports_count'], ['*']),
                     UserProfile::class => $this->getRelationFieldsFromRequest($request, 'reportable_profile', [], ['*']),
                 ]
             );
