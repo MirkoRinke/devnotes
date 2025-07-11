@@ -2,12 +2,15 @@
 
 namespace App\Traits;
 
+use App\Models\Post;
 use App\Models\Comment;
-
+use App\Models\UserProfile;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+
+use Illuminate\Support\Facades\Schema;
 
 /**
  * This ApiInclude Trait Provides methods to dynamically include relationships in API responses based on request parameters.
@@ -64,6 +67,29 @@ trait ApiInclude {
     protected function getRelationFieldsFromRequest(Request $request, string $relation, array $requiredFields = [], array $allowedFields = []): array | null {
         if ($request->has('include') && $request->has($relation . '_fields')) {
             $fields = $request->input($relation . '_fields');
+
+            if ($allowedFields === ['*']) {
+                $modelName = ucfirst(str_contains($relation, '_') ? substr($relation, strrpos($relation, '_') + 1) : $relation);
+                // $modelClass = 'App\\Models\\' . $modelName;
+                // $allowedFields = Schema::getColumnListing((new $modelClass())->getTable());
+                //TODO Fix this to use the model class dynamically ( Profile is the problem here ).
+                switch ($modelName) {
+                    case 'Post':
+                        $allowedFields = Schema::getColumnListing((new Post())->getTable());
+                        break;
+                    case 'Comment':
+                        $allowedFields = Schema::getColumnListing((new Comment())->getTable());
+                        break;
+                    case 'Profile':
+                        $allowedFields = Schema::getColumnListing((new UserProfile())->getTable());
+                        break;
+                    default:
+                        $allowedFields = ['id'];
+                        break;
+                }
+            }
+
+            // TODO: Return an error response if invalid fields are requested instead of silently removing them.
 
             $requiredFields = array_unique(array_merge($requiredFields, ['id']));
 
