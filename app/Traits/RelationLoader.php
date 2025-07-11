@@ -134,6 +134,9 @@ trait RelationLoader {
             try {
                 $fieldsToSelect = $allowedFieldsByModel[$modelClass] ?? ['id'];
 
+                $modelName = lcfirst(class_basename($modelClass));
+                $originalSelectFields = $this->getRelationFieldsFromRequest($request, "likeable_{$modelName}", [], ['*']);
+
                 // Load the related entities based on the model class
                 $relatedEntities = app($modelClass)->whereIn('id', $ids)
                     ->select($fieldsToSelect)
@@ -146,10 +149,11 @@ trait RelationLoader {
                     if (isset($relatedEntities[$item->$foreignKey])) {
                         $item->setRelation($relationship, $relatedEntities[$item->$foreignKey]);
 
-                        $modelName = ucfirst($item->type);
-
                         // Manage the visibility of fields for the entity
-                        $item->$relationship = $this->{"manage{$modelName}sFieldVisibility"}($request, $item->$relationship, $this->getRelationFieldsFromRequest($request, "likeable_{$item->type}", [], ['*']));
+                        $item->$relationship = $this->{"manage{$modelName}sFieldVisibility"}($request, $item->$relationship, $originalSelectFields);
+
+                        $hiddenFields = array_diff($fieldsToSelect, $originalSelectFields);
+                        $item->$relationship->makeHidden($hiddenFields);
                     }
                 }
             } catch (Exception $e) {
