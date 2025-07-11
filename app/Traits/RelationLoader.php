@@ -149,7 +149,7 @@ trait RelationLoader {
                         $modelName = ucfirst($item->type);
 
                         // Manage the visibility of fields for the entity
-                        $item->$relationship = $this->{"manage{$modelName}sFieldVisibility"}($request, $item->$relationship);
+                        $item->$relationship = $this->{"manage{$modelName}sFieldVisibility"}($request, $item->$relationship, $this->getRelationFieldsFromRequest($request, "likeable_{$item->type}", [], ['*']));
                     }
                 }
             } catch (Exception $e) {
