@@ -134,8 +134,9 @@ trait RelationLoader {
             try {
                 $fieldsToSelect = $allowedFieldsByModel[$modelClass] ?? ['id'];
 
-                $modelName = lcfirst(class_basename($modelClass));
-                $originalSelectFields = $this->getRelationFieldsFromRequest($request, "likeable_{$modelName}", [], ['*']);
+                $modelName = class_basename($modelClass);
+
+                $originalSelectFields = $this->getRelationFieldsFromRequest($request, "likeable_" . lcfirst($modelName), [], ['*']);
 
                 // Load the related entities based on the model class
                 $relatedEntities = app($modelClass)->whereIn('id', $ids)
