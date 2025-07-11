@@ -102,8 +102,8 @@ class UserLikeController extends Controller {
                 $query,
                 'likeable',
                 [
-                    Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post', [], ['*']),
-                    Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', [], ['*']),
+                    Post::class => $this->getRelationFieldsFromRequest($request, 'likeable_post', ['user_id'], ['*']),
+                    Comment::class => $this->getRelationFieldsFromRequest($request, 'likeable_comment', ['reports_count'], ['*']),
                 ]
             );
         }
