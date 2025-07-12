@@ -18,7 +18,9 @@ use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
 use App\Traits\AccessFilter;
+use App\Traits\FavoriteHelper;
 use App\Traits\LikeHelper;
+use App\Traits\FollowerHelper;
 use App\Traits\PostQuerySetup;
 use App\Traits\CommentQuerySetup;
 
@@ -33,7 +35,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, LikeHelper, PostQuerySetup, CommentQuerySetup;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, FavoriteHelper, LikeHelper, FollowerHelper, PostQuerySetup, CommentQuerySetup;
 
     /**
      * The validation rule for the like entity
@@ -117,29 +119,42 @@ class UserLikeController extends Controller {
      * Endpoint: GET /likes
      *
      * Retrieves a list of all likes in the system with support for filtering, sorting,
-     * and relation inclusion. Only administrators can access this endpoint.
+     * and relation inclusion. Only administrators and moderators can access this endpoint.
      *
      * @group Likes
      *
-     * @queryParam select string Select specific fields. Example: select=id,user_id,likeable_id
-     * @queryParam sort string Sort by field (prefix with - for descending order). Example: sort=-created_at
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
+     * 
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
+     * 
      * @queryParam filter[type] string Filter by likeable type. Example: filter[type]=post
+     * @see \App\Traits\ApiFiltering::filter()
+     * 
      * @queryParam filter[user_id] integer Filter by user ID. Example: filter[user_id]=5
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam startsWith[field] string Filter where field starts with given string. Format: field:value. Example: startsWith[created_at]=2025-05-06
-     * @queryParam endsWith[field] string Filter where field ends with given string. Format: field:value. Example: endsWith[created_at]=Z
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user, likeable).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=user,likeable
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
-     *                              Example: user_fields=id,display_name
-     * @queryParam likeable_post_fields string When including likeable relation (for posts), specify fields to return.
-     *                              Example: likeable_post_fields=id,title,description
-     * @queryParam likeable_comment_fields string When including likeable relation (for comments), specify fields to return.
-     *                              Example: likeable_comment_fields=id,content
+     * @queryParam user_fields string See [ApiInclude](#apiinclude). When including user relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Items per page. Example: per_page=15 (default: 10)
+     * @queryParam likeable_post_fields string See [ApiInclude](#apiinclude). When including likeable relation (for posts), specify fields to return. Example: likeable_post_fields=id,title,description
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam likeable_comment_fields string See [ApiInclude](#apiinclude). When including likeable relation (for comments), specify fields to return. Example: likeable_comment_fields=id,content
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
      *
      * Example URL: /likes
      * 
@@ -147,56 +162,23 @@ class UserLikeController extends Controller {
      *   "status": "success",
      *   "message": "Likes retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "user_id": 1,
+     *       "user_id": 356,
      *       "likeable_type": "App\\Models\\Post",
-     *       "likeable_id": 3,
+     *       "likeable_id": 129,
      *       "type": "post",
-     *       "created_at": "2025-05-06T11:24:18.000000Z",
-     *       "updated_at": "2025-05-06T11:24:18.000000Z",
-     *     },
-     *     {
-     *       "id": 2,
-     *       "user_id": 1,
-     *       "likeable_type": "App\\Models\\Comment",
-     *       "likeable_id": 8,
-     *       "type": "comment",
-     *       "created_at": "2025-05-06T12:14:52.000000Z",
-     *       "updated_at": "2025-05-06T12:14:52.000000Z",
+     *       "created_at": "2025-07-09T17:27:27.000000Z",
+     *       "updated_at": "2025-07-09T17:27:27.000000Z"
      *     }
      *   ]
      * }
-     * 
-     * Example URL: /likes/?include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="With user relation" {
-     *   "status": "success",
-     *   "message": "Likes retrieved successfully",
-     *   "code": 200,
-     *   "count": 2,
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "user_id": 1,
-     *       "likeable_type": "App\\Models\\Post",
-     *       "likeable_id": 3,
-     *       "type": "post",
-     *       "created_at": "2025-05-06T11:24:18.000000Z",
-     *       "updated_at": "2025-05-06T11:24:18.000000Z",
-     *       "user": {
-     *         "id": 1,
-     *         "display_name": "admin"
-     *       }
-     *     }
-     *   ]
-     * }
-     * 
-     * Example URL: /likes/?include=likeable&likeable_post_fields=id,title,description
-     * 
-     * @response status=200 scenario="With likeable" {
+     *
+     * Example URL: /likes/?include=user,likeable
+     *
+     * @response status=200 scenario="Success (with includes, post, user)" {
      *   "status": "success",
      *   "message": "Likes retrieved successfully",
      *   "code": 200,
@@ -204,16 +186,139 @@ class UserLikeController extends Controller {
      *   "data": [
      *     {
      *       "id": 1,
-     *       "user_id": 1,
+     *       "user_id": 356,
      *       "likeable_type": "App\\Models\\Post",
-     *       "likeable_id": 3,
+     *       "likeable_id": 129,
      *       "type": "post",
-     *       "created_at": "2025-05-06T11:24:18.000000Z",
-     *       "updated_at": "2025-05-06T11:24:18.000000Z",
+     *       "created_at": "2025-07-09T17:27:27.000000Z",
+     *       "updated_at": "2025-07-09T17:27:27.000000Z",
      *       "likeable": {
-     *         "id": 3,
-     *         "title": "Understanding JavaScript Promises",
-     *         "description": "A comprehensive guide to JavaScript Promises"
+     *         "id": 129,
+     *         "user_id": 1,
+     *         "title": "Angular Understanding JavaScript Promises",
+     *         "code": "const promise = new Promise((resolve, reject) => {});",
+     *         "description": "A comprehensive guide to JavaScript Promises",
+     *         "images": [
+     *           "https://picsum.photos/id/324/200/300",
+     *           "https://picsum.photos/id/898/200/300",
+     *           "https://picsum.photos/id/422/200/300"
+     *         ],
+     *         "videos": [
+     *           "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     *         ],
+     *         "resources": [
+     *           "https://www.php.net/manual/de/index.php",
+     *           "https://developer.mozilla.org/de/docs/Web/JavaScript/Guide/Introduction",
+     *           "https://developer.mozilla.org/de/docs/Web/CSS"
+     *         ],
+     *         "external_source_previews": [
+     *           {
+     *             "url": "https://picsum.photos/id/324/200/300",
+     *             "type": "images",
+     *             "domain": "picsum.photos"
+     *           },
+     *           {
+     *             "url": "https://picsum.photos/id/898/200/300",
+     *             "type": "images",
+     *             "domain": "picsum.photos"
+     *           },
+     *           {
+     *             "url": "https://picsum.photos/id/422/200/300",
+     *             "type": "images",
+     *             "domain": "picsum.photos"
+     *           },
+     *           {
+     *             "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *             "type": "videos",
+     *             "domain": "www.youtube.com"
+     *           },
+     *           {
+     *             "url": "https://www.php.net/manual/de/index.php",
+     *             "type": "resources",
+     *             "domain": "www.php.net"
+     *           },
+     *           {
+     *             "url": "https://developer.mozilla.org/de/docs/Web/JavaScript/Guide/Introduction",
+     *             "type": "resources",
+     *             "domain": "developer.mozilla.org"
+     *           },
+     *           {
+     *             "url": "https://developer.mozilla.org/de/docs/Web/CSS",
+     *             "type": "resources",
+     *             "domain": "developer.mozilla.org"
+     *           }
+     *         ],
+     *         "category": "Cloud Computing",
+     *         "post_type": "Tutorial",
+     *         "status": "Draft",
+     *         "favorite_count": 4,
+     *         "likes_count": 3,
+     *         "reports_count": 0,
+     *         "comments_count": 2,
+     *         "is_updated": false,
+     *         "updated_by_role": null,
+     *         "last_comment_at": "2025-07-09T17:27:16.000000Z",
+     *         "history": [],
+     *         "moderation_info": [],
+     *         "created_at": "2025-07-09T17:26:53.000000Z",
+     *         "updated_at": "2025-07-09T17:28:09.000000Z"
+     *       },
+     *       "user": {
+     *         "id": 356,
+     *         "display_name": "bessie.hermiston",
+     *         "role": "user",
+     *         "created_at": "2025-07-09T17:26:48.000000Z",
+     *         "updated_at": "2025-07-09T17:26:48.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
+     *       }
+     *     }
+     *   ]
+     * }
+     * 
+     * Example URL: /likes/?include=user,likeable
+     *
+     * @response status=200 scenario="Success (with includes, comment, user)" {
+     *   "status": "success",
+     *   "message": "Likes retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       "id": 1255,
+     *       "user_id": 335,
+     *       "likeable_type": "App\\Models\\Comment",
+     *       "likeable_id": 27,
+     *       "type": "comment",
+     *       "created_at": "2025-07-09T17:27:34.000000Z",
+     *       "updated_at": "2025-07-09T17:27:34.000000Z",
+     *       "likeable": {
+     *         "id": 27,
+     *         "post_id": 344,
+     *         "user_id": 1,
+     *         "parent_id": null,
+     *         "content": "This is a comment on the post",
+     *         "parent_content": null,
+     *         "is_deleted": false,
+     *         "depth": 0,
+     *         "likes_count": 5,
+     *         "reports_count": 0,
+     *         "is_updated": false,
+     *         "updated_by_role": null,
+     *         "moderation_info": [],
+     *         "created_at": "2025-07-09T17:27:05.000000Z",
+     *         "updated_at": "2025-07-09T17:27:52.000000Z"
+     *       },
+     *       "user": {
+     *         "id": 335,
+     *         "display_name": "b.koch",
+     *         "role": "user",
+     *         "created_at": "2025-07-09T17:26:47.000000Z",
+     *         "updated_at": "2025-07-09T17:26:47.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
      *       }
      *     }
      *   ]
@@ -235,13 +340,13 @@ class UserLikeController extends Controller {
      * }
      *
      * @response status=500 scenario="Server Error" {
-     *   "status": "error", 
+     *   "status": "error",
      *   "message": "An unexpected error occurred",
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
      * 
-     * Note: This endpoint requires admin privileges as it accesses all likes in the system.
+     * Note: This endpoint requires admin or moderator privileges as it accesses all likes in the system.
      * Regular users should use the user-likes endpoints to access their own likes.
      * 
      * @authenticated
@@ -289,25 +394,26 @@ class UserLikeController extends Controller {
      * @group Likes
      *
      * @bodyParam likeable_type string required The type of entity to like ('post' or 'comment'). Example: post
-     * @bodyParam likeable_id integer required The ID of the entity to like. Example: 5
+     * @bodyParam likeable_id integer required The ID of the entity to like. Example: 324
      * 
      * @bodyContent {
-     *   "likeable_type": "post",
-     *   "likeable_id": 5
+     *   "likeable_type": "post",                   || required, string, must be 'post' or 'comment'
+     *   "likeable_id": 324                         || required, integer
      * }
      *
      * @response status=201 scenario="Success" {
      *   "status": "success",
      *   "message": "Like added successfully",
      *   "code": 201,
+     *   "count": 1,
      *   "data": {
-     *     "id": 10,
-     *     "user_id": 2,
-     *     "likeable_id": 5,
+     *     "user_id": 1,
+     *     "likeable_id": 325,
      *     "likeable_type": "App\\Models\\Post",
      *     "type": "post",
-     *     "updated_at": "2025-05-07T09:42:18.000000Z",
-     *     "created_at": "2025-05-07T09:42:18.000000Z"
+     *     "updated_at": "2025-07-12T17:40:35.000000Z",
+     *     "created_at": "2025-07-12T17:40:35.000000Z",
+     *     "id": 4140
      *   }
      * }
      *
@@ -420,11 +526,11 @@ class UserLikeController extends Controller {
      * @group Likes
      *
      * @bodyParam likeable_type string required The type of entity to unlike ('post' or 'comment'). Example: post
-     * @bodyParam likeable_id integer required The ID of the entity to unlike. Example: 5
+     * @bodyParam likeable_id integer required The ID of the entity to unlike. Example: 325
      * 
      * @bodyContent {
-     *   "likeable_type": "post",
-     *   "likeable_id": 5
+     *   "likeable_type": "post",                   || required, string, must be 'post' or 'comment'
+     *   "likeable_id": 325                         || required, integer
      * }
      *
      * @response status=200 scenario="Success" {
@@ -515,52 +621,80 @@ class UserLikeController extends Controller {
 
 
     /**
-     * Get Liked Posts
+     * List All Liked Posts of a User
      * 
      * Endpoint: GET /user-likes/{userId}/posts
      *
-     * Retrieves all posts that have been liked by the specified user, with support for
-     * filtering, sorting, and relation inclusion.
+     * Retrieves a list of posts that have been liked by the specified user, with support for filtering, sorting, field selection, relation inclusion, and pagination.  
+     * **By default, results are paginated.** 
+     *
+     * The relations `tags`, `languages`, and `technologies` are always included in the response and do not require the `include` parameter.
+     * Other relations (e.g. `user`) can be included using the `include` parameter.
+     *
+     * You can use the `*_fields` parameter for all relations (e.g. `user_fields`, `tags_fields`, `languages_fields`, `technologies_fields`)
+     * to specify which fields should be returned for each relation.
+     * 
+     * Example: `/user-likes/5/posts/?include=user&user_fields=id,display_name&tags_fields=name`
      *
      * @group User Likes
      *
-     * @queryParam select string Select specific fields from posts. Example: select=id,title,code
-     * @queryParam sort string Sort by field (prefix with - for descending order). Example: sort=-created_at
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[language]=php
+     * @urlParam userId required The ID of the user whose liked posts should be retrieved. Example: 5
+     *
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. 
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Filter where field starts with given string. Example: startsWith[title]=How
-     * @queryParam endsWith[field] string Filter where field ends with given string. Example: endsWith[title]=Guide
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=user,comments
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
-     *                              Example: user_fields=id,display_name
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details. 
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Items per page. Example: per_page=15
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user). 
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
+     * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (tags, languages, technologies), specify fields to return. Example: tags_fields=name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     * @see \App\Traits\PostQuerySetup::getSelectRelationFields() for always-included relations
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination). 
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
      *
      * Example URL: /user-likes/5/posts
-     * 
+     *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "Liked posts retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
-     *       "user_id": 1,
-     *       "title": "Svelte Store: Simple State Management",
-     *       "code": "import { writable } from 'svelte/store';",
-     *       "description": "Discover the benefits of Svelte Stores for simple state management.",
-     *       "images": [],
-     *       "videos": [],
-     *       "resources": [],
+     *       "user_id": 42,
+     *       "title": "Example Post Title",
+     *       "code": "...",
+     *       "description": "...",
+     *       "images": [],                                  || Empty by default - requires user consent or owner access
+     *       "videos": [                                    || Empty by default - requires user consent or owner access
+     *         "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *         "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     *       ],                                
+     *       "resources": [],                               || Empty by default - requires user consent or owner access
      *       "external_source_previews": [
      *         {
      *           "url": "https://picsum.photos/200",
      *           "type": "images",
      *           "domain": "picsum.photos"
+     *         },
+     *         {
+     *           "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *           "type": "videos",
+     *           "domain": "www.youtube.com"
      *         },
      *         {
      *           "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -573,208 +707,62 @@ class UserLikeController extends Controller {
      *           "domain": "svelte.dev"
      *         }
      *       ],
-     *       "language": [
-     *         "HTML",
-     *         "JavaScript"
-     *       ],
-     *       "category": "Frontend",
-     *       "post_type": "tutorial",
-     *       "technology": [
-     *         "Svelte"
-     *       ],
-     *       "tags": [
-     *         "svelte",
-     *         "store",
-     *         "state-management"
-     *       ],
-     *       "status": "published",
-     *       "favorite_count": 2,
-     *       "likes_count": 2,
-     *       "reports_count": 0,            || Admin and Moderator only
-     *       "comments_count": 3,
+     *       "category": "Machine Learning",                || See /post-allowed-values/?filter[type]=category for valid values.
+     *       "post_type": "Feedback",                       || See /post-allowed-values/?filter[type]=post_type for valid values.
+     *       "status": "Published",                         || See /post-allowed-values/?filter[type]=status for valid values. 
+     *       "favorite_count": 1,
+     *       "likes_count": 0,
+     *       "reports_count": 0,                            || Admin and Moderator only
+     *       "comments_count": 0,
      *       "is_updated": false,
      *       "updated_by_role": null,
-     *       "last_comment_at": "2025-05-07T22:10:44.000000Z",
-     *       "history": null,
-     *       "moderation_info": null,       || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T16:27:48.000000Z"
-     *     },
-     *     {
-     *       "id": 2,
-     *       "user_id": 4,
-     *       "title": "Laravel 8: Eloquent ORM",
-     *       "code": "use App\\Models\\User;",
-     *       "description": "Learn how to use Eloquent ORM in Laravel 8.",
-     *       "images": [],
-     *       "videos": [],
-     *       "resources": [],
-     *       "external_source_previews": [
-     *         {
-     *           "url": "https://picsum.photos/200",
-     *           "type": "images",
-     *           "domain": "picsum.photos"
-     *         },
-     *         {
-     *           "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-     *           "type": "videos",
-     *           "domain": "www.youtube.com"
-     *         },
-     *         {
-     *           "url": "https://laravel.com/docs/8.x/eloquent",
-     *           "type": "resources",
-     *           "domain": "laravel.com"
-     *         }
+     *       "last_comment_at": null,
+     *       "history": [],
+     *       "moderation_info": [],                         || Admin and Moderator only
+     *       "created_at": "2025-06-23T22:52:38.000000Z",
+     *       "updated_at": "2025-06-23T22:53:53.000000Z",
+     *       "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
+     *       "is_liked": true,                              || Virtual field, true if the authenticated user has liked this post
+     *       "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
+     *         { "id": 1, "name": "Laravel" },              || Note: Users can create new tags when posting; other allowed values are admin-only.
+     *         { "id": 2, "name": "PHP" },
+     *         { "id": 3, "name": "Backend" }
      *       ],
-     *       "language": [
-     *         "PHP"
+     *       "languages": [                                 || See /post-allowed-values/?filter[type]=language for valid values.
+     *         { "id": 4, "name": "Java" },
+     *         { "id": 5, "name": "C#" },
+     *         { "id": 6, "name": "TypeScript" }
      *       ],
-     *       "category": "Backend",
-     *       "post_type": "tutorial",
-     *       "technology": [
-     *         "Laravel"
-     *       ],
-     *       "tags": [
-     *         "laravel",
-     *         "eloquent",
-     *         "orm"
-     *       ],
-     *       "status": "published",
-     *       "favorite_count": 3,
-     *       "likes_count": 2,
-     *       "reports_count": 0,            || Admin and Moderator only
-     *       "comments_count": 3,
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "last_comment_at": "2025-05-05T16:12:42.000000Z",
-     *       "history": null,
-     *       "moderation_info": null,       || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T15:54:25.000000Z"
+     *       "technologies": [                              || See /post-allowed-values/?filter[type]=technology for valid values.
+     *         { "id": 7, "name": "Bootstrap" },
+     *         { "id": 8, "name": "TailwindCSS" },
+     *         { "id": 9, "name": "Material UI" }
+     *       ]
      *     }
      *   ]
      * }
-     *
-     * Example URL: /user-likes/5/posts/?include=user&user_fields=id,display_name
      * 
-     * @response status=200 scenario="With included user relation" {
+     * Example URL: /user-likes/5/posts/?include=user
+     *
+     * @response status=200 scenario="Success with user include" {
      *   "status": "success",
      *   "message": "Liked posts retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "user_id": 1,
-     *       "title": "Svelte Store: Simple State Management",
-     *       "code": "import { writable } from 'svelte/store';",
-     *       "description": "Discover the benefits of Svelte Stores for simple state management.",
-     *       "images": [],
-     *       "videos": [],
-     *       "resources": [],
-     *       "external_source_previews": [
-     *         {
-     *           "url": "https://picsum.photos/200",
-     *           "type": "images",
-     *           "domain": "picsum.photos"
-     *         },
-     *         {
-     *           "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-     *           "type": "videos",
-     *           "domain": "www.youtube.com"
-     *         },
-     *         {
-     *           "url": "https://svelte.dev/docs#run-time-store",
-     *           "type": "resources",
-     *           "domain": "svelte.dev"
-     *         }
-     *       ],
-     *       "language": [
-     *         "HTML",
-     *         "JavaScript"
-     *       ],
-     *       "category": "Frontend",
-     *       "post_type": "tutorial",
-     *       "technology": [
-     *         "Svelte"
-     *       ],
-     *       "tags": [
-     *         "svelte",
-     *         "store",
-     *         "state-management"
-     *       ],
-     *       "status": "published",
-     *       "favorite_count": 2,
-     *       "likes_count": 2,
-     *       "reports_count": 0,            || Admin and Moderator only
-     *       "comments_count": 3,
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "last_comment_at": "2025-05-07T22:10:44.000000Z",
-     *       "history": null,
-     *       "moderation_info": null,       || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T16:27:48.000000Z",
+     *      ..... || Same post data as above
      *       "user": {
-     *         "id": 1,
-     *         "display_name": "Admin"
-     *       }
-     *     },
-     *     {
-     *       "id": 2,
-     *       "user_id": 4,
-     *       "title": "Laravel 8: Eloquent ORM",
-     *       "code": "use App\\Models\\User;",
-     *       "description": "Learn how to use Eloquent ORM in Laravel 8.",
-     *       "images": [],
-     *       "videos": [],
-     *       "resources": [],
-     *       "external_source_previews": [
-     *         {
-     *           "url": "https://picsum.photos/200",
-     *           "type": "images",
-     *           "domain": "picsum.photos"
-     *         },
-     *         {
-     *           "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-     *           "type": "videos",
-     *           "domain": "www.youtube.com"
-     *         },
-     *         {
-     *           "url": "https://laravel.com/docs/8.x/eloquent",
-     *           "type": "resources",
-     *           "domain": "laravel.com"
-     *         }
-     *       ],
-     *       "language": [
-     *         "PHP"
-     *       ],
-     *       "category": "Backend",
-     *       "post_type": "tutorial",
-     *       "technology": [
-     *         "Laravel"
-     *       ],
-     *       "tags": [
-     *         "laravel",
-     *         "eloquent",
-     *         "orm"
-     *       ],
-     *       "status": "published",
-     *       "favorite_count": 3,
-     *       "likes_count": 2,
-     *       "reports_count": 0,            || Admin and Moderator only
-     *       "comments_count": 3,
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "last_comment_at": "2025-05-05T16:12:42.000000Z",
-     *       "history": null,
-     *       "moderation_info": null,       || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T15:54:25.000000Z",
-     *       "user": {
-     *         "id": 4,
-     *         "display_name": "Maxi4"
-     *       }
+     *          "id": 42,
+     *          "display_name": "John Doe",
+     *          "role": "user",
+     *          "created_at": "2025-06-23T22:52:35.000000Z",
+     *          "updated_at": "2025-06-23T22:52:35.000000Z",
+     *          "is_banned": null,                      || Admin and Moderator only
+     *          "was_ever_banned": false,               || Admin and Moderator only
+     *          "moderation_info": [],                  || Admin and Moderator only
+     *          "is_following": false                   || Virtual field, true if the authenticated user follows this user
+     *        },
      *     }
      *   ]
      * }
@@ -786,8 +774,8 @@ class UserLikeController extends Controller {
      *   "count": 0,
      *   "data": []
      * }
-     * 
-     * @response status=403 scenario="User not found" {
+     *
+     * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User not found",
      *   "code": 404,
@@ -800,6 +788,13 @@ class UserLikeController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
+     *
+     * Note: External content (images, videos, resources) is not displayed by default for privacy reasons.
+     * To view this content, one of the following conditions must be met:
+     * 1. You are the owner of the post (automatically shows all content)
+     * 2. For non-authenticated users: Send header X-Show-External-Images: true (similarly for videos/resources)
+     * 3. For authenticated users: Either have auto_load_external_images set to true in user profile,
+     *    or have a valid temporary permission (external_images_temp_until date is in the future)
      * 
      * @authenticated
      */
@@ -815,22 +810,28 @@ class UserLikeController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->setupPostQuery($request, $query, 'buildQuery');
-            if ($query instanceof JsonResponse) {
-                return $query;
+            $posts = $this->setupPostQuery($request, $query, 'buildQuery');
+            if ($posts instanceof JsonResponse) {
+                return $posts;
             }
 
-            if ($query->isEmpty()) {
+            if ($posts->isEmpty()) {
                 return $this->successResponse([], 'No liked posts found', 200);
             }
 
-            $query = $this->managePostsFieldVisibility($request, $query);
+            $posts = $this->managePostsFieldVisibility($request, $posts);
 
-            $query = $this->checkForIncludedRelations($request, $query);
+            $posts = $this->checkForIncludedRelations($request, $posts);
 
-            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+            $posts = $this->controlVisibleFields($request, $originalSelectFields, $posts);
 
-            return $this->successResponse($query, 'Liked posts retrieved successfully', 200);
+            $posts = $this->isFavorited($request, $user, $posts, $originalSelectFields);
+
+            $posts = $this->isLiked($request, $user, $posts, 'post', $originalSelectFields);
+
+            $posts = $this->isFollowing($request, $posts);
+
+            return $this->successResponse($posts, 'Liked posts retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
@@ -843,25 +844,41 @@ class UserLikeController extends Controller {
      * 
      * Endpoint: GET /user-likes/{userId}/comments
      *
-     * Retrieves all comments that have been liked by the specified user, with support for
-     * filtering, sorting, and relation inclusion.
+     * Retrieves all comments that have been liked by the specified user, with support for filtering, sorting, field selection, relation inclusion, and pagination.
+     * **By default, results are paginated.**
+     *
+     * Only the `user` relation can be included via the `include` parameter.
+     * You can use `user_fields` to specify which fields should be returned for the user relation.
+     *
+     * Example: `/user-likes/4/comments/?include=user&user_fields=id,display_name`
      *
      * @group User Likes
      *
-     * @queryParam select string Select specific fields from comments. Example: select=id,content,post_id
-     * @queryParam sort string Sort by field (prefix with - for descending order). Example: sort=-created_at
-     * @queryParam filter[field] string Filter by specific fields. Example: filter[post_id]=5
+     * @urlParam userId required The ID of the user whose liked comments should be retrieved. Example: 4
+     *
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. Example: select=id,content,post_id
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Filter where field starts with given string. Example: startsWith[content]=Thank
-     * @queryParam endsWith[field] string Filter where field ends with given string. Example: endsWith[content]=question
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details. Example: sort=-created_at
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=user,post
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at
-     *                              Example: user_fields=id,display_name
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details. Example: filter[post_id]=5
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Items per page. Example: per_page=15
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (only `user` is supported). Example: include=user
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
+     * 
+     * @queryParam user_fields string See [ApiInclude](#apiinclude). When including user relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination). Example: page=1
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination). Example: per_page=15
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
      *
      * Example URL: /user-likes/4/comments
      * 
@@ -869,93 +886,49 @@ class UserLikeController extends Controller {
      *   "status": "success",
      *   "message": "Liked comments retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "post_id": 1,
-     *       "user_id": 4,
-     *       "parent_id": null,
-     *       "content": "Thanks for this helpful post about Svelte Stores!",
-     *       "parent_content": null,
-     *       "is_deleted": false,
-     *       "depth": 0,
-     *       "likes_count": 1,
-     *       "reports_count": 0,           || Admin and Moderator only
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "moderation_info": null,      || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T18:16:03.000000Z"
-     *     },
-     *     {
-     *       "id": 4,
-     *       "post_id": 2,
-     *       "user_id": 4,
-     *       "parent_id": 3,
-     *       "content": "Absolutely, I use it in all my Laravel projects.",
-     *       "parent_content": "Eloquent is truly one of the best ORMs for PHP!",
+     *       "id": 523,
+     *       "post_id": 15,
+     *       "user_id": 339,
+     *       "parent_id": 508,
+     *       "content": "This is a comment on the post",
+     *       "parent_content": "This is the parent comment content",
      *       "is_deleted": false,
      *       "depth": 1,
-     *       "likes_count": 1,
-     *       "reports_count": 0,           || Admin and Moderator only
+     *       "likes_count": 3,
+     *       "reports_count": 0,                                                    || Admin and Moderator only
      *       "is_updated": false,
      *       "updated_by_role": null,
-     *       "moderation_info": null,      || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T18:15:56.000000Z"
+     *       "moderation_info": [],                                                 || Admin and Moderator only
+     *       "created_at": "2025-07-09T17:27:16.000000Z",
+     *       "updated_at": "2025-07-12T17:41:00.000000Z",
+     *       "is_liked": true
      *     }
      *   ]
      * }
      *
      * Example URL: /user-likes/4/comments/?include=user&user_fields=id,display_name
-     * 
+     *
      * @response status=200 scenario="With included user relation" {
      *   "status": "success",
      *   "message": "Liked comments retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "post_id": 1,
-     *       "user_id": 4,
-     *       "parent_id": null,
-     *       "content": "Thanks for this helpful post about Svelte Stores!",
-     *       "parent_content": null,
-     *       "is_deleted": false,
-     *       "depth": 0,
-     *       "likes_count": 1,
-     *       "reports_count": 0,           || Admin and Moderator only
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "moderation_info": null,      || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T18:16:03.000000Z",
+     *    ..... || Same comment data as above
      *       "user": {
-     *         "id": 4,
-     *         "display_name": "Maxi4"
-     *       }
-     *     },
-     *     {
-     *       "id": 4,
-     *       "post_id": 2,
-     *       "user_id": 4,
-     *       "parent_id": 3,
-     *       "content": "Absolutely, I use it in all my Laravel projects.",
-     *       "parent_content": "Eloquent is truly one of the best ORMs for PHP!",
-     *       "is_deleted": false,
-     *       "depth": 1,
-     *       "likes_count": 1,
-     *       "reports_count": 0,           || Admin and Moderator only
-     *       "is_updated": false,
-     *       "updated_by_role": null,
-     *       "moderation_info": null,      || Admin and Moderator only
-     *       "created_at": "2025-05-05T16:12:42.000000Z",
-     *       "updated_at": "2025-05-08T18:15:56.000000Z",
-     *       "user": {
-     *         "id": 4,
-     *         "display_name": "Maxi4"
+     *         "id": 339,
+     *         "display_name": "Jane Doe",
+     *         "role": "user",
+     *         "created_at": "2025-07-09T17:26:47.000000Z",
+     *         "updated_at": "2025-07-09T17:26:47.000000Z",
+     *         "is_banned": null,                                                   || Admin and Moderator only
+     *         "was_ever_banned": false,                                            || Admin and Moderator only
+     *         "moderation_info": [],                                               || Admin and Moderator only
+     *         "is_following": false                                                || Virtual field, true if the authenticated user is following this user
      *       }
      *     }
      *   ]
@@ -969,7 +942,7 @@ class UserLikeController extends Controller {
      *   "data": []
      * }
      *
-     * @response status=403 scenario="User not found" {
+     * @response status=404 scenario="User not found" {
      *   "status": "error",
      *   "message": "User not found",
      *   "code": 404,
@@ -997,22 +970,26 @@ class UserLikeController extends Controller {
 
             $originalSelectFields = $this->getSelectFields($request);
 
-            $query = $this->setupCommentQuery($request, $query, 'buildQuery');
-            if ($query instanceof JsonResponse) {
-                return $query;
+            $comments = $this->setupCommentQuery($request, $query, 'buildQuery');
+            if ($comments instanceof JsonResponse) {
+                return $comments;
             }
 
-            if ($query->isEmpty()) {
+            if ($comments->isEmpty()) {
                 return $this->successResponse([], 'No liked comments found', 200);
             }
 
-            $query = $this->manageCommentsFieldVisibility($request, $query);
+            $comments = $this->manageCommentsFieldVisibility($request, $comments);
 
-            $query = $this->checkForIncludedRelations($request, $query);
+            $comments = $this->checkForIncludedRelations($request, $comments);
 
-            $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
+            $comments = $this->controlVisibleFields($request, $originalSelectFields, $comments);
 
-            return $this->successResponse($query, 'Liked comments retrieved successfully', 200);
+            $comments = $this->isLiked($request, $user, $comments, 'comment', $originalSelectFields);
+
+            $comments = $this->isFollowing($request, $comments);
+
+            return $this->successResponse($comments, 'Liked comments retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
