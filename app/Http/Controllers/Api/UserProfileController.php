@@ -76,7 +76,7 @@ class UserProfileController extends Controller {
             'auto_load_external_images' => 'sometimes|required|boolean',
             'auto_load_external_videos' => 'sometimes|required|boolean',
             'auto_load_external_resources' => 'sometimes|required|boolean',
-            'favorite_languages' => 'sometimes|array|min:1',
+            'favorite_languages' => 'sometimes|array',
             'favorite_languages.*' =>  'sometimes|string',
         ];
         return $validationRulesUpdate;
@@ -88,83 +88,112 @@ class UserProfileController extends Controller {
      * 
      * Endpoint: GET /user-profiles
      *
-     * Retrieves a list of user profiles. For regular users, this returns only public profiles
-     * plus their own profile. Administrators and moderators can see all profiles.
+     * Retrieves a list of user profiles. For regular users, only public profiles and their own profile are returned.
+     * Administrators and moderators can see all profiles.
+     *
+     * The relation `favorite_languages` is always included.  
+     * The relation `user` can be included via the `include` parameter.
+     * You can use `user_fields` and `favorite_languages_fields` to specify which fields should be returned for these relations.
+     *
+     * Example: `/user-profiles?include=user&user_fields=id,display_name&favorite_languages_fields=name`
      *
      * @group User Profiles
      *
-     * @queryParam select string Optional. Select specific fields. Example: select=id,display_name,website
-     * @queryParam sort string Optional. Sort by fields (prefix with - for descending). Example: sort=-created_at
-     * @queryParam filter string Optional. Filter by fields. Example: filter[is_public]=true
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. Example: select=id,display_name,website
+     * @see \App\Traits\ApiSelectable::select()
      * 
-     * @queryParam startsWith[field] string Optional. Filter records where a field starts with a specific value. Example: startsWith[created_at]=2023-01-01
-     * @queryParam endsWith[field] string Optional. Filter records where a field ends with a specific value. Example: endsWith[public_email]=@example.com
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details. Example: sort=-created_at
+     * @see \App\Traits\ApiSorting::sort()
      * 
-     * @queryParam page int Optional. Page number for pagination. Example: page=1
-     * @queryParam per_page int Optional. Items per page for pagination. Example: per_page=15
+     * @queryParam filter   See [ApiFiltering](#apifiltering) for filtering details. Example: filter[is_public]=true
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (only `user` is supported). Example: include=user
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     *  Example URL: /user-profiles
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (favorite_languages), specify fields to return. Example: favorite_languages_fields=name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination). Example: page=1
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination). Example: per_page=15
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit). Example: setLimit=10
+     * @see \App\Traits\ApiLimit::setLimit()
+     *
+     * Example URL: /user-profiles
      *
      * @response status=200 scenario="Success" {
      *   "status": "success",
      *   "message": "User Profiles retrieved successfully",
      *   "code": 200,
-     *   "count": 2,
+     *   "count": 1,
      *   "data": [
      *     {
      *       "id": 1,
      *       "user_id": 1,
-     *       "display_name": "John Dev",
-     *       "public_email": "john.public@example.com",
-     *       "website": "https://johndev.example.com",
-     *       "avatar_path": "/storage/avatars/johndev.jpg",
+     *       "display_name": "Admin",
+     *       "public_email": "contact@mirkorinke.dev",
+     *       "website": "https://mirkorinke.dev/",
+     *       "avatar_path": null,
      *       "is_public": true,
-     *       "location": "San Francisco, CA",
-     *       "biography": "Full-stack developer with 5 years of experience",
-     *       "skills": ["PHP", "Laravel", "JavaScript"],
+     *       "location": "Hildesheim, Germany",
+     *       "biography": "...",
+     *       "skills": [
+     *         "TypeScript",
+     *         "Angular",
+     *         "PHP",
+     *         "Laravel",
+     *         "MySQL"
+     *       ],
      *       "social_links": {
-     *         "github": "https://github.com/johndev",
-     *         "linkedin": "https://linkedin.com/in/john-developer"
+     *         "github": "https://github.com/MirkoRinke",
+     *         "linkedin": "https://linkedin.com/in/mirkorinke"
      *       },
-     *       "contact_channels": {"discord": "johndev#1234"},
-     *       "auto_load_external_images": false,
-     *       "external_images_temp_until": null,
-     *       "auto_load_external_videos": false,
-     *       "external_videos_temp_until": null,
-     *       "auto_load_external_resources": false,
-     *       "external_resources_temp_until": null,
-     *       "created_at": "2023-01-15T09:24:12.000000Z",
-     *       "updated_at": "2023-02-20T14:35:47.000000Z"
-     *     },
-     *     {
-     *       "id": 2,
-     *       "user_id": 2,
-     *       "display_name": "Jane Designer",
-     *       "public_email": "jane.public@example.com",
-     *       "website": "https://janedesigner.example.com",
-     *       "avatar_path": "/storage/avatars/janedesigner.jpg",
-     *       "is_public": true,
-     *       "location": "Berlin, Germany",
-     *       "biography": "UI/UX designer focused on user experience",
-     *       "skills": ["UI/UX", "Figma", "CSS"],
-     *       "social_links": {
-     *         "github": "https://github.com/janedesigner",
-     *         "linkedin": "https://linkedin.com/in/jane-designer"
+     *       "contact_channels": {
+     *         "discord": "gallifrey87"
      *       },
-     *       "contact_channels": {"discord": "janedesigner#5678"},
      *       "auto_load_external_images": true,
      *       "external_images_temp_until": null,
-     *       "auto_load_external_videos": false,
-     *       "external_videos_temp_until": "2023-06-15T18:00:00.000000Z",
-     *       "auto_load_external_resources": false,
+     *       "auto_load_external_videos": true,
+     *       "external_videos_temp_until": null,
+     *       "auto_load_external_resources": true,
      *       "external_resources_temp_until": null,
-     *       "created_at": "2023-02-10T11:42:23.000000Z",
-     *       "updated_at": "2023-05-18T09:15:32.000000Z"
+     *       "reports_count": 0,                                        || Admin and Moderator only
+     *       "created_at": "2025-07-09T17:26:42.000000Z",
+     *       "updated_at": "2025-07-12T20:54:32.000000Z",
+     *       "favorite_languages": [
+     *         { "id": 4, "name": "JavaScript" },
+     *         { "id": 5, "name": "TypeScript" },
+     *         { "id": 12, "name": "Go" }
+     *       ]
+     *     }
+     *   ]
+     * }
+     *
+     * Example URL: /user-profiles/?include=user
+     *
+     * @response status=200 scenario="Success (with user include)" {
+     *   "status": "success",
+     *   "message": "User Profiles retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       ... // Same profile fields as above
+     *       "user": {
+     *         "id": 1,
+     *         "display_name": "Admin",
+     *         "role": "admin",
+     *         "created_at": "2025-07-09T17:26:42.000000Z",
+     *         "updated_at": "2025-07-09T17:26:42.000000Z",
+     *         "is_banned": null,                                       || Admin and Moderator only
+     *         "was_ever_banned": false,                                || Admin and Moderator only
+     *         "moderation_info": [],                                   || Admin and Moderator only
+     *         "is_following": false                                    || Virtual field, true if the authenticated user follows this user
+     *       },
      *     }
      *   ]
      * }
@@ -240,16 +269,25 @@ class UserProfileController extends Controller {
      * Retrieves details for a specific user profile. Users can only access profiles that are 
      * either public or their own. Administrators and moderators can access any profile.
      *
+     * The relation `favorite_languages` is always included.  
+     * The relation `user` can be included via the `include` parameter.
+     * You can use `user_fields` and `favorite_languages_fields` to specify which fields should be returned for these relations.
+     *
+     * Example: `/user-profiles/1?include=user&user_fields=id,display_name&favorite_languages_fields=name`
+     *
      * @group User Profiles
      *
      * @urlParam id required The ID of the user profile. Example: 1
      *
-     * @queryParam select string Optional. Select specific fields. Example: select=id,display_name,website
-     * @queryParam include string Optional. Include related resources: user. Example: include=user
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                              Available fields: id, display_name, role, created_at, updated_at, is_banned, was_ever_banned, moderation_info
-     *                              Example: user_fields=id,name,display_name
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details. Example: select=id,display_name,website
+     * @see \App\Traits\ApiSelectable::select()
      * 
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (only `user` is supported). Example: include=user
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
+     * 
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (favorite_languages), specify fields to return. Example: favorite_languages_fields=name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
+     *
      * Example URL: /user-profiles/1
      *
      * @response status=200 scenario="Success" {
@@ -260,28 +298,64 @@ class UserProfileController extends Controller {
      *   "data": {
      *     "id": 1,
      *     "user_id": 1,
-     *     "display_name": "John Dev",
-     *     "public_email": "john.public@example.com",
-     *     "website": "https://johndev.example.com",
-     *     "avatar_path": "/storage/avatars/johndev.jpg",
+     *     "display_name": "Admin",
+     *     "public_email": "contact@mirkorinke.dev",
+     *     "website": "https://mirkorinke.dev/",
+     *     "avatar_path": null,
      *     "is_public": true,
-     *     "location": "San Francisco, CA",
-     *     "biography": "Full-stack developer with 5 years of experience",
-     *     "skills": ["PHP", "Laravel", "JavaScript"],
+     *     "location": "Hildesheim, Germany",
+     *     "biography": "...",
+     *     "skills": [
+     *       "TypeScript",
+     *       "Angular",
+     *       "PHP",
+     *       "Laravel",
+     *       "MySQL"
+     *     ],
      *     "social_links": {
-     *       "github": "https://github.com/johndev",
-     *       "linkedin": "https://linkedin.com/in/john-developer"
+     *       "github": "https://github.com/MirkoRinke",
+     *       "linkedin": "https://linkedin.com/in/mirkorinke"
      *     },
-     *     "contact_channels": {"discord": "johndev#1234"},
-     *     "auto_load_external_images": false,
+     *     "contact_channels": {
+     *       "discord": "gallifrey87"
+     *     },
+     *     "auto_load_external_images": true,
      *     "external_images_temp_until": null,
-     *     "auto_load_external_videos": false,
+     *     "auto_load_external_videos": true,
      *     "external_videos_temp_until": null,
-     *     "auto_load_external_resources": false,
+     *     "auto_load_external_resources": true,
      *     "external_resources_temp_until": null,
-     *     "reports_count": 0,          || Admin and Moderator only
-     *     "created_at": "2023-01-15T09:24:12.000000Z",
-     *     "updated_at": "2023-02-20T14:35:47.000000Z"
+     *     "reports_count": 0,                                        || Admin and Moderator only
+     *     "created_at": "2025-07-09T17:26:42.000000Z",
+     *     "updated_at": "2025-07-12T20:54:32.000000Z",
+     *     "favorite_languages": [
+     *       { "id": 4, "name": "JavaScript" },
+     *       { "id": 5, "name": "TypeScript" },
+     *       { "id": 12, "name": "Go" }
+     *     ]
+     *   }
+     * }
+     *
+     * Example URL: /user-profiles/1?include=user
+     *
+     * @response status=200 scenario="Success (with user include)" {
+     *   "status": "success",
+     *   "message": "User Profile retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     ... // Same profile fields as above
+     *     "user": {
+     *       "id": 1,
+     *       "display_name": "Admin",
+     *       "role": "admin",
+     *       "created_at": "2025-07-09T17:26:42.000000Z",
+     *       "updated_at": "2025-07-09T17:26:42.000000Z",
+     *       "is_banned": null,                                       || Admin and Moderator only
+     *       "was_ever_banned": false,                                || Admin and Moderator only
+     *       "moderation_info": [],                                   || Admin and Moderator only
+     *       "is_following": false                                    || Virtual field, true if the authenticated user follows this user
+     *     }
      *   }
      * }
      *
@@ -350,40 +424,50 @@ class UserProfileController extends Controller {
      * Updates a user profile. Users can only update their own profiles,
      * while administrators can update any profile.
      *
+     * All fields are optional; at least one field must be provided.
+     * The relation `favorite_languages` is always included in the response.
+     *
      * @group User Profiles
      *
      * @urlParam id required The ID of the user profile to update. Example: 1
      *
-     * @bodyParam display_name string The display name of the user (2-255 characters). Example: "John Developer"
-     * @bodyParam public_email string|null The publicly visible email address. Example: "public@example.com"
-     * @bodyParam website string|null User's website. Example: "https://example.com"
-     * @bodyParam avatar_path string|null Path to the user's avatar. Example: "/storage/avatars/image.jpg"
+     * @bodyParam display_name string The display name of the user (2-255 characters). Example: "Admin"
+     * @bodyParam public_email string|null The publicly visible email address. Example: "contact@mirkorinke.dev"
+     * @bodyParam website string|null User's website. Example: "https://mirkorinke.dev/"
+     * @bodyParam avatar_path string|null Path to the user's avatar. Example: null
      * @bodyParam is_public boolean Whether the profile is publicly visible. Example: true
-     * @bodyParam location string|null The user's location. Example: "Berlin, Germany"
-     * @bodyParam biography string|null User's biography or description. Example: "Full-stack developer with 5 years experience"
-     * @bodyParam skills array|null Array of user skills. Example: ["PHP", "Laravel", "Vue.js"]
-     * @bodyParam social_links object|null Social media links. Example: {"github": "https://github.com/username", "linkedin": "https://linkedin.com/in/username"}
-     * @bodyParam contact_channels object|null Contact information, limited to "discord". Example: {"discord": "username#1234"}
-     * @bodyParam auto_load_external_images boolean Whether to auto-load external images. Example: false
-     * @bodyParam auto_load_external_videos boolean Whether to auto-load external videos. Example: false
-     * @bodyParam auto_load_external_resources boolean Whether to auto-load external resources. Example: false
-     * 
-     * @bodyContent {
-     *   "display_name": "John Developer",
-     *   "public_email": "public@example.com",
+     * @bodyParam location string|null The user's location. Example: "Hildesheim, Germany"
+     * @bodyParam biography string|null User's biography or description. Example: "..."
+     * @bodyParam skills array|null Array of user skills. Example: ["TypeScript", "Angular", "PHP", "Laravel", "MySQL"]
+     * @bodyParam social_links object|null Social media links. Example: {"github": "https://github.com/MirkoRinke", "linkedin": "https://linkedin.com/in/mirkorinke"}
+     * @bodyParam contact_channels object|null Contact information, limited to "discord". Example: {"discord": "gallifrey87"}
+     * @bodyParam auto_load_external_images boolean Whether to auto-load external images. Example: true
+     * @bodyParam auto_load_external_videos boolean Whether to auto-load external videos. Example: true
+     * @bodyParam auto_load_external_resources boolean Whether to auto-load external resources. Example: true
+     * @bodyParam favorite_languages array|null Array of language names. Example: ["JavaScript", "TypeScript", "Go"]
+     *
+     * @bodyContent application/json Full Update {
+     *   "display_name": "Admin",
+     *   "public_email": "contact@mirkorinke.dev",
+     *   "website": "https://mirkorinke.dev/",
+     *   "avatar_path": null,
      *   "is_public": true,
-     *   "location": "Berlin, Germany",
-     *   "skills": ["PHP", "Laravel", "Vue.js", "API Design"],
+     *   "location": "Hildesheim, Germany",
+     *   "biography": "...",
+     *   "skills": ["TypeScript", "Angular", "PHP", "Laravel", "MySQL"],
      *   "social_links": {
-     *     "github": "https://github.com/johndev",
-     *     "linkedin": "https://linkedin.com/in/john-developer"
+     *     "github": "https://github.com/MirkoRinke",
+     *     "linkedin": "https://linkedin.com/in/mirkorinke"
      *   },
      *   "contact_channels": {
-     *     "discord": "johndev#1234"
+     *     "discord": "gallifrey87"
      *   },
      *   "auto_load_external_images": true,
+     *   "auto_load_external_videos": true,
+     *   "auto_load_external_resources": true,
+     *   "favorite_languages": ["JavaScript", "TypeScript", "Go"]
      * }
-     * 
+     *
      * @bodyContent application/json Only E-Mail-Update {
      *   "public_email": "new.email@example.com"
      * }
@@ -400,27 +484,40 @@ class UserProfileController extends Controller {
      *   "data": {
      *     "id": 1,
      *     "user_id": 1,
-     *     "display_name": "John Developer",
-     *     "public_email": "public@example.com",
-     *     "website": "https://example.com",
-     *     "avatar_path": "/storage/avatars/johndev.jpg",
+     *     "display_name": "Admin",
+     *     "public_email": "contact@mirkorinke.dev",
+     *     "website": "https://mirkorinke.dev/",
+     *     "avatar_path": null,
      *     "is_public": true,
-     *     "location": "San Francisco, CA",
-     *     "biography": "Full-stack developer with 5 years of experience",
-     *     "skills": ["PHP", "Laravel", "JavaScript"],
+     *     "location": "Hildesheim, Germany",
+     *     "biography": "...",
+     *     "skills": [
+     *       "TypeScript",
+     *       "Angular",
+     *       "PHP",
+     *       "Laravel",
+     *       "MySQL"
+     *     ],
      *     "social_links": {
-     *       "github": "https://github.com/johndev",
-     *       "linkedin": "https://linkedin.com/in/john-developer"
+     *       "github": "https://github.com/MirkoRinke",
+     *       "linkedin": "https://linkedin.com/in/mirkorinke"
      *     },
-     *     "contact_channels": {"discord": "johndev#1234"},
-     *     "auto_load_external_images": false,
+     *     "contact_channels": {
+     *       "discord": "gallifrey87"
+     *     },
+     *     "auto_load_external_images": true,
      *     "external_images_temp_until": null,
-     *     "auto_load_external_videos": false,
+     *     "auto_load_external_videos": true,
      *     "external_videos_temp_until": null,
-     *     "auto_load_external_resources": false,
+     *     "auto_load_external_resources": true,
      *     "external_resources_temp_until": null,
-     *     "created_at": "2023-01-15T09:24:12.000000Z",
-     *     "updated_at": "2023-05-20T14:35:47.000000Z"
+     *     "created_at": "2025-07-09T17:26:42.000000Z",
+     *     "updated_at": "2025-07-12T20:54:32.000000Z",
+     *     "favorite_languages": [
+     *       { "id": 4, "name": "JavaScript" },
+     *       { "id": 5, "name": "TypeScript" },
+     *       { "id": 12, "name": "Go" }
+     *     ]
      *   }
      * }
      *
@@ -451,6 +548,13 @@ class UserProfileController extends Controller {
      *     ]
      *   }
      * }
+     *
+     * @response status=422 scenario="No Fields Provided" {
+     *   "status": "error",
+     *   "message": "At least one field must be provided for update",
+     *   "code": 422,
+     *   "errors": "NO_FIELDS_PROVIDED"
+     * }
      * 
      * @response status=500 scenario="Server Error" {
      *   "status": "error", 
@@ -471,6 +575,10 @@ class UserProfileController extends Controller {
                 $this->getValidationRulesUpdate($userProfile),
                 $this->getValidationMessages('UserProfile')
             );
+
+            if (empty($validatedData)) {
+                return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
+            }
 
             if (isset($validatedData['favorite_languages']) && is_array($validatedData['favorite_languages'])) {
                 $result = $this->syncFavoriteLanguages($userProfile, $validatedData['favorite_languages']);
@@ -521,6 +629,7 @@ class UserProfileController extends Controller {
      *
      * Temporarily enables loading of external content (images, videos, or resources) for a specific time period.
      * Setting hours to 0 will disable the temporary loading. Maximum allowed time is 72 hours.
+     * Only the owner of the profile can use this endpoint for the own profile.
      *
      * @group User Profiles
      *
@@ -529,77 +638,64 @@ class UserProfileController extends Controller {
      * @bodyParam type string required The type of external content to enable. Must be one of: images, videos, resources. Example: images
      * @bodyParam hours integer required Number of hours to enable (0-72). Use 0 to disable. Example: 24
      * 
-     * @bodyContent application/json Enable images for 24 hours {
-     *   "type": "images",
-     *   "hours": 24
-     * }
-     * 
-     * @bodyContent application/json Disable temporary images {
-     *   "type": "images",
-     *   "hours": 0
+     * @bodyContent application/json Enable resources for 2 hours {
+     *   "type": "resources",
+     *   "hours": 2
      * }
      *
      * @response status=200 scenario="Successfully Enabled" {
      *   "status": "success",
-     *   "message": "Temporary images successfully activated for the next 24 hours.",
+     *   "message": "Temporary resources successfully activated for the next 2 hours.",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
      *     "id": 1,
      *     "user_id": 1,
-     *     "display_name": "John Dev",
-     *     "public_email": "john.public@example.com", 
-     *     "website": "https://johndev.example.com",
-     *     "avatar_path": "/storage/avatars/johndev.jpg",
+     *     "display_name": "Admin",
+     *     "public_email": "contact@mirkorinke.dev",
+     *     "website": "https://mirkorinke.dev/",
+     *     "avatar_path": null,
      *     "is_public": true,
-     *     "location": "San Francisco, CA",
-     *     "biography": "Full-stack developer with 5 years of experience",
-     *     "skills": ["PHP", "Laravel", "JavaScript"],
+     *     "location": "Hildesheim, Germany",
+     *     "biography": "...",
+     *     "skills": [
+     *       "TypeScript",
+     *       "Angular",
+     *       "PHP",
+     *       "Laravel",
+     *       "MySQL"
+     *     ],
      *     "social_links": {
-     *       "github": "https://github.com/johndev",
-     *       "linkedin": "https://linkedin.com/in/john-developer"
+     *       "github": "https://github.com/MirkoRinke",
+     *       "linkedin": "https://linkedin.com/in/mirkorinke"
      *     },
-     *     "contact_channels": {"discord": "johndev#1234"},
-     *     "auto_load_external_images": false,
-     *     "external_images_temp_until": "2023-05-21T14:35:47.000000Z",         || This field was updated
-     *     "auto_load_external_videos": false,
+     *     "contact_channels": {
+     *       "discord": "gallifrey87"
+     *     },
+     *     "auto_load_external_images": true,
+     *     "external_images_temp_until": null,
+     *     "auto_load_external_videos": true,
      *     "external_videos_temp_until": null,
-     *     "auto_load_external_resources": false,
-     *     "external_resources_temp_until": null,
-     *     "created_at": "2023-01-15T09:24:12.000000Z",
-     *     "updated_at": "2023-05-20T14:35:47.000000Z"
+     *     "auto_load_external_resources": true,
+     *     "external_resources_temp_until": "2025-07-13T00:03:31.000000Z",
+     *     "created_at": "2025-07-09T17:26:42.000000Z",
+     *     "updated_at": "2025-07-12T22:03:31.000000Z"
      *   }
      * }
      *
+     * @bodyContent application/json Disable temporary images {
+     *   "type": "images",
+     *   "hours": 0
+     * }
+     * 
      * @response status=200 scenario="Successfully Disabled" {
      *   "status": "success",
-     *   "message": "Temporary videos deactivated.",
+     *   "message": "Temporary images deactivated.",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *     "id": 1,
-     *     "user_id": 1,
-     *     "display_name": "John Dev",
-     *     "public_email": "john.public@example.com",
-     *     "website": "https://johndev.example.com",
-     *     "avatar_path": "/storage/avatars/johndev.jpg",
-     *     "is_public": true,
-     *     "location": "San Francisco, CA",
-     *     "biography": "Full-stack developer with 5 years of experience",
-     *     "skills": ["PHP", "Laravel", "JavaScript"],
-     *     "social_links": {
-     *       "github": "https://github.com/johndev",
-     *       "linkedin": "https://linkedin.com/in/john-developer"
-     *     },
-     *     "contact_channels": {"discord": "johndev#1234"},
-     *     "auto_load_external_images": false,
-     *     "external_images_temp_until": null,                                  || FIELD UPDATED: Set to null (disabled)
-     *     "auto_load_external_videos": false,
-     *     "external_videos_temp_until": null,
-     *     "auto_load_external_resources": false,
-     *     "external_resources_temp_until": null,
-     *     "created_at": "2023-01-15T09:24:12.000000Z",
-     *     "updated_at": "2023-05-20T14:35:47.000000Z"
+     *     ... // Same profile fields as above
+     *     "external_images_temp_until": null
      *   }
      * }
      *
