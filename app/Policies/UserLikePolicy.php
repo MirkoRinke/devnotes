@@ -29,7 +29,7 @@ class UserLikePolicy {
      * @example | $this->authorize('viewAny', UserLike::class); 
      */
     public function viewAny(User $user): bool {
-        if ($this->isAdmin($user)) {
+        if ($this->hasModeratorPrivileges($user)) {
             return true;
         }
         return false;
