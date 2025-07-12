@@ -117,6 +117,9 @@ class UserFollowerController extends Controller {
      * 
      * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
      * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
      *
      * Example URL: /followers
      * 
@@ -259,6 +262,9 @@ class UserFollowerController extends Controller {
      * 
      * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
      * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
      *
      * Example URL: /following
      * 
