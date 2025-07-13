@@ -37,32 +37,40 @@ class UserStatsController extends Controller {
      * 
      * Example URL: /users/1/post-interactions/?type=likes_count
      * 
-     * @response status=200 scenario="Success" {
+     * @response status=200 scenario="Success (likes_count)" {
      *   "status": "success",
      *   "message": "Total likes_count for user with ID 1",
      *   "code": 200,
      *   "count": 1,
-     *   "data": 3
+     *   "data": 7
      * }
      * 
      * Example URL: /users/1/post-interactions/?type=favorite_count
      *
-     * @response status=200 scenario="Success" {
+     * @response status=200 scenario="Success (favorite_count)" {
      *   "status": "success",
      *   "message": "Total favorite_count for user with ID 1",
      *   "code": 200,
      *   "count": 1,
-     *   "data": 4
+     *   "data": 5
      * }
      * 
      * Example URL: /users/1/post-interactions/?type=interactions
      * 
-     * @response status=200 scenario="Success" {
+     * @response status=200 scenario="Success (interactions)" {
      *   "status": "success",
      *   "message": "Total interactions for user with ID 1",
      *   "code": 200,
      *   "count": 1,
-     *   "data": 7
+     *   "data": 12
+     * }
+     * 
+     * @response status=200 scenario="No posts found" {
+     *   "status": "success",
+     *   "message": "Total likes_count for user with ID 1",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": 0
      * }
      * 
      * @response status=422 scenario="Validation Error" {
@@ -80,20 +88,11 @@ class UserStatsController extends Controller {
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
      * }
-     * 
-     * Note: This endpoint sums the total number of likes, favorites, or both (interactions)
-     * received on posts created by the specified user. It doesn't count interactions on individual comments.
-     * 
+     *
      * @authenticated
      */
     public function getUserPostsInteractions(Request $request, string $id) {
         try {
-            /**
-             * Check if the user has any posts only for ModelNotFoundException
-             * This will throw an exception if no posts are found
-             */
-            $hasPosts = Post::where('user_id', $id)->firstOrFail();
-
             $validatedData = $request->validate(
                 [
                     'type' => 'required|string|in:likes_count,favorite_count,interactions',
@@ -110,8 +109,6 @@ class UserStatsController extends Controller {
             }
 
             return $this->successResponse($total, 'Total ' . $validatedData['type'] . ' for user with ID ' . $id, 200);
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse("No posts found for user with ID $id", 'NO_POSTS_FOUND', 404);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
