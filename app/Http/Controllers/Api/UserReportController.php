@@ -123,6 +123,7 @@ class UserReportController extends Controller {
                 ]
             );
         }
+
         return $query;
     }
 
@@ -137,107 +138,265 @@ class UserReportController extends Controller {
      *
      * @group Report Management
      *
-     * @queryParam select string Select specific fields. Example: select=id,user_id,reportable_id
-     * @queryParam sort string Sort by field (prefix with - for descending order). Example: sort=-created_at
+     * @queryParam select   See [ApiSelectable](#apiselectable) for field selection details.
+     * @see \App\Traits\ApiSelectable::select()
+     * 
+     * @queryParam sort     See [ApiSorting](#apisorting) for sorting details.
+     * @see \App\Traits\ApiSorting::sort()
+     * 
      * @queryParam filter[type] string Filter by reportable type. Example: filter[type]=post
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam startsWith[field] string Filter where field starts with given string. Example: startsWith[created_at]=2024-01
-     * @queryParam endsWith[field] string Filter where field ends with given string. Example: endsWith[reason]=content
+     * @queryParam filter[user_id] integer Filter by user ID. Example: filter[user_id]=5
+     * @see \App\Traits\ApiFiltering::filter()
      * 
-     * @queryParam include string Comma-separated relations to include. Example: include=user,reportable
-     * @queryParam user_fields string When including user relation, specify fields to return. 
-     *                                Available fields: id, display_name, role, created_at, updated_at , is_banned, was_ever_banned, moderation_info
-     *                                Example: user_fields=id,display_name
-     * @queryParam reportable_post_fields string When including reportable relation (for posts), specify fields to return.
-     *                                Example: reportable_post_fields=id,title,description
-     * @queryParam reportable_comment_fields string When including reportable relation (for comments), specify fields to return.
-     *                                Example: reportable_comment_fields=id,content
-     * @queryParam reportable_profile_fields string When including reportable relation (for user profiles), specify fields to return.
-     *                                Example: reportable_profile_fields=id,display_name,public_email
+     * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (e.g. user, reportable).
+     * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam page integer Page number for pagination. Example: page=1
-     * @queryParam per_page integer Items per page. Example: per_page=15 (default: 10)
+     * @queryParam user_fields string See [ApiInclude](#apiinclude). When including user relation, specify fields to return. Example: user_fields=id,display_name
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam reportable_post_fields string See [ApiInclude](#apiinclude). When including reportable relation (for posts), specify fields to return. Example: reportable_post_fields=id,title,description
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam reportable_comment_fields string See [ApiInclude](#apiinclude). When including reportable relation (for comments), specify fields to return. Example: reportable_comment_fields=id,content
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam reportable_profile_fields string See [ApiInclude](#apiinclude). When including reportable relation (for user profiles), specify fields to return. Example: reportable_profile_fields=id,display_name,public_email
+     * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest()
+     * 
+     * @queryParam page     Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam per_page Pagination, see [ApiPagination](#apipagination).
+     * @see \App\Traits\ApiPagination::paginate()
+     * 
+     * @queryParam setLimit Disables pagination and limits the number of results. See [ApiLimit](#apilimit).
+     * @see \App\Traits\ApiLimit::setLimit()
      *
      * Example URL: /reports
      * 
-     * @response status=200 scenario="Success" {
-     *   "success": true,
+     * @response status=200 scenario="Success (no includes)" {
+     *   "status": "success",
      *   "message": "Reports retrieved successfully",
+     *   "code": 200,
+     *   "count": 3,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "user_id": 2,
+     *       "id": 4,
+     *       "user_id": 1,
      *       "reportable_type": "App\\Models\\Post",
-     *       "reportable_id": 5,
+     *       "reportable_id": 123,
      *       "type": "post",
-     *       "reason": "This post contains inappropriate content",
-     *       "impact_value": 2,
-     *       "created_at": "2024-01-15T14:30:00Z",
-     *       "updated_at": "2024-01-15T14:30:00Z"
-     *     },
-     *     {
-     *       "id": 2,
-     *       "user_id": 3,
-     *       "reportable_type": "App\\Models\\Comment",
-     *       "reportable_id": 12,
-     *       "type": "comment",
-     *       "reason": "This comment contains offensive language",
-     *       "impact_value": 3,
-     *       "created_at": "2024-01-16T09:45:22Z",
-     *       "updated_at": "2024-01-16T09:45:22Z"
+     *       "reason": "These posts contain inappropriate content",
+     *       "reportable_snapshot": { ... },
+     *       "impact_value": 5,
+     *       "created_at": "2025-07-13T19:17:31.000000Z",
+     *       "updated_at": "2025-07-13T19:17:31.000000Z"
      *     }
      *   ]
      * }
-     * 
-     * Example URL: /reports/?include=user&user_fields=id,display_name
-     * 
-     * @response status=200 scenario="With user relation" {
-     *   "success": true,
+     *
+     * Example URL: /reports?include=reportable,user
+     *
+     * @response status=200 scenario="Success (include: post, user)" {
+     *   "status": "success",
      *   "message": "Reports retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
      *   "data": [
      *     {
-     *       "id": 1,
-     *       "user_id": 2,
+     *       "id": 4,
+     *       "user_id": 1,
      *       "reportable_type": "App\\Models\\Post",
-     *       "reportable_id": 5,
+     *       "reportable_id": 123,
      *       "type": "post",
-     *       "reason": "This post contains inappropriate content",
-     *       "impact_value": 2,
-     *       "created_at": "2024-01-15T14:30:00Z",
-     *       "updated_at": "2024-01-15T14:30:00Z",
-     *       "user": {
-     *         "id": 2,
-     *         "display_name": "JohnDoe"
-     *       }
-     *     }
-     *   ]
-     * }
-     * 
-     * Example URL: /reports/?include=reportable&reportable_post_fields=id,title,description
-     * 
-     * @response status=200 scenario="With reportable" {
-     *   "success": true,
-     *   "message": "Reports retrieved successfully",
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "user_id": 2,
-     *       "reportable_type": "App\\Models\\Post",
-     *       "reportable_id": 5,
-     *       "type": "post",
-     *       "reason": "This post contains inappropriate content",
-     *       "impact_value": 2,
-     *       "created_at": "2024-01-15T14:30:00Z",
-     *       "updated_at": "2024-01-15T14:30:00Z",
+     *       "reason": "These posts contain inappropriate content",
+     *       "reportable_snapshot": { ... },
+     *       "impact_value": 5,
+     *       "created_at": "2025-07-13T19:17:31.000000Z",
+     *       "updated_at": "2025-07-13T19:17:31.000000Z",
      *       "reportable": {
-     *         "id": 5,
-     *         "title": "Node.js: RESTful API",
-     *         "description": "Learn how to build a RESTful API using Node.js and Express."
+     *         "id": 123,
+     *         "user_id": 311,
+     *         "title": "Hello World",
+     *         "code": " <?php echo 'echo \"Hello World\"; ?>",
+     *         "description": "This is a test post",
+     *         "images": [
+     *           "https://picsum.photos/id/227/200/300",
+     *           "https://picsum.photos/id/728/200/300"
+     *         ],
+     *         "videos": [
+     *           "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *           "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *           "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+     *         ],
+     *         "resources": [
+     *           "https://laravel.com/docs/master"
+     *         ],
+     *         "external_source_previews": [
+     *           {
+     *             "url": "https://picsum.photos/id/227/200/300",
+     *             "type": "images",
+     *             "domain": "picsum.photos"
+     *           },
+     *           {
+     *             "url": "https://picsum.photos/id/728/200/300",
+     *             "type": "images",
+     *             "domain": "picsum.photos"
+     *           },
+     *           {
+     *             "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *             "type": "videos",
+     *             "domain": "www.youtube.com"
+     *           },
+     *           {
+     *             "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *             "type": "videos",
+     *             "domain": "www.youtube.com"
+     *           },
+     *           {
+     *             "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+     *             "type": "videos",
+     *             "domain": "www.youtube.com"
+     *           },
+     *           {
+     *             "url": "https://laravel.com/docs/master",
+     *             "type": "resources",
+     *             "domain": "laravel.com"
+     *           }
+     *         ],
+     *         "category": "Fullstack",
+     *         "post_type": "Feedback",
+     *         "status": "Private",
+     *         "favorite_count": 5,
+     *         "likes_count": 2,
+     *         "reports_count": 5,
+     *         "comments_count": 1,
+     *         "is_updated": false,
+     *         "updated_by_role": null,
+     *         "last_comment_at": "2025-07-09T17:27:09.000000Z",
+     *         "history": [],
+     *         "moderation_info": [],
+     *         "created_at": "2025-07-09T17:26:53.000000Z",
+     *         "updated_at": "2025-07-13T19:17:31.000000Z"
+     *       },
+     *       "user": {
+     *         "id": 1,
+     *         "display_name": "Admin",
+     *         "role": "admin",
+     *         "created_at": "2025-07-09T17:26:42.000000Z",
+     *         "updated_at": "2025-07-09T17:26:42.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
      *       }
      *     }
      *   ]
      * }
-     * 
+     *
+     * @response status=200 scenario="Success (include: comment, user)" {
+     *   "status": "success",
+     *   "message": "Reports retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       "id": 6,
+     *       "user_id": 1,
+     *       "reportable_type": "App\\Models\\Comment",
+     *       "reportable_id": 2,
+     *       "type": "comment",
+     *       "reason": "This comment contains inappropriate content",
+     *       "reportable_snapshot": { ... },
+     *       "impact_value": 5,
+     *       "created_at": "2025-07-13T19:17:37.000000Z",
+     *       "updated_at": "2025-07-13T19:17:37.000000Z",
+     *       "reportable": {
+     *         "id": 2,
+     *         "post_id": 326,
+     *         "user_id": 131,
+     *         "parent_id": null,
+     *         "content": "This comment has been reported too many times and is no longer available",
+     *         "parent_content": null,
+     *         "is_deleted": false,
+     *         "depth": 0,
+     *         "likes_count": 4,
+     *         "reports_count": 5,
+     *         "is_updated": false,
+     *         "updated_by_role": null,
+     *         "moderation_info": [],
+     *         "created_at": "2025-07-09T17:27:05.000000Z",
+     *         "updated_at": "2025-07-13T19:17:37.000000Z"
+     *       },
+     *       "user": {
+     *         "id": 1,
+     *         "display_name": "Admin",
+     *         "role": "admin",
+     *         "created_at": "2025-07-09T17:26:42.000000Z",
+     *         "updated_at": "2025-07-09T17:26:42.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
+     *       }
+     *     }
+     *   ]
+     * }
+     *
+     * @response status=200 scenario="Success (include: userProfile, user)" {
+     *   "status": "success",
+     *   "message": "Reports retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": [
+     *     {
+     *       "id": 5,
+     *       "user_id": 1,
+     *       "reportable_type": "App\\Models\\UserProfile",
+     *       "reportable_id": 125,
+     *       "type": "userProfile",
+     *       "reason": "This user profile contains inappropriate content",
+     *       "reportable_snapshot": { ... },
+     *       "impact_value": 5,
+     *       "created_at": "2025-07-13T19:17:34.000000Z",
+     *       "updated_at": "2025-07-13T19:17:34.000000Z",
+     *       "reportable": {
+     *         "id": 125,
+     *         "user_id": 125,
+     *         "display_name": "johndoe",
+     *         "public_email": "johndoe@example.com",
+     *         "website": "localhost:8000",
+     *         "avatar_path": null,
+     *         "is_public": true,
+     *         "location": "Berlin, Germany",
+     *         "biography": "Software developer with a passion for open source projects.",
+     *         "skills": "PHP, Laravel, JavaScript",
+     *         "social_links": null,
+     *         "contact_channels": null,
+     *         "auto_load_external_images": false,
+     *         "external_images_temp_until": null,
+     *         "auto_load_external_videos": false,
+     *         "external_videos_temp_until": null,
+     *         "auto_load_external_resources": false,
+     *         "external_resources_temp_until": null,
+     *         "reports_count": 5,
+     *         "created_at": "2025-07-09T17:26:46.000000Z",
+     *         "updated_at": "2025-07-13T19:17:34.000000Z"
+     *       },
+     *       "user": {
+     *         "id": 1,
+     *         "display_name": "Admin",
+     *         "role": "admin",
+     *         "created_at": "2025-07-09T17:26:42.000000Z",
+     *         "updated_at": "2025-07-09T17:26:42.000000Z",
+     *         "is_banned": null,
+     *         "was_ever_banned": false,
+     *         "moderation_info": []
+     *       }
+     *     }
+     *   ]
+     * }
+     *
      * @response status=200 scenario="No reports found" {
      *   "status": "success",
      *   "message": "No reports exist in the database",
@@ -254,7 +413,7 @@ class UserReportController extends Controller {
      * }
      *
      * @response status=500 scenario="Server Error" {
-     *   "status": "error", 
+     *   "status": "error",
      *   "message": "An unexpected error occurred",
      *   "code": 500,
      *   "errors": "SERVER_ERROR"
@@ -301,19 +460,22 @@ class UserReportController extends Controller {
      * 
      * Endpoint: POST /reports
      *
-     * Creates a new report for a post, comment, or user profile. Users cannot report their own content
-     * and cannot report the same content multiple times.
+     * Creates a new report for a post, comment, or user profile.
+     * Users cannot report their own content and cannot report the same content multiple times.
+     * Guests can submit reports; their report will use a fallback user and always have impact_value 1.
+     * Admins and moderators receive impact_value 5.
+     * For regular users, impact_value may increase if critical terms are found in the reason.
      *
      * @group Report Management
      *
-     * @bodyParam reportable_type string required The type of entity to report ('post', 'comment', or 'userProfile'). Example: comment
-     * @bodyParam reportable_id integer required The ID of the entity to report. Example: 9
-     * @bodyParam reason string optional The reason for reporting this content. Example: "This comment contains inappropriate content"
+     * @bodyParam reportable_type string required The type of entity to report ('post', 'comment', or 'userProfile'). Example: post
+     * @bodyParam reportable_id integer required The ID of the entity to report. Example: 42
+     * @bodyParam reason string optional The reason for reporting this content. Example: "This post contains spam and inappropriate language."
      *
      * @bodyContent {
-     *   "reportable_type": "comment",                                  || required, string, in:post,comment,userProfile
-     *   "reportable_id": 9,                                            || required, integer
-     *   "reason": "This comment contains inappropriate content"        || optional, string, max:500
+     *   "reportable_type": "post",                                         || required, string, in:post,comment,userProfile
+     *   "reportable_id": 42,                                               || required, integer
+     *   "reason": "This post contains spam and inappropriate language."    || optional, string, max:500
      * }
      *
      * @response status=201 scenario="Success" {
@@ -323,39 +485,85 @@ class UserReportController extends Controller {
      *   "count": 1,
      *   "data": {
      *     "user_id": 1,
-     *     "reportable_id": 9,
-     *     "reportable_type": "App\\Models\\Comment",
-     *     "type": "comment",
-     *     "reason": "This comment contains inappropriate content",
+     *     "reportable_id": 42,
+     *     "reportable_type": "App\\Models\\Post",
+     *     "type": "post",
+     *     "reason": "This post contains spam and inappropriate language.",
      *     "reportable_snapshot": {
-     *       "user_id": 7,
-     *       "post_id": 6,
-     *       "parent_id": null,
-     *       "content": "Docker has revolutionized my development environment!",
-     *       "parent_content": null,
+     *       "user_id": 567,
+     *       "title": "How to secure your API endpoints",
+     *       "code": "const apiKey = process.env.API_KEY;",
+     *       "description": "A guide to securing RESTful APIs using best practices.",
+     *       "images": [
+     *         "https://picsum.photos/id/1/200/300",
+     *         "https://picsum.photos/id/926/200/300",
+     *         "https://picsum.photos/id/27/200/300"
+     *       ],
+     *       "videos": [
+     *         "https://www.youtube.com/watch?v=abcd1234",
+     *         "https://www.youtube.com/watch?v=efgh5678"
+     *       ],
+     *       "resources": [
+     *         "https://developer.mozilla.org/en-US/docs/Web/API",
+     *         "https://laravel.com/docs/master"
+     *       ],
+     *       "external_source_previews": [
+     *         {
+     *           "url": "https://picsum.photos/id/1/200/300",
+     *           "type": "images",
+     *           "domain": "picsum.photos"
+     *         },
+     *         {
+     *           "url": "https://www.youtube.com/watch?v=abcd1234",
+     *           "type": "videos",
+     *           "domain": "www.youtube.com"
+     *         },
+     *         {
+     *           "url": "https://developer.mozilla.org/en-US/docs/Web/API",
+     *           "type": "resources",
+     *           "domain": "developer.mozilla.org"
+     *         }
+     *       ],
+     *       "category": "Web Development",
+     *       "post_type": "Tutorial",
+     *       "status": "Published",
+     *       "created_at": "2025-07-09T17:26:51.000000Z",
+     *       "updated_at": "2025-07-09T17:28:12.000000Z",
+     *       "tags": [
+     *         { "id": 64, "name": "Security" },
+     *         { "id": 65, "name": "API" }
+     *       ],
+     *       "languages": [
+     *         { "id": 5, "name": "TypeScript" },
+     *         { "id": 10, "name": "JavaScript" }
+     *       ],
+     *       "technologies": [
+     *         { "id": 30, "name": "Express" },
+     *         { "id": 44, "name": "Node.js" }
+     *       ],
      *       "user_data": {
-     *         "name": "Max Mustermann7",
-     *         "email": "max@example7.com",
+     *         "name": "Jane Doe",
+     *         "email": "jane.doe@example.com",
      *         "role": "user"
      *       }
      *     },
      *     "impact_value": 5,
-     *     "updated_at": "2025-05-11T20:46:00.000000Z",
-     *     "created_at": "2025-05-11T20:46:00.000000Z",
-     *     "id": 11
+     *     "updated_at": "2025-07-13T20:21:35.000000Z",
+     *     "created_at": "2025-07-13T20:21:35.000000Z",
+     *     "id": 7
      *   }
      * }
      *
      * @response status=403 scenario="Cannot report own content" {
      *   "status": "error",
-     *   "message": "You cannot report your own comment",
+     *   "message": "You cannot report your own post",
      *   "code": 403,
-     *   "errors": "CANNOT_REPORT_OWN_COMMENT"
+     *   "errors": "CANNOT_REPORT_OWN_POST"
      * }
      *
      * @response status=409 scenario="Already reported" {
      *   "status": "error",
-     *   "message": "You have already reported this comment",
+     *   "message": "You have already reported this post",
      *   "code": 409,
      *   "errors": "ALREADY_REPORTED"
      * }
@@ -364,7 +572,7 @@ class UserReportController extends Controller {
      *   "status": "error",
      *   "message": "Entity not found",
      *   "code": 404,
-     *   "errors": "NOT_FOUND"
+     *   "errors": "ENTITY_NOT_FOUND"
      * }
      *
      * @response status=422 scenario="Validation error" {
@@ -384,8 +592,8 @@ class UserReportController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      * 
-     * Admin/moderator reports have higher impact values.
-     *
+     * @authenticated
+     * 
      */
     public function store(Request $request) {
         try {
@@ -452,7 +660,7 @@ class UserReportController extends Controller {
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Entity not found', 'NOT_FOUND', 404);
+            return $this->errorResponse('Entity not found', 'ENTITY_NOT_FOUND', 404);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -463,15 +671,15 @@ class UserReportController extends Controller {
      * 
      * Endpoint: DELETE /reports
      *
-     * Removes a report from a post, comment, or user profile. Regular users can only remove their own reports,
-     * while administrators can remove any report by specifying a user_id.
+     * Removes a report from a post, comment, or user profile.
+     * Regular users can only remove their own reports.
+     * Administrators can remove any report by specifying the user_id.
      *
      * @group Report Management
      *
      * @bodyParam reportable_type string required The type of entity ('post', 'comment', or 'userProfile'). Example: comment
      * @bodyParam reportable_id integer required The ID of the entity. Example: 9
-     * @bodyParam user_id integer optional For admins only: ID of the user whose report should be removed. 
-     *                                    If not provided, the authenticated user's report will be removed. Example: 3
+     * @bodyParam user_id integer optional For admins only: ID of the user whose report should be removed. If not provided, the authenticated user's report will be removed. Example: 3
      *
      * @bodyContent {
      *   "reportable_type": "comment",                                  || required, string, in:post,comment,userProfile
@@ -491,7 +699,7 @@ class UserReportController extends Controller {
      *   "status": "error",
      *   "message": "Report not found",
      *   "code": 404,
-     *   "errors": "NOT_FOUND"
+     *   "errors": "REPORT_NOT_FOUND"
      * }
      *
      * @response status=403 scenario="Non-Admin trying to delete another user's report" {
@@ -518,8 +726,7 @@ class UserReportController extends Controller {
      *   "errors": "SERVER_ERROR"
      * }
      * 
-     * Note: Regular users can only remove their own reports. Administrators can remove any report
-     * by specifying the user_id in the request.
+     * Note: Only administrators can remove reports for other users by specifying user_id. Regular users can only remove their own reports.
      *
      * @authenticated
      */
@@ -579,7 +786,7 @@ class UserReportController extends Controller {
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('Report not found', 'NOT_FOUND', 404);
+            return $this->errorResponse('Report not found', 'REPORT_NOT_FOUND', 404);
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
