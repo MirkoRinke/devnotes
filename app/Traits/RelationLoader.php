@@ -136,7 +136,17 @@ trait RelationLoader {
 
                 $modelName = class_basename($modelClass);
 
-                $originalSelectFields = $this->getRelationFieldsFromRequest($request, "likeable_" . lcfirst($modelName), [], ['*']);
+                //TODO : Remove this workaround when the QueryParam is renamed
+                if ($modelName === 'UserProfile') {
+                    $modelName = 'Profile';
+                }
+
+                $originalSelectFields = $this->getRelationFieldsFromRequest($request, $relationship . "_" . lcfirst($modelName), [], ['*']);
+
+                //TODO : Remove this workaround when the QueryParam is renamed
+                if ($modelName === 'Profile') {
+                    $modelName = 'UserProfile';
+                }
 
                 // Load the related entities based on the model class
                 $relatedEntities = app($modelClass)->whereIn('id', $ids)
