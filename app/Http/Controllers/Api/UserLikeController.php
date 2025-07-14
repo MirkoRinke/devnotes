@@ -19,7 +19,7 @@ use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
 use App\Traits\AccessFilter;
 use App\Traits\FavoriteHelper;
-use App\Traits\LikeHelper;
+use App\Traits\UserLikeHelper;
 use App\Traits\UserFollowerHelper;
 use App\Traits\PostQuerySetup;
 use App\Traits\CommentQuerySetup;
@@ -35,7 +35,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, FavoriteHelper, LikeHelper, UserFollowerHelper, PostQuerySetup, CommentQuerySetup;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, FavoriteHelper, UserLikeHelper, UserFollowerHelper, PostQuerySetup, CommentQuerySetup;
 
     /**
      * The validation rule for the like entity
@@ -51,7 +51,6 @@ class UserLikeController extends Controller {
         ];
         return $validationRules;
     }
-
 
     /**
      * Update the likes_count for a likeable entity
@@ -87,7 +86,6 @@ class UserLikeController extends Controller {
         return $query;
     }
 
-
     /**
      * Load the likeable polymorphic relation
      * 
@@ -111,7 +109,6 @@ class UserLikeController extends Controller {
         }
         return $query;
     }
-
 
     /**
      * Get All Likes
@@ -382,7 +379,6 @@ class UserLikeController extends Controller {
         }
     }
 
-
     /**
      * Add a Like
      * 
@@ -515,7 +511,6 @@ class UserLikeController extends Controller {
         }
     }
 
-
     /**
      * Remove a Like
      * 
@@ -618,7 +613,6 @@ class UserLikeController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
-
 
     /**
      * List All Liked Posts of a User

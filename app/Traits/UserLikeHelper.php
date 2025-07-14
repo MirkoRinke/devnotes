@@ -13,7 +13,7 @@ use App\Models\Comment;
 use App\Models\User;
 use App\Models\UserLike;
 
-trait LikeHelper {
+trait UserLikeHelper {
 
     /**
      * Check if the user can like the content
