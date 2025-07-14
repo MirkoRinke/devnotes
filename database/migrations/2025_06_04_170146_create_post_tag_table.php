@@ -10,12 +10,15 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('post_tags', function (Blueprint $table) {
+            // Default
             $table->id();
+
+            // Basic
             $table->foreignId('post_id')->constrained()->onDelete('cascade');
             $table->foreignId('post_allowed_value_id')->constrained()->onDelete('cascade');
-
             $table->unique(['post_id', 'post_allowed_value_id']);
 
+            // Update info
             $table->timestamps();
         });
     }
