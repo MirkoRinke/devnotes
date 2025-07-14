@@ -18,8 +18,8 @@ class AllowedSocialLinks implements ValidationRule {
      * The allowed platforms for social links
      */
     protected $allowedPlatforms = [
-        'github' => 'https://github.com/',
-        'linkedin' => 'https://linkedin.com/in/',
+        'github' => 'https://www.github.com/',
+        'linkedin' => 'https://www.linkedin.com/in/',
     ];
 
     /**
@@ -37,7 +37,11 @@ class AllowedSocialLinks implements ValidationRule {
                 return;
             }
 
+            $url = preg_replace('/^http:\/\//i', 'https://', $url);
+            $url = preg_replace('/^(https:\/\/)?(www\.)?/', 'https://www.', $url);
+
             $baseUrl = $this->allowedPlatforms[$platform];
+
             if (!$this->validateUrl($url, $baseUrl)) {
                 $fail("SOCIAL_LINK_INVALID_FORMAT");
                 return;
