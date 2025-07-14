@@ -19,20 +19,6 @@ class UserPolicy {
      */
     use PolicyChecks;
 
-
-    /**
-     *  Is the user the same as the model?
-     * 
-     * @param User $user    
-     * @param User $model
-     * 
-     * @example | $this->isSameUser($user, $model);
-     */
-    protected function isSameUser(User $user, User $model): bool {
-        return $user->id === $model->id;
-    }
-
-
     /**
      * Determine whether the user can view any models.
      * 
