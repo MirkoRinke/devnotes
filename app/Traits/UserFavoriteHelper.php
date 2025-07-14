@@ -12,7 +12,7 @@ use App\Models\Post;
 
 use App\Traits\ApiSelectable;
 
-trait FavoriteHelper {
+trait UserFavoriteHelper {
 
     /**
      *  The traits used in the Trait

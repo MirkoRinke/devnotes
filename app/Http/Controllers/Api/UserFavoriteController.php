@@ -16,7 +16,7 @@ use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\PostQuerySetup;
-use App\Traits\FavoriteHelper;
+use App\Traits\UserFavoriteHelper;
 use App\Traits\UserLikeHelper;
 use App\Traits\UserFollowerHelper;
 
@@ -41,7 +41,7 @@ class UserFavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup, FavoriteHelper, UserLikeHelper, UserFollowerHelper;
+    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup, UserFavoriteHelper, UserLikeHelper, UserFollowerHelper;
 
 
     /**
