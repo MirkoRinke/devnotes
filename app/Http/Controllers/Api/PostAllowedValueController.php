@@ -16,6 +16,7 @@ use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\CacheHelper;
 use App\Traits\FieldManager;
+use App\Traits\PostAllowedValueHelper;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -37,7 +38,7 @@ class PostAllowedValueController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use AuthorizesRequests, ApiResponses, ApiInclude, QueryBuilder, CacheHelper, RelationLoader, FieldManager;
+    use AuthorizesRequests, ApiResponses, ApiInclude, QueryBuilder, CacheHelper, RelationLoader, FieldManager, PostAllowedValueHelper;
 
     /**
      * The validation rules for the create method
@@ -95,48 +96,6 @@ class PostAllowedValueController extends Controller {
         }
 
         return $query;
-    }
-
-
-    /**
-     * Check if the Post Allowed Value is used in any posts
-     * 
-     * @param string $name The name of the allowed value
-     * @param string $type The type of the allowed value (e.g., category, post_type, status, language, technology, tag)
-     * @return bool True if the value is in use, false otherwise
-     * 
-     * @example | $isInUse = $this->isPostAllowedValueInUse($name, $type)
-     */
-    protected function isPostAllowedValueInUse($name, $type) {
-        $isInUse = false;
-
-        switch ($type) {
-            case 'category':
-                $isInUse = Post::where('category', $name)->exists();
-                break;
-            case 'post_type':
-                $isInUse = Post::where('post_type', $name)->exists();
-                break;
-            case 'status':
-                $isInUse = Post::where('status', $name)->exists();
-                break;
-            case 'language':
-                $isInUse = Post::with('languages')->whereHas('languages', function ($query) use ($name) {
-                    $query->where('name', $name);
-                })->exists();
-                break;
-            case 'technology':
-                $isInUse = Post::with('technologies')->whereHas('technologies', function ($query) use ($name) {
-                    $query->where('name', $name);
-                })->exists();
-                break;
-            case 'tag':
-                $isInUse = Post::with('tags')->whereHas('tags', function ($query) use ($name) {
-                    $query->where('name', $name);
-                })->exists();
-                break;
-        }
-        return $isInUse;
     }
 
     /**
