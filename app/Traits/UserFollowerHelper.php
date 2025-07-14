@@ -2,10 +2,12 @@
 
 namespace App\Traits;
 
+use Illuminate\Http\Request;
+
 use App\Models\Post;
 use App\Models\Comment;
 use App\Models\UserProfile;
-
+use App\Models\UserFollower;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -16,12 +18,50 @@ use Illuminate\Database\Eloquent\Model;
 use App\Traits\AuthHelper;
 
 
-trait FollowerHelper {
+trait UserFollowerHelper {
 
     /**
      *  The traits used in the trait
      */
     use AuthHelper;
+
+    /**
+     * Add mutual follow status to the query
+     * 
+     * This method checks if the authenticated user follows back the followers or users they are following.
+     * It adds an "is_following_back" field to the query results.
+     * 
+     * @param Request $request The current HTTP request
+     * @param mixed $query The query builder instance
+     * @param User $user The authenticated user
+     * @param array $originalSelectFields The original select fields from the request
+     * @param string $relation The relation type (followers or following)
+     * 
+     * @return mixed The modified query with mutual follow status
+     * 
+     * @example | $query = $this->addMutualFollowStatus($request, $query, $user, $originalSelectFields, 'followers');
+     */
+    private function addMutualFollowStatus(Request $request, $query, $user, $originalSelectFields, string $relation): mixed {
+        if (!$request->has('select')  || $request->has('select') && in_array('is_following_back', $originalSelectFields)) {
+
+            $idField = $relation === 'followers' ? 'follower_id' : 'user_id';
+            $relationField = $relation === 'followers' ? 'user_id' : 'follower_id';
+
+            $followerIds = $query->pluck($idField);
+
+            $mutualFollows = UserFollower::where($idField, $user->id)
+                ->whereIn($relationField, $followerIds)
+                ->pluck($relationField)
+                ->flip()
+                ->toArray();
+
+            $query->each(function ($record) use ($mutualFollows, $relation) {
+                $idToCheck = $relation === 'followers' ? $record->follower_id : $record->user_id;
+                $record->is_following_back = isset($mutualFollows[$idToCheck]);
+            });
+        }
+        return $query;
+    }
 
     /**
      * Check if the user is following the user in the query

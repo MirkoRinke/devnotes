@@ -16,7 +16,7 @@ use App\Traits\ApiInclude;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
 use App\Traits\LikeHelper;
-use App\Traits\FollowerHelper;
+use App\Traits\UserFollowerHelper;
 use App\Traits\CommentQuerySetup;
 
 use App\Services\ModerationService;
@@ -43,7 +43,7 @@ class CommentController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper, FollowerHelper, CommentQuerySetup;
+    use ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, LikeHelper, UserFollowerHelper, CommentQuerySetup;
 
     /**
      *  The Service used in the controller

@@ -18,7 +18,7 @@ use App\Traits\FieldManager;
 use App\Traits\PostQuerySetup;
 use App\Traits\FavoriteHelper;
 use App\Traits\LikeHelper;
-use App\Traits\FollowerHelper;
+use App\Traits\UserFollowerHelper;
 
 
 use Exception;
@@ -41,7 +41,7 @@ class UserFavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup, FavoriteHelper, LikeHelper, FollowerHelper;
+    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup, FavoriteHelper, LikeHelper, UserFollowerHelper;
 
 
     /**

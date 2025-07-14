@@ -20,7 +20,7 @@ use App\Traits\FieldManager;
 use App\Traits\AccessFilter;
 use App\Traits\FavoriteHelper;
 use App\Traits\LikeHelper;
-use App\Traits\FollowerHelper;
+use App\Traits\UserFollowerHelper;
 use App\Traits\PostQuerySetup;
 use App\Traits\CommentQuerySetup;
 
@@ -35,7 +35,7 @@ class UserLikeController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, FavoriteHelper, LikeHelper, FollowerHelper, PostQuerySetup, CommentQuerySetup;
+    use ApiResponses, QueryBuilder, RelationLoader, AuthorizesRequests, ApiInclude, FieldManager, AccessFilter, FavoriteHelper, LikeHelper, UserFollowerHelper, PostQuerySetup, CommentQuerySetup;
 
     /**
      * The validation rule for the like entity

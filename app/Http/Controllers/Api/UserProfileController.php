@@ -20,7 +20,7 @@ use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\ApiInclude;
 use App\Traits\FieldManager;
-use App\Traits\FollowerHelper;
+use App\Traits\UserFollowerHelper;
 use App\Traits\UserProfileHelper;
 
 use App\Services\UserRelationService;
@@ -37,7 +37,7 @@ class UserProfileController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude, FieldManager, FollowerHelper, UserProfileHelper;
+    use ApiResponses, QueryBuilder, AuthorizesRequests, RelationLoader, ApiInclude, FieldManager, UserFollowerHelper, UserProfileHelper;
 
 
     /**

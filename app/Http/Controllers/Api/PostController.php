@@ -21,7 +21,7 @@ use App\Traits\PostQuerySetup;
 use App\Traits\PostHelper;
 use App\Traits\FavoriteHelper;
 use App\Traits\LikeHelper;
-use App\Traits\FollowerHelper;
+use App\Traits\UserFollowerHelper;
 use App\Traits\PostAttributeRelationManager;
 
 use App\Services\ModerationService;
@@ -42,7 +42,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, FieldManager, AuthorizesRequests, PostQuerySetup, PostHelper, FavoriteHelper, LikeHelper, FollowerHelper, PostAttributeRelationManager;
+    use ApiResponses, QueryBuilder, ApiInclude, FieldManager, AuthorizesRequests, PostQuerySetup, PostHelper, FavoriteHelper, LikeHelper, UserFollowerHelper, PostAttributeRelationManager;
 
 
     /**
