@@ -10,12 +10,15 @@ return new class extends Migration {
      */
     public function up(): void {
         Schema::create('user_profile_favorite_languages', function (Blueprint $table) {
+            // Default
             $table->id();
+
+            // Basic
             $table->foreignId('user_profile_id')->constrained()->onDelete('cascade');
             $table->foreignId('post_allowed_value_id')->constrained()->onDelete('cascade');
-
             $table->unique(['user_profile_id', 'post_allowed_value_id'], 'userprofile_favlang_unique');
 
+            // Update info
             $table->timestamps();
         });
     }
