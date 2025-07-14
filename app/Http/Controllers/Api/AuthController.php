@@ -10,16 +10,15 @@ use App\Models\User;
 
 use App\Traits\ApiResponses;
 use App\Traits\QueryBuilder;
+use App\Traits\AuthHelper;
 
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 
 use Exception;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller {
@@ -27,7 +26,7 @@ class AuthController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder;
+    use ApiResponses, QueryBuilder, AuthHelper;
 
     /**
      * User Login
@@ -274,68 +273,6 @@ class AuthController extends Controller {
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
-    }
-
-
-    /**
-     * Set the current token flag for each token in the list
-     *
-     * This method marks the current access token with a flag `is_current` to indicate
-     * which token is currently active for the user.
-     *
-     * @param Request $request
-     * @param mixed $query
-     * @return mixed
-     * 
-     * @example | $query = $this->setCurrentToken($request, $query);
-     */
-    protected function setCurrentToken(Request $request, $query, $originalSelectFields): mixed {
-
-        if (!$request->has('select') || in_array('is_current', $originalSelectFields)) {
-
-            $currentTokenId = $request->user()->currentAccessToken()->id;
-
-            if ($query instanceof LengthAwarePaginator) {
-                foreach ($query->items() as $token) {
-                    $token->is_current = ($token->id == $currentTokenId);
-                }
-            } else {
-                foreach ($query as $token) {
-                    $token->is_current = ($token->id == $currentTokenId);
-                }
-            }
-
-            return $query;
-        }
-
-        return $query;
-    }
-
-    /**
-     * Filter token objects to only include safe fields
-     *
-     * Ensures that only non-sensitive fields are included in API responses
-     * by using Laravel's built-in attribute visibility control.
-     *
-     * @param mixed $query The query result containing token objects
-     * @return mixed The same query with only safe fields visible
-     * 
-     * @example | $query = $this->setVisibleTokensFields($query);
-     */
-    protected function setVisibleTokensFields($query): mixed {
-        $visibleFields = ['id', 'name', 'last_used_at', 'created_at', 'updated_at', 'is_current'];
-
-        if ($query instanceof LengthAwarePaginator) {
-            foreach ($query->items() as $token) {
-                $token->setVisible($visibleFields);
-            }
-        } else {
-            foreach ($query as $token) {
-                $token->setVisible($visibleFields);
-            }
-        }
-
-        return $query;
     }
 
 
