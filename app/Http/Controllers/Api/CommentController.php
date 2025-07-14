@@ -958,7 +958,8 @@ class CommentController extends Controller {
      *
      * Permanently removes a comment from the database, along with all associated data.
      * This action also removes all child comments, likes, and reports.
-     * This endpoint is restricted to administrators and moderators only.
+     * 
+     * Only administrators can access this endpoint.
      * 
      * @group Comments
      *
