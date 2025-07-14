@@ -15,6 +15,7 @@ use App\Traits\ApiInclude;
 use App\Traits\QueryBuilder;
 use App\Traits\RelationLoader;
 use App\Traits\FieldManager;
+use App\Traits\UserFollowerHelper;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -24,7 +25,7 @@ class UserFollowerController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader, FieldManager;
+    use ApiResponses, ApiInclude, QueryBuilder, RelationLoader, FieldManager, UserFollowerHelper;
 
     /**
      * Setup the query for followers
@@ -46,44 +47,6 @@ class UserFollowerController extends Controller {
 
         $query = $this->buildQuery($request, $query, 'user_followers');
 
-        return $query;
-    }
-
-    /**
-     * Add mutual follow status to the query
-     * 
-     * This method checks if the authenticated user follows back the followers or users they are following.
-     * It adds an "is_following_back" field to the query results.
-     * 
-     * @param Request $request The current HTTP request
-     * @param mixed $query The query builder instance
-     * @param User $user The authenticated user
-     * @param array $originalSelectFields The original select fields from the request
-     * @param string $relation The relation type (followers or following)
-     * 
-     * @return mixed The modified query with mutual follow status
-     * 
-     * @example | $query = $this->addMutualFollowStatus($request, $query, $user, $originalSelectFields, 'followers');
-     */
-    private function addMutualFollowStatus(Request $request, $query, $user, $originalSelectFields, string $relation): mixed {
-        if (!$request->has('select')  || $request->has('select') && in_array('is_following_back', $originalSelectFields)) {
-
-            $idField = $relation === 'followers' ? 'follower_id' : 'user_id';
-            $relationField = $relation === 'followers' ? 'user_id' : 'follower_id';
-
-            $followerIds = $query->pluck($idField);
-
-            $mutualFollows = UserFollower::where($idField, $user->id)
-                ->whereIn($relationField, $followerIds)
-                ->pluck($relationField)
-                ->flip()
-                ->toArray();
-
-            $query->each(function ($record) use ($mutualFollows, $relation) {
-                $idToCheck = $relation === 'followers' ? $record->follower_id : $record->user_id;
-                $record->is_following_back = isset($mutualFollows[$idToCheck]);
-            });
-        }
         return $query;
     }
 
@@ -377,7 +340,6 @@ class UserFollowerController extends Controller {
         }
     }
 
-
     /**
      * Follow a User
      * 
@@ -472,7 +434,6 @@ class UserFollowerController extends Controller {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
     }
-
 
     /**
      * Unfollow a User
