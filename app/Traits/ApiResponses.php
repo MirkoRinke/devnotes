@@ -126,6 +126,9 @@ trait ApiResponses {
                     'device_fingerprint' => 'DEVICE_FINGERPRINT_FIELD_REQUIRED',
                     'device_fingerprint.string' => 'DEVICE_FINGERPRINT_MUST_BE_STRING',
                     'device_fingerprint.max' => 'DEVICE_FINGERPRINT_FIELD_MAX_LENGTH_255',
+
+                    'privacy_policy_accepted' => 'PRIVACY_POLICY_ACCEPTED_FIELD_REQUIRED',
+                    'privacy_policy_accepted.accepted' => 'PRIVACY_POLICY_ACCEPTED_MUST_BE_TRUE',
                 ];
             case 'verifyEmail':
                 return [
@@ -180,6 +183,9 @@ trait ApiResponses {
                     'days.integer' => 'DAYS_MUST_BE_INTEGER',
                     'days.min' => 'DAYS_MUST_BE_AT_LEAST_1',
                     'days.max' => 'DAYS_CANNOT_EXCEED_99999',
+
+                    'privacy_policy_accepted' => 'PRIVACY_POLICY_ACCEPTED_FIELD_REQUIRED',
+                    'privacy_policy_accepted.accepted' => 'PRIVACY_POLICY_ACCEPTED_MUST_BE_TRUE',
                 ];
             case 'Post':
                 return [
