@@ -32,6 +32,7 @@ return new class extends Migration {
             $table->json('moderation_info')->nullable();
 
             // Account info
+            $table->timestamp('privacy_policy_accepted_at')->nullable();
             $table->enum('account_purpose', ['regular', 'guest'])->default('regular')->nullable(false);
 
             // Update info
