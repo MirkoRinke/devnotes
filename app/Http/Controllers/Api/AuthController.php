@@ -43,12 +43,14 @@ class AuthController extends Controller {
      * @bodyParam password string required User's password. Example: sicheresPasswort123
      * @bodyParam name string required Name for the device/browser creating this token. Example: test_device1
      * @bodyParam device_fingerprint string required Unique device fingerprint (SHA256 hash). Example: 9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002
+     * @bodyParam privacy_policy_accepted boolean required Must be true to proceed with login. Example: true
      *
      * @bodyContent {
      *   "email": "max@example1.com",
      *   "password": "sicheresPasswort123",
      *   "name": "test_device1",
-     *   "device_fingerprint": "9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002"
+     *   "device_fingerprint": "9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002",
+     *   "privacy_policy_accepted": true
      * }
      *
      * @response status=200 scenario="Success" {
@@ -91,7 +93,8 @@ class AuthController extends Controller {
      *     "email": ["EMAIL_FIELD_REQUIRED"],
      *     "password": ["PASSWORD_FIELD_REQUIRED"],
      *     "name": ["NAME_FIELD_REQUIRED"],
-     *     "device_fingerprint": ["DEVICE_FINGERPRINT_FIELD_REQUIRED"]
+     *     "device_fingerprint": ["DEVICE_FINGERPRINT_FIELD_REQUIRED"],
+     *     "privacy_policy_accepted": ["PRIVACY_POLICY_ACCEPTED_FIELD_REQUIRED"],
      *   }
      * }
      *
@@ -110,11 +113,19 @@ class AuthController extends Controller {
                     'password' => 'required',
                     'name' => 'required',
                     'device_fingerprint' => 'required|string|max:255',
+                    'privacy_policy_accepted' => ['required', 'accepted'],
                 ],
                 $this->getValidationMessages('Login')
             );
 
             $user = User::where('email', $request->email)->first();
+
+            /**
+             * Set privacy policy acceptance timestamp
+             * This is required to ensure the user has accepted the privacy policy before logging in.
+             */
+            $user->privacy_policy_accepted_at = now();
+            $user->save();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
