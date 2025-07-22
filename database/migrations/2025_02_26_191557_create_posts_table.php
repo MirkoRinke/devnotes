@@ -35,7 +35,7 @@ return new class extends Migration {
             // Update info
             $table->boolean('is_updated')->default(false);
             $table->string('updated_by_role')->nullable();
-            $table->timestamp('last_comment_at')->nullable(); // last comment add, update, delete
+            $table->timestamp('comments_updated_at')->nullable(); // last comment add, update, delete
 
             // History
             $table->json('history')->nullable(); // history of changes made to the post
