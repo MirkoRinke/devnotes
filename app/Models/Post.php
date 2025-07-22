@@ -49,7 +49,7 @@ class Post extends Model {
         // 'updated_at',                || Laravel will automatically handle the 'updated_at' field
         // 'is_updated',                || Explicitly set in controller during update operations
         // 'updated_by_role',           || Explicitly set in controller based on updating user's role
-        // 'last_comment_at',           || Updated by CommentController when comments are added/modified
+        // 'comments_updated_at',       || Updated by CommentController when comments are added , updated, or deleted
 
         // History
         // 'history',                   || Generated in controller by HistoryService
@@ -96,7 +96,7 @@ class Post extends Model {
         // Update info
         'is_updated' => 'boolean',
         'updated_by_role' => 'string',
-        'last_comment_at' => 'datetime',
+        'comments_updated_at' => 'datetime',
 
         // History
         'history' => 'array',
