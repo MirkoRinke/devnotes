@@ -120,16 +120,17 @@ class AuthController extends Controller {
 
             $user = User::where('email', $request->email)->first();
 
+
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
+            }
+
             /**
              * Set privacy policy acceptance timestamp
              * This is required to ensure the user has accepted the privacy policy before logging in.
              */
             $user->privacy_policy_accepted_at = now();
             $user->save();
-
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
-            }
 
             if ($user->is_banned && now()->lt($user->is_banned)) {
                 return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
