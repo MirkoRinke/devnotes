@@ -42,9 +42,8 @@ trait UserFavoriteHelper {
                     $query->is_favorited = false;
                     return $query;
                 }
-                $query->is_favorited = $user->favorites()
-                    ->where('post_id', $query->id)
-                    ->exists();
+                $query->is_favorited = $user->favorites()->where('post_id', $query->id)->exists();
+
                 return $query;
             }
 
@@ -52,10 +51,7 @@ trait UserFavoriteHelper {
             $favoritedPosts = [];
 
             if ($user && !empty($postIds)) {
-                $favoritedPosts = $user->favorites()
-                    ->whereIn('post_id', $postIds)
-                    ->pluck('post_id')
-                    ->toArray();
+                $favoritedPosts = $user->favorites()->whereIn('post_id', $postIds)->pluck('post_id')->toArray();
             }
 
             $query->each(function ($post) use ($favoritedPosts) {

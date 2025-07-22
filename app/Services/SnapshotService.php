@@ -130,7 +130,6 @@ class SnapshotService {
             return array_merge($post_data, ['user_data' => $user_data]);
         }
 
-        // If user data is not needed, return the post data only
         return $post_data;
     }
 
@@ -161,7 +160,6 @@ class SnapshotService {
             return array_merge($comment_data, ['user_data' => $user_data]);
         }
 
-        // If user data is not needed, return the comment data only
         return $comment_data;
     }
 }

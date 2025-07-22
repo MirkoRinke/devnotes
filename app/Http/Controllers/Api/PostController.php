@@ -520,7 +520,9 @@ class PostController extends Controller {
 
             $user = $request->user();
 
-            // Get the tags from the validated data and remove them from the main data array
+            /**
+             * Get the tags from the validated data and remove them from the main data array
+             */
             $tagNames = $validatedData['tags'] ?? [];
             $languageNames = $validatedData['languages'] ?? [];
             $technologyNames = $validatedData['technologies'] ?? [];
@@ -528,8 +530,6 @@ class PostController extends Controller {
             unset($validatedData['languages']);
             unset($validatedData['technologies']);
 
-
-            // Create a new post
             $post = new Post($validatedData);
             $post->user_id = $user->id;
             $post->history = [];
@@ -537,14 +537,12 @@ class PostController extends Controller {
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
             $post->save();
 
-            // Sync the relations for the post
             $this->syncMultipleRelations($post, $user, [
                 'tag' => $tagNames,
                 'language' => $languageNames,
                 'technology' => $technologyNames,
             ]);
 
-            // Load the relations for the post
             $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
             return $this->successResponse($post, 'Post created successfully', 201);
@@ -1026,10 +1024,6 @@ class PostController extends Controller {
 
             $isContentModeration = $user->id !== $post->user_id && ($user->role === 'admin' || $user->role === 'moderator');
 
-            /** 
-             * Check if the user is an admin or moderator and if they are not the owner of the post
-             * If so, add the moderation_reason to the validation rules
-             */
             if ($isContentModeration) {
                 $validationRules['moderation_reason'] = 'required|string|max:255';
             }
@@ -1039,8 +1033,6 @@ class PostController extends Controller {
                 $this->getValidationMessages('Post')
             );
 
-
-            // Check if at least one field is provided
             if (empty($validatedData)) {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
@@ -1073,13 +1065,10 @@ class PostController extends Controller {
                 unset($validatedData['technologies']);
             }
 
-            /** 
-             * Check if the user is an admin or moderator and if they are not the owner of the post
-             * If so, handle the moderation update
-             */
             if ($isContentModeration) {
-                // Update the post
-                // Set the moderation_info field and apply all changes from validatedData to the model
+                /**
+                 * Update the post and set the moderation_info field and apply all changes from validatedData to the model
+                 */
                 $post = $this->moderationService->handleModerationUpdate(
                     $post,
                     $validatedData,
@@ -1097,7 +1086,6 @@ class PostController extends Controller {
                 DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
                     $post->save();
 
-                    // Sync the relations for the post  
                     $this->syncMultipleRelations($post, $user, [
                         'tag' => $tagNames,
                         'language' => $languageNames,
@@ -1109,15 +1097,12 @@ class PostController extends Controller {
 
                 $post = $this->managePostsFieldVisibility($request, $post);
 
-                // Load the relations for the post
                 $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
 
-            // Update the post
             $post->fill($validatedData);
-
             $post->is_updated = true;
             $post->updated_by_role = $user->role;
             $post->history = $this->historyService->createPostHistory($post, $user->id);
@@ -1126,7 +1111,6 @@ class PostController extends Controller {
             DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
                 $post->save();
 
-                // Sync the relations for the post
                 $this->syncMultipleRelations($post, $user, [
                     'tag' => $tagNames,
                     'language' => $languageNames,
@@ -1138,7 +1122,6 @@ class PostController extends Controller {
 
             $post = $this->managePostsFieldVisibility($request, $post);
 
-            // Load the relations for the post
             $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
             return $this->successResponse($post, 'Post updated successfully', 200);
@@ -1210,10 +1193,8 @@ class PostController extends Controller {
             $this->authorize('delete', $post);
 
             DB::transaction(function () use ($post) {
-                // Delete all comments associated with the post
                 $this->postRelationService->deleteComments($post);
 
-                // Delete all reports and likes associated with the post
                 $this->postRelationService->deleteReports($post);
                 $this->postRelationService->deleteLikes($post);
 
@@ -1223,7 +1204,6 @@ class PostController extends Controller {
                  * and don't require explicit deletion here.
                  */
 
-                // Delete the post
                 $post->delete();
             });
 

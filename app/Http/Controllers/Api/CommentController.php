@@ -454,21 +454,14 @@ class CommentController extends Controller {
 
             $comment = DB::transaction(function () use ($user, $validatedData, $depth, $parentComment) {
 
-                // Create the new comment
                 $comment = new Comment($validatedData);
-
                 $comment->user_id = $user->id;
                 $comment->parent_content = $parentComment->content ?? null;
                 $comment->depth = $depth;
                 $comment->moderation_info = [];
-
-                // Save the comment
                 $comment->save();
 
-                // Update last_comment_at
                 $this->commentRelationService->updateLastCommentAt($comment);
-
-                // Update comments_count
                 $this->commentRelationService->updateCommentsCount($comment, 'increment');
 
                 return $comment;
@@ -659,7 +652,9 @@ class CommentController extends Controller {
                 return $query;
             }
 
-            // Need this because the select method returns only the query object
+            /**
+             * Need this because the buildQuerySelect method returns only the query object
+             */
             $comment = $query->firstOrFail();
 
             $comment = $this->manageCommentsFieldVisibility($request, $comment);
@@ -883,10 +878,6 @@ class CommentController extends Controller {
 
             $isContentModeration = $user->id !== $comment->user_id && ($user->role === 'admin' || $user->role === 'moderator');
 
-            /** 
-             * Check if the user is an admin or moderator and if they are not the owner of the comment
-             * If so, add the moderation_reason to the validation rules
-             */
             if ($isContentModeration) {
                 $validationRulesUpdate['moderation_reason'] = 'required|string|max:255';
             }
@@ -896,13 +887,10 @@ class CommentController extends Controller {
                 $this->getValidationMessages('Comment')
             );
 
-            /** 
-             * Check if the user is an admin or moderator and if they are not the owner of the comment
-             * If so, handle the moderation update
-             */
             if ($isContentModeration) {
-                // Update the comment
-                // Set the moderation_info field and apply all changes from validatedData to the model
+                /**
+                 *  Update the comment and set the moderation_info field and apply all changes from validatedData to the model
+                 */
                 $comment = $this->moderationService->handleModerationUpdate(
                     $comment,
                     $validatedData,
@@ -913,7 +901,6 @@ class CommentController extends Controller {
 
                 $comment->is_updated = true;
                 $comment->updated_by_role = $user->role;
-
                 $comment->save();
 
                 $comment = $this->manageCommentsFieldVisibility($request, $comment);
@@ -923,15 +910,12 @@ class CommentController extends Controller {
 
             $comment = DB::transaction(function () use ($comment, $validatedData, $user) {
 
-                // Update the comment
                 $comment->fill($validatedData);
 
                 $comment->is_updated = true;
                 $comment->updated_by_role = $user->role;
-
                 $comment->save();
 
-                // Update the last_comment_at timestamp of the parent post
                 $this->commentRelationService->updateLastCommentAt($comment);
 
                 return $comment;
@@ -1008,18 +992,15 @@ class CommentController extends Controller {
             $this->authorize('delete', $comment);
 
             DB::transaction(function () use ($comment) {
-                // Delete all reports and likes associated with the comment
+
                 $this->commentRelationService->deleteReports($comment);
                 $this->commentRelationService->deleteLikes($comment);
 
-                // Delete all child comments
                 $this->commentRelationService->deleteChildren($comment);
 
-                // Update the last_comment_at timestamp of the parent post and comments_count
                 $this->commentRelationService->updateLastCommentAt($comment);
                 $this->commentRelationService->updateCommentsCount($comment, 'decrement');
 
-                // Delete the comment
                 $comment->delete();
             });
 
@@ -1123,7 +1104,6 @@ class CommentController extends Controller {
                     $comment->content = "This comment has been deleted";
                     $comment->save();
 
-                    // Update the last_comment_at timestamp of the parent post
                     $this->commentRelationService->updateLastCommentAt($comment);
 
                     return $comment;
@@ -1134,11 +1114,9 @@ class CommentController extends Controller {
                 return $this->successResponse($comment, "Comment marked as deleted", 200);
             } else {
                 DB::transaction(function () use ($comment) {
-                    // Delete all reports and likes associated with the comment
                     $this->commentRelationService->deleteReports($comment);
                     $this->commentRelationService->deleteLikes($comment);
 
-                    // Update the last_comment_at timestamp of the parent post and comments_count
                     $this->commentRelationService->updateLastCommentAt($comment);
                     $this->commentRelationService->updateCommentsCount($comment, 'decrement');
 

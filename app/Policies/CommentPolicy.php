@@ -51,11 +51,11 @@ class CommentPolicy {
         if ($this->hasModeratorPrivileges($user)) {
             return true;
         }
-        // Check if user is the owner of the comment
+
         if ($this->isNotOwner($user, $comment)) {
             return false;
         }
-        // Check if the comment was created within the last 15 minutes
+
         return now()->diffInMinutes($comment->created_at) <= 15;
     }
 
@@ -86,7 +86,6 @@ class CommentPolicy {
             return true;
         }
 
-        // Check if user is the owner of the comment
         return $this->isOwner($user, $comment);
     }
 }

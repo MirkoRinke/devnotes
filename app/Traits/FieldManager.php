@@ -153,11 +153,9 @@ trait FieldManager {
             'profile' => ['reports_count']
         ];
 
-        // Define a closure to process each item
         $processItem = function ($item) use ($hasModeratorAccess, $fieldMap) {
             foreach ($fieldMap as $relation => $fields) {
                 if ($item->relationLoaded($relation) && $item->{$relation}) {
-                    // Set visibility based on user role
                     if ($hasModeratorAccess) {
                         $item->{$relation}->makeVisible($fields);
                     } else {
@@ -167,7 +165,9 @@ trait FieldManager {
             }
         };
 
-        // Process the data based on its type (Collection, LengthAwarePaginator, or single item)
+        /**
+         * Process the data based on its type (Collection, LengthAwarePaginator, or single item)
+         */
         if ($data instanceof Collection || $data instanceof LengthAwarePaginator) {
             foreach ($data as $item) {
                 $processItem($item);

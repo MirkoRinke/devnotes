@@ -38,15 +38,12 @@ class AllowedContactChannels implements ValidationRule {
                 return;
             }
 
-            // Check if the value is a URL (e.g., http://example.com)
             $urlValidator = Validator::make(['contact' => $contactValue], [
                 'contact' => 'url'
             ]);
 
-            // Check if the value looks like a domain (e.g., example.com)
             $containsWebDomain = $this->looksLikeDomain($contactValue);
 
-            // If the value is a URL or contains a web domain, fail the validation
             if ($urlValidator->passes() || $containsWebDomain) {
                 $fail("CONTACT_CHANNEL_CONTAINS_URL");
                 return;
@@ -66,13 +63,10 @@ class AllowedContactChannels implements ValidationRule {
      * @example | $this->looksLikeDomain('example.com')
      */
     protected function looksLikeDomain(string $value): bool {
-        // If no protocol (://), add 'http://' temporarily to help parse_url function    
         $testUrl = (strpos($value, '://') === false) ? 'http://' . $value : $value;
 
-        // Use PHP's URL parser to extract components
         $parsed = parse_url($testUrl);
 
-        // A domain typically has a host with at least one dot (e.g., example.com)
         return isset($parsed['host']) && strpos($parsed['host'], '.') !== false;
     }
 }

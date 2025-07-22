@@ -412,19 +412,15 @@ class UserFollowerController extends Controller {
                 return $this->errorResponse('Cannot follow yourself', 'CANNOT_FOLLOW_SELF', 400);
             }
 
-            // Check if the user is already followed
             $exists = UserFollower::where('user_id', $userToFollow->id)->where('follower_id', $follower->id)->exists();
             if ($exists) {
                 $follow = UserFollower::where('user_id', $userToFollow->id)->where('follower_id', $follower->id)->first();
                 return $this->successResponse($follow, 'Already following this user', 200);
             }
 
-            // Create the follow relationship
             $follow = new UserFollower();
-
             $follow->user_id = $userToFollow->id;
             $follow->follower_id = $follower->id;
-
             $follow->save();
 
             return $this->successResponse($follow, 'User followed successfully', 201);
@@ -483,13 +479,12 @@ class UserFollowerController extends Controller {
             $follower = $request->user();
             $userToUnfollow = User::findOrFail($userId);
 
-            // Check if the user is not following
-            $follow = UserFollower::where('user_id', $userToUnfollow->id)->where('follower_id', $follower->id)->first();
-            if (!$follow) {
+            $isFollowing = UserFollower::where('user_id', $userToUnfollow->id)->where('follower_id', $follower->id)->first();
+            if (!$isFollowing) {
                 return $this->errorResponse('Not following this user', 'NOT_FOLLOWING', 404);
             }
 
-            $follow->delete();
+            $isFollowing->delete();
 
             return $this->successResponse(null, 'User unfollowed successfully', 200);
         } catch (ModelNotFoundException $e) {

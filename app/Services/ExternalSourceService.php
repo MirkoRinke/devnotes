@@ -59,17 +59,14 @@ class ExternalSourceService {
      * @example | $this->shouldDisplayExternals($request, $user, $type)
      */
     public function shouldDisplayExternals(Request $request, ?User $user, string $type) {
-        // If no user is logged in 
         if (!$user) {
             return $request->header("X-Show-External-" . ucfirst($type)) === 'true';
         }
 
-        // Check permanent setting
         if ($user->profile->{"auto_load_external_{$type}"} === true) {
             return true;
         }
 
-        // Check temporary setting
         if ($user->profile->{"external_{$type}_temp_until"} && now()->lt($user->profile->{"external_{$type}_temp_until"})) {
             return true;
         }

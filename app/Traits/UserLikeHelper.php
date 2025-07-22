@@ -37,11 +37,7 @@ trait UserLikeHelper {
             return $this->errorResponse('You cannot like your own comment', 'CANNOT_LIKE_OWN_COMMENT', 403);
         }
 
-        $existingLike = UserLike::where([
-            'user_id' => $user->id,
-            'likeable_id' => $likeableId,
-            'likeable_type' => $likeableType
-        ])->first();
+        $existingLike = UserLike::where(['user_id' => $user->id, 'likeable_id' => $likeableId, 'likeable_type' => $likeableType])->first();
 
         if ($existingLike) {
             return $this->errorResponse('You have already liked this ' . $simpleType, 'ALREADY_LIKED', 403);
@@ -76,10 +72,7 @@ trait UserLikeHelper {
                     return $query;
                 }
 
-                $query->is_liked = $user->likes()
-                    ->where('likeable_type', $className)
-                    ->where('likeable_id', $query->id)
-                    ->exists();
+                $query->is_liked = $user->likes()->where('likeable_type', $className)->where('likeable_id', $query->id)->exists();
 
                 return $query;
             }
@@ -88,11 +81,7 @@ trait UserLikeHelper {
             $likedItems = [];
 
             if ($user && !empty($ids)) {
-                $likedItems = $user->likes()
-                    ->where('likeable_type', $className)
-                    ->whereIn('likeable_id', $ids)
-                    ->pluck('likeable_id')
-                    ->toArray();
+                $likedItems = $user->likes()->where('likeable_type', $className)->whereIn('likeable_id', $ids)->pluck('likeable_id')->toArray();
             }
 
             $query->each(function ($item) use ($likedItems) {

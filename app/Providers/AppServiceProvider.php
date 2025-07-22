@@ -67,7 +67,6 @@ class AppServiceProvider extends ServiceProvider {
             // The key is the user id or the IP address of the user    
             $key = 'api:' . ($request->user()?->id ?: $userIp);
 
-            // The maximum number of attempts allowed in a minute
             $maxAttempts = 120;
 
             // $beforeAttempts = RateLimiter::attempts($key);
@@ -89,12 +88,10 @@ class AppServiceProvider extends ServiceProvider {
             //     'method' => $request->method()
             // ]);
 
-            // If the number of attempts exceeds the maximum allowed attempts
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
                 return $this->errorResponse('Too many requests', 'TOO_MANY_REQUESTS', 429);
             }
 
-            // The perMinute method is used to limit the number of requests per minute
             return Limit::perMinute($maxAttempts)->by($key);
         });
 

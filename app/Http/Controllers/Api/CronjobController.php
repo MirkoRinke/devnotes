@@ -110,7 +110,6 @@ class CronjobController extends Controller {
             $guestAccount = User::where('account_purpose', 'guest')->first();
 
             if (!$guestAccount) {
-                // If no guest account exists, create a new one
                 $this->guestAccountService->createGuestAccount();
                 return $this->successResponse([], 'Guest account created successfully', 201);
             }

@@ -338,12 +338,9 @@ class PostAllowedValueController extends Controller {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
             }
 
-            // Create the new Post Allowed Value
             $postAllowedValue = new PostAllowedValue($validatedData);
-
             $postAllowedValue->created_by_role = $user->role;
             $postAllowedValue->created_by_user_id = $user->id;
-
             $postAllowedValue->save();
 
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
@@ -584,12 +581,13 @@ class PostAllowedValueController extends Controller {
                 $this->getValidationMessages('PostAllowedValue')
             );
 
-            // Find the Post Allowed Value by ID
             $postAllowedValue = PostAllowedValue::findOrFail($id);
 
             $validatedData['name'] = trim($validatedData['name']);
 
-            // If type is provided, check if the Post Allowed Value is in use
+            /**
+             * If type is provided, check if the Post Allowed Value is in use
+             */
             if (isset($validatedData['type']) && $validatedData['type'] !== $postAllowedValue->type) {
                 $isInUse = $this->isPostAllowedValueInUse($postAllowedValue->name, $postAllowedValue->type, $id);
                 if ($isInUse) {
@@ -597,7 +595,6 @@ class PostAllowedValueController extends Controller {
                 }
             }
 
-            // Check if at least one field is provided
             if (empty($validatedData)) {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
@@ -605,23 +602,18 @@ class PostAllowedValueController extends Controller {
             $nameToCheck = $validatedData['name'] ?? $postAllowedValue->name;
             $typeToCheck = $validatedData['type'] ?? $postAllowedValue->type;
 
-
             $existingPostAllowedValue = PostAllowedValue::whereRaw('LOWER(name) = LOWER(?) AND type = ? AND id != ?', [$nameToCheck, $typeToCheck, $id])->first();
-
 
             if ($existingPostAllowedValue) {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
             }
 
             /**
-             * Update the Post Allowed Value
              * Note: We update the created_by fields because each change basically redefines the entire entity
              */
             $postAllowedValue->fill($validatedData);
-
             $postAllowedValue->created_by_role = $user->role;
             $postAllowedValue->created_by_user_id = $user->id;
-
             $postAllowedValue->save();
 
             $this->forgetPostAllowedValueCache($postAllowedValue->type);
@@ -694,22 +686,17 @@ class PostAllowedValueController extends Controller {
         try {
             $this->authorize('delete', PostAllowedValue::class);
 
-            // Find the Post Allowed Value by ID            
             $postAllowedValue = PostAllowedValue::findOrFail($id);
 
-            // Get the name and type of the Post Allowed Value
             $name = $postAllowedValue->name;
             $type = $postAllowedValue->type;
 
-            // Check if the Post Allowed Value is in use
             $isInUse = $this->isPostAllowedValueInUse($name, $type);
 
-            // Prevent deletion if value is in use
             if ($isInUse) {
                 return $this->errorResponse("Post Allowed Value '$name' is used in posts and cannot be deleted", 'POST_ALLOWED_VALUE_IN_USE', 409);
             }
 
-            // Delete the Post Allowed Value
             $postAllowedValue->delete();
 
             $this->forgetPostAllowedValueCache($postAllowedValue->type);

@@ -87,7 +87,6 @@ class ApiKeyController extends Controller {
         try {
             $this->authorize('viewAny', ApiKey::class);
 
-            // Retrieve all API keys from the database 
             $query = ApiKey::query();
 
             $query = $this->buildQuery($request, $query, 'apiKey');
@@ -169,12 +168,9 @@ class ApiKeyController extends Controller {
                 $this->getValidationMessages('ApiKey')
             );
 
-            // Generate a random 40-character string to be used as the API key
             $key = Str::random(40);
 
-            // Create a new API key record in the database
             $apiKey = new ApiKey($validated);
-
             $apiKey->key = $key;
             $apiKey->active = true;
             $apiKey->save();
@@ -246,7 +242,6 @@ class ApiKeyController extends Controller {
 
             $apiKey = ApiKey::findOrFail($id);
 
-            // Toggle the status of the API key (active/inactive) and save the changes to the database
             $apiKey->active = !$apiKey->active;
             $apiKey->save();
 
@@ -313,7 +308,6 @@ class ApiKeyController extends Controller {
 
             $apiKey = ApiKey::findOrFail($id);
 
-            // Delete the API key from the database
             $name = $apiKey->name;
             $apiKey->delete();
 

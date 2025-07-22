@@ -49,11 +49,7 @@ trait UserFollowerHelper {
 
             $followerIds = $query->pluck($idField);
 
-            $mutualFollows = UserFollower::where($idField, $user->id)
-                ->whereIn($relationField, $followerIds)
-                ->pluck($relationField)
-                ->flip()
-                ->toArray();
+            $mutualFollows = UserFollower::where($idField, $user->id)->whereIn($relationField, $followerIds)->pluck($relationField)->flip()->toArray();
 
             $query->each(function ($record) use ($mutualFollows, $relation) {
                 $idToCheck = $relation === 'followers' ? $record->follower_id : $record->user_id;
@@ -92,9 +88,7 @@ trait UserFollowerHelper {
                         return $query;
                     }
 
-                    $query->user->is_following = $user->followingRelations()
-                        ->where('user_id', $query->user->id)
-                        ->exists();
+                    $query->user->is_following = $user->followingRelations()->where('user_id', $query->user->id)->exists();
 
                     return $query;
                 }
@@ -109,10 +103,7 @@ trait UserFollowerHelper {
 
                 $followedIds = [];
                 if ($user && !empty($userIds)) {
-                    $followedIds = $user->followingRelations()
-                        ->whereIn('user_id', array_unique($userIds))
-                        ->pluck('user_id')
-                        ->toArray();
+                    $followedIds = $user->followingRelations()->whereIn('user_id', array_unique($userIds))->pluck('user_id')->toArray();
                 }
 
                 $query->each(function ($item) use ($followedIds) {

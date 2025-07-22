@@ -79,18 +79,15 @@ class GuestAccountService {
     public function resetGuestAccount(User $user): bool {
         try {
             DB::transaction(function () use ($user) {
-                // Delete all posts and comments associated with the guest account
                 $this->deletePosts($user);
                 $this->deleteComments($user);
 
-                // Delete all reports and likes associated with the user
                 $this->userRelationService->deleteReports($user);
                 $this->userRelationService->deleteLikes($user);
 
                 $user->delete();
             });
 
-            // Recreate the guest account outside the transaction
             $this->createGuestAccount();
 
             return true;

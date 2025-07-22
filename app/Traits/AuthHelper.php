@@ -28,7 +28,6 @@ trait AuthHelper {
      * @example | $user = $this->getAuthenticatedUser($request);
      */
     protected function getAuthenticatedUser(Request $request) {
-        // Check if the user is authenticated via Sanctum session then return it
         if ($request->user()) {
             return $request->user();
         }

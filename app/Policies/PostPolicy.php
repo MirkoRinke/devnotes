@@ -34,7 +34,6 @@ class PostPolicy {
             return true;
         }
 
-        // Only the post owner can update the post
         return $this->isOwner($user, $post);
     }
 
@@ -52,7 +51,6 @@ class PostPolicy {
             return true;
         }
 
-        // Only the post owner can delete the post
         return $this->isOwner($user, $post);
     }
 }

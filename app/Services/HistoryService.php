@@ -32,30 +32,28 @@ class HistoryService {
      * @example | $this->historyService->createPostHistory($post, $user->id)
      */
     public function createPostHistory(Post $post, $user_id): array {
-        // Check if the user is the owner of the post
         if ($post->user_id !== $user_id) {
             return $post->history ?? [];
         }
 
-        // Only create a new history entry if the post was updated within the time threshold (2 hours)
+        /**
+         * Only create a new history entry if the post was updated within the time threshold (2 hours)
+         */
         if ($post->updated_at > now()->subHours(2)) {
             return $post->history ?? [];
         }
 
-        // Create snapshot of current state
         $newHistory = $this->snapshotService->postSnapshot($post);
 
-        // Get existing history
         $historyLog = $post->history ?? [];
 
-        // Normalize history structure
         if (!empty($historyLog) && !isset($historyLog[0])) {
-
-            // If historyLog is not an array of arrays, wrap it in an array
+            /**
+             * If historyLog is not an array of arrays, wrap it in an array
+             */
             $historyLog = [$historyLog];
         }
 
-        // Add metadata to history entry
         $newHistory = array_merge(
             $newHistory,
             [
@@ -63,7 +61,6 @@ class HistoryService {
             ]
         );
 
-        // Add the new history entry to the beginning of the history log
         array_unshift($historyLog, $newHistory);
 
         return $historyLog;

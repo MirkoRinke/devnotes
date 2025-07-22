@@ -54,7 +54,6 @@ trait PostAttributeRelationManager {
          */
         foreach ($relationIds as $type => $ids) {
             if (isset($relationMap[$type])) {
-                // Get the current IDs from the pivot table
                 $currentIds = $exportCurrentIds[$type];
 
                 sort($currentIds);
@@ -63,7 +62,6 @@ trait PostAttributeRelationManager {
                 $toRemove = array_diff($currentIds, $ids);
                 $toAdd = array_diff($ids, $currentIds);
 
-                // Get the pivot table name from the relation map
                 $pivotTable = $post->{$relationMap[$type]}()->getTable();
 
                 if (!empty($toRemove)) {
@@ -125,7 +123,6 @@ trait PostAttributeRelationManager {
             sort($compareValues);
             sort($names);
 
-            // If the values are unchanged, remove the relation from the data
             if ($compareValues === $names) {
                 unset($relationData[$type]);
                 continue;

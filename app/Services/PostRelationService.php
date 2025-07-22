@@ -40,7 +40,9 @@ class PostRelationService {
         $totalDeleted = 0;
         $commentIds = [];
 
-        // Get all comments associated with the post and delete their likes and reports
+        /**
+         * Get all comments associated with the post and delete their likes and reports
+         */
         $post->comments()->chunkById(100, function ($comments) use (&$commentIds) {
             foreach ($comments as $comment) {
                 $commentIds[] = $comment->id;
@@ -49,7 +51,9 @@ class PostRelationService {
             }
         });
 
-        // Delete all comments in chunks to avoid memory issues and to ensure that the database can handle the load
+        /**
+         * Delete all comments in chunks to avoid memory issues and to ensure that the database can handle the load
+         */
         if (!empty($commentIds)) {
             foreach (array_chunk($commentIds, 100) as $chunk) {
                 $deleted = DB::table('comments')->whereIn('id', $chunk)->delete();

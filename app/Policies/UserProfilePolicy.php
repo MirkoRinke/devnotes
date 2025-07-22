@@ -33,12 +33,11 @@ class UserProfilePolicy {
         if ($this->isAdmin($user)) {
             return true;
         }
-        // If the profile is public, everyone can view it
+
         if ($userProfile->is_public) {
             return true;
         }
 
-        // If the profile is private, only the owner can view it
         return $this->isOwner($user, $userProfile);
     }
 

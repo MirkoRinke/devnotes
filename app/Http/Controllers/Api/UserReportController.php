@@ -597,7 +597,7 @@ class UserReportController extends Controller {
      */
     public function store(Request $request) {
         try {
-            $fallbackUserId = 4; // Fallback user ID ( Guest Report )
+            $fallbackUserId = 4; // ID 4 is reserved for guest reports
 
             $user = $this->getAuthenticatedUser($request) ?? User::query()->where('id', $fallbackUserId)->get()->first();
 
@@ -630,17 +630,14 @@ class UserReportController extends Controller {
                 if ($user->role === 'admin' || $user->role === 'moderator') {
                     $value = 5;
                 } else if ($user->id === $fallbackUserId) {
-                    $value = 1; // Guest Report value
+                    $value = 1;
                 } else if ($reason) {
                     $value = $this->checkCriticalTerms($reason);
                 }
 
-                // Create a snapshot of the reportable entity
                 $reportableSnapshot = $this->snapshotService->createSnapshot($reportable, $reportableType);
 
-                // Create the report
                 $report = new UserReport();
-
                 $report->user_id = $user->id;
                 $report->reportable_id = $reportableId;
                 $report->reportable_type = $reportableType;
@@ -769,16 +766,14 @@ class UserReportController extends Controller {
 
             $this->authorize('delete', $report);
 
-            // The entity being reported
-            $reportable = $report->reportable;
+            $reportableEntity = $report->reportable;
 
             $destroyedType = ucfirst($validatedData['reportable_type']);
 
-            // The impact value of the original report
-            $value = $report->impact_value;
+            $usedImpactValue = $report->impact_value;
 
-            DB::transaction(function () use ($report, $reportable, $value) {
-                $this->updateReportsCount($reportable, 'decrement', $value);
+            DB::transaction(function () use ($report, $reportableEntity, $usedImpactValue) {
+                $this->updateReportsCount($reportableEntity, 'decrement', $usedImpactValue);
                 $report->delete();
             });
 

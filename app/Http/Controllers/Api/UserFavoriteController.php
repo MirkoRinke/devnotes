@@ -204,12 +204,9 @@ class UserFavoriteController extends Controller {
             if (!$exists) {
                 $favorite = DB::transaction(function () use ($user, $post) {
 
-                    // Create the favorite relationship
                     $favorite = new UserFavorite();
-
                     $favorite->user_id = $user->id;
                     $favorite->post_id = $post->id;
-
                     $favorite->save();
 
                     $this->updateFavoriteCount($post, 'increment');
@@ -478,9 +475,7 @@ class UserFavoriteController extends Controller {
     public function getFavoritePosts(Request $request): JsonResponse {
         try {
             $user = $request->user();
-            // $userId = $user->id;
 
-            // Get posts that have been favorited by this user
             $query = Post::query()->whereHas('favorites', function ($subQuery) use ($user) {
                 $subQuery->where('user_id', $user->id);
             });

@@ -388,7 +388,7 @@ class UserController extends Controller {
             }
 
             /**
-             * Need this because the select method returns only the query object
+             * Need this because the buildQuerySelect method returns only the query object
              */
             $user = $query->firstOrFail();
 
@@ -517,7 +517,9 @@ class UserController extends Controller {
                 if (isset($validatedData['password']) && $user === $request->user()) {
                     $user->password = bcrypt($validatedData['password']);
 
-                    // If the password is changed, delete all other tokens except the current one
+                    /**
+                     * If the password is changed, delete all other tokens except the current one
+                     */
                     $tokens = $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->get();
                     $tokens->each->delete();
                 }
@@ -628,16 +630,13 @@ class UserController extends Controller {
             }
 
             DB::transaction(function () use ($user) {
-                // Transfer all posts and comments to the system user (ID 3)
                 $this->userRelationService->transferPosts($user);
                 $this->userRelationService->transferComments($user);
                 $this->userRelationService->transferPostAllowedValues($user);
 
-                // Delete all reports and likes associated with the user
                 $this->userRelationService->deleteReports($user);
                 $this->userRelationService->deleteLikes($user);
 
-                // Delete all tokens associated with the user
                 $user->tokens()->delete();
 
                 /**
@@ -796,7 +795,9 @@ class UserController extends Controller {
                 $user->is_banned = $bannedTime;
                 $user->was_ever_banned = true;
 
-                // Delete all tokens to force logout on all devices
+                /**
+                 * Delete all tokens to force logout on all devices
+                 */
                 $user->tokens()->delete();
 
                 $user->save();

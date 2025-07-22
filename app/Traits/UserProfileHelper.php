@@ -82,10 +82,6 @@ trait UserProfileHelper {
          * we will load the favorite_languages relation by default.
          */
         if (!$request->has('select') || $this->isSelected($request, 'favorite_languages')) {
-
-            /**
-             * If favorite_languages have been set in the request, we remove it from the select fields
-             */
             $this->removeFromSelect($request, ['favorite_languages']);
 
             /**
@@ -94,14 +90,13 @@ trait UserProfileHelper {
              * Explicit table.column AS alias format is used for many-to-many relationships
              * This is to avoid ambiguity in the result set, especially when joining multiple tables.
              */
-            $tableName = $query->getModel()->favoriteLanguages()->getRelated()->getTable(); // Get the table name of the favorite_languages relation
+            $tableName = $query->getModel()->favoriteLanguages()->getRelated()->getTable();
 
             $defaultColumns = [
                 "$tableName.id as id",
                 "$tableName.name as name"
             ];
 
-            // If the request has 'favorite_languages_fields', we will use it to select the fields
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'favorite_languages');
 
             $query = $this->loadRelations($request, $query, [

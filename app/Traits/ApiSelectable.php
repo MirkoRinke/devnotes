@@ -60,19 +60,14 @@ trait ApiSelectable {
                 return $isSumSelect;
             }
 
-            // Check if the select parameter is an array
             $validAttributes = array_intersect($select, $allowedAttributes);
-
-            // Check if there are any invalid attributes
             $invalidAttributes = array_diff($select, $allowedAttributes);
 
-            // If there are invalid attributes, return an error response
             if (empty($validAttributes) || !empty($invalidAttributes)) {
                 $invalidAttributesString = implode(', ', $invalidAttributes);
                 return $this->errorResponse("Invalid select column: $invalidAttributesString", ['select' => 'INVALID_SELECT_COLUMN'], 400);
             }
 
-            // If the id column is allowed and not in the valid attributes, add it to the beginning of the valid attributes array
             if (in_array('id', $allowedAttributes) && !in_array('id', $validAttributes)) {
                 array_unshift($validAttributes, 'id');
             }
@@ -188,7 +183,6 @@ trait ApiSelectable {
      */
     protected function removeFromSelect(Request $request, array $fields): void {
         if ($request->has('select')) {
-            // Is the select input a string convert it to an array
             if (is_string($request->input('select'))) {
                 $select = explode(',', $request->input('select'));
             } else {
@@ -260,13 +254,13 @@ trait ApiSelectable {
             $fields = $request->input("{$relation}_fields");
 
             if (!is_array($fields)) {
-                $fields = explode(',', $fields); // Convert comma-separated string to array
+                $fields = explode(',', $fields);
             }
 
             foreach ($fields as $key => $value) {
                 $valueCheck = "$tableName.$value as $value";
                 if (in_array($valueCheck, $defaultColumns)) {
-                    $selectedFields[$key] = "$tableName.$value as $value"; // Add the field to the selected fields
+                    $selectedFields[$key] = "$tableName.$value as $value";
                 }
             }
             return $selectedFields;

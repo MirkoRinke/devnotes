@@ -21,23 +21,18 @@ trait ReportHelper {
      * @example | $this->checkCriticalTerms($reason);
      */
     private function checkCriticalTerms($reason) {
-        // Default severity if no critical terms are found
         $defaultSeverity = 1;
 
         if (empty($reason)) {
             return $defaultSeverity;
         }
 
-        // Generate a cache key for the critical terms
         $cacheKey = $this->generateSimpleCacheKey('critical_terms');
 
-        // Get all critical terms from the database
-        // Cache the critical terms for 1 hour
         $criticalTerms = $this->cacheData($cacheKey, 3600, function () {
             return CriticalTerm::all();
         });
 
-        // Check if any critical term is found in the reason
         foreach ($criticalTerms as $name) {
             if (stripos($reason, $name->name) !== false) {
                 return $name->severity;

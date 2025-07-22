@@ -60,14 +60,11 @@ class UserRelationService {
      * @example | $this->userRelationService->updateProfileDisplayName($userProfile);
      */
     public function updateProfileDisplayName(UserProfile $profile) {
-        // Check if the display name has changed
         if ($profile->wasChanged('display_name')) {
-            // Update the user's display name
             $profile->user()->update([
                 'display_name' => $profile->display_name
             ]);
 
-            // Check name for partially forbidden words
             app(UserModerationService::class)->checkAndReportUsername($profile->user);
         }
     }

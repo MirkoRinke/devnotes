@@ -36,20 +36,16 @@ class FavoriteSeeder extends Seeder {
 
                 if ($favoritesCount > 0) {
 
-                    // Shuffle eligible post IDs to randomize selection
                     shuffle($eligiblePosts);
 
-                    // Select a random subset of posts to favorite
                     $selectedPosts = array_slice($eligiblePosts, 0, $favoritesCount);
 
-                    // Create favorites for each selected post
                     foreach ($selectedPosts as $postId) {
                         $favorite = UserFavorite::firstOrCreate([
                             'user_id' => $userId,
                             'post_id' => $postId,
                         ]);
 
-                        // Only increment the favorite count if a new favorite was created
                         if ($favorite->wasRecentlyCreated) {
                             Post::where('id', $postId)->increment('favorite_count');
                         }

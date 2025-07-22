@@ -31,37 +31,29 @@ trait ApiPagination {
      * @example | $this->paginate($request, $query, (int) $config);
      */
     protected function paginate(Request $request, Builder $query, int $perPage = 10): JsonResponse|Collection|LengthAwarePaginator {
-
-        // If the request has a 'setLimit' parameter, return the query results without pagination
         if ($request->get('setLimit')) {
             return $query->get();
         }
 
-        // If query logging is enabled, return the query results without pagination
         if (env('QUERY_LOGGING_ENABLED', false)) {
             return $query->get();
         }
 
-        // Get the page parameter from the request or default to 1
         $page = $request->get('page', 1);
 
-        // Get the per_page parameter from the request
         $perPage = $request->get('per_page', $perPage);
 
-        $perPage = $perPage < 1 ? 10 : $perPage; // If perPage is less than 1, set it to 10
-        $perPage = $perPage > 100 ? 100 : $perPage; // If perPage is greater than 100, set it to 100
+        $perPage = $perPage < 1 ? 10 : $perPage;
+        $perPage = $perPage > 100 ? 100 : $perPage;
 
-        // Validate the page parameter
         if (!is_numeric($page) || $page < 1) {
             return $this->errorResponse('The page parameter must be a number greater than 0', ['page' => 'INVALID_PAGE_NUMBER'], 400);
         }
 
-        // Validate the per_page parameter
         if (!is_numeric($perPage) || $perPage < 1) {
             return $this->errorResponse('The per_page parameter must be a number greater than 0', ['per_page' => 'INVALID_PER_PAGE_NUMBER'], 400);
         }
 
-        // Always paginate the query results
         return $query->paginate((int) $perPage);
     }
 }

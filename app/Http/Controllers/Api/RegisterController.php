@@ -135,7 +135,6 @@ class RegisterController extends Controller {
 
             $user = DB::transaction(function () use ($validatedData) {
 
-
                 $user = new User();
                 $user->name = $validatedData['name'];
                 $user->display_name = $validatedData['display_name'];
@@ -149,7 +148,6 @@ class RegisterController extends Controller {
 
                 /**
                  * Send email verification notification
-                 * The user must implement the MustVerifyEmail interface
                  */
                 if (config('app.features.email_verification', true)) {
                     $user->sendEmailVerificationNotification();
@@ -209,12 +207,10 @@ class RegisterController extends Controller {
      */
     public function resendVerificationEmail(Request $request): JsonResponse {
         try {
-            // Check if email is already verified
             if ($request->user()->hasVerifiedEmail()) {
                 return $this->successResponse(null, 'Email already verified', 200);
             }
 
-            // Resend the verification email
             $request->user()->sendEmailVerificationNotification();
 
             return $this->successResponse(null, 'Verification link sent', 200);
@@ -283,7 +279,6 @@ class RegisterController extends Controller {
      */
     public function verifyEmail(Request $request): JsonResponse {
         try {
-            // Validate the request parameters
             $validated = $request->validate(
                 [
                     'id' => 'required|integer',
@@ -292,20 +287,16 @@ class RegisterController extends Controller {
                 $this->getValidationMessages('verifyEmail')
             );
 
-            // Find the user by ID
             $user = User::findOrFail($validated['id']);
 
-            // Verify that the hash matches
             if (!hash_equals((string) $validated['hash'], sha1($user->getEmailForVerification()))) {
                 return $this->errorResponse('Invalid verification link', 'INVALID_VERIFICATION_LINK', 400);
             }
 
-            // Check if already verified
             if ($user->hasVerifiedEmail()) {
                 return $this->successResponse(null, 'Email already verified', 200);
             }
 
-            // Mark as verified and trigger Verified event
             if ($user->markEmailAsVerified()) {
                 event(new Verified($user));
             }

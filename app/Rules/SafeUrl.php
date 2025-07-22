@@ -36,19 +36,15 @@ class SafeUrl implements ValidationRule {
      * @example | $this->isValidUrl($value, $fail);
      */
     public function isValidUrl(mixed $value, Closure $fail): bool {
-        // Check if the value is a valid URL
         if (!$this->hasValidProtocol($value, $fail)) return false;
 
-        // Use PHP's URL parser to extract components
         $parsed = parse_url($value);
 
-        // If parse_url fails, it returns false
         if ($parsed === false) {
             $fail("UNSAFE_URL_PROTOCOL");
             return false;
         }
 
-        // Check if the URL is valid
         if (!$this->hasValidHost($parsed, $fail)) return false;
         if (!$this->hasValidContent($parsed, $fail)) return false;
 
@@ -108,13 +104,17 @@ class SafeUrl implements ValidationRule {
     private function hasValidContent(array $parsed, Closure $fail): bool {
         $dangerousCharacters = ['<', '>', '"', "'", '\\', '`'];
 
-        // Extract path and query components
+        /**
+         * Extract path and query components
+         */
         $pathToCheck = isset($parsed['path']) ? $parsed['path'] : '';
         if (isset($parsed['query'])) {
             $pathToCheck .= '?' . $parsed['query'];
         }
 
-        // Check for dangerous characters
+        /**
+         * Check for dangerous characters
+         */
         foreach ($dangerousCharacters as $char) {
             if (strpos($pathToCheck, $char) !== false) {
                 $fail("UNSAFE_URL_CONTENT");

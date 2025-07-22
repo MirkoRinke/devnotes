@@ -221,10 +221,6 @@ class UserProfileController extends Controller {
                 return $this->successResponse([], 'No User Profiles exist in the database', 200);
             }
 
-            /**
-             * Check if the user is an admin or moderator get all user profiles
-             * Otherwise, get only public profiles
-             */
             $query = $this->applyProfileAccessFilters($request);
 
             $originalSelectFields = $this->getSelectFields($request);
@@ -393,7 +389,9 @@ class UserProfileController extends Controller {
                 return $query;
             }
 
-            // Need this because the buildQuerySelect method returns only the query object
+            /**
+             * Need this because the buildQuerySelect method returns only the query object
+             */
             $query = $query->firstOrFail();
 
             $this->authorize('view', $query);
@@ -591,11 +589,8 @@ class UserProfileController extends Controller {
             $userProfile = DB::transaction(function () use ($userProfile, $validatedData) {
 
                 $userProfile->update($validatedData);
-
-                // Update Profile display name and check for forbidden words
                 $this->userRelationService->updateProfileDisplayName($userProfile);
 
-                // Load the favoriteLanguages relation after the update
                 $userProfile->load(['favoriteLanguages:id,name']);
 
                 return $userProfile;

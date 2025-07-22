@@ -135,7 +135,9 @@ class AuthController extends Controller {
                 return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
             }
 
-            // Delete all tokens with the same device name OR tokens that are expired
+            /**
+             * Delete all tokens with the same device name OR tokens that are expired
+             */
             $user->tokens()->where('name', $request->name)->orWhere('expires_at', '<', now())->delete();
 
             $token = $user->createToken($request->name);
@@ -262,8 +264,7 @@ class AuthController extends Controller {
      */
     public function getUserTokens(Request $request): JsonResponse {
         try {
-            $tokensRelation = $request->user()->tokens()
-                ->select(['id', 'name', 'last_used_at', 'created_at', 'updated_at']);
+            $tokensRelation = $request->user()->tokens()->select(['id', 'name', 'last_used_at', 'created_at', 'updated_at']);
 
             $query = $tokensRelation->getQuery();
 
@@ -549,7 +550,6 @@ class AuthController extends Controller {
                         'password' => Hash::make($password)
                     ]);
 
-                    // Delete all tokens after password reset
                     $user->tokens()->delete();
 
                     $user->save();

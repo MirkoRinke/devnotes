@@ -76,9 +76,6 @@ trait PostQuerySetup {
          */
         if (!$request->has('select') || $this->isSelected($request, 'tags')) {
 
-            /**
-             * If tags have been set in the request, we remove it from the select fields
-             */
             $this->removeFromSelect($request, ['tags']);
 
             /**
@@ -87,14 +84,13 @@ trait PostQuerySetup {
              * Explicit table.column AS alias format is used for many-to-many relationships
              * This is to avoid ambiguity in the result set, especially when joining multiple tables.
              */
-            $tableName = $query->getModel()->tags()->getRelated()->getTable(); // Get the table name of the tags relation
+            $tableName = $query->getModel()->tags()->getRelated()->getTable();
 
             $defaultColumns = [
                 "$tableName.id as id",
                 "$tableName.name as name"
             ];
 
-            // If the request has 'tags_fields', we will use it to select the fields
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'tags');
 
             $query = $this->loadRelations($request, $query, [
@@ -125,9 +121,6 @@ trait PostQuerySetup {
          */
         if (!$request->has('select') || $this->isSelected($request, 'languages')) {
 
-            /**
-             * If languages have been set in the request, we remove it from the select fields
-             */
             $this->removeFromSelect($request, ['languages']);
 
             /**
@@ -136,14 +129,13 @@ trait PostQuerySetup {
              * Explicit table.column AS alias format is used for many-to-many relationships
              * This is to avoid ambiguity in the result set, especially when joining multiple tables.
              */
-            $tableName = $query->getModel()->languages()->getRelated()->getTable(); // Get the table name of the languages relation
+            $tableName = $query->getModel()->languages()->getRelated()->getTable();
 
             $defaultColumns = [
                 "$tableName.id as id",
                 "$tableName.name as name"
             ];
 
-            // If the request has 'languages_fields', we will use it to select the fields
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'languages');
 
             $query = $this->loadRelations($request, $query, [
@@ -172,9 +164,6 @@ trait PostQuerySetup {
          * we will load the technologies relation by default.
          */
         if (!$request->has('select') || $this->isSelected($request, 'technologies')) {
-            /**
-             * If technologies have been set in the request, we remove it from the select fields
-             */
             $this->removeFromSelect($request, ['technologies']);
 
             /**
@@ -183,14 +172,13 @@ trait PostQuerySetup {
              * Explicit table.column AS alias format is used for many-to-many relationships
              * This is to avoid ambiguity in the result set, especially when joining multiple tables.
              */
-            $tableName = $query->getModel()->technologies()->getRelated()->getTable(); // Get the table name of the technologies relation
+            $tableName = $query->getModel()->technologies()->getRelated()->getTable();
 
             $defaultColumns = [
                 "$tableName.id as id",
                 "$tableName.name as name"
             ];
 
-            // If the request has 'technologies_fields', we will use it to select the fields
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'technologies');
 
             $query = $this->loadRelations($request, $query, [

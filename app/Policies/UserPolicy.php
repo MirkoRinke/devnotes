@@ -76,7 +76,9 @@ class UserPolicy {
      * @example | $this->authorize('delete', $model);
      */
     public function delete(User $user, User $model): bool {
-        // Protect against deleting admin, system, or moderator accounts
+        /**
+         * Protect against deleting admin, system, or moderator accounts
+         */
         if ($model->role === 'admin' || $model->role === 'system' || $model->role === 'moderator') {
             return false;
         }
@@ -85,7 +87,9 @@ class UserPolicy {
             return true;
         }
 
-        // Guests cannot delete their own accounts
+        /**
+         * Guests cannot delete their own accounts
+         */
         if ($user->account_purpose === 'guest') {
             return false;
         }

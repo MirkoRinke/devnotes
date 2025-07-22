@@ -331,18 +331,14 @@ class ForbiddenNameController extends Controller {
                 $this->getValidationMessages('ForbiddenName')
             );
 
-            // Check if the forbidden name already exists
             $existingForbiddenName = ForbiddenName::where('name', $validatedData['name'])->first();
             if ($existingForbiddenName) {
                 return $this->errorResponse('Forbidden name already exists', 'FORBIDDEN_NAME_EXISTS', 409);
             }
 
-            // Create a new ForbiddenName
             $forbiddenName = new ForbiddenName($validatedData);
-
             $forbiddenName->created_by_role = $user->role;
             $forbiddenName->created_by_user_id = $user->id;
-
             $forbiddenName->save();
 
             $this->forgetForbiddenNameCache();
@@ -581,7 +577,6 @@ class ForbiddenNameController extends Controller {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
 
-            // Find the forbidden name by ID
             $forbiddenName = ForbiddenName::findOrFail($id);
 
             if (isset($validatedData['name']) && $validatedData['name'] !== $forbiddenName->name) {
@@ -592,12 +587,9 @@ class ForbiddenNameController extends Controller {
                 }
             }
 
-            // Update the forbidden name
             $forbiddenName->fill($validatedData);
-
             $forbiddenName->created_by_role = $user->role;
             $forbiddenName->created_by_user_id = $user->id;
-
             $forbiddenName->save();
 
             $this->forgetForbiddenNameCache();
@@ -661,14 +653,11 @@ class ForbiddenNameController extends Controller {
         try {
             $this->authorize('delete', ForbiddenName::class);
 
-            // Find the forbidden name by ID
             $forbiddenName = ForbiddenName::findOrFail($id);
 
-            // Get the name of the forbidden name
             $name = $forbiddenName->name;
             $matchType = $forbiddenName->match_type;
 
-            // Delete the forbidden name
             $forbiddenName->delete();
 
             $this->forgetForbiddenNameCache();

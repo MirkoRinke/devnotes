@@ -328,7 +328,6 @@ class CriticalTermController extends Controller {
      */
     public function store(Request $request) {
         try {
-            // Check if the user is authorized to create Critical Terms
             $this->authorize('create', CriticalTerm::class);
 
             $user = $request->user();
@@ -338,19 +337,15 @@ class CriticalTermController extends Controller {
                 $this->getValidationMessages('CriticalTerm')
             );
 
-            // Check if the Critical Term already exists
             $existingCriticalTerm = CriticalTerm::where('name', $validatedData['name'])->first();
 
             if ($existingCriticalTerm) {
                 return $this->errorResponse('Critical Term already exists', 'CRITICAL_TERM_EXISTS', 409);
             }
 
-            // Create the Critical Term
             $criticalTerm = new CriticalTerm($validatedData);
-
             $criticalTerm->created_by_role = $user->role;
             $criticalTerm->created_by_user_id = $user->id;
-
             $criticalTerm->save();
 
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
@@ -474,7 +469,9 @@ class CriticalTermController extends Controller {
                 return $query;
             }
 
-            // Need this because the select method returns only the query object
+            /**
+             * Need this because the buildQuerySelect method returns only the query object
+             */
             $query = $query->firstOrFail();
 
             $query = $this->moderationFieldsVisibilityRelation($request, $query);
@@ -581,7 +578,6 @@ class CriticalTermController extends Controller {
      */
     public function update(Request $request, string $id) {
         try {
-            // Check if the user is authorized to update Critical Terms
             $this->authorize('update', CriticalTerm::class);
 
             $user = $request->user();
@@ -591,12 +587,10 @@ class CriticalTermController extends Controller {
                 $this->getValidationMessages('CriticalTerm')
             );
 
-            // Check if at least one field is provided
             if (empty($validatedData)) {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
 
-            // Find the Critical Term by ID
             $criticalTerm = CriticalTerm::findOrFail($id);
 
             if (isset($validatedData['name']) && $validatedData['name'] !== $criticalTerm->name) {
@@ -607,12 +601,9 @@ class CriticalTermController extends Controller {
                 }
             }
 
-            // Update the Critical Term
             $criticalTerm->fill($validatedData);
-
             $criticalTerm->created_by_role = $user->role;
             $criticalTerm->created_by_user_id = $user->id;
-
             $criticalTerm->save();
 
             $this->forgetCacheByModelType('App\Models\CriticalTerm');
@@ -679,12 +670,10 @@ class CriticalTermController extends Controller {
 
             $criticalTerm = CriticalTerm::findOrFail($id);
 
-            // Get the name, language, and severity of the Critical Term
             $name = $criticalTerm->name;
             $language = $criticalTerm->language;
             $severity = $criticalTerm->severity;
 
-            // Delete the Critical Term
             $criticalTerm->delete();
 
             $this->forgetCacheByModelType('App\Models\CriticalTerm');

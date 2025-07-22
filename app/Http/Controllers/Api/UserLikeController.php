@@ -467,10 +467,6 @@ class UserLikeController extends Controller {
                 'comment' => Comment::class,
             ];
 
-            /**
-             * Map the likeable_type to the corresponding model class
-             * This is required for polymorphic relationships in the database
-             */
             $likeableType = $typeMap[$validatedData['likeable_type']];
 
             $likeableId = $validatedData['likeable_id'];
@@ -483,17 +479,13 @@ class UserLikeController extends Controller {
                 return $likeableResult;
             }
 
-            // Add the like and update the likes count for the likeable entity in a transaction
             $like = DB::transaction(function () use ($user, $likeableId, $likeableType, $simpleType, $likeable) {
 
-                // Create a new UserLike
                 $like = new UserLike();
-
                 $like->user_id = $user->id;
                 $like->likeable_id = $likeableId;
                 $like->likeable_type = $likeableType;
                 $like->type = $simpleType;
-
                 $like->save();
 
                 $this->updateLikesCount($likeable, 'increment');
@@ -586,17 +578,12 @@ class UserLikeController extends Controller {
             $likeableType = $typeMap[$validatedData['likeable_type']];
             $likeableId = $validatedData['likeable_id'];
 
-            $like = UserLike::where([
-                'user_id' => $user->id,
-                'likeable_id' => $likeableId,
-                'likeable_type' => $likeableType
-            ])->firstOrFail();
+            $like = UserLike::where(['user_id' => $user->id, 'likeable_id' => $likeableId, 'likeable_type' => $likeableType])->firstOrFail();
 
             $this->authorize('delete', $like);
 
             $likeable = $like->likeable;
 
-            // Remove the like and update the likes count for the likeable entity in a transaction
             DB::transaction(function () use ($like, $likeable) {
                 $this->updateLikesCount($likeable, 'decrement');
                 $like->delete();
@@ -796,9 +783,7 @@ class UserLikeController extends Controller {
         try {
             $user = User::findOrFail($userId);
 
-            $likedPostIds = $user->likes()
-                ->where('likeable_type', Post::class)
-                ->pluck('likeable_id');
+            $likedPostIds = $user->likes()->where('likeable_type', Post::class)->pluck('likeable_id');
 
             $query = Post::whereIn('id', $likedPostIds);
 
@@ -956,9 +941,7 @@ class UserLikeController extends Controller {
         try {
             $user = User::findOrFail($userId);
 
-            $likedCommentIds = $user->likes()
-                ->where('likeable_type', Comment::class)
-                ->pluck('likeable_id');
+            $likedCommentIds = $user->likes()->where('likeable_type', Comment::class)->pluck('likeable_id');
 
             $query = Comment::whereIn('id', $likedCommentIds);
 

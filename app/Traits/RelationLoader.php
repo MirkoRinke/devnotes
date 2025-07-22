@@ -148,11 +148,7 @@ trait RelationLoader {
                     $modelName = 'UserProfile';
                 }
 
-                // Load the related entities based on the model class
-                $relatedEntities = app($modelClass)->whereIn('id', $ids)
-                    ->select($fieldsToSelect)
-                    ->get()
-                    ->keyBy('id');
+                $relatedEntities = app($modelClass)->whereIn('id', $ids)->select($fieldsToSelect)->get()->keyBy('id');
 
                 $foreignKey = $relationship . '_id';
 
@@ -160,7 +156,9 @@ trait RelationLoader {
                     if (isset($relatedEntities[$item->$foreignKey])) {
                         $item->setRelation($relationship, $relatedEntities[$item->$foreignKey]);
 
-                        // Manage the visibility of fields for the entity
+                        /**
+                         * Manage the visibility of fields for the entity
+                         */
                         $item->$relationship = $this->{"manage{$modelName}sFieldVisibility"}($request, $item->$relationship, $originalSelectFields);
 
                         $hiddenFields = array_diff($fieldsToSelect, $originalSelectFields);

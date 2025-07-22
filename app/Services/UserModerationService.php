@@ -47,19 +47,19 @@ class UserModerationService {
      * @example | app(UserModerationService::class)->checkAndReportUsername($user);
      */
     public function checkAndReportUsername(User $user): ?UserReport {
-        // Check if the user is an admin, system, or moderator
-        // If so, skip the moderation check
+        /**
+         * Check if the user is an admin, system, or moderator
+         * If so, skip the moderation check
+         */
         if ($user->role === 'admin' || $user->role === 'system' || $user->role === 'moderator') {
             return null;
         }
 
-        // Check display_name
         $displayMatchedWord = $this->findForbiddenPartialMatch($user->display_name);
         if ($displayMatchedWord) {
             return $this->createAutoReport($user, $displayMatchedWord, "display_name '{$user->display_name}'");
         }
 
-        // Check name
         $nameMatchedWord = $this->findForbiddenPartialMatch($user->name);
         if ($nameMatchedWord) {
             return $this->createAutoReport($user, $nameMatchedWord, "name '{$user->name}'");
@@ -84,7 +84,6 @@ class UserModerationService {
             return ForbiddenName::where('match_type', 'partial')->get();
         });
 
-        // Check for partial matches
         foreach ($partialMatches as $forbidden) {
             if (stripos($name, $forbidden->name) !== false) {
                 return $forbidden->name;
@@ -105,20 +104,20 @@ class UserModerationService {
      * @example | $this->createAutoReport($user, $nameMatchedWord, "name '{$user->name}'");
      */
     private function createAutoReport(User $user, string $matchedWord, string $fieldInfo): UserReport {
-        // Check if a report already exists for this user ( user_id = 2  is the system user )
+        /**
+         * Check if a report already exists for this user ( user_id = 2  is the system user )
+         */
         $existingReport = UserReport::where(['user_id' => 2, 'reportable_id' => $user->id, 'reportable_type' => UserProfile::class])->first();
 
         $reportableSnapshot = $this->snapshotService->createSnapshot($user->profile, UserProfile::class);
 
         if ($existingReport) {
-            // Update the existing report instead of creating a new one
             $existingReport->update([
                 'reason' => "Automatic moderation: User {$fieldInfo} contains potentially inappropriate word '{$matchedWord}'. (Updated)",
                 'reportable_snapshot' => $reportableSnapshot,
             ]);
             $report = $existingReport;
         } else {
-            // Create a new report if none exists
             $report = UserReport::create([
                 'user_id' => 2, // System user ID
                 'reportable_id' => $user->id,
@@ -128,7 +127,6 @@ class UserModerationService {
                 'reportable_snapshot' => $reportableSnapshot
             ]);
 
-            // Only increment reports_count for new reports
             $profile = UserProfile::where('user_id', $user->id)->first();
             if ($profile) {
                 $profile->increment('reports_count');

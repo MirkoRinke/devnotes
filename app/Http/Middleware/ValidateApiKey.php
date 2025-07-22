@@ -51,27 +51,21 @@ class ValidateApiKey {
      */
     public function handle(Request $request, Closure $next): Response {
 
-        // Get the API key from the request header or query parameter
         $apiKey = $request->header('X-API-Key') ?: $request->query('api_key');
 
         if (!$apiKey) {
             return $this->errorResponse('This request requires a valid API key in the X-API-Key header or api_key query parameter', 'API_KEY_MISSING', 401);
         }
 
-        // Check if the API key is valid and active
-        $validKey = ApiKey::where('key', $apiKey)
-            ->where('active', true)
-            ->first();
+        $validKey = ApiKey::where('key', $apiKey)->where('active', true)->first();
 
         if (!$validKey) {
             return $this->errorResponse('The provided API key is invalid or has been deactivated', 'INVALID_API_KEY', 401);
         }
 
-        // Update the last_used_at timestamp of the API key
         $validKey->last_used_at = now();
         $validKey->save();
 
-        // Continue with the request
         return $next($request);
     }
 }
