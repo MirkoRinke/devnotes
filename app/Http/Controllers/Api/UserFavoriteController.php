@@ -397,7 +397,7 @@ class UserFavoriteController extends Controller {
      *       "comments_count": 0,
      *       "is_updated": false,
      *       "updated_by_role": null,
-     *       "last_comment_at": null,
+     *       "comments_updated_at": null,
      *       "history": [],
      *       "moderation_info": [],                         || Admin and Moderator only
      *       "created_at": "2025-06-23T22:52:38.000000Z",
