@@ -134,7 +134,7 @@ trait QueryBuilder {
                     ...['favorite_count', 'likes_count', 'comments_count'],
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                     // Update info
-                    ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                    ...['updated_at', 'is_updated', 'updated_by_role', 'comments_updated_at'],
                 ],
                 'filter' => [
                     // Default 
@@ -145,7 +145,7 @@ trait QueryBuilder {
                     ...['favorite_count', 'likes_count', 'comments_count'],
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                     // Update info
-                    ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                    ...['updated_at', 'is_updated', 'updated_by_role', 'comments_updated_at'],
                     // History
                     ...['history'],
                     // Moderation info
@@ -160,7 +160,7 @@ trait QueryBuilder {
                     ...['favorite_count', 'likes_count', 'comments_count'],
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                     // Update info
-                    ...['updated_at', 'is_updated', 'updated_by_role', 'last_comment_at'],
+                    ...['updated_at', 'is_updated', 'updated_by_role', 'comments_updated_at'],
                     // History
                     ...['history'],
                     // Moderation info
