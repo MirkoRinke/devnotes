@@ -275,7 +275,7 @@ class UserReportController extends Controller {
      *         "comments_count": 1,
      *         "is_updated": false,
      *         "updated_by_role": null,
-     *         "last_comment_at": "2025-07-09T17:27:09.000000Z",
+     *         "comments_updated_at": "2025-07-09T17:27:09.000000Z",
      *         "history": [],
      *         "moderation_info": [],
      *         "created_at": "2025-07-09T17:26:53.000000Z",
