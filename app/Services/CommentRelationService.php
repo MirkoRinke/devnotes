@@ -17,7 +17,7 @@ use App\Models\UserReport;
  */
 class CommentRelationService {
     /**
-     * Update the last_comment_at timestamp of the parent post
+     * Update the comments_updated_at timestamp of the parent post
      *
      * @param Comment $comment
      * @return void
@@ -26,7 +26,7 @@ class CommentRelationService {
      */
     public function updateLastCommentAt(Comment $comment): void {
         Post::where('id', $comment->post_id)
-            ->update(['last_comment_at' => now()]);
+            ->update(['comments_updated_at' => now()]);
     }
 
     /**
