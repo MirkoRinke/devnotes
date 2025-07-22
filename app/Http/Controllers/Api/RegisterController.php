@@ -173,9 +173,73 @@ class RegisterController extends Controller {
     }
 
     /**
+     * Send verification email to a specific user.
+     * 
+     * This endpoint is intended for admin use to (re)send the verification email
+     *
+     * Endpoint: POST /admin/send-verification-email
+     *
+     * @bodyParam id integer required The user ID. Example: 1
+     *
+     * @response status=200 scenario="Email sent" {
+     *   "status": "success",
+     *   "message": "Verification link sent",
+     *   "code": 200,
+     *   "count": 0,
+     *   "data": null
+     * }
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User not found",
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
+     * }
+     * @response status=200 scenario="Already verified" {
+     *   "status": "success",
+     *   "message": "Email already verified",
+     *   "code": 200,
+     *   "count": 0,
+     *   "data": null
+     * }
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error",
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     */
+    public function adminSendVerificationEmail(Request $request): JsonResponse {
+        try {
+            $validated = $request->validate([
+                'id' => 'required|integer|exists:users,id',
+            ]);
+
+            if ($request->user()->role !== 'admin') {
+                return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+            }
+
+            $user = User::findOrFail($validated['id']);
+
+            if ($user->hasVerifiedEmail()) {
+                return $this->successResponse(null, 'Email already verified', 200);
+            }
+
+            $user->sendEmailVerificationNotification();
+
+            return $this->successResponse(null, 'Verification link sent', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+    /**
      * Resend the email verification notification
      *
-     * Endpoint: POST /email/verification-notification
+     * Endpoint: POST /email/resend-verification-email
      * 
      * Resend the verification email to the authenticated user if their 
      * email hasn't been verified yet.
