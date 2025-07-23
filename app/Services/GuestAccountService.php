@@ -67,8 +67,7 @@ class GuestAccountService {
     /**
      * Special handling for guest account deletion and recreation
      * 
-     * This method deletes all posts and comments associated with the guest account,
-     * deletes all reports and likes associated with the user, and then recreates the guest account.
+     * This method deletes all posts and comments associated with the guest account.
      * 
      * @param User $user The guest user to be reset
      * @return bool True if the operation was successful, false otherwise
@@ -79,11 +78,22 @@ class GuestAccountService {
     public function resetGuestAccount(User $user): bool {
         try {
             DB::transaction(function () use ($user) {
+                $this->userRelationService->transferPostAllowedValues($user);
+
                 $this->deletePosts($user);
                 $this->deleteComments($user);
 
-                $this->userRelationService->deleteReports($user);
-                $this->userRelationService->deleteLikes($user);
+                $this->userRelationService->deleteReceivedReports($user);
+
+                $this->userRelationService->deleteGivenLikes($user);
+
+                /**
+                 * Note: Favorites are automatically deleted through 
+                 * database foreign key constraints (onDelete('cascade')) 
+                 * and don't require explicit deletion here.
+                 */
+
+                $user->tokens()->delete();
 
                 $user->delete();
             });
