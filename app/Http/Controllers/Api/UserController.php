@@ -551,7 +551,7 @@ class UserController extends Controller {
      * 
      * Endpoint: DELETE /users/{id}
      *
-     * Permanently deletes a user account. For regular users, all posts and comments will be transferred to the system user ("Deleted User"), and all reports, likes, and favorites will be deleted.
+     * Permanently deletes a user account. For regular users, all posts and comments will be transferred to the system user ("Deleted User").
      * Guest accounts receive special handling and will be reset (recreated).
      *
      * Only administrators can delete other users' accounts. Regular users can only delete their own account.  
@@ -634,16 +634,20 @@ class UserController extends Controller {
                 $this->userRelationService->transferComments($user);
                 $this->userRelationService->transferPostAllowedValues($user);
 
-                $this->userRelationService->deleteReports($user);
-                $this->userRelationService->deleteLikes($user);
+                $this->userRelationService->transferForbiddenNames($user);
+                $this->userRelationService->transferCriticalTerms($user);
 
-                $user->tokens()->delete();
+                $this->userRelationService->deleteReceivedReports($user);
+
+                $this->userRelationService->deleteGivenLikes($user);
 
                 /**
                  * Note: Favorites are automatically deleted through 
                  * database foreign key constraints (onDelete('cascade')) 
                  * and don't require explicit deletion here.
                  */
+
+                $user->tokens()->delete();
 
                 $user->delete();
             });
