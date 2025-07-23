@@ -86,7 +86,7 @@ class PostController extends Controller {
             'videos.*' => ['max:2048', new SafeUrl()],
             'resources' => 'nullable|array',
             'resources.*' => ['max:2048', new SafeUrl()],
-            'languages' => 'required|array|min:1',
+            'languages' => 'nullable|array',
             'languages.*' => ['required', new ValidPostValue('language')],
             'category' => ['required', 'string', new ValidPostValue('category')],
             'post_type' => ['required', 'string', new ValidPostValue('post_type')],
@@ -117,7 +117,7 @@ class PostController extends Controller {
             'videos.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'resources' => 'sometimes|nullable|array',
             'resources.*' => ['sometimes', 'max:2048', new SafeUrl()],
-            'languages' => 'sometimes|required|array|min:1',
+            'languages' => 'sometimes|array',
             'languages.*' => ['sometimes', 'required', new ValidPostValue('language')],
             'category' => ['sometimes', 'required', 'string', new ValidPostValue('category')],
             'post_type' => ['sometimes', 'required', 'string', new ValidPostValue('post_type')],
@@ -381,7 +381,7 @@ class PostController extends Controller {
      *   "images": ["https://example.com/image.jpg"],                       || optional, array of URLs
      *   "videos": ["https://youtube.com/watch?v=example"],                 || optional, array of URLs
      *   "resources": ["https://mdn.io/promise"],                           || optional, array of URLs
-     *   "languages": ["JavaScript"],                                       || required, array, min:1, valid language values only
+     *   "languages": ["JavaScript"],                                       || optional, array, valid language values only
      *   "category": "Frontend",                                            || required, string, valid category value
      *   "post_type": "tutorial",                                           || required, string, valid post_type value
      *   "technologies": ["Node.js"],                                       || optional, array, valid technology values only
