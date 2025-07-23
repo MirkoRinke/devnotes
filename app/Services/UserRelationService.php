@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Post;
 use App\Models\Comment;
+use App\Models\CriticalTerm;
+use App\Models\ForbiddenName;
 use App\Models\PostAllowedValue;
 use App\Models\UserLike;
 use App\Models\UserProfile;
@@ -14,7 +16,8 @@ use App\Models\UserReport;
 
 /**
  * This UserRelationService handles user-related operations such as creating user profiles,
- * checking usernames for moderation, transferring posts and comments, and deleting reports and likes.
+ * checking usernames for moderation, transferring posts, comments and other user-related data,
+ * and deleting user-related data.
  */
 class UserRelationService {
     /**
@@ -143,14 +146,66 @@ class UserRelationService {
     }
 
     /**
+     * Transfer all critical terms from a user to the system user
+     *
+     * @param User $user
+     * @param int $systemUserId Default: 2
+     * @return int Number of transferred critical terms
+     *
+     * @example | $this->userRelationService->transferCriticalTerms($user);
+     */
+    public function transferCriticalTerms(User $user, int $systemUserId = 2): int {
+        $totalTransferred = 0;
+        CriticalTerm::where('created_by_user_id', $user->id)
+            ->chunkById(100, function ($terms) use ($systemUserId, &$totalTransferred) {
+                $ids = $terms->pluck('id')->toArray();
+                $updated = DB::table('critical_terms')
+                    ->whereIn('id', $ids)
+                    ->update([
+                        'created_by_user_id' => $systemUserId,
+                        'created_by_role' => 'system'
+                    ]);
+                $totalTransferred += $updated;
+            });
+
+        return $totalTransferred;
+    }
+
+    /**
+     * Transfer all forbidden names from a user to the system user
+     *
+     * @param User $user
+     * @param int $systemUserId Default: 2
+     * @return int Number of transferred forbidden names
+     *
+     * @example | $this->userRelationService->transferForbiddenNames($user);
+     */
+    public function transferForbiddenNames(User $user, int $systemUserId = 2): int {
+        $totalTransferred = 0;
+        ForbiddenName::where('created_by_user_id', $user->id)
+            ->chunkById(100, function ($forbiddenNames) use ($systemUserId, &$totalTransferred) {
+                $ids = $forbiddenNames->pluck('id')->toArray();
+                $updated = DB::table('forbidden_names')
+                    ->whereIn('id', $ids)
+                    ->update([
+                        'created_by_user_id' => $systemUserId,
+                        'created_by_role' => 'system'
+                    ]);
+                $totalTransferred += $updated;
+            });
+
+        return $totalTransferred;
+    }
+
+    /**
      * Delete all reports associated with a user
      * 
      * @param User $user
      * @return int Number of deleted reports
      * 
-     * @example | $this->userRelationService->deleteReports($user);
+     * @example | $this->userRelationService->deleteReceivedReports($user);
      */
-    public function deleteReports(User $user): int {
+    public function deleteReceivedReports(User $user): int {
         $totalDeleted = 0;
 
         UserReport::where('reportable_type', User::class)
@@ -167,18 +222,17 @@ class UserRelationService {
     }
 
     /**
-     * Delete all likes associated with a user
+     * Delete all likes given by a user
      * 
      * @param User $user
      * @return int Number of deleted likes
      * 
-     * @example | $this->userRelationService->deleteLikes($user);
+     * @example | $this->userRelationService->deleteGivenLikes($user);
      */
-    public function deleteLikes(User $user): int {
+    public function deleteGivenLikes(User $user): int {
         $totalDeleted = 0;
 
-        UserLike::where('likeable_type', User::class)
-            ->where('likeable_id', $user->id)
+        UserLike::where('user_id', $user->id)
             ->chunkById(100, function ($likes) use (&$totalDeleted) {
                 $ids = $likes->pluck('id')->toArray();
                 $deleted = DB::table('user_likes')
