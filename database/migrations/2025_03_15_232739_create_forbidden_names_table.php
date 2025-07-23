@@ -15,10 +15,10 @@ return new class extends Migration {
 
             // Basic
             $table->string('name')->unique();
-            $table->string('match_type')->default('exact'); // Assuming 'exact' is the default match type
-            $table->string('created_by_role')->default('system'); // Assuming 'system' is the default role for the system user
-            $table->unsignedBigInteger('created_by_user_id')->default(2); // Assuming 2 is the ID of the system user
-            $table->foreign('created_by_user_id')->references('id')->on('users'); // Foreign key reference to users table
+            $table->string('match_type')->default('exact');
+            $table->string('created_by_role')->default('system');
+            $table->unsignedBigInteger('created_by_user_id')->default(2);
+            $table->foreign('created_by_user_id')->references('id')->on('users');
 
             // Update info
             $table->timestamps();
