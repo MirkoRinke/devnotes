@@ -14,12 +14,12 @@ return new class extends Migration {
             $table->id();
 
             // Basic
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // User who created the report
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->morphs('reportable');  // Polymorphic relationship (for Post|User|Comment)
-            $table->unique(['user_id', 'reportable_id', 'reportable_type']); // A user can only report an entity once
+            $table->unique(['user_id', 'reportable_id', 'reportable_type']);
             $table->string('type')->nullable(); // Simple type (post, user, comment)
-            $table->text('reason')->nullable(); // Reason for the report
-            $table->json('reportable_snapshot')->nullable(); // Snapshot of the reportable entity at the time of reporting
+            $table->text('reason')->nullable();
+            $table->json('reportable_snapshot')->nullable();
             $table->integer('impact_value')->default(0);
 
             // Update info
