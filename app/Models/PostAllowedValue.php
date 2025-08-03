@@ -28,6 +28,9 @@ class PostAllowedValue extends Model {
         // 'created_by_role',       || Explicitly set in controller from authenticated user's role
         // 'created_by_user_id',    || Explicitly set in controller from authenticated user's id
 
+        // Counts
+        // 'post_count',            || Explicitly set in PostController when creating/updating/deleting posts
+
         // Update info
         // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
     ];
