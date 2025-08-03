@@ -21,6 +21,9 @@ return new class extends Migration {
             $table->unsignedBigInteger('created_by_user_id')->default(2);
             $table->foreign('created_by_user_id')->references('id')->on('users');
 
+            //Counts
+            $table->integer('post_count')->default(0);
+
             // Update info
             $table->timestamps();
         });
