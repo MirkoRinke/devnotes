@@ -23,6 +23,7 @@ use App\Traits\UserFavoriteHelper;
 use App\Traits\UserLikeHelper;
 use App\Traits\UserFollowerHelper;
 use App\Traits\PostAttributeRelationManager;
+use App\Traits\PostAllowedValueHelper;
 
 use App\Services\ModerationService;
 use App\Services\ExternalSourceService;
@@ -42,7 +43,7 @@ class PostController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use ApiResponses, QueryBuilder, ApiInclude, FieldManager, AuthorizesRequests, PostQuerySetup, PostHelper, UserFavoriteHelper, UserLikeHelper, UserFollowerHelper, PostAttributeRelationManager;
+    use ApiResponses, QueryBuilder, ApiInclude, FieldManager, AuthorizesRequests, PostQuerySetup, PostHelper, UserFavoriteHelper, UserLikeHelper, UserFollowerHelper, PostAttributeRelationManager, PostAllowedValueHelper;
 
 
     /**
@@ -535,13 +536,27 @@ class PostController extends Controller {
             $post->history = [];
             $post->moderation_info = [];
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
-            $post->save();
 
-            $this->syncMultipleRelations($post, $user, [
-                'tag' => $tagNames,
-                'language' => $languageNames,
-                'technology' => $technologyNames,
-            ]);
+            DB::transaction(function () use ($post, $user, $tagNames, $languageNames, $technologyNames, $validatedData) {
+                $post->save();
+
+                $this->syncMultipleRelations($post, $user, [
+                    'tag' => $tagNames,
+                    'language' => $languageNames,
+                    'technology' => $technologyNames,
+                ]);
+
+                $syncValidatedData = array_merge(
+                    $validatedData,
+                    [
+                        'tag' => $tagNames,
+                        'language' => $languageNames,
+                        'technology' => $technologyNames,
+                    ]
+                );
+
+                $this->syncPostAllowedValueCounts($syncValidatedData);
+            });
 
             $post->load(['tags:id,name', 'languages:id,name', 'technologies:id,name']);
 
@@ -1016,6 +1031,8 @@ class PostController extends Controller {
         try {
             $post = Post::findOrFail($id);
 
+            $oldPost = clone $post;
+
             $this->authorize('update', $post);
 
             $user = $request->user();
@@ -1045,25 +1062,38 @@ class PostController extends Controller {
             $languageNames = null;
             $technologyNames = null;
 
+            $oldTagNames = null;
+            $oldLanguageNames = null;
+            $oldTechnologyNames = null;
+
             $relationChanges = [];
 
             if (isset($validatedData['tags'])) {
                 $relationChanges['tags'] = $validatedData['tags'];
                 $tagNames = $validatedData['tags'];
+                $oldTagNames = $post->tags->pluck('name')->toArray();
                 unset($validatedData['tags']);
             }
 
             if (isset($validatedData['languages'])) {
                 $relationChanges['languages'] = $validatedData['languages'];
                 $languageNames = $validatedData['languages'];
+                $oldLanguageNames = $post->languages->pluck('name')->toArray();
                 unset($validatedData['languages']);
             }
 
             if (isset($validatedData['technologies'])) {
                 $relationChanges['technologies'] = $validatedData['technologies'];
                 $technologyNames = $validatedData['technologies'];
+                $oldTechnologyNames = $post->technologies->pluck('name')->toArray();
                 unset($validatedData['technologies']);
             }
+
+            $oldRelations = [
+                'tags' => $oldTagNames,
+                'languages' => $oldLanguageNames,
+                'technologies' => $oldTechnologyNames
+            ];
 
             if ($isContentModeration) {
                 /**
@@ -1083,7 +1113,7 @@ class PostController extends Controller {
                 $post->updated_by_role = $user->role;
                 $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-                DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
+                DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user, $validatedData, $oldPost, $oldRelations) {
                     $post->save();
 
                     $this->syncMultipleRelations($post, $user, [
@@ -1091,6 +1121,17 @@ class PostController extends Controller {
                         'language' => $languageNames,
                         'technology' => $technologyNames,
                     ]);
+
+                    $syncValidatedData = array_merge(
+                        $validatedData,
+                        [
+                            'tag' => $tagNames,
+                            'language' => $languageNames,
+                            'technology' => $technologyNames,
+                        ]
+                    );
+                    $this->syncPostAllowedValueCounts($syncValidatedData, $oldPost, $oldRelations);
+
 
                     return $post;
                 });
@@ -1108,7 +1149,7 @@ class PostController extends Controller {
             $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
-            DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user) {
+            DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user, $validatedData, $oldPost, $oldRelations) {
                 $post->save();
 
                 $this->syncMultipleRelations($post, $user, [
@@ -1116,6 +1157,17 @@ class PostController extends Controller {
                     'language' => $languageNames,
                     'technology' => $technologyNames,
                 ]);
+
+                $syncValidatedData = array_merge(
+                    $validatedData,
+                    [
+                        'tag' => $tagNames,
+                        'language' => $languageNames,
+                        'technology' => $technologyNames,
+                    ]
+                );
+
+                $this->syncPostAllowedValueCounts($syncValidatedData, $oldPost, $oldRelations);
 
                 return $post;
             });
@@ -1203,6 +1255,8 @@ class PostController extends Controller {
                  * database foreign key constraints (onDelete('cascade')) 
                  * and don't require explicit deletion here.
                  */
+
+                $this->destroyPostAllowedValueCounts($post);
 
                 $post->delete();
             });
