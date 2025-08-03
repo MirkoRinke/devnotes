@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 use App\Traits\PostAttributeRelationManager;
+use App\Traits\PostAllowedValueHelper;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Post>
@@ -16,7 +17,7 @@ class PostFactory extends Factory {
     /**
      *  The traits used in the Factory
      */
-    use PostAttributeRelationManager;
+    use PostAttributeRelationManager, PostAllowedValueHelper;
 
     /**
      * Define the model's default state.
@@ -157,6 +158,16 @@ class PostFactory extends Factory {
                 'language' => $languageNames,
                 'technology' => $technologyNames
             ]);
+
+            $postAllowedValueMap = ["category", "post_type", "status", "tag", "language", "technology"];
+
+            foreach ($postAllowedValueMap as $value) {
+                if (isset($post->$value) && ($value == 'category' || $value == 'post_type' || $value == 'status')) {
+                    $this->updatePostAllowedValueCount($post->$value, $value, 'increment');
+                } else if ($value == 'tag' || $value == 'language' || $value == 'technology') {
+                    $this->updatePostAllowedValueCount(${$value . 'Names'}, $value, 'increment');
+                }
+            }
         });
     }
 }
