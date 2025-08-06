@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Traits\ApiResponses;
+use App\Traits\CacheHelper;
+
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +23,7 @@ trait ApiSelectable {
     /**
      *  The traits used in the Trait
      */
-    use ApiResponses;
+    use ApiResponses, CacheHelper;
 
     /**
      * Select the columns to return in the response
@@ -139,8 +141,8 @@ trait ApiSelectable {
      * @param Request $request The HTTP request containing filter parameters
      * @param Builder $query The query builder instance
      * @param array $countSelect The processed count parameters (without 'count:' prefix)
-     * @return JsonResponse|null Returns a JsonResponse with grouped count results or null
-     * 
+     * @return JsonResponse|null Returns a JsonResponse with grouped count results or null ( Caching is applied for performance )
+     *
      * @example | $this->countSelectGroupedByFilter($request, $query, $countSelect);
      *
      *  Example URL: /select=count:post_type&filter[post_type]=question,tutorial
@@ -175,15 +177,17 @@ trait ApiSelectable {
                  */
                 $query->getQuery()->orders = null;
 
-                $results = $query
-                    ->whereIn($filterKey, $filterValue)
-                    ->select($filterKey, DB::raw('count(' . $column . ') as total_counts'))
-                    ->groupBy($filterKey)
-                    ->get()
-                    ->pluck('total_counts', $filterKey)
-                    ->toArray();
+                $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . implode('_', $filterValue));
 
-                // dd($query->toSql(), $query->getBindings());
+                $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $column) {
+                    return $query
+                        ->whereIn($filterKey, $filterValue)
+                        ->select($filterKey, DB::raw('count(' . $column . ') as total_counts'))
+                        ->groupBy($filterKey)
+                        ->get()
+                        ->pluck('total_counts', $filterKey)
+                        ->toArray();
+                });
 
                 return $this->successResponse($results, 'Count retrieved successfully by filter values');
             }
