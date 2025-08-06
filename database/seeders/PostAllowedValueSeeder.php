@@ -48,7 +48,8 @@ class PostAllowedValueSeeder extends Seeder {
                 'Tutorial',
                 'Feedback',
                 'Showcase',
-                'Question'
+                'Question',
+                'Resources'
             ],
             'technology' => [
                 'Angular',
