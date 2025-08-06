@@ -25,6 +25,16 @@ class PostFactory extends Factory {
      * @return array<string, mixed>
      */
     public function definition(): array {
+        static $categories = null;
+        static $postTypes = null;
+        static $statuses = null;
+
+        if ($categories === null || $postTypes === null || $statuses === null) {
+            $categories = PostAllowedValue::where('type', 'category')->pluck('name')->toArray();
+            $postTypes = PostAllowedValue::where('type', 'post_type')->pluck('name')->toArray();
+            $statuses = PostAllowedValue::where('type', 'status')->pluck('name')->toArray();
+        }
+
         return [
             'user_id' => User::whereNotIn('role', ['system'])->inRandomOrder()->first()?->id ?? User::factory(),
             'title' => fake()->sentence(6, true),
@@ -88,30 +98,9 @@ class PostFactory extends Factory {
 
                 return $previews;
             },
-            'category' => fake()->randomElement([
-                'Frontend',
-                'Backend',
-                'Fullstack',
-                'DevOps',
-                'Data Science',
-                'Machine Learning',
-                'Game Development',
-                'Cloud Computing'
-            ]),
-            'post_type' => fake()->randomElement([
-                'Snippet',
-                'Tutorial',
-                'Feedback',
-                'Showcase',
-                'Question',
-                'Resources'
-            ]),
-            'status' => fake()->randomElement([
-                'Draft',
-                'Private',
-                'Published',
-                'Archived'
-            ]),
+            'category' => fake()->randomElement($categories),
+            'post_type' => fake()->randomElement($postTypes),
+            'status' => fake()->randomElement($statuses),
             'history' => [],
             'moderation_info' => [],
         ];
@@ -124,29 +113,19 @@ class PostFactory extends Factory {
      */
     public function configure() {
         return $this->afterCreating(function ($post) {
-            $tagNames = fake()->randomElement([
-                ['Laravel', 'PHP', 'Backend'],
-                ['JavaScript', 'React', 'Frontend'],
-                ['Python', 'Data Science', 'Machine Learning'],
-                ['DevOps', 'Docker', 'Kubernetes'],
-                ['Game Development', 'Unity', 'C#'],
-            ]);
+            static $tags = null;
+            static $languages = null;
+            static $technologies = null;
 
-            $languageNames = fake()->randomElement([
-                ['PHP', 'JavaScript'],
-                ['Python', 'SQL'],
-                ['Java', 'C#', 'TypeScript'],
-                ['Go', 'Rust'],
-                ['HTML', 'CSS', 'JavaScript'],
-            ]);
+            if ($tags === null || $languages === null || $technologies === null) {
+                $tags = PostAllowedValue::where('type', 'tag')->pluck('name')->toArray();
+                $languages = PostAllowedValue::where('type', 'language')->pluck('name')->toArray();
+                $technologies = PostAllowedValue::where('type', 'technology')->pluck('name')->toArray();
+            }
 
-            $technologyNames = fake()->randomElement([
-                ['Angular', 'React', 'Vue'],
-                ['Laravel', 'Django', 'Flask'],
-                ['Spring', 'Express', 'Node.js'],
-                ['Pandas', 'NumPy', 'SciPy'],
-                ['Bootstrap', 'TailwindCSS', 'Material UI'],
-            ]);
+            $tagNames = fake()->randomElements($tags, fake()->numberBetween(1, 5));
+            $languageNames = fake()->randomElements($languages, fake()->numberBetween(1, 5));
+            $technologyNames = fake()->randomElements($technologies, fake()->numberBetween(1, 5));
 
             // Create a placeholder user for system relations
             $systemUser = (object)[
