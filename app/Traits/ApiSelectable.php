@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Traits\ApiResponses;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * This ApiSelectable Trait provides a method to select specific columns from a query
@@ -45,7 +46,7 @@ trait ApiSelectable {
              * This is done by checking if the select parameter contains any 'count:' prefix.
              * If it does, it will return a JsonResponse with the count of those columns.
              */
-            $isCountSelect = $this->countSelect($query, $select);
+            $isCountSelect = $this->countSelect($request, $query, $select);
             if ($isCountSelect) {
                 return $isCountSelect;
             }
@@ -78,25 +79,47 @@ trait ApiSelectable {
     }
 
     /**
-     * Get the count select from the query
-     * This method checks if the select parameter contains any count: columns
-     * If it does, it returns a JsonResponse with the count of those columns
+     * Process count select operations from the query
      *
+     * This method extracts columns with 'count:' prefix from the select parameter
+     * and returns a count of records based on those columns. It supports:
+     * - Basic counting of a single column across all records
+     * - Delegating to filtered counting when filter parameters are present
+     *
+     * @param Request $request The HTTP request containing filter parameters
      * @param Builder $query The query builder instance
      * @param array $select The select parameters from the request
      * @return JsonResponse|null Returns a JsonResponse with count results or null if no count columns are found
      * 
-     * @example | $this->countSelect($query, $select);
+     * @example | $this->countSelect($request, $query, $select);
+     * 
+     * Example URL: /select=count:post_type
+     * 
+     * {
+     *   "status": "success",
+     *   "message": "Count retrieved successfully",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *       "post_type": 500
+     *   }
+     * }
      */
-    private function countSelect($query, $select): JsonResponse|null {
+    private function countSelect(Request $request, $query, $select): JsonResponse|null {
         $countSelect = [];
+
         foreach ($select as $value) {
             if (str_starts_with($value, 'count:')) {
                 $countSelect[] = str_replace('count:', '', $value);
             }
         }
+
         if (count($countSelect) > 1) {
             return $this->errorResponse('Multiple counts are not supported.', ['select' => 'MULTIPLE_COUNTS_NOT_SUPPORTED'], 400);
+        }
+
+        if ($request->has('filter') && !empty($countSelect)) {
+            return $this->countSelectGroupedByFilter($request, $query, $countSelect);
         }
 
         if (!empty($countSelect)) {
@@ -107,6 +130,68 @@ trait ApiSelectable {
 
         return null;
     }
+
+    /**
+     * Count records grouped by filter values
+     *
+     * This specialized counting method groups records by filter values and returns counts for each value.
+     *
+     * @param Request $request The HTTP request containing filter parameters
+     * @param Builder $query The query builder instance
+     * @param array $countSelect The processed count parameters (without 'count:' prefix)
+     * @return JsonResponse|null Returns a JsonResponse with grouped count results or null
+     * 
+     * @example | $this->countSelectGroupedByFilter($request, $query, $countSelect);
+     *
+     *  Example URL: /select=count:post_type&filter[post_type]=question,tutorial
+     * 
+     * {
+     *   "status": "success",
+     *   "message": "Count retrieved successfully by filter values",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *       "question": 88,
+     *       "tutorial": 75,
+     *   }
+     * }
+     */
+    private function countSelectGroupedByFilter(Request $request, $query, $countSelect): JsonResponse|null {
+        $filter = $request->input('filter');
+        $filterKey = array_keys($filter)[0] ?? null;
+        $filterValue = $filter[$filterKey] ?? null;
+
+        if (is_string($filterValue)) {
+            $filterValue = explode(',', $filterValue);
+        }
+
+        if (isset($filterKey) && isset($filterValue)) {
+            $column = $countSelect[0];
+
+            if (is_array($filterValue) && isset($filterKey)) {
+
+                /**
+                 * Remove any existing order by clauses that might cause SQL_FULL_GROUP_BY issues
+                 */
+                $query->getQuery()->orders = null;
+
+                $results = $query
+                    ->whereIn($filterKey, $filterValue)
+                    ->select($filterKey, DB::raw('count(' . $column . ') as total_counts'))
+                    ->groupBy($filterKey)
+                    ->get()
+                    ->pluck('total_counts', $filterKey)
+                    ->toArray();
+
+                // dd($query->toSql(), $query->getBindings());
+
+                return $this->successResponse($results, 'Count retrieved successfully by filter values');
+            }
+        }
+
+        return null;
+    }
+
 
     /**
      * Get the sum select from the query
