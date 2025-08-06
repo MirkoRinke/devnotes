@@ -202,6 +202,8 @@ trait PostAttributeRelationManager {
     /**
      * Process normalized relation values, creating new relations as needed
      * 
+     * Note: Types like 'category', 'post_type', and 'status' should not be created via user input.
+     * 
      * @param mixed $user The user performing the action
      * @param array $normalizedValues The normalized relation values
      * @param array $originalValueMap Map of original values for reference
