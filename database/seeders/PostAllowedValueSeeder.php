@@ -18,6 +18,30 @@ class PostAllowedValueSeeder extends Seeder {
      */
     protected function getAllowedPostValues(): array {
         return [
+            'category' => [
+                'frontend',
+                'backend',
+                'fullstack',
+                'devops',
+                'data science',
+                'machine learning',
+                'game development',
+                'cloud computing'
+            ],
+            'post_type' => [
+                'snippet',
+                'tutorial',
+                'feedback',
+                'showcase',
+                'question',
+                'resources'
+            ],
+            'status' => [
+                'draft',
+                'private',
+                'published',
+                'archived'
+            ],
             'language' => [
                 'HTML',
                 'CSS',
@@ -32,24 +56,6 @@ class PostAllowedValueSeeder extends Seeder {
                 'C#',
                 'Go',
                 'Rust',
-            ],
-            'category' => [
-                'Frontend',
-                'Backend',
-                'Fullstack',
-                'DevOps',
-                'Data Science',
-                'Machine Learning',
-                'Game Development',
-                'Cloud Computing'
-            ],
-            'post_type' => [
-                'Snippet',
-                'Tutorial',
-                'Feedback',
-                'Showcase',
-                'Question',
-                'Resources'
             ],
             'technology' => [
                 'Angular',
@@ -75,11 +81,20 @@ class PostAllowedValueSeeder extends Seeder {
                 'Material UI',
 
             ],
-            'status' => [
-                'Draft',
-                'Private',
-                'Published',
-                'Archived'
+            'tag' => [
+                'Web Development',
+                'Mobile Development',
+                'Game Development',
+                'Data Analysis',
+                'Machine Learning',
+                'DevOps',
+                'Cloud Computing',
+                'Open Source',
+                'Community',
+                'AI',
+                'Blockchain',
+                'Cybersecurity',
+                'Software Engineering'
             ],
         ];
     }
@@ -94,6 +109,15 @@ class PostAllowedValueSeeder extends Seeder {
         $allowedValues = $this->getAllowedPostValues();
 
         foreach ($allowedValues as $field => $values) {
+
+            /**
+             * Ensure that the values are definitely lowercase for fields like 'category', 'post_type', and 'status'.
+             */
+            $convertToLower = in_array($field, ['category', 'post_type', 'status']);
+            if ($convertToLower) {
+                $values = array_map('strtolower', $values);
+            }
+
             foreach ($values as $value) {
                 PostAllowedValue::firstOrCreate([
                     'name' => $value,
