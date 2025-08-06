@@ -103,7 +103,8 @@ class PostFactory extends Factory {
                 'Tutorial',
                 'Feedback',
                 'Showcase',
-                'Question'
+                'Question',
+                'Resources'
             ]),
             'status' => fake()->randomElement([
                 'Draft',
