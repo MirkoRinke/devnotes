@@ -336,6 +336,11 @@ class PostAllowedValueController extends Controller {
 
             $existingPostAllowedValue = PostAllowedValue::whereRaw('LOWER(name) = LOWER(?) AND type = ?', [$validatedData['name'], $validatedData['type']])->first();
 
+            $convertToLower = in_array($validatedData['type'], ['category', 'post_type', 'status']);
+            if ($convertToLower) {
+                $validatedData['name'] = strtolower($validatedData['name']);
+            }
+
             if ($existingPostAllowedValue) {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
             }
@@ -607,6 +612,11 @@ class PostAllowedValueController extends Controller {
             $typeToCheck = $validatedData['type'] ?? $postAllowedValue->type;
 
             $existingPostAllowedValue = PostAllowedValue::whereRaw('LOWER(name) = LOWER(?) AND type = ? AND id != ?', [$nameToCheck, $typeToCheck, $id])->first();
+
+            $convertToLower = in_array($validatedData['type'], ['category', 'post_type', 'status']);
+            if ($convertToLower) {
+                $validatedData['name'] = strtolower($validatedData['name']);
+            }
 
             if ($existingPostAllowedValue) {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
