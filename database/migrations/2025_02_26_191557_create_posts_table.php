@@ -23,8 +23,8 @@ return new class extends Migration {
             $table->json('resources')->nullable();
             $table->json('external_source_previews')->nullable();
             $table->string('category'); // category of the post (e.g., Frontend, Backend, etc.)
-            $table->string('post_type')->default('snippet'); // snippet, tutorial, feedback, showcase, question, etc.
-            $table->string('status')->default('draft'); // status of the post (e.g., draft, private, published, archived)
+            $table->string('post_type'); // snippet, tutorial, feedback, showcase, question, etc.
+            $table->string('status'); // status of the post (e.g., draft, private, published, archived)
 
             // Counts
             $table->integer('favorite_count')->default(0);
