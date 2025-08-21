@@ -13,6 +13,8 @@ use App\Traits\CacheHelper;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * This ApiSelectable Trait provides a method to select specific columns from a query
@@ -108,6 +110,9 @@ trait ApiSelectable {
      * }
      */
     private function countSelect(Request $request, $query, $select): JsonResponse|null {
+        $modelClass = get_class($query->getModel());
+        $modelSchema = Schema::getColumnListing((new $modelClass())->getTable());
+
         $countSelect = [];
 
         foreach ($select as $value) {
@@ -120,8 +125,12 @@ trait ApiSelectable {
             return $this->errorResponse('Multiple counts are not supported.', ['select' => 'MULTIPLE_COUNTS_NOT_SUPPORTED'], 400);
         }
 
+        if (!in_array($countSelect[0], $modelSchema)) {
+            return $this->errorResponse("Invalid count column: {$countSelect[0]}", 'INVALID_COUNT_COLUMN', 400);
+        }
+
         if ($request->has('filter') && !empty($countSelect)) {
-            return $this->countSelectGroupedByFilter($request, $query, $countSelect);
+            return $this->countSelectGroupedByFilter($request, $query, $countSelect, $modelSchema);
         }
 
         if (!empty($countSelect)) {
@@ -132,6 +141,7 @@ trait ApiSelectable {
 
         return null;
     }
+
 
     /**
      * Count records grouped by filter values
@@ -158,10 +168,22 @@ trait ApiSelectable {
      *   }
      * }
      */
-    private function countSelectGroupedByFilter(Request $request, $query, $countSelect): JsonResponse|null {
+    private function countSelectGroupedByFilter(Request $request, $query, $countSelect, $modelSchema): JsonResponse|null {
         $filter = $request->input('filter');
-        $filterKey = array_keys($filter)[0] ?? null;
+
+        if (!array_key_exists($countSelect[0], $filter)) {
+            $column = $countSelect[0];
+            $count = $query->count($column);
+            return $this->successResponse([$column => $count], 'Count retrieved successfully');
+        }
+
+        $filterKey = $countSelect[0];
         $filterValue = $filter[$filterKey] ?? null;
+
+
+        if (!in_array($filterKey, $modelSchema)) {
+            return $this->errorResponse("Invalid filter key: $filterKey", 'INVALID_FILTER_KEY', 400);
+        }
 
         if (is_string($filterValue)) {
             $filterValue = explode(',', $filterValue);
@@ -171,13 +193,17 @@ trait ApiSelectable {
             $column = $countSelect[0];
 
             if (is_array($filterValue) && isset($filterKey)) {
-
                 /**
                  * Remove any existing order by clauses that might cause SQL_FULL_GROUP_BY issues
                  */
                 $query->getQuery()->orders = null;
 
                 $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . implode('_', $filterValue));
+
+                /**
+                 * Clear the cache for the grouped count by filter for Testing
+                 */
+                // Cache::forget($this->generateSimpleCacheKey('count_select_grouped_by_filter_' . implode('_', $filterValue)));
 
                 $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $column) {
                     return $query
