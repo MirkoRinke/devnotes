@@ -12,6 +12,8 @@ use App\Traits\CacheHelper;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
@@ -121,20 +123,26 @@ trait ApiSelectable {
             }
         }
 
-        if (count($countSelect) > 1) {
-            return $this->errorResponse('Multiple counts are not supported.', ['select' => 'MULTIPLE_COUNTS_NOT_SUPPORTED'], 400);
-        }
-
-        if (!in_array($countSelect[0], $modelSchema)) {
-            return $this->errorResponse("Invalid count column: {$countSelect[0]}", 'INVALID_COUNT_COLUMN', 400);
-        }
-
-        if ($request->has('filter') && !empty($countSelect)) {
-            return $this->countSelectGroupedByFilter($request, $query, $countSelect, $modelSchema);
-        }
-
         if (!empty($countSelect)) {
-            $column = $countSelect[0];
+
+            if (count($countSelect) > 1) {
+                return $this->errorResponse('Multiple counts are not supported.', 'MULTIPLE_COUNTS_NOT_SUPPORTED', 400);
+            }
+            $countSelect = $countSelect[0];
+
+            if (str_contains($countSelect, '.')) {
+                return $this->countSelectGroupedByRelation($query, $countSelect);
+            }
+
+            if (!in_array($countSelect, $modelSchema)) {
+                return $this->errorResponse("Invalid count column: {$countSelect}", 'INVALID_COUNT_COLUMN', 400);
+            }
+
+            if ($request->has('filter') && !empty($countSelect)) {
+                return $this->countSelectGroupedByFilter($request, $query, $countSelect, $modelSchema);
+            }
+
+            $column = $countSelect;
             $count = $query->count($column);
             return $this->successResponse([$column => $count], 'Count retrieved successfully');
         }
@@ -142,6 +150,42 @@ trait ApiSelectable {
         return null;
     }
 
+    /**
+     * Count records grouped by relation values
+     *
+     * This method counts records based on a specified relation and returns the counts grouped by the relation's field.
+     *
+     * @param Builder $query The query builder instance
+     * @param string $relationSelect The relation select parameter (e.g., 'relation.field')
+     * @return JsonResponse
+     *
+     * @example | $this->countSelectGroupedByRelation($query, 'relation.field');
+     */
+    private function countSelectGroupedByRelation($query, $relationSelect): JsonResponse {
+        [$relation, $relationField] = explode('.', $relationSelect, 2);
+
+        if (!method_exists($query->getModel(), $relation)) {
+            return $this->errorResponse("Invalid relation: $relation", 'INVALID_RELATION', 400);
+        }
+
+        $mainIds = $query->pluck($query->getModel()->getKeyName())->toArray();
+
+        if (empty($mainIds)) {
+            return $this->successResponse([], 'Count retrieved successfully by relation values');
+        }
+
+        $relationInstance = $query->getModel()->$relation();
+
+        if ($relationInstance instanceof BelongsToMany) {
+            return $this->countBelongsToMany($relationInstance, $mainIds, $relationField);
+        }
+
+        if ($relationInstance instanceof BelongsTo) {
+            return $this->countBelongsTo($relationInstance, $mainIds, $relationField, $query);
+        }
+
+        return $this->errorResponse("Relation type not supported for counting.", 'UNSUPPORTED_RELATION_TYPE', 400);
+    }
 
     /**
      * Count records grouped by filter values
@@ -171,13 +215,13 @@ trait ApiSelectable {
     private function countSelectGroupedByFilter(Request $request, $query, $countSelect, $modelSchema): JsonResponse|null {
         $filter = $request->input('filter');
 
-        if (!array_key_exists($countSelect[0], $filter)) {
-            $column = $countSelect[0];
+        if (!array_key_exists($countSelect, $filter)) {
+            $column = $countSelect;
             $count = $query->count($column);
             return $this->successResponse([$column => $count], 'Count retrieved successfully');
         }
 
-        $filterKey = $countSelect[0];
+        $filterKey = $countSelect;
         $filterValue = $filter[$filterKey] ?? null;
 
 
@@ -190,25 +234,29 @@ trait ApiSelectable {
         }
 
         if (isset($filterKey) && isset($filterValue)) {
-            $column = $countSelect[0];
-
             if (is_array($filterValue) && isset($filterKey)) {
                 /**
                  * Remove any existing order by clauses that might cause SQL_FULL_GROUP_BY issues
                  */
                 $query->getQuery()->orders = null;
 
-                $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . implode('_', $filterValue));
+                $cacheKeySuffix = "";
+                foreach ($filter as $key => $value) {
+                    $value = str_replace(',', '_', $value);
+                    $cacheKeySuffix .=  "_" . $value;
+                }
+
+                $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . md5($cacheKeySuffix));
 
                 /**
                  * Clear the cache for the grouped count by filter for Testing
                  */
-                // Cache::forget($this->generateSimpleCacheKey('count_select_grouped_by_filter_' . implode('_', $filterValue)));
+                // Cache::forget($this->generateSimpleCacheKey('count_select_grouped_by_filter_' . md5($cacheKeySuffix)));
 
-                $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $column) {
+                $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $countSelect) {
                     return $query
                         ->whereIn($filterKey, $filterValue)
-                        ->select($filterKey, DB::raw('count(' . $column . ') as total_counts'))
+                        ->select($filterKey, DB::raw('count(' . $countSelect . ') as total_counts'))
                         ->groupBy($filterKey)
                         ->get()
                         ->pluck('total_counts', $filterKey)
@@ -220,6 +268,68 @@ trait ApiSelectable {
         }
 
         return null;
+    }
+
+
+    /**
+     * Count records in a BelongsToMany relationship
+     *
+     * This method counts records in a many-to-many relationship and returns the counts grouped by the relation's field.
+     *
+     * @param BelongsToMany $relationInstance The relation instance
+     * @param array $mainIds The IDs of the main model
+     * @param string $relationField The field to group by in the related model
+     * @return JsonResponse
+     */
+    private function countBelongsToMany($relationInstance, $mainIds, $relationField): JsonResponse {
+        $pivotTable = $relationInstance->getTable();
+        $parentKey = $relationInstance->getForeignPivotKeyName();
+        $relatedKey = $relationInstance->getRelatedPivotKeyName();
+        $relatedTable = $relationInstance->getRelated()->getTable();
+
+        // dd($pivotTable, $parentKey, $relatedKey, $relatedTable, $relationField);
+
+        $results = DB::table($pivotTable)
+            ->join($relatedTable, "$pivotTable.$relatedKey", '=', "$relatedTable.id")
+            ->whereIn("$pivotTable.$parentKey", $mainIds)
+            ->select("$relatedTable.$relationField as value", DB::raw("count(*) as total_counts"))
+            ->groupBy("$relatedTable.$relationField")
+            ->pluck('total_counts', 'value')
+            ->toArray();
+
+
+        return $this->successResponse($results, 'Count retrieved successfully by relation values');
+    }
+
+
+    /**
+     * Count records in a BelongsTo relationship
+     *
+     * This method counts records in a one-to-many relationship and returns the counts grouped by the relation's field.
+     *
+     * @param BelongsTo $relationInstance The relation instance
+     * @param array $mainIds The IDs of the main model
+     * @param string $relationField The field to group by in the related model
+     * @param Builder $query The query builder instance
+     * @return JsonResponse
+     */
+    private function countBelongsTo($relationInstance, $mainIds, $relationField, $query): JsonResponse {
+        $relatedTable = $relationInstance->getRelated()->getTable();
+        $foreignKey = $relationInstance->getForeignKeyName();
+        $ownerKey = $relationInstance->getOwnerKeyName();
+        $mainTable = $query->getModel()->getTable();
+
+        // dd($relatedTable, $foreignKey, $ownerKey, $mainTable, $relationField);
+
+        $results = DB::table($mainTable)
+            ->join($relatedTable, "$mainTable.$foreignKey", '=', "$relatedTable.$ownerKey")
+            ->whereIn("$mainTable.id", $mainIds)
+            ->select("$relatedTable.$relationField as value", DB::raw("count(*) as total_counts"))
+            ->groupBy("$relatedTable.$relationField")
+            ->pluck('total_counts', 'value')
+            ->toArray();
+
+        return $this->successResponse($results, 'Count retrieved successfully by relation values');
     }
 
 
