@@ -329,19 +329,19 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['name', 'type', 'created_by_role', 'created_by_user_id']
+                    ...['name', 'type', 'post_count', 'created_by_role', 'created_by_user_id']
                 ],
                 'filter' => [
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['name', 'type', 'created_by_role', 'created_by_user_id']
+                    ...['name', 'type', 'post_count', 'created_by_role', 'created_by_user_id']
                 ],
                 'select' => [
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['name', 'type', 'created_by_role', 'created_by_user_id']
+                    ...['name', 'type', 'post_count', 'created_by_role', 'created_by_user_id']
                 ],
                 'setLimit' => 10,
                 'paginate' => 10
