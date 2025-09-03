@@ -37,6 +37,7 @@ return new class extends Migration {
 
             // Update info
             $table->timestamps();
+            $table->timestamp('last_post_created_at')->nullable();
         });
 
         DB::statement('ALTER TABLE users AUTO_INCREMENT = 100;');
