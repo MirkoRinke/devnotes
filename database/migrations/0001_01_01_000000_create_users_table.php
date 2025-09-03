@@ -33,6 +33,7 @@ return new class extends Migration {
 
             // Account info
             $table->timestamp('privacy_policy_accepted_at')->nullable();
+            $table->timestamp('terms_of_service_accepted_at')->nullable();
             $table->enum('account_purpose', ['regular', 'guest'])->default('regular')->nullable(false);
 
             // Update info
