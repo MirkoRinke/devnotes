@@ -147,7 +147,8 @@ class UserController extends Controller {
      *       "was_ever_banned": false,                      || Admin and Moderator only
      *       "moderation_info": [],                         || Admin and Moderator only
      *       "created_at": "2025-06-30T01:01:51.000000Z",
-     *       "updated_at": "2025-06-30T01:01:51.000000Z"
+     *       "updated_at": "2025-06-30T01:01:51.000000Z",
+     *       "last_post_created_at": "2025-06-30T01:01:51.000000Z"
      *     }
      *   ]
      * }
@@ -309,7 +310,8 @@ class UserController extends Controller {
      *     "was_ever_banned": false,                            || Admin and Moderator only
      *     "moderation_info": [],                               || Admin and Moderator only
      *     "created_at": "2025-06-30T01:01:54.000000Z",
-     *     "updated_at": "2025-06-30T01:01:54.000000Z"
+     *     "updated_at": "2025-06-30T01:01:54.000000Z",
+     *     "last_post_created_at": "2025-06-30T01:01:54.000000Z"
      *   }
      * }
      *
@@ -452,7 +454,8 @@ class UserController extends Controller {
      *     "was_ever_banned": false,                                || Admin and Moderator only
      *     "moderation_info": [],                                   || Admin and Moderator only
      *     "created_at": "2025-06-30T19:09:26.000000Z",
-     *     "updated_at": "2025-06-30T19:21:03.000000Z"
+     *     "updated_at": "2025-06-30T19:21:03.000000Z",
+     *     "last_post_created_at": "2025-06-30T19:21:03.000000Z"
      *   }
      * }
      *
