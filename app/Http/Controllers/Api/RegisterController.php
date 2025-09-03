@@ -53,6 +53,7 @@ class RegisterController extends Controller {
             'email' => 'required|string|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'privacy_policy_accepted' => ['required', 'accepted'],
+            'terms_of_service_accepted' => ['required', 'accepted'],
         ];
         return $validationRules;
     }
@@ -74,6 +75,7 @@ class RegisterController extends Controller {
      * @bodyParam password string required Password (min 8 characters). Example: secret123
      * @bodyParam password_confirmation string required Must match the password field. Example: secret123
      * @bodyParam privacy_policy_accepted boolean required Must be true to proceed with registration. Example: true
+     * @bodyParam terms_of_service_accepted boolean required Must be true to proceed with registration. Example: true
      *
      * @bodyContent {
      *   "name": "John Doe",                        || required, string, min:2, max:255, forbidden names not allowed
@@ -82,6 +84,7 @@ class RegisterController extends Controller {
      *   "password": "secret123",                   || required, string, min:8, confirmed
      *   "password_confirmation": "secret123"       || required, string, must match password
      *   "privacy_policy_accepted": true             || required, boolean, must be true
+     *   "terms_of_service_accepted": true           || required, boolean, must be true
      * }
      * 
      * @response status=201 scenario="Success" {
@@ -96,6 +99,7 @@ class RegisterController extends Controller {
      *     "email": "john@example.com",
      *     "email_verified_at": "null", // or current timestamp if email verification is disabled
      *     "privacy_policy_accepted_at": "2025-07-21T21:16:33.032980Z",
+     *     "terms_of_service_accepted_at": "2025-07-21T21:16:33.032980Z",
      *     "updated_at": "2025-04-29T18:35:29.000000Z",
      *     "created_at": "2025-04-29T18:35:29.000000Z",
      *   }
@@ -143,6 +147,7 @@ class RegisterController extends Controller {
                 $user->email_verified_at = config('app.features.email_verification', true) ? null : now();
                 $user->moderation_info = [];
                 $user->privacy_policy_accepted_at = now();
+                $user->terms_of_service_accepted_at = now();
 
                 $user->save();
 
