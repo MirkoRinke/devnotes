@@ -537,8 +537,11 @@ class PostController extends Controller {
             $post->moderation_info = [];
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData);
 
+            $user->last_post_created_at = now();
+
             DB::transaction(function () use ($post, $user, $tagNames, $languageNames, $technologyNames, $validatedData) {
                 $post->save();
+                $user->save();
 
                 $this->syncMultipleRelations($post, $user, [
                     'tag' => $tagNames,
