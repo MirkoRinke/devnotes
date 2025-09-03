@@ -50,6 +50,8 @@ class User extends Authenticatable implements MustVerifyEmail {
 
         // Account info
         // 'account_purpose',               || Set during account creation (default is 'regular')
+        // 'privacy_policy_accepted_at',    || Set by RegisterController or AuthController ( register | login )
+        // 'terms_of_service_accepted_at',  || Set by RegisterController or AuthController ( register | login )
     ];
 
     /**
@@ -100,6 +102,8 @@ class User extends Authenticatable implements MustVerifyEmail {
 
             // Account info
             'account_purpose' => 'string',
+            'privacy_policy_accepted_at' => 'datetime',
+            'terms_of_service_accepted_at' => 'datetime',
         ];
     }
 
