@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 
 use App\Http\Middleware\EnsureEmailIsVerifiedApi;
 use App\Http\Middleware\EnsurePrivacyPolicyAccepted;
+use App\Http\Middleware\EnsureTermsOfServiceAccepted;
 use App\Http\Middleware\ValidateApiKey;
 use App\Http\Middleware\VerifyDeviceFingerprint;
 
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api-key' => ValidateApiKey::class,
             'device-fingerprint' => VerifyDeviceFingerprint::class,
             'privacy-policy-accepted' => EnsurePrivacyPolicyAccepted::class,
+            'terms-of-service-accepted' => EnsureTermsOfServiceAccepted::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
