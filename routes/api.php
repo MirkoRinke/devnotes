@@ -45,13 +45,18 @@ use App\Http\Controllers\Api\UserStatsController;
  *    - Deletes the current token and returns an error if acceptance is missing or outdated
  *    - User must accept the latest privacy policy to continue using protected endpoints
  *
- * 5. device-fingerprint: Validates device identity
+ * 5. terms-of-service-accepted: Checks if the user has accepted the current terms of service
+ *    - Verifies the 'terms_of_service_accepted_at' field on the user record
+ *    - Compares the acceptance date with the current terms date (from .env or default)
+ *    - Deletes the current token and returns an error if acceptance is missing or outdated
+ *
+ * 6. device-fingerprint: Validates device identity
  *    - Requires matching device fingerprint in 'X-Device-Fingerprint' header
  *    - Compares against fingerprint stored during token creation
  *    - Automatically revokes tokens on fingerprint mismatch
  *    - Prevents token use on unauthorized devices
  * 
- * 6. email-verified: Ensures the user's email is verified
+ * 7. email-verified: Ensures the user's email is verified
  *    - Checks if the user has a verified email address
  *    - Returns a 403 error if the email is not verified
  * 
@@ -72,14 +77,14 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      */
     Route::post('/email/verify', [RegisterController::class, 'verifyEmail']);
 
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint'])->group(function () {
         Route::post('/email/resend-verification-email', [RegisterController::class, 'resendVerificationEmail']);
     });
 
     /**
      * Route for admin sending verification email
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::post('/email/admin-send-verification-email', [RegisterController::class, 'adminSendVerificationEmail']);
     });
 
@@ -91,7 +96,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for logout and tokens
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/tokens', [AuthController::class, 'getUserTokens']);
         Route::delete('/tokens/{id}', [AuthController::class, 'revokeToken']);
@@ -107,7 +112,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for ban and unban users
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::post('/users/{id}/ban', [UserController::class, 'banUser']);
         Route::post('/users/{id}/unban', [UserController::class, 'unbanUser']);
     });
@@ -115,7 +120,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for users
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('users', UserController::class);
     });
 
@@ -130,7 +135,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     Route::get('/posts', [PostController::class, 'index']);
     Route::get('/posts/{post}', [PostController::class, 'show']);
 
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('posts', PostController::class)->except(['index', 'show']);
     });
 
@@ -141,7 +146,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);
     Route::get('/comments/{comment}', [CommentController::class, 'show']);
 
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('comments', CommentController::class)->except(['index', 'show']);
         Route::patch('comments/{id}/deleteComment', [CommentController::class, 'deleteComment']);
     });
@@ -149,7 +154,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Routes for user profiles
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('user-profiles', UserProfileController::class);
         Route::post('user-profiles/{id}/enable-temporary-externals', [UserProfileController::class, 'enableTemporaryExternals']);
     });
@@ -157,7 +162,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for API keys
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::post('/api-keys', [ApiKeyController::class, 'generate']);
         Route::get('/api-keys', [ApiKeyController::class, 'index']);
         Route::patch('/api-keys/{apiKey}/toggle', [ApiKeyController::class, 'toggleStatus']);
@@ -167,7 +172,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for favorites
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::get('/user/favorites', [UserFavoriteController::class, 'index']);
         Route::post('/posts/{post}/favorites', [UserFavoriteController::class, 'store']);
         Route::delete('/posts/{post}/favorites', [UserFavoriteController::class, 'destroy']);
@@ -180,7 +185,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      */
     Route::post('/reports', [UserReportController::class, 'store']);
 
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::get('/reports', [UserReportController::class, 'index']);
         Route::delete('/reports', [UserReportController::class, 'destroy']);
     });
@@ -188,7 +193,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for likes
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('likes', UserLikeController::class)->only(['index', 'store']);
         Route::delete('/likes', [UserLikeController::class, 'destroy']);
 
@@ -199,7 +204,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for followers
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::get('followers', [UserFollowerController::class, 'getFollowers']);
         Route::get('following', [UserFollowerController::class, 'getFollowing']);
         Route::post('follow/{userId}', [UserFollowerController::class, 'follow']);
@@ -209,21 +214,21 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     /**
      * Route for forbidden names
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('forbidden-names', ForbiddenNameController::class);
     });
 
     /**
      * Route for post allowed values
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('post-allowed-values', PostAllowedValueController::class);
     });
 
     /**
      * Route for Critical Terms
      */
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
+    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('critical-terms', CriticalTermController::class);
     });
 
