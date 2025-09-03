@@ -43,6 +43,7 @@ class User extends Authenticatable implements MustVerifyEmail {
 
         // Update info
         // 'updated_at',                    || Laravel will automatically handle the 'updated_at' field
+        // 'last_post_created_at',          || Set Automatically when a post is created
 
         // Moderation info
         // 'moderation_info',               || Set by ModerationService during moderation actions
@@ -90,6 +91,9 @@ class User extends Authenticatable implements MustVerifyEmail {
             // Ban info
             'is_banned' => 'datetime',
             'was_ever_banned' => 'boolean',
+
+            // Update info
+            'last_post_created_at' => 'datetime',
 
             // Moderation info
             'moderation_info' => 'json',
