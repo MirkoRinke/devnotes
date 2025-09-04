@@ -1152,8 +1152,11 @@ class PostController extends Controller {
             $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
+            $user->last_post_updated_at = now();
+
             DB::transaction(function () use ($post, $tagNames, $languageNames, $technologyNames, $user, $validatedData, $oldPost, $oldRelations) {
                 $post->save();
+                $user->save();
 
                 $this->syncMultipleRelations($post, $user, [
                     'tag' => $tagNames,
