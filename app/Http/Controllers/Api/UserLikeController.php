@@ -264,6 +264,15 @@ class UserLikeController extends Controller {
      *         "id": 356,
      *         "display_name": "bessie.hermiston",
      *         "role": "user",
+     *         "avatar_items": {
+     *           "duck": "/ducks/yellow_duck.webp",
+     *           "background": "/background/beach.webp",
+     *           "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *           "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *           "head_accessory": "/head_accessory/top_hat.webp",
+     *           "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *           "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *         },
      *         "created_at": "2025-07-09T17:26:48.000000Z",
      *         "updated_at": "2025-07-09T17:26:48.000000Z",
      *         "is_banned": null,
@@ -311,6 +320,15 @@ class UserLikeController extends Controller {
      *         "id": 335,
      *         "display_name": "b.koch",
      *         "role": "user",
+     *         "avatar_items": {
+     *           "duck": "/ducks/yellow_duck.webp",
+     *           "background": "/background/beach.webp",
+     *           "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *           "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *           "head_accessory": "/head_accessory/top_hat.webp",
+     *           "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *           "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *         },
      *         "created_at": "2025-07-09T17:26:47.000000Z",
      *         "updated_at": "2025-07-09T17:26:47.000000Z",
      *         "is_banned": null,
@@ -737,6 +755,15 @@ class UserLikeController extends Controller {
      *          "id": 42,
      *          "display_name": "John Doe",
      *          "role": "user",
+     *         "avatar_items": {
+     *           "duck": "/ducks/yellow_duck.webp",
+     *           "background": "/background/beach.webp",
+     *           "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *           "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *           "head_accessory": "/head_accessory/top_hat.webp",
+     *           "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *           "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *         },
      *          "created_at": "2025-06-23T22:52:35.000000Z",
      *          "updated_at": "2025-06-23T22:52:35.000000Z",
      *          "is_banned": null,                      || Admin and Moderator only
@@ -902,6 +929,15 @@ class UserLikeController extends Controller {
      *         "id": 339,
      *         "display_name": "Jane Doe",
      *         "role": "user",
+     *         "avatar_items": {
+     *           "duck": "/ducks/yellow_duck.webp",
+     *           "background": "/background/beach.webp",
+     *           "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *           "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *           "head_accessory": "/head_accessory/top_hat.webp",
+     *           "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *           "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *         },
      *         "created_at": "2025-07-09T17:26:47.000000Z",
      *         "updated_at": "2025-07-09T17:26:47.000000Z",
      *         "is_banned": null,                                                   || Admin and Moderator only
