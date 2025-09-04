@@ -148,7 +148,8 @@ class UserController extends Controller {
      *       "moderation_info": [],                         || Admin and Moderator only
      *       "created_at": "2025-06-30T01:01:51.000000Z",
      *       "updated_at": "2025-06-30T01:01:51.000000Z",
-     *       "last_post_created_at": "2025-06-30T01:01:51.000000Z"
+     *       "last_post_created_at": "2025-06-30T01:01:51.000000Z",
+     *       "last_post_updated_at": "2025-06-30T01:01:51.000000Z"
      *     }
      *   ]
      * }
