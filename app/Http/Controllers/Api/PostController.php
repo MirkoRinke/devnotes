@@ -266,6 +266,15 @@ class PostController extends Controller {
      *          "id": 42,
      *          "display_name": "John Doe",
      *          "role": "user",
+     *           "avatar_items": {
+     *             "duck": "/ducks/yellow_duck.webp",
+     *             "background": "/background/beach.webp",
+     *             "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *             "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *             "head_accessory": "/head_accessory/top_hat.webp",
+     *             "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *             "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *           },
      *          "created_at": "2025-06-23T22:52:35.000000Z",
      *          "updated_at": "2025-06-23T22:52:35.000000Z",
      *          "is_banned": null,                      || Admin and Moderator only
@@ -677,6 +686,15 @@ class PostController extends Controller {
      *          "id": 42,
      *          "display_name": "John Doe",
      *          "role": "user",
+     *           "avatar_items": {
+     *             "duck": "/ducks/yellow_duck.webp",
+     *             "background": "/background/beach.webp",
+     *             "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *             "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *             "head_accessory": "/head_accessory/top_hat.webp",
+     *             "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *             "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *           },
      *          "created_at": "2025-06-23T22:52:35.000000Z",
      *          "updated_at": "2025-06-23T22:52:35.000000Z",
      *          "is_banned": null,                      || Admin and Moderator only
