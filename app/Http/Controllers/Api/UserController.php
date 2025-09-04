@@ -69,6 +69,14 @@ class UserController extends Controller {
             'name' => ['sometimes', 'required', 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'email' => 'sometimes|required|string|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|required|string|min:8|confirmed',
+            'avatar_items' => 'sometimes|nullable|array',
+            'avatar_items.duck' => ['sometimes', 'nullable', 'string', 'starts_with:/ducks/', 'ends_with:.webp'], // The Duck the Character
+            'avatar_items.head_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/head_accessory/', 'ends_with:.webp'], // Head e.g. Hats, Helmets, Headband
+            'avatar_items.eye_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/eye_accessory/', 'ends_with:.webp'], // Eye e.g. Glasses, Eye Patches, Masks
+            'avatar_items.ear_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/ear_accessory/', 'ends_with:.webp'], // Ear e.g. Earrings, Headphones, Earbuds
+            'avatar_items.neck_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/neck_accessory/', 'ends_with:.webp'], // Neck e.g. Scarfs, Necklaces, Ties
+            'avatar_items.chest_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/chest_accessory/', 'ends_with:.webp'], // Chest e.g. Armor, Shirts
+            'avatar_items.background' => ['sometimes', 'nullable', 'string', 'starts_with:/background/', 'ends_with:.webp'], // Backgrounds e.g. Nature, City, Space
         ];
         return $validationRules;
     }
@@ -143,6 +151,15 @@ class UserController extends Controller {
      *       "email": "contact@mirkorinke.dev",
      *       "display_name": "Admin",
      *       "role": "admin",
+     *       "avatar_items": {
+     *         "duck": "/ducks/yellow_duck.webp",
+     *         "background": "/background/beach.webp",
+     *         "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *         "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *         "head_accessory": "/head_accessory/top_hat.webp",
+     *         "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *         "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *       },
      *       "is_banned": null,                             || Admin and Moderator only
      *       "was_ever_banned": false,                      || Admin and Moderator only
      *       "moderation_info": [],                         || Admin and Moderator only
@@ -170,7 +187,6 @@ class UserController extends Controller {
      *         "display_name": "Admin",
      *         "public_email": "contact@mirkorinke.dev",
      *         "website": "https://mirkorinke.dev/",
-     *         "avatar_path": null,
      *         "is_public": true,
      *         "location": "Hildesheim, Germany",
      *         "biography": "...",
@@ -307,6 +323,15 @@ class UserController extends Controller {
      *     "email": "trenton.mckenzie@example.com",
      *     "display_name": "madeline.jerde",
      *     "role": "user",
+     *       "avatar_items": {
+     *         "duck": "/ducks/yellow_duck.webp",
+     *         "background": "/background/beach.webp",
+     *         "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *         "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *         "head_accessory": "/head_accessory/top_hat.webp",
+     *         "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *         "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *       },
      *     "is_banned": null,                                   || Admin and Moderator only
      *     "was_ever_banned": false,                            || Admin and Moderator only
      *     "moderation_info": [],                               || Admin and Moderator only
@@ -331,7 +356,6 @@ class UserController extends Controller {
      *       "display_name": "madeline.jerde",
      *       "public_email": "madeline.jerde@example.com",
      *       "website": null,
-     *       "avatar_path": null,
      *       "is_public": true,
      *       "location": "Berlin, Germany",
      *       "biography": null,
@@ -431,12 +455,29 @@ class UserController extends Controller {
      * @bodyParam email string Email address (must be unique). Example: "max@example.com"
      * @bodyParam password string Password (min 8 characters). Example: "sicheresPasswort1234"
      * @bodyParam password_confirmation string Password confirmation (must match password). Example: "sicheresPasswort1234"
+     * @bodyParam avatar_items.object An object containing avatar item paths to update. See details below.
+     * @bodyParam avatar_items.duck string Path to the duck avatar item. Must start with "/ducks/" and end with ".webp". Example: "/ducks/yellow_duck.webp"
+     * @bodyParam avatar_items.head_accessory string Path to the head accessory avatar item. Must start with "/head_accessory/" and end with ".webp". Example: "/head_accessory/top_hat.webp"
+     * @bodyParam avatar_items.eye_accessory string Path to the eye accessory avatar item. Must start with "/eye_accessory/" and end with ".webp". Example: "/eye_accessory/sunglasses.webp"
+     * @bodyParam avatar_items.ear_accessory string Path to the ear accessory avatar item. Must start with "/ear_accessory/" and end with ".webp". Example: "/ear_accessory/stud_earring.webp"
+     * @bodyParam avatar_items.neck_accessory string Path to the neck accessory avatar item. Must start with "/neck_accessory/" and end with ".webp". Example: "/neck_accessory/gold_chain.webp"
+     * @bodyParam avatar_items.chest_accessory string Path to the chest accessory avatar item. Must start with "/chest_accessory/" and end with ".webp". Example: "/chest_accessory/bow_tie.webp"
+     * @bodyParam avatar_items.background string Path to the background avatar item. Must start with "/background/" and end with ".webp". Example: "/background/beach.webp"
      *
      * @bodyContent {
-     *   "name": "Max Mustermann99",                        || optional, string, min:2, max:255
-     *   "email": "max@example99.com",                      || optional, string, email, unique
-     *   "password": "sicheresPasswort1234",                || optional, string, min:8, confirmed
-     *   "password_confirmation": "sicheresPasswort1234"    || required if password is set, string, must match password
+     *   "name": "Max Mustermann99",                                || optional, string, min:2, max:255
+     *   "email": "max@example99.com",                              || optional, string, email, unique
+     *   "password": "sicheresPasswort1234",                        || optional, string, min:8, confirmed
+     *   "password_confirmation": "sicheresPasswort1234"            || required if password is set, string, must match password
+     *   "avatar_items": {                                          || optional, object, used to update avatar items
+     *      "duck": "/ducks/yellow_duck.webp",                      || optional, string, starts_with:/ducks/, ends_with:.webp
+     *      "head_accessory": "/head_accessory/top_hat.webp",       || optional, string, starts_with:/head_accessory/, ends_with:.webp
+     *      "eye_accessory": "/eye_accessory/sunglasses.webp",      || optional, string, starts_with:/eye_accessory/, ends_with:.webp
+     *      "ear_accessory": "/ear_accessory/stud_earring.webp",    || optional, string, starts_with:/ear_accessory/, ends_with:.webp 
+     *      "neck_accessory": "/neck_accessory/gold_chain.webp",    || optional, string, starts_with:/neck_accessory/, ends_with:.webp
+     *      "chest_accessory": "/chest_accessory/bow_tie.webp",     || optional, string, starts_with:/chest_accessory/, ends_with:.webp
+     *      "background": "/background/beach.webp"                  || optional, string, starts_with:/background/, ends_with:.webp
+     *    }
      * }
      *
      * @response status=200 scenario="Success" {
@@ -451,6 +492,15 @@ class UserController extends Controller {
      *     "email": "max@example99.com",
      *     "display_name": "Maxi22",
      *     "role": "user",
+     *       "avatar_items": {
+     *         "duck": "/ducks/yellow_duck.webp",
+     *         "background": "/background/beach.webp",
+     *         "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *         "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *         "head_accessory": "/head_accessory/top_hat.webp",
+     *         "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *         "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *       },
      *     "is_banned": null,                                       || Admin and Moderator only
      *     "was_ever_banned": false,                                || Admin and Moderator only
      *     "moderation_info": [],                                   || Admin and Moderator only
@@ -509,6 +559,11 @@ class UserController extends Controller {
                 $this->getValidationRulesUpdate($user),
                 $this->getValidationMessages('User')
             );
+
+            if (isset($validatedData['avatar_items'])) {
+                $currentAvatarItems = $user->avatar_items ?? [];
+                $user->avatar_items = array_merge($currentAvatarItems, $validatedData['avatar_items']);
+            }
 
             $user = DB::transaction(function () use ($user, $validatedData, $request) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
