@@ -27,7 +27,6 @@ class UserProfile extends Model {
         'display_name',
         'public_email',
         'website',
-        'avatar_path',
         'is_public',
         'location',
         'biography',
