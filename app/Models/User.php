@@ -33,6 +33,9 @@ class User extends Authenticatable implements MustVerifyEmail {
         'password',
         // 'created_at',                    || Laravel will automatically handle the 'created_at' field
 
+        // Avatar-System
+        // 'avatar_type',                   || Explicitly set in UserController
+
         // Basic
         'display_name',
         // 'role',                          || Set during account creation (default is 'user')
@@ -90,6 +93,9 @@ class User extends Authenticatable implements MustVerifyEmail {
             // Default
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+
+            // Avatar-System
+            'avatar_items' => 'array',
 
             // Ban info
             'is_banned' => 'datetime',
