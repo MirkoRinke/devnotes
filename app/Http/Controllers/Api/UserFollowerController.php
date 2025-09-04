@@ -41,8 +41,8 @@ class UserFollowerController extends Controller {
 
         // These relationships are loaded unconditionally as they're needed for internal logic
         $query = $this->loadRelations($request, $query, [
-            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
-            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ['relation' => 'follower', 'foreignKey' => 'follower_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'follower', [], ['id', 'display_name', 'role', 'avatar_items', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ['relation' => 'user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'avatar_items', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
         ]);
 
         $query = $this->buildQuery($request, $query, 'user_followers');
@@ -122,6 +122,15 @@ class UserFollowerController extends Controller {
      *         "id": 21,
      *         "display_name": "Maxi21",
      *         "role": "user",
+     *         "avatar_items": {
+     *           "duck": "/ducks/yellow_duck.webp",
+     *           "background": "/background/beach.webp",
+     *           "ear_accessory": "/ear_accessory/stud_earring.webp",
+     *           "eye_accessory": "/eye_accessory/sunglasses.webp",
+     *           "head_accessory": "/head_accessory/top_hat.webp",
+     *           "neck_accessory": "/neck_accessory/gold_chain.webp",
+     *           "chest_accessory": "/chest_accessory/bow_tie.webp"
+     *         },
      *         "created_at": "2025-07-05T21:38:52.000000Z",
      *         "updated_at": "2025-07-05T21:38:52.000000Z",
      *         "is_banned": null,                           || Admin and Moderator only
