@@ -113,7 +113,8 @@ class AuthController extends Controller {
                     'password' => 'required',
                     'name' => 'required',
                     'device_fingerprint' => 'required|string|max:255',
-                    'privacy_policy_accepted' => ['required', 'accepted'],
+                    'privacy_policy_accepted' => ['sometimes', 'accepted'],
+                    'terms_of_service_accepted' => ['sometimes', 'accepted'],
                 ],
                 $this->getValidationMessages('Login')
             );
@@ -126,11 +127,26 @@ class AuthController extends Controller {
             }
 
             /**
-             * Set privacy policy acceptance timestamp
-             * This is required to ensure the user has accepted the privacy policy before logging in.
+             * Set privacy policy and terms of service acceptance timestamps
              */
-            $user->privacy_policy_accepted_at = now();
-            $user->save();
+            if ($request->privacy_policy_accepted) {
+                $user->privacy_policy_accepted_at = now();
+            }
+            if ($request->terms_of_service_accepted) {
+                $user->terms_of_service_accepted_at = now();
+            }
+            if ($request->privacy_policy_accepted || $request->terms_of_service_accepted) {
+                $user->save();
+            }
+
+            $defaultDate = Carbon::now()->subDays(2)->format('Y-m-d H:i:s');
+            if (!$user->privacy_policy_accepted_at || $user->privacy_policy_accepted_at < env('CURRENT_PRIVACY_POLICY_DATE', $defaultDate)) {
+                return $this->errorResponse('You must accept the latest privacy policy.', 'PRIVACY_POLICY_NOT_ACCEPTED', 403);
+            }
+
+            if (!$user->terms_of_service_accepted_at || $user->terms_of_service_accepted_at < env('CURRENT_TERMS_OF_SERVICE_DATE', $defaultDate)) {
+                return $this->errorResponse('You must accept the latest terms of service.', 'TERMS_OF_SERVICE_NOT_ACCEPTED', 403);
+            }
 
             if ($user->is_banned && now()->lt($user->is_banned)) {
                 return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
