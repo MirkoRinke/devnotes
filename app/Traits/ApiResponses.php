@@ -179,13 +179,46 @@ trait ApiResponses {
                     'password.min' => 'PASSWORD_TOO_SHORT',
                     'password.confirmed' => 'PASSWORD_CONFIRMATION_MISMATCH',
 
+                    'avatar_items.array' => 'AVATAR_ITEMS_MUST_BE_ARRAY',
+
+                    'avatar_items.duck.string' => 'DUCK_MUST_BE_STRING',
+                    'avatar_items.duck.starts_with' => 'DUCK_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.duck.ends_with' => 'DUCK_MUST_END_WITH_WEBP',
+
+                    'avatar_items.head_accessory.string' => 'HEAD_ACCESSORY_MUST_BE_STRING',
+                    'avatar_items.head_accessory.starts_with' => 'HEAD_ACCESSORY_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.head_accessory.ends_with' => 'HEAD_ACCESSORY_MUST_END_WITH_WEBP',
+
+                    'avatar_items.eye_accessory.string' => 'EYE_ACCESSORY_MUST_BE_STRING',
+                    'avatar_items.eye_accessory.starts_with' => 'EYE_ACCESSORY_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.eye_accessory.ends_with' => 'EYE_ACCESSORY_MUST_END_WITH_WEBP',
+
+                    'avatar_items.ear_accessory.string' => 'EAR_ACCESSORY_MUST_BE_STRING',
+                    'avatar_items.ear_accessory.starts_with' => 'EAR_ACCESSORY_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.ear_accessory.ends_with' => 'EAR_ACCESSORY_MUST_END_WITH_WEBP',
+
+                    'avatar_items.neck_accessory.string' => 'NECK_ACCESSORY_MUST_BE_STRING',
+                    'avatar_items.neck_accessory.starts_with' => 'NECK_ACCESSORY_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.neck_accessory.ends_with' => 'NECK_ACCESSORY_MUST_END_WITH_WEBP',
+
+                    'avatar_items.chest_accessory.string' => 'CHEST_ACCESSORY_MUST_BE_STRING',
+                    'avatar_items.chest_accessory.starts_with' => 'CHEST_ACCESSORY_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.chest_accessory.ends_with' => 'CHEST_ACCESSORY_MUST_END_WITH_WEBP',
+
+                    'avatar_items.background.string' => 'BACKGROUND_MUST_BE_STRING',
+                    'avatar_items.background.starts_with' => 'BACKGROUND_MUST_START_WITH_CORRECT_PATH',
+                    'avatar_items.background.ends_with' => 'BACKGROUND_MUST_END_WITH_WEBP',
+
+                    'privacy_policy_accepted' => 'PRIVACY_POLICY_ACCEPTED_FIELD_REQUIRED',
+                    'privacy_policy_accepted.accepted' => 'PRIVACY_POLICY_ACCEPTED_MUST_BE_TRUE',
+
+                    'terms_of_service_accepted' => 'TERMS_OF_SERVICE_ACCEPTED_FIELD_REQUIRED',
+                    'terms_of_service_accepted.accepted' => 'TERMS_OF_SERVICE_ACCEPTED_MUST_BE_TRUE',
+
                     'days.required' => 'DAYS_FIELD_REQUIRED',
                     'days.integer' => 'DAYS_MUST_BE_INTEGER',
                     'days.min' => 'DAYS_MUST_BE_AT_LEAST_1',
                     'days.max' => 'DAYS_CANNOT_EXCEED_99999',
-
-                    'privacy_policy_accepted' => 'PRIVACY_POLICY_ACCEPTED_FIELD_REQUIRED',
-                    'privacy_policy_accepted.accepted' => 'PRIVACY_POLICY_ACCEPTED_MUST_BE_TRUE',
                 ];
             case 'Post':
                 return [
@@ -271,9 +304,6 @@ trait ApiResponses {
 
                     'website.string' => 'WEBSITE_MUST_BE_STRING',
                     'website.max' => 'WEBSITE_FIELD_MAX_LENGTH',
-
-                    'avatar_path.string' => 'AVATAR_PATH_MUST_BE_STRING',
-                    'avatar_path.max' => 'AVATAR_PATH_FIELD_MAX_LENGTH',
 
                     'is_public.required' => 'IS_PUBLIC_FIELD_REQUIRED',
                     'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN',
