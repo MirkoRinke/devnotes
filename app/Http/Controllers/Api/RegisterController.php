@@ -144,6 +144,15 @@ class RegisterController extends Controller {
                 $user->display_name = $validatedData['display_name'];
                 $user->email = $validatedData['email'];
                 $user->password = bcrypt($validatedData['password']);
+                $user->avatar_items = [
+                    'duck' => null,
+                    'head_accessory' => null,
+                    'eye_accessory' => null,
+                    'ear_accessory' => null,
+                    'neck_accessory' => null,
+                    'chest_accessory' => null,
+                    'background' => null,
+                ];
                 $user->email_verified_at = config('app.features.email_verification', true) ? null : now();
                 $user->moderation_info = [];
                 $user->privacy_policy_accepted_at = now();
