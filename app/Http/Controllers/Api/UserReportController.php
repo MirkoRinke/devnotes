@@ -366,7 +366,6 @@ class UserReportController extends Controller {
      *         "display_name": "johndoe",
      *         "public_email": "johndoe@example.com",
      *         "website": "localhost:8000",
-     *         "avatar_path": null,
      *         "is_public": true,
      *         "location": "Berlin, Germany",
      *         "biography": "Software developer with a passion for open source projects.",
