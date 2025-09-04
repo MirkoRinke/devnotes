@@ -24,6 +24,9 @@ return new class extends Migration {
             $table->string('display_name')->unique();
             $table->string('role')->default('user');
 
+            // Avatar-System
+            $table->json('avatar_items');
+
             // Ban info
             $table->timestamp('is_banned')->nullable();
             $table->boolean('was_ever_banned')->default(false);
