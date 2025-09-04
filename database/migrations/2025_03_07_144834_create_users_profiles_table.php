@@ -20,7 +20,6 @@ return new class extends Migration {
             $table->string('display_name')->unique()->nullable();
             $table->string('public_email')->nullable();
             $table->string('website')->nullable();
-            $table->string('avatar_path')->nullable();
             $table->boolean('is_public')->default(true);
             $table->string('location')->nullable();
             $table->text('biography')->nullable();
