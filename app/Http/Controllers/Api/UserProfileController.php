@@ -66,7 +66,6 @@ class UserProfileController extends Controller {
             'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'public_email' => 'sometimes|nullable|email|max:255',
             'website' => ['sometimes', 'nullable', 'string', 'max:255', new SafeUrl()],
-            'avatar_path' => 'sometimes|nullable|string|max:255',
             'is_public' => 'sometimes|required|boolean',
             'location' => 'sometimes|nullable|string|max:255',
             'biography' => 'sometimes|nullable|string',
@@ -137,7 +136,6 @@ class UserProfileController extends Controller {
      *       "display_name": "Admin",
      *       "public_email": "contact@mirkorinke.dev",
      *       "website": "https://mirkorinke.dev/",
-     *       "avatar_path": null,
      *       "is_public": true,
      *       "location": "Hildesheim, Germany",
      *       "biography": "...",
@@ -297,7 +295,6 @@ class UserProfileController extends Controller {
      *     "display_name": "Admin",
      *     "public_email": "contact@mirkorinke.dev",
      *     "website": "https://mirkorinke.dev/",
-     *     "avatar_path": null,
      *     "is_public": true,
      *     "location": "Hildesheim, Germany",
      *     "biography": "...",
@@ -432,7 +429,6 @@ class UserProfileController extends Controller {
      * @bodyParam display_name string The display name of the user (2-255 characters). Example: "Admin"
      * @bodyParam public_email string|null The publicly visible email address. Example: "contact@mirkorinke.dev"
      * @bodyParam website string|null User's website. Example: "https://mirkorinke.dev/"
-     * @bodyParam avatar_path string|null Path to the user's avatar. Example: null
      * @bodyParam is_public boolean Whether the profile is publicly visible. Example: true
      * @bodyParam location string|null The user's location. Example: "Hildesheim, Germany"
      * @bodyParam biography string|null User's biography or description. Example: "..."
@@ -447,8 +443,7 @@ class UserProfileController extends Controller {
      * @bodyContent application/json Full Update {
      *   "display_name": "Admin",
      *   "public_email": "contact@mirkorinke.dev",
-     *   "website": "https://mirkorinke.dev/",
-     *   "avatar_path": null,
+     *   "website": "https://mirkorinke.dev/",    
      *   "is_public": true,
      *   "location": "Hildesheim, Germany",
      *   "biography": "...",
@@ -485,7 +480,6 @@ class UserProfileController extends Controller {
      *     "display_name": "Admin",
      *     "public_email": "contact@mirkorinke.dev",
      *     "website": "https://mirkorinke.dev/",
-     *     "avatar_path": null,
      *     "is_public": true,
      *     "location": "Hildesheim, Germany",
      *     "biography": "...",
@@ -649,7 +643,6 @@ class UserProfileController extends Controller {
      *     "display_name": "Admin",
      *     "public_email": "contact@mirkorinke.dev",
      *     "website": "https://mirkorinke.dev/",
-     *     "avatar_path": null,
      *     "is_public": true,
      *     "location": "Hildesheim, Germany",
      *     "biography": "...",
