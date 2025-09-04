@@ -59,7 +59,7 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                     // Basic
-                    ...['display_name', 'role'],
+                    ...['display_name', 'role', 'avatar_items'],
                     // Ban info
                     ...($hasModeratorPrivileges ? ['is_banned', 'was_ever_banned'] : []),
                     // Moderation info
@@ -105,7 +105,7 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                    ...['user_id', 'display_name', 'public_email', 'website', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
                     // Settings
                     ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
                     // Counts
@@ -115,7 +115,7 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['user_id', 'display_name', 'public_email', 'website', 'avatar_path', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
+                    ...['user_id', 'display_name', 'public_email', 'website', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
                     // Settings
                     ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
                     // Counts
