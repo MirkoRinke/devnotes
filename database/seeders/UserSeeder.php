@@ -43,9 +43,20 @@ class UserSeeder extends Seeder {
             $user->password = $data['password'];
             $user->display_name = $data['display_name'] ?? null;
             $user->role = $data['role'] ?? 'user';
+            $user->avatar_items = [
+                'duck' => null,
+                'head_accessory' => null,
+                'eye_accessory' => null,
+                'ear_accessory' => null,
+                'neck_accessory' => null,
+                'chest_accessory' => null,
+                'background' => null,
+            ];
             $user->email_verified_at = $data['email_verified_at'] ?? null;
             $user->account_purpose = $data['account_purpose'] ?? 'regular';
             $user->moderation_info = [];
+            $user->privacy_policy_accepted_at = now();
+            $user->terms_of_service_accepted_at = now();
 
             $user->save();
 
