@@ -28,9 +28,20 @@ class UserFactory extends Factory {
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'user',
+            'avatar_items' => [
+                'duck' => null,
+                'head_accessory' => null,
+                'eye_accessory' => null,
+                'ear_accessory' => null,
+                'neck_accessory' => null,
+                'chest_accessory' => null,
+                'background' => null,
+            ],
             'account_purpose' => 'regular',
             // 'remember_token' => Str::random(10),
             'moderation_info' => [],
+            'privacy_policy_accepted_at' => now(),
+            'terms_of_service_accepted_at' => now(),
         ];
     }
 
