@@ -32,7 +32,7 @@ return new class extends Migration {
             $table->boolean('was_ever_banned')->default(false);
 
             // Moderation info
-            $table->json('moderation_info')->nullable();
+            $table->json('moderation_info');
 
             // Account info
             $table->timestamp('privacy_policy_accepted_at')->nullable();
