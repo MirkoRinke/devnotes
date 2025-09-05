@@ -204,6 +204,8 @@ class UserController extends Controller {
      *         "contact_channels": {
      *           "discord": "gallifrey87"
      *         },
+     *         "preferred_theme": "system",
+     *         "preferred_language": "system",
      *         "auto_load_external_images": true,
      *         "external_images_temp_until": null,
      *         "auto_load_external_videos": true,
@@ -364,6 +366,8 @@ class UserController extends Controller {
      *         "contact_channels": {
      *           "discord": "madeline.jerde#1234"
      *         },
+     *       "preferred_theme": "system",
+     *       "preferred_language": "system",
      *       "auto_load_external_images": false,
      *       "external_images_temp_until": null,
      *       "auto_load_external_videos": false,
