@@ -35,6 +35,9 @@ class UserProfile extends Model {
         'contact_channels',
 
         // Settings
+        'preferred_theme',
+        'preferred_language',
+
         'auto_load_external_images',
         // 'external_images_temp_until',        || Explicitly set in controller via enableTemporaryExternals
 
