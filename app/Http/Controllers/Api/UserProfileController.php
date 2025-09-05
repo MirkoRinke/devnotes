@@ -72,6 +72,8 @@ class UserProfileController extends Controller {
             'skills' => 'sometimes|nullable|array',
             'social_links' => ['sometimes', 'nullable', 'array', new AllowedSocialLinks()],
             'contact_channels' => ['sometimes', 'nullable', 'array', new AllowedContactChannels()],
+            'preferred_theme' => ['sometimes', 'required', 'string', 'in:system,dark,light'],
+            'preferred_language' => ['sometimes', 'required', 'string', 'in:system,de,en'],
             'auto_load_external_images' => 'sometimes|required|boolean',
             'auto_load_external_videos' => 'sometimes|required|boolean',
             'auto_load_external_resources' => 'sometimes|required|boolean',
@@ -153,6 +155,8 @@ class UserProfileController extends Controller {
      *       "contact_channels": {
      *         "discord": "gallifrey87"
      *       },
+     *       "preferred_theme": "system",
+     *       "preferred_language": "system",
      *       "auto_load_external_images": true,
      *       "external_images_temp_until": null,
      *       "auto_load_external_videos": true,
@@ -312,6 +316,8 @@ class UserProfileController extends Controller {
      *     "contact_channels": {
      *       "discord": "gallifrey87"
      *     },
+     *     "preferred_theme": "system",
+     *     "preferred_language": "system",
      *     "auto_load_external_images": true,
      *     "external_images_temp_until": null,
      *     "auto_load_external_videos": true,
@@ -435,6 +441,8 @@ class UserProfileController extends Controller {
      * @bodyParam skills array|null Array of user skills. Example: ["TypeScript", "Angular", "PHP", "Laravel", "MySQL"]
      * @bodyParam social_links object|null Social media links. Example: {"github": "https://github.com/MirkoRinke", "linkedin": "https://linkedin.com/in/mirkorinke"}
      * @bodyParam contact_channels object|null Contact information, limited to "discord". Example: {"discord": "gallifrey87"}
+     * @bodyParam preferred_theme string Preferred theme: "system", "dark", or "light". Example: "system"
+     * @bodyParam preferred_language string Preferred language: "system", "de", or "en". Example: "system"
      * @bodyParam auto_load_external_images boolean Whether to auto-load external images. Example: true
      * @bodyParam auto_load_external_videos boolean Whether to auto-load external videos. Example: true
      * @bodyParam auto_load_external_resources boolean Whether to auto-load external resources. Example: true
@@ -455,6 +463,8 @@ class UserProfileController extends Controller {
      *   "contact_channels": {
      *     "discord": "gallifrey87"
      *   },
+     *   "preferred_theme": "system",
+     *   "preferred_language": "system",
      *   "auto_load_external_images": true,
      *   "auto_load_external_videos": true,
      *   "auto_load_external_resources": true,
@@ -497,6 +507,8 @@ class UserProfileController extends Controller {
      *     "contact_channels": {
      *       "discord": "gallifrey87"
      *     },
+     *     "preferred_theme": "system",
+     *     "preferred_language": "system",
      *     "auto_load_external_images": true,
      *     "external_images_temp_until": null,
      *     "auto_load_external_videos": true,
@@ -660,6 +672,8 @@ class UserProfileController extends Controller {
      *     "contact_channels": {
      *       "discord": "gallifrey87"
      *     },
+     *     "preferred_theme": "system",
+     *     "preferred_language": "system",
      *     "auto_load_external_images": true,
      *     "external_images_temp_until": null,
      *     "auto_load_external_videos": true,
