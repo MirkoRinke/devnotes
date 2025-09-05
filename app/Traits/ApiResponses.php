@@ -308,6 +308,14 @@ trait ApiResponses {
                     'is_public.required' => 'IS_PUBLIC_FIELD_REQUIRED',
                     'is_public.boolean' => 'IS_PUBLIC_MUST_BE_BOOLEAN',
 
+                    'preferred_theme.required' => 'PREFERRED_THEME_FIELD_REQUIRED',
+                    'preferred_theme.string' => 'PREFERRED_THEME_MUST_BE_STRING',
+                    'preferred_theme.in' => 'PREFERRED_THEME_INVALID_OPTION',
+
+                    'preferred_language.required' => 'PREFERRED_LANGUAGE_FIELD_REQUIRED',
+                    'preferred_language.string' => 'PREFERRED_LANGUAGE_MUST_BE_STRING',
+                    'preferred_language.in' => 'PREFERRED_LANGUAGE_INVALID_OPTION',
+
                     'auto_load_external_images.required' => 'AUTO_LOAD_EXTERNAL_IMAGES_FIELD_REQUIRED',
                     'auto_load_external_images.boolean' => 'AUTO_LOAD_EXTERNAL_IMAGES_MUST_BE_BOOLEAN',
 
