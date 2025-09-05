@@ -372,6 +372,8 @@ class UserReportController extends Controller {
      *         "skills": "PHP, Laravel, JavaScript",
      *         "social_links": null,
      *         "contact_channels": null,
+     *         "preferred_theme": "system",
+     *         "preferred_language": "system", 
      *         "auto_load_external_images": false,
      *         "external_images_temp_until": null,
      *         "auto_load_external_videos": false,
