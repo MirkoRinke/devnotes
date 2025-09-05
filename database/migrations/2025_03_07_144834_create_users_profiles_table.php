@@ -28,6 +28,9 @@ return new class extends Migration {
             $table->json('contact_channels')->nullable();
 
             // Settings
+            $table->string('preferred_theme')->default('system');
+            $table->string('preferred_language')->default('system');
+
             $table->boolean('auto_load_external_images')->default(false);
             $table->timestamp('external_images_temp_until')->nullable();
 
