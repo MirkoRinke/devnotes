@@ -100,6 +100,8 @@ trait QueryBuilder {
                     ...['user_id', 'display_name', 'is_public', 'location'],
                     // Counts
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
+                    // Settings
+                    ...['preferred_theme', 'preferred_language'],
                 ],
                 'filter' => [
                     // Default
@@ -107,7 +109,7 @@ trait QueryBuilder {
                     // Basic
                     ...['user_id', 'display_name', 'public_email', 'website', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
                     // Settings
-                    ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
+                    ...['preferred_theme', 'preferred_language', 'auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
                     // Counts
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                 ],
@@ -117,7 +119,7 @@ trait QueryBuilder {
                     // Basic
                     ...['user_id', 'display_name', 'public_email', 'website', 'is_public', 'location', 'skills', 'biography', 'social_links', 'contact_channels'],
                     // Settings
-                    ...['auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
+                    ...['preferred_theme', 'preferred_language', 'auto_load_external_images', 'external_images_temp_until', 'auto_load_external_videos', 'external_videos_temp_until', 'auto_load_external_resources', 'external_resources_temp_until'],
                     // Counts
                     ...($hasModeratorPrivileges ? ['reports_count'] : []),
                 ],
