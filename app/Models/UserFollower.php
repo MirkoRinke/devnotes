@@ -27,6 +27,7 @@ class UserFollower extends Model {
         // 'follower_id',           || Explicitly set in controller from authenticated user
 
         // Update info
+        // 'last_posts_visited_at'  || Can be set when user visits posts of the followed user
         // 'updated_at',            || Laravel will automatically handle the 'updated_at' field
     ];
 
@@ -46,7 +47,9 @@ class UserFollower extends Model {
      *
      * @var array
      */
-    protected $casts = [];
+    protected $casts = [
+        'last_posts_visited_at' => 'datetime',
+    ];
 
     /**
      * Get the user that owns the UserFollower.
