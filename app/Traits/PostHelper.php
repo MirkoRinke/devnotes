@@ -5,6 +5,7 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 
 use App\Models\Post;
+use App\Models\UserFollower;
 
 trait PostHelper {
 
@@ -27,5 +28,27 @@ trait PostHelper {
         }
 
         return $existingPost->external_source_previews ?? [];
+    }
+
+
+    /**
+     * If the posts belong to a single user and the authenticated user follows that user,
+     * update the last_posts_visited_at timestamp for that follower relationship.
+     * 
+     * @param \Illuminate\Support\Collection $posts
+     * @param \App\Models\User|null $user
+     * 
+     * @return void
+     * 
+     * @example | $this->setLastPostVisitedIfFollowing($posts, $user)
+     */
+    protected function setLastPostVisitedIfFollowing($posts, $user) {
+        $postsUserIds = $posts->pluck('user_id')->unique()->toArray();
+
+        if (count($postsUserIds) === 1) {
+            UserFollower::where('user_id', $postsUserIds[0])
+                ->where('follower_id', $user->id)
+                ->update(['last_posts_visited_at' => now()]);
+        }
     }
 }
