@@ -288,18 +288,24 @@ trait QueryBuilder {
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
                     ...['user_id', 'follower_id'],
+                    // Update info
+                    ...['last_posts_visited_at'],
                 ],
                 'filter' => [
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
                     ...['user_id', 'follower_id'],
+                    // Update info
+                    ...['last_posts_visited_at'],
                 ],
                 'select' => [
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
                     ...['user_id', 'follower_id'],
+                    // Update info
+                    ...['last_posts_visited_at'],
                 ],
                 'setLimit' => 10,
                 'paginate' => 10
