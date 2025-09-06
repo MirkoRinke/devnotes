@@ -96,6 +96,7 @@ class UserFollowerController extends Controller {
      *       "id": 4,
      *       "user_id": 1,
      *       "follower_id": 21,
+     *       "last_posts_visited_at": "2025-07-10T14:20:00.000000Z",
      *       "created_at": "2025-07-09T16:37:32.000000Z",
      *       "updated_at": "2025-07-09T16:37:32.000000Z",
      *       "is_following_back": true                      || Virtual field: true if the authenticated user follows this follower
@@ -115,6 +116,7 @@ class UserFollowerController extends Controller {
      *       "id": 4,
      *       "user_id": 1,
      *       "follower_id": 21,
+     *       "last_posts_visited_at": "2025-07-10T14:20:00.000000Z",
      *       "created_at": "2025-07-09T16:37:32.000000Z",
      *       "updated_at": "2025-07-09T16:37:32.000000Z",
      *       "is_following_back": true,                     || Virtual field: true if the authenticated user follows this follower
@@ -250,6 +252,7 @@ class UserFollowerController extends Controller {
      *       "id": 1,
      *       "user_id": 5,
      *       "follower_id": 1,
+     *       "last_posts_visited_at": "2025-07-10T14:20:00.000000Z",
      *       "created_at": "2025-07-09T16:37:06.000000Z",
      *       "updated_at": "2025-07-09T16:37:06.000000Z",
      *       "is_following_back": false // Virtual field: true if the user being followed also follows the authenticated user
@@ -269,6 +272,7 @@ class UserFollowerController extends Controller {
      *       "id": 1,
      *       "user_id": 5,
      *       "follower_id": 1,
+     *       "last_posts_visited_at": "2025-07-10T14:20:00.000000Z",
      *       "created_at": "2025-07-09T16:37:06.000000Z",
      *       "updated_at": "2025-07-09T16:37:06.000000Z",
      *       "is_following_back": false,                                || Virtual field: true if the user being followed also follows the authenticated user
@@ -370,6 +374,7 @@ class UserFollowerController extends Controller {
      *     "id": 7,
      *     "user_id": 5,
      *     "follower_id": 1,
+     *     "last_posts_visited_at": null,
      *     "created_at": "2025-05-06T18:12:45.000000Z",
      *     "updated_at": "2025-05-06T18:12:45.000000Z"
      *   }
@@ -384,6 +389,7 @@ class UserFollowerController extends Controller {
      *     "id": 7,
      *     "user_id": 5,
      *     "follower_id": 1,
+     *     "last_posts_visited_at": null,
      *     "created_at": "2025-05-06T18:12:45.000000Z",
      *     "updated_at": "2025-05-06T18:12:45.000000Z"
      *   }
@@ -430,6 +436,7 @@ class UserFollowerController extends Controller {
             $follow = new UserFollower();
             $follow->user_id = $userToFollow->id;
             $follow->follower_id = $follower->id;
+            $follow->last_posts_visited_at = null;
             $follow->save();
 
             return $this->successResponse($follow, 'User followed successfully', 201);
