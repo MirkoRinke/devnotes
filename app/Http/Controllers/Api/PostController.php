@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 use App\Models\Post;
-
 use App\Rules\SafeUrl;
 use App\Rules\ValidPostValue;
 
@@ -349,6 +348,8 @@ class PostController extends Controller {
             $posts = $this->isLiked($request, $user, $posts, 'post', $originalSelectFields);
 
             $posts = $this->isFollowing($request, $posts);
+
+            $this->setLastPostVisitedIfFollowing($posts, $user);
 
             return $this->successResponse($posts, 'Posts retrieved successfully');
         } catch (Exception $e) {
