@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->unique(['user_id', 'follower_id'], 'user_follower_unique');
 
             // Update info
+            $table->timestamp('last_posts_visited_at')->nullable();
             $table->timestamps();
         });
     }
