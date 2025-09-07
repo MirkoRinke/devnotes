@@ -232,6 +232,7 @@ class PostController extends Controller {
      *       "updated_at": "2025-06-23T22:53:53.000000Z",
      *       "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
      *       "is_liked": false,                             || Virtual field, true if the authenticated user has liked this post
+     *       "is_read": false,                              || Virtual field, true if the authenticated user has read this post
      *       "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
      *         { "id": 1, "name": "Laravel" },              || Note: Users can create new tags when posting; other allowed values are admin-only.
      *         { "id": 2, "name": "PHP" },
@@ -346,6 +347,8 @@ class PostController extends Controller {
             $posts = $this->isFavorited($request, $user, $posts, $originalSelectFields);
 
             $posts = $this->isLiked($request, $user, $posts, 'post', $originalSelectFields);
+
+            $posts = $this->isRead($request, $user, $posts, $originalSelectFields);
 
             $posts = $this->isFollowing($request, $posts);
 
@@ -659,6 +662,7 @@ class PostController extends Controller {
      *     "updated_at": "2025-05-04T22:00:45.000000Z",
      *     "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
      *     "is_liked": false,                             || Virtual field, true if the authenticated user has liked this post
+     *     "is_read": true,                               || Virtual field, true if the authenticated user has read this post
      *     "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values. Users can create new tags when posting; other allowed values are admin-only.
      *       { "id": 1, "name": "svelte" },
      *       { "id": 2, "name": "store" },
@@ -754,6 +758,10 @@ class PostController extends Controller {
             $post = $this->isLiked($request, $user, $post, 'post', $originalSelectFields);
 
             $post = $this->isFollowing($request, $post);
+
+            $this->markPostAsRead($post, $user);
+
+            $this->isRead($request, $user, $post, $originalSelectFields);
 
             return $this->successResponse($post, 'Post retrieved successfully', 200);
         } catch (ModelNotFoundException $e) {
