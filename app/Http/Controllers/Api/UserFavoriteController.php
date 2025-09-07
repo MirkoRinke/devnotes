@@ -19,6 +19,7 @@ use App\Traits\PostQuerySetup;
 use App\Traits\UserFavoriteHelper;
 use App\Traits\UserLikeHelper;
 use App\Traits\UserFollowerHelper;
+use App\Traits\PostHelper;
 
 
 use Exception;
@@ -41,7 +42,7 @@ class UserFavoriteController extends Controller {
     /**
      *  The traits used in the controller
      */
-    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup, UserFavoriteHelper, UserLikeHelper, UserFollowerHelper;
+    use  ApiResponses, QueryBuilder, ApiInclude, RelationLoader, AuthorizesRequests, FieldManager, PostQuerySetup, UserFavoriteHelper, UserLikeHelper, UserFollowerHelper, PostHelper;
 
 
     /**
@@ -404,6 +405,7 @@ class UserFavoriteController extends Controller {
      *       "updated_at": "2025-06-23T22:53:53.000000Z",
      *       "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
      *       "is_liked": false,                             || Virtual field, true if the authenticated user has liked this post
+     *       "is_read": true,                               || Virtual field, true if the authenticated user has read this post
      *       "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
      *         { "id": 1, "name": "Laravel" },              || Note: Users can create new tags when posting; other allowed values are admin-only.
      *         { "id": 2, "name": "PHP" },
@@ -511,6 +513,8 @@ class UserFavoriteController extends Controller {
             $posts = $this->isLiked($request, $user, $posts, 'post', $originalSelectFields);
 
             $posts = $this->isFollowing($request, $posts);
+
+            $this->isRead($request, $user, $posts, $originalSelectFields);
 
             return $this->successResponse($posts, 'Favorited posts retrieved successfully', 200);
         } catch (Exception $e) {
