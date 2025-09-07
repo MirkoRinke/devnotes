@@ -168,7 +168,7 @@ trait QueryBuilder {
                     // Moderation info
                     ...($hasModeratorPrivileges ? ['moderation_info'] : []),
                     // Relationship Status Flags
-                    ...['is_favorited', 'is_liked'],
+                    ...['is_favorited', 'is_liked', 'is_read'],
                 ],
                 'setLimit' => 10,
                 'paginate' => 10
