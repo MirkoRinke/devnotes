@@ -247,4 +247,16 @@ class User extends Authenticatable implements MustVerifyEmail {
     public function postAllowedValues() {
         return $this->hasMany(PostAllowedValue::class, 'created_by_user_id');
     }
+
+    /**
+     * Get all post reads created by this user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * 
+     * @example | $user->postReads // Access the related post reads
+     * @example | User::with('postReads')->get() // Eager loading
+     */
+    public function postReads() {
+        return $this->hasMany(PostRead::class);
+    }
 }
