@@ -21,6 +21,9 @@ trait ApiSorting {
 
     /**
      * Sort the query based on the request parameters.
+     * The 'sort' parameter can be a comma-separated string or an array.
+     * Prefix a column with '-' for descending order, otherwise ascending is assumed.
+     * If 'random' is specified, the results will be returned in random order.
      *
      * @param Request $request
      * @param Builder $query
@@ -41,6 +44,11 @@ trait ApiSorting {
         }
 
         foreach ($sort as $orderSettings) {
+
+            if ($orderSettings === 'random') {
+                $query->inRandomOrder();
+                break;
+            }
 
             $orderColumnName = str_starts_with($orderSettings, '-') ? substr($orderSettings, 1) : $orderSettings;
             $orderDirection = str_starts_with($orderSettings, '-') ? 'desc' : 'asc';
