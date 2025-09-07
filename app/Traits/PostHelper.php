@@ -43,6 +43,10 @@ trait PostHelper {
      * @example | $this->setLastPostVisitedIfFollowing($posts, $user)
      */
     protected function setLastPostVisitedIfFollowing($posts, $user) {
+        if (!$user) {
+            return;
+        }
+
         $postsUserIds = $posts->pluck('user_id')->unique()->toArray();
 
         if (count($postsUserIds) === 1) {
