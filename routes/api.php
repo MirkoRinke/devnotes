@@ -176,8 +176,10 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
         Route::get('/user/favorites', [UserFavoriteController::class, 'index']);
         Route::post('/posts/{post}/favorites', [UserFavoriteController::class, 'store']);
         Route::delete('/posts/{post}/favorites', [UserFavoriteController::class, 'destroy']);
+        Route::patch('/posts/{postId}/favorites/important', [UserFavoriteController::class, 'toggleImportant']);
 
-        Route::get('/user/favorites/posts', [UserFavoriteController::class, 'getFavoritePosts']);
+        Route::get('/user/favorites/posts/', [UserFavoriteController::class, 'getFavoritePosts']);
+        Route::get('/user/favorites/posts/important', [UserFavoriteController::class, 'getFavoritePosts'])->defaults('important', true);
     });
 
     /**
