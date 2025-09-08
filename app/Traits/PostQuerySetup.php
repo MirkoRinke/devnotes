@@ -41,7 +41,7 @@ trait PostQuerySetup {
 
         $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'user_id']);
 
-        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields], ['is_favorited', 'is_liked', 'is_read']);
+        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields], ['is_favorited', 'is_liked', 'is_read', 'is_important']);
 
         $query = $this->loadUserRelation($request, $query, 'user_id');
 
