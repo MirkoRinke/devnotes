@@ -572,12 +572,30 @@ class UserController extends Controller {
             $user = DB::transaction(function () use ($user, $validatedData, $request) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
 
+                if (isset($validatedData['email']) && $user->email !== $validatedData['email']) {
+                    $user->email_verified_at = null;
+
+                    /**
+                     * Send email verification notification
+                     */
+                    if (config('app.features.email_verification', true)) {
+                        $user->sendEmailVerificationNotification();
+                    } else {
+                        $user->email_verified_at = now();
+                    }
+                }
+
                 $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
                     'email' => $validatedData['email'] ?? $user->email,
                 ]);
 
                 if (isset($validatedData['password']) && $user === $request->user()) {
+
+                    if ($user->email === null) {
+                        return $this->errorResponse('Valid email required to set password', 'VALID_EMAIL_REQUIRED', 422);
+                    }
+
                     $user->password = bcrypt($validatedData['password']);
 
                     /**
