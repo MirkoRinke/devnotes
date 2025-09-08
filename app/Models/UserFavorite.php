@@ -25,6 +25,7 @@ class UserFavorite extends Model {
         // Basic
         // 'user_id',           || Explicitly set in controller from authenticated user
         // 'post_id',           || Explicitly set in controller from post parameter
+        // 'is_important',      || Can be set via a dedicated endpoint
 
         // Update info
         // 'updated_at',        || Laravel will automatically handle the 'updated_at' field
@@ -42,7 +43,9 @@ class UserFavorite extends Model {
      *
      * @var array
      */
-    protected $casts = [];
+    protected $casts = [
+        'is_important' => 'boolean',
+    ];
 
     /**
      * Get the user that owns the UserFavorite
