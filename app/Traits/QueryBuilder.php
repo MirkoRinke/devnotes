@@ -168,7 +168,7 @@ trait QueryBuilder {
                     // Moderation info
                     ...($hasModeratorPrivileges ? ['moderation_info'] : []),
                     // Relationship Status Flags
-                    ...['is_favorited', 'is_liked', 'is_read'],
+                    ...['is_favorited', 'is_liked', 'is_read', 'is_important'],
                 ],
                 'setLimit' => 10,
                 'paginate' => 10
@@ -221,19 +221,19 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['user_id', 'post_id'],
+                    ...['user_id', 'post_id', 'is_important'],
                 ],
                 'filter' => [
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['user_id', 'post_id'],
+                    ...['user_id', 'post_id', 'is_important'],
                 ],
                 'select' => [
                     // Default
                     ...['id', 'created_at', 'updated_at'],
                     // Basic
-                    ...['user_id', 'post_id'],
+                    ...['user_id', 'post_id', 'is_important'],
                 ],
                 'setLimit' => 10,
                 'paginate' => 10
