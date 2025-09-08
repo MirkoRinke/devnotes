@@ -208,6 +208,7 @@ class UserFavoriteController extends Controller {
                     $favorite = new UserFavorite();
                     $favorite->user_id = $user->id;
                     $favorite->post_id = $post->id;
+                    $favorite->is_important = false;
                     $favorite->save();
 
                     $this->updateFavoriteCount($post, 'increment');
@@ -220,6 +221,73 @@ class UserFavoriteController extends Controller {
             }
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
+     * Toggle Important Flag on a Favorited Post
+     * 
+     * Endpoint: PATCH /posts/{postId}/favorites/important
+     *
+     * Toggles the "important" status of a favorited post for the authenticated user.
+     * Returns an error if the post is not already in the user's favorites.
+     *
+     * @group Favorites
+     *
+     * @urlParam postId integer required The ID of the post to mark as important. Example: 28
+     * 
+     * @response status=200 scenario="Important status toggled" {
+     *   "status": "success",
+     *   "message": "Favorite marked as important",
+     *   "code": 200,
+     *   "count": 1,
+     *   "data": {
+     *     "id": 1239,
+     *     "user_id": 1,
+     *     "post_id": 28,
+     *     "is_important": true,
+     *     "created_at": "2025-07-09T14:25:41.000000Z",
+     *     "updated_at": "2025-07-09T14:26:35.000000Z"
+     *   }
+     * }
+     * 
+     * @response status=404 scenario="Post not in favorites" {
+     *   "status": "error",
+     *   "message": "Post is not in favorites",
+     *   "code": 404,
+     *   "errors": "POST_NOT_IN_FAVORITES"
+     * }
+     *
+     * @response status=500 scenario="Server Error" {
+     *   "status": "error", 
+     *   "message": "An unexpected error occurred",
+     *   "code": 500,
+     *   "errors": "SERVER_ERROR"
+     * }
+     * 
+     * @authenticated
+     */
+    public function toggleImportant(Request $request, $postId): JsonResponse {
+        try {
+            $user = $request->user();
+
+            $favorite = UserFavorite::where('user_id', $user->id)
+                ->where('post_id', $postId)
+                ->first();
+
+            if (!$favorite) {
+                return $this->errorResponse('Post is not in favorites', 'POST_NOT_IN_FAVORITES', 404);
+            }
+
+            $favorite->is_important = !$favorite->is_important;
+            $favorite->save();
+
+            $message = $favorite->is_important ? 'Favorite marked as important' : 'Favorite unmarked as important';
+
+            return $this->successResponse($favorite, $message, 200);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
@@ -406,6 +474,7 @@ class UserFavoriteController extends Controller {
      *       "is_favorited": false,                         || Virtual field, true if the authenticated user has favorited this post
      *       "is_liked": false,                             || Virtual field, true if the authenticated user has liked this post
      *       "is_read": true,                               || Virtual field, true if the authenticated user has read this post
+     *       "is_important": false,                         || Virtual field, true if the authenticated user has marked this favorite as important
      *       "tags": [                                      || See /post-allowed-values/?filter[type]=tag for valid values.
      *         { "id": 1, "name": "Laravel" },              || Note: Users can create new tags when posting; other allowed values are admin-only.
      *         { "id": 2, "name": "PHP" },
@@ -483,13 +552,19 @@ class UserFavoriteController extends Controller {
      *
      * @authenticated
      */
-    public function getFavoritePosts(Request $request): JsonResponse {
+    public function getFavoritePosts(Request $request, bool $important = false): JsonResponse {
         try {
             $user = $request->user();
 
-            $query = Post::query()->whereHas('favorites', function ($subQuery) use ($user) {
-                $subQuery->where('user_id', $user->id);
-            });
+            if ($important) {
+                $query = Post::query()->whereHas('favorites', function ($subQuery) use ($user) {
+                    $subQuery->where('user_id', $user->id)->where('is_important', true);
+                });
+            } else
+                $query = Post::query()->whereHas('favorites', function ($subQuery) use ($user) {
+                    $subQuery->where('user_id', $user->id);
+                });
+
 
             $originalSelectFields = $this->getSelectFields($request);
 
@@ -515,6 +590,8 @@ class UserFavoriteController extends Controller {
             $posts = $this->isFollowing($request, $posts);
 
             $this->isRead($request, $user, $posts, $originalSelectFields);
+
+            $this->isImportant($request, $user, $posts, $originalSelectFields, $important);
 
             return $this->successResponse($posts, 'Favorited posts retrieved successfully', 200);
         } catch (Exception $e) {
