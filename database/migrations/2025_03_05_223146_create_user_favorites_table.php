@@ -20,6 +20,8 @@ class CreateUserFavoritesTable extends Migration {
             $table->foreignId('post_id')->constrained()->onDelete('cascade');
             $table->unique(['user_id', 'post_id']); // A user can only favorite a post once
 
+            $table->boolean('is_important')->default(false);
+
             // Update info
             $table->timestamps();
         });
