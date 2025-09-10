@@ -113,15 +113,20 @@ trait ApiResponses {
                 ];
             case 'Login':
                 return [
+
                     'email.required' => 'EMAIL_FIELD_REQUIRED',
                     'email.string' => 'EMAIL_MUST_BE_STRING',
                     'email.email' => 'EMAIL_MUST_BE_VALID',
 
+                    'user_name.required' => 'USERNAME_FIELD_REQUIRED',
+                    'user_name.string' => 'USERNAME_MUST_BE_STRING',
+                    'user_name.max' => 'USERNAME_FIELD_MAX_LENGTH',
+
                     'password.required' => 'PASSWORD_FIELD_REQUIRED',
                     'password.string' => 'PASSWORD_MUST_BE_STRING',
 
-                    'name' => 'NAME_FIELD_REQUIRED',
-                    'name.string' => 'NAME_MUST_BE_STRING',
+                    'device_name' => 'NAME_FIELD_REQUIRED',
+                    'device_name.string' => 'NAME_MUST_BE_STRING',
 
                     'device_fingerprint' => 'DEVICE_FINGERPRINT_FIELD_REQUIRED',
                     'device_fingerprint.string' => 'DEVICE_FINGERPRINT_MUST_BE_STRING',
