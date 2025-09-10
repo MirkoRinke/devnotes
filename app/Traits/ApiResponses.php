@@ -165,6 +165,7 @@ trait ApiResponses {
             case 'User':
                 return [
                     'name.required' => 'NAME_FIELD_REQUIRED',
+                    'name.unique' => 'NAME_ALREADY_IN_USE',
                     'name.string' => 'NAME_MUST_BE_STRING',
                     'name.min' => 'NAME_FIELD_MIN_LENGTH',
                     'name.max' => 'NAME_FIELD_MAX_LENGTH',
