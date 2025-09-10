@@ -40,6 +40,7 @@ class AuthController extends Controller {
      * @group User Authentication
      *
      * @bodyParam email string required User's email address. Example: max@example1.com
+     * @bodyParam user_name string required User's username. Example: max
      * @bodyParam password string required User's password. Example: sicheresPasswort123
      * @bodyParam device_name string required Name for the device/browser creating this token. Example: test_device1
      * @bodyParam device_fingerprint string required Unique device fingerprint (SHA256 hash). Example: 9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002
@@ -109,7 +110,8 @@ class AuthController extends Controller {
         try {
             $request->validate(
                 [
-                    'email' => 'required|email',
+                    'email' => 'sometimes|required|email',
+                    'user_name' => 'sometimes|required|string',
                     'password' => 'required',
                     'device_name' => 'required',
                     'device_fingerprint' => 'required|string|max:255',
@@ -119,8 +121,15 @@ class AuthController extends Controller {
                 $this->getValidationMessages('Login')
             );
 
-            $user = User::where('email', $request->email)->first();
+            if (!$request->has('email') && !$request->has('user_name')) {
+                return $this->errorResponse('Either email or user_name must be provided.', 'EMAIL_OR_USERNAME_REQUIRED', 422);
+            }
 
+            if ($request->has('email')) {
+                $user = User::where('email', $request->email)->first();
+            } else {
+                $user = User::where('name', $request->user_name)->first();
+            }
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
