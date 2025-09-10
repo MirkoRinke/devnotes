@@ -41,14 +41,14 @@ class AuthController extends Controller {
      *
      * @bodyParam email string required User's email address. Example: max@example1.com
      * @bodyParam password string required User's password. Example: sicheresPasswort123
-     * @bodyParam name string required Name for the device/browser creating this token. Example: test_device1
+     * @bodyParam device_name string required Name for the device/browser creating this token. Example: test_device1
      * @bodyParam device_fingerprint string required Unique device fingerprint (SHA256 hash). Example: 9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002
      * @bodyParam privacy_policy_accepted boolean required Must be true to proceed with login. Example: true
      *
      * @bodyContent {
      *   "email": "max@example1.com",
      *   "password": "sicheresPasswort123",
-     *   "name": "test_device1",
+     *   "device_name": "test_device1",
      *   "device_fingerprint": "9e2f1c3a4b5d11eebe560242ac1200029e2f1c3a4b5d11eebe560242ac120002",
      *   "privacy_policy_accepted": true
      * }
@@ -92,7 +92,7 @@ class AuthController extends Controller {
      *   "errors": {
      *     "email": ["EMAIL_FIELD_REQUIRED"],
      *     "password": ["PASSWORD_FIELD_REQUIRED"],
-     *     "name": ["NAME_FIELD_REQUIRED"],
+     *     "device_name": ["DEVICE_NAME_FIELD_REQUIRED"],
      *     "device_fingerprint": ["DEVICE_FINGERPRINT_FIELD_REQUIRED"],
      *     "privacy_policy_accepted": ["PRIVACY_POLICY_ACCEPTED_FIELD_REQUIRED"],
      *   }
@@ -111,7 +111,7 @@ class AuthController extends Controller {
                 [
                     'email' => 'required|email',
                     'password' => 'required',
-                    'name' => 'required',
+                    'device_name' => 'required',
                     'device_fingerprint' => 'required|string|max:255',
                     'privacy_policy_accepted' => ['sometimes', 'accepted'],
                     'terms_of_service_accepted' => ['sometimes', 'accepted'],
@@ -153,11 +153,11 @@ class AuthController extends Controller {
             }
 
             /**
-             * Delete all tokens with the same device name OR tokens that are expired
+             * Delete all tokens with the same name OR tokens that are expired
              */
-            $user->tokens()->where('name', $request->name)->orWhere('expires_at', '<', now())->delete();
+            $user->tokens()->where('name', $request->device_name)->orWhere('expires_at', '<', now())->delete();
 
-            $token = $user->createToken($request->name);
+            $token = $user->createToken($request->device_name);
             $token->accessToken->expires_at = Carbon::now()->addDays(30);
             $token->accessToken->device_fingerprint = $request->device_fingerprint;
             $token->accessToken->save();
