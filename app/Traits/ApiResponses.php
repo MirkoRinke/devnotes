@@ -278,10 +278,15 @@ trait ApiResponses {
                     'moderation_reason.required' => 'MODERATION_REASON_FIELD_REQUIRED',
                     'moderation_reason.string' => 'MODERATION_REASON_MUST_BE_STRING',
                     'moderation_reason.max' => 'MODERATION_REASON_FIELD_MAX_LENGTH',
-
+                ];
+            case 'PostInteractions':
+                return [
                     'type.required' => 'TYPE_FIELD_REQUIRED',
-                    'type.in' => 'TYPE_INVALID_OPTION',
                     'type.string' => 'TYPE_MUST_BE_STRING',
+                    'type.in' => 'TYPE_INVALID_OPTION',
+
+                    'period.string' => 'PERIOD_MUST_BE_STRING',
+                    'period.in' => 'PERIOD_INVALID_OPTION',
                 ];
             case 'UserProfile':
                 return [
