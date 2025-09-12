@@ -34,8 +34,15 @@ class UserStatsController extends Controller {
      * @urlParam user_id required The ID of the user to get interactions for. Example: 1
      * 
      * @queryParam type required The type of interaction to count. Must be either "likes_count", "favorite_count" or "interactions".
+     * @queryParam period optional Filter results by time period. Available options:
+     *   - Rolling time periods: subDay (last 24h), subWeek (last 7 days), subMonth (last 30 days), subYear (last 365 days)
+     *   - Calendar periods: startOfDay (since 00:00 today), startOfWeek (since start of current week), 
+     *     startOfMonth (since 1st of current month), startOfYear (since Jan 1st of current year)
+     *   - If not specified, returns all-time statistics
      * 
      * Example URL: /users/1/post-interactions/?type=likes_count
+     * Example URL with period: /users/1/post-interactions/?type=interactions&period=subWeek
+     * Example URL with calendar period: /users/1/post-interactions/?type=likes_count&period=startOfMonth
      * 
      * @response status=200 scenario="Success (likes_count)" {
      *   "status": "success",
@@ -96,16 +103,25 @@ class UserStatsController extends Controller {
             $validatedData = $request->validate(
                 [
                     'type' => 'required|string|in:likes_count,favorite_count,interactions',
+                    'period' => 'sometimes|string|in:subDay,subWeek,subMonth,subYear,startOfDay,startOfWeek,startOfMonth,startOfYear'
                 ],
-                $this->getValidationMessages('Post')
+                $this->getValidationMessages('PostInteractions')
             );
 
+            $period = $validatedData['period'] ?? null;
+
+            $query = Post::where('user_id', $id);
+
+            if ($period) {
+                $query->where('created_at', '>=', now()->{$period}());
+            }
+
             if ($validatedData['type'] === 'likes_count' || $validatedData['type'] === 'favorite_count') {
-                $total = (int)Post::where('user_id', $id)->sum($validatedData['type']);
+                $total = (int)$query->sum($validatedData['type']);
             }
 
             if ($validatedData['type'] === 'interactions') {
-                $total = (int)Post::where('user_id', $id)->sum('likes_count') + Post::where('user_id', $id)->sum('favorite_count');
+                $total = (int)$query->sum('likes_count') + $query->sum('favorite_count');
             }
 
             return $this->successResponse($total, 'Total ' . $validatedData['type'] . ' for user with ID ' . $id, 200);
