@@ -35,6 +35,11 @@ class PostFactory extends Factory {
             $statuses = PostAllowedValue::where('type', 'status')->pluck('name')->toArray();
         }
 
+        $createdAt = fake()->dateTimeBetween('-1 year', 'now');
+
+        $updatedAt = fake()->optional(0.7, $createdAt)->dateTimeBetween($createdAt, 'now');
+
+
         return [
             'user_id' => User::whereNotIn('role', ['system'])->inRandomOrder()->first()?->id ?? User::factory(),
             'title' => fake()->sentence(6, true),
@@ -103,6 +108,8 @@ class PostFactory extends Factory {
             'status' => fake()->randomElement($statuses),
             'history' => [],
             'moderation_info' => [],
+            'created_at' => $createdAt,
+            'updated_at' => $updatedAt,
         ];
     }
 
