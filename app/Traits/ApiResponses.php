@@ -288,6 +288,19 @@ trait ApiResponses {
                     'period.string' => 'PERIOD_MUST_BE_STRING',
                     'period.in' => 'PERIOD_INVALID_OPTION',
                 ];
+            case 'TopUsersByPostInteractions':
+                return [
+                    'type.required' => 'TYPE_FIELD_REQUIRED',
+                    'type.string' => 'TYPE_MUST_BE_STRING',
+                    'type.in' => 'TYPE_INVALID_OPTION',
+
+                    'period.string' => 'PERIOD_MUST_BE_STRING',
+                    'period.in' => 'PERIOD_INVALID_OPTION',
+
+                    'setLimit.integer' => 'LIMIT_MUST_BE_INTEGER',
+                    'setLimit.min' => 'LIMIT_MUST_BE_AT_LEAST_1',
+                    'setLimit.max' => 'LIMIT_CANNOT_EXCEED_100',
+                ];
             case 'UserProfile':
                 return [
                     'user_id.required' => 'USER_ID_FIELD_REQUIRED',
