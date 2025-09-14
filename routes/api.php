@@ -118,16 +118,18 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     });
 
     /**
+     * Route for user stats
+     */
+    Route::get('/users/post-interactions', [UserStatsController::class, 'getTopUsersByPostInteractions']);
+    Route::get('/users/{user_id}/post-interactions', [UserStatsController::class, 'getUserPostsInteractions']);
+
+    /**
      * Route for users
      */
     Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::apiResource('users', UserController::class);
     });
 
-    /**
-     * Route for user stats
-     */
-    Route::get('/users/{user_id}/post-interactions', [UserStatsController::class, 'getUserPostsInteractions']);
 
     /**
      * Route for posts
