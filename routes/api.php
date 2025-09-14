@@ -77,9 +77,7 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      */
     Route::post('/email/verify', [RegisterController::class, 'verifyEmail']);
 
-    Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint'])->group(function () {
-        Route::post('/email/resend-verification-email', [RegisterController::class, 'resendVerificationEmail']);
-    });
+    Route::post('/email/resend-verification-email', [RegisterController::class, 'resendVerificationEmail']);
 
     /**
      * Route for admin sending verification email
