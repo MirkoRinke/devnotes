@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller {
 
@@ -68,7 +69,7 @@ class UserController extends Controller {
         $validationRules = [
             'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'email' => 'sometimes|required|string|email|unique:users,email,' . $user->id,
-            'password' => 'sometimes|required|string|min:8|confirmed',
+            'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'avatar_items' => 'sometimes|nullable|array',
             'avatar_items.duck' => ['sometimes', 'nullable', 'string', 'starts_with:/ducks/', 'ends_with:.webp'], // The Duck the Character
             'avatar_items.head_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/head_accessory/', 'ends_with:.webp'], // Head e.g. Hats, Helmets, Headband
@@ -457,8 +458,8 @@ class UserController extends Controller {
      *
      * @bodyParam name string Name of the user (2-255 characters). Example: "Max Mustermann"
      * @bodyParam email string Email address (must be unique). Example: "max@example.com"
-     * @bodyParam password string Password (min 8 characters). Example: "sicheresPasswort1234"
-     * @bodyParam password_confirmation string Password confirmation (must match password). Example: "sicheresPasswort1234"
+     * @bodyParam password string required Password (8-255 characters, must contain uppercase and lowercase letters, numbers, and symbols, and must not be found in data breaches). Example: sicheresPasswort1234!
+     * @bodyParam password_confirmation string required Must match the password field. Example: sicheresPasswort1234!
      * @bodyParam avatar_items.object An object containing avatar item paths to update. See details below.
      * @bodyParam avatar_items.duck string Path to the duck avatar item. Must start with "/ducks/" and end with ".webp". Example: "/ducks/yellow_duck.webp"
      * @bodyParam avatar_items.head_accessory string Path to the head accessory avatar item. Must start with "/head_accessory/" and end with ".webp". Example: "/head_accessory/top_hat.webp"
@@ -471,8 +472,8 @@ class UserController extends Controller {
      * @bodyContent {
      *   "name": "Max Mustermann99",                                || optional, string, min:2, max:255
      *   "email": "max@example99.com",                              || optional, string, email, unique
-     *   "password": "sicheresPasswort1234",                        || optional, string, min:8, confirmed
-     *   "password_confirmation": "sicheresPasswort1234"            || required if password is set, string, must match password
+     *   "password": "sicheresPasswort1234!",                       || optional, string, min:8, confirmed
+     *   "password_confirmation": "sicheresPasswort1234!"           || required if password is set, string, must match password
      *   "avatar_items": {                                          || optional, object, used to update avatar items
      *      "duck": "/ducks/yellow_duck.webp",                      || optional, string, starts_with:/ducks/, ends_with:.webp
      *      "head_accessory": "/head_accessory/top_hat.webp",       || optional, string, starts_with:/head_accessory/, ends_with:.webp
