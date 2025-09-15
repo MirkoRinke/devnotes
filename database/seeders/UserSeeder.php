@@ -83,7 +83,7 @@ class UserSeeder extends Seeder {
             'name' => 'Admin',
             'display_name' => 'Admin',
             'email' => 'max@example1.com',
-            'password' => Hash::make('sicheresPasswort123'),
+            'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'admin',
             'email_verified_at' => now(),
         ]);
@@ -134,7 +134,7 @@ class UserSeeder extends Seeder {
             'name' => 'Moderator',
             'display_name' => 'Moderator',
             'email' => 'max@example4.com',
-            'password' => Hash::make('sicheresPasswort123'),
+            'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'moderator',
             'email_verified_at' => now(),
         ]);
@@ -149,7 +149,7 @@ class UserSeeder extends Seeder {
                 'name' => "Max Mustermann{$i}",
                 'display_name' => "Maxi{$i}",
                 'email' => "max@example{$i}.com",
-                'password' => Hash::make('sicheresPasswort123'),
+                'password' => Hash::make('sicheresPasswort1234!'),
                 'role' => 'user',
                 'email_verified_at' => now(),
             ]);
@@ -163,7 +163,7 @@ class UserSeeder extends Seeder {
             'name' => 'Guest',
             'display_name' => 'Guest',
             'email' => 'guest@system.local',
-            'password' => Hash::make('sicheresPasswort123'),
+            'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'user',
             'email_verified_at' => now(),
             'account_purpose' => 'guest',
