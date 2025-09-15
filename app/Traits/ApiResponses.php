@@ -182,8 +182,14 @@ trait ApiResponses {
 
                     'password.required' => 'PASSWORD_FIELD_REQUIRED',
                     'password.string' => 'PASSWORD_MUST_BE_STRING',
-                    'password.min' => 'PASSWORD_TOO_SHORT',
                     'password.confirmed' => 'PASSWORD_CONFIRMATION_MISMATCH',
+                    'password.min' => 'PASSWORD_TOO_SHORT',
+                    'password.max' => 'PASSWORD_TOO_LONG',
+                    'password.mixed' => 'PASSWORD_MUST_HAVE_MIXED_CASE',
+                    'password.letters' => 'PASSWORD_MUST_HAVE_LETTERS',
+                    'password.numbers' => 'PASSWORD_MUST_HAVE_NUMBERS',
+                    'password.symbols' => 'PASSWORD_MUST_HAVE_SYMBOLS',
+                    'password.uncompromised' => 'PASSWORD_MUST_BE_UNCOMPROMISED',
 
                     'avatar_items.array' => 'AVATAR_ITEMS_MUST_BE_ARRAY',
 
