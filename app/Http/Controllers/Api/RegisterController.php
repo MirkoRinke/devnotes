@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller {
 
@@ -51,7 +52,7 @@ class RegisterController extends Controller {
             'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'display_name' => ['required', 'unique:users,display_name', 'string', 'max:255', new NotForbiddenName()],
             'email' => 'required|string|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'privacy_policy_accepted' => ['required', 'accepted'],
             'terms_of_service_accepted' => ['required', 'accepted'],
         ];
@@ -72,19 +73,19 @@ class RegisterController extends Controller {
      * @bodyParam name string required The full name of the user (2-255 characters, forbidden names not allowed). Example: John Doe
      * @bodyParam display_name string required A unique username for display (2-255 characters, forbidden names not allowed). Example: johndoe
      * @bodyParam email string required A valid, unique email address. Example: john@example.com
-     * @bodyParam password string required Password (min 8 characters). Example: secret123
-     * @bodyParam password_confirmation string required Must match the password field. Example: secret123
+     * @bodyParam password string required Password (8-255 characters, must contain uppercase and lowercase letters, numbers, and symbols, and must not be found in data breaches). Example: sicheresPasswort1234!
+     * @bodyParam password_confirmation string required Must match the password field. Example: sicheresPasswort1234!
      * @bodyParam privacy_policy_accepted boolean required Must be true to proceed with registration. Example: true
      * @bodyParam terms_of_service_accepted boolean required Must be true to proceed with registration. Example: true
      *
      * @bodyContent {
-     *   "name": "John Doe",                        || required, string, min:2, max:255, forbidden names not allowed
-     *   "display_name": "johndoe",                 || required, string, unique, min:2, max:255, forbidden names not allowed
-     *   "email": "john@example.com",               || required, string, email, unique
-     *   "password": "secret123",                   || required, string, min:8, confirmed
-     *   "password_confirmation": "secret123"       || required, string, must match password
-     *   "privacy_policy_accepted": true             || required, boolean, must be true
-     *   "terms_of_service_accepted": true           || required, boolean, must be true
+     *   "name": "John Doe",                                || required, string, min:2, max:255, forbidden names not allowed
+     *   "display_name": "johndoe",                         || required, string, unique, min:2, max:255, forbidden names not allowed
+     *   "email": "john@example.com",                       || required, string, email, unique
+     *   "password": "sicheresPasswort1234!",               || required, string, min:8, confirmed
+     *   "password_confirmation": "sicheresPasswort1234!"   || required, string, must match password
+     *   "privacy_policy_accepted": true                    || required, boolean, must be true
+     *   "terms_of_service_accepted": true                  || required, boolean, must be true
      * }
      * 
      * @response status=201 scenario="Success" {
