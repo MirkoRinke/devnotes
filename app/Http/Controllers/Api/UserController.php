@@ -68,7 +68,7 @@ class UserController extends Controller {
     public function getValidationRulesUpdate($user): array {
         $validationRules = [
             'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName()],
-            'email' => 'sometimes|required|string|email|unique:users,email,' . $user->id,
+            'email' => 'sometimes|required|string|email|confirmed|unique:users,email,' . $user->id,
             'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'avatar_items' => 'sometimes|nullable|array',
             'avatar_items.duck' => ['sometimes', 'nullable', 'string', 'starts_with:/ducks/', 'ends_with:.webp'], // The Duck the Character
