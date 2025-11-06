@@ -90,26 +90,26 @@ class UserSeeder extends Seeder {
 
         $this->command->info('Admin user created successfully!');
 
-        // Create a system user for deleted accounts
+        // Create a system user for deleted accounts. It is important that this user receives exactly this ID.
         $this->createUserWithProfile([
             'id' => 2,
             'name' => 'System',
             'display_name' => 'System',
             'email' => 'system@system.local',
-            'password' => Hash::make(Str::random(32)),
+            'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
         ]);
 
         $this->command->info('System user created successfully!');
 
-        // Create a system user for deleted accounts
+        // Create a system user for deleted accounts. It is important that this user receives exactly this ID.
         $this->createUserWithProfile([
             'id' => 3,
             'name' => 'System Deleted User',
             'display_name' => 'Deleted User',
             'email' => 'deleted@system.local',
-            'password' => Hash::make(Str::random(32)),
+            'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
         ]);
@@ -121,7 +121,7 @@ class UserSeeder extends Seeder {
             'name' => 'Guest Report',
             'display_name' => 'Guest Report',
             'email' => 'guestreport@system.local',
-            'password' => Hash::make(Str::random(32)),
+            'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
         ]);
