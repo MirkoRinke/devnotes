@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller {
@@ -746,6 +747,131 @@ class UserController extends Controller {
 
 
     /**
+     * Request account deletion using credentials.
+     * 
+     * Endpoint: POST /users/request-deletion
+     * 
+     * This endpoint allows users to delete their accounts by entering their login details.
+     * This is typically used when users reject new terms of use and do not wish to log in.
+     *
+     * @group User Management
+     * 
+     * @bodyParam email string required The user's email address. Example: "user@example.com"
+     * @bodyParam user_name string required The user's username. Example: "username123"
+     * @bodyParam password string required The user's current password. Example: "password123"
+     * 
+     * @bodyContent {
+     *   "email": "user@example.com",
+     *   "password": "password123"
+     * }
+     * 
+     * @bodyContent {
+     *   "user_name": "username123",
+     *   "password": "password123"
+     * }
+     *
+     * @response status=200 scenario="Success" {
+     *   "status": "success",
+     *   "message": "Your account has been successfully deleted.",
+     *   "code": 200
+     * }
+     * @response status=401 scenario="Invalid Credentials" {
+     *   "status": "error",
+     *   "message": "Invalid credentials provided.",
+     *   "code": 401,
+     *   "errors": "INVALID_CREDENTIALS"
+     * }
+     * @response status=403 scenario="Deletion not allowed" {
+     *   "status": "error",
+     *   "message": "This account 'guest' cannot be deleted.",
+     *   "code": 403,
+     *   "errors": "FORBIDDEN"
+     * }
+     * @response status=404 scenario="User not found" {
+     *   "status": "error",
+     *   "message": "User not found.",
+     *   "code": 404,
+     *   "errors": "USER_NOT_FOUND"
+     * }
+     */
+    public function requestAccountDeletion(Request $request): JsonResponse {
+        $userRole = "";
+        try {
+            $validated = $request->validate(
+                [
+                    'email' => 'sometimes|required|email',
+                    'user_name' => 'sometimes|required|string',
+                    'password' => 'required|string',
+                ],
+                $this->getValidationMessages('Login')
+            );
+
+            if (!$request->has('email') && !$request->has('user_name')) {
+                return $this->errorResponse('An email or a user name is required.', 'EMAIL_OR_USERNAME_REQUIRED', 422);
+            }
+
+            if ($request->has('email')) {
+                $user = User::where('email', $validated['email'])->firstOrFail();
+            } else {
+                $user = User::where('name', $validated['user_name'])->firstOrFail();
+            }
+
+            if (!Hash::check($validated['password'], $user->password)) {
+                return $this->errorResponse('Invalid credentials provided.', 'INVALID_CREDENTIALS', 401);
+            }
+
+            $userRole = $user->role;
+
+            /**
+             *  Check if the user is a guest account
+             *  If so, use the special handling for guest account deletion and recreation
+             */
+            if ($user->account_purpose === 'guest') {
+                return $this->errorResponse("This account '{$user->account_purpose}' cannot be deleted.", 'FORBIDDEN', 403);
+            }
+
+            // Manually authorize the deletion.
+            // We pass the user object twice because the policy expects the currently authenticated user
+            // and the model to be deleted. In this case, they are the same.
+            $this->authorizeForUser($user, 'delete', $user);
+
+            DB::transaction(function () use ($user) {
+                $this->userRelationService->transferPosts($user);
+                $this->userRelationService->transferComments($user);
+                $this->userRelationService->transferPostAllowedValues($user);
+
+                $this->userRelationService->transferForbiddenNames($user);
+                $this->userRelationService->transferCriticalTerms($user);
+
+                $this->userRelationService->deleteReceivedReports($user);
+
+                $this->userRelationService->deleteGivenLikes($user);
+
+                /**
+                 * Note: Favorites are automatically deleted through 
+                 * database foreign key constraints (onDelete('cascade')) 
+                 * and don't require explicit deletion here.
+                 */
+
+                $user->tokens()->delete();
+
+                $user->delete();
+            });
+
+            return $this->successResponse(null, 'Your account has been successfully deleted.', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('User not found.', 'USER_NOT_FOUND', 404);
+        } catch (AuthorizationException $e) {
+            return $this->errorResponse("This account '{$userRole}' cannot be deleted.", 'FORBIDDEN', 403);
+        } catch (ValidationException $e) {
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+        }
+    }
+
+
+    /**
      * Ban a user
      * 
      * Endpoint: POST /users/{id}/ban
@@ -1015,9 +1141,12 @@ class UserController extends Controller {
 
             $this->authorize('unbanUser', $user);
 
-            $validatedData = $request->validate([
-                'moderation_reason' => 'required|string|max:255',
-            ]);
+            $validatedData = $request->validate(
+                [
+                    'moderation_reason' => 'required|string|max:255',
+                ],
+                $this->getValidationMessages('User')
+            );
 
             $user = $this->moderationService->handleModerationUpdate(
                 $user,
