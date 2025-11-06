@@ -112,8 +112,8 @@ class AuthController extends Controller {
                 [
                     'email' => 'sometimes|required|email',
                     'user_name' => 'sometimes|required|string',
-                    'password' => 'required',
-                    'device_name' => 'required',
+                    'password' => 'required|string',
+                    'device_name' => 'required|string',
                     'device_fingerprint' => 'required|string|max:255',
                     'privacy_policy_accepted' => ['sometimes', 'accepted'],
                     'terms_of_service_accepted' => ['sometimes', 'accepted'],
