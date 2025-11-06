@@ -92,6 +92,11 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 
     /**
+     * Route for account deletion request
+     */
+    Route::delete('/users/request-deletion', [UserController::class, 'requestAccountDeletion']);
+
+    /**
      * Route for logout and tokens
      */
     Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint'])->group(function () {
