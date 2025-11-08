@@ -35,11 +35,11 @@ trait CommentQuerySetup {
             ['relation' => 'parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
 
             ['relation' => 'children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ['relation' => 'children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'avatar_items', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ['relation' => 'children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
 
             ['relation' => 'children.children', 'foreignKey' => 'parent_id', 'columns' => ['*']],
-            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
+            ['relation' => 'children.children.user', 'foreignKey' => 'user_id', 'columns' => $this->getRelationFieldsFromRequest($request, 'user', [], ['id', 'display_name', 'role', 'avatar_items', 'created_at', 'updated_at', 'is_banned', 'was_ever_banned', 'moderation_info'])],
             ['relation' => 'children.children.parent', 'foreignKey' => 'parent_id', 'columns' => ['*']],
         ]);
 
