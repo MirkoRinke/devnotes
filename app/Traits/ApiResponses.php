@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,10 +25,13 @@ trait ApiResponses {
      */
     protected function successResponse($data, $message = null, $code = 200): JsonResponse {
 
-        if ($data === null || (is_array($data) && empty($data)) || (is_string($data) && trim($data) === '')) {
-            $count = 0;
-        } else if ($data instanceof Collection) {
+        $isPaginator = $data instanceof LengthAwarePaginator;
+        $isCollection = $data instanceof Collection;
+
+        if ($isPaginator || $isCollection) {
             $count = $data->count();
+        } else if ($data === null || (is_array($data) && empty($data)) || (is_string($data) && trim($data) === '')) {
+            $count = 0;
         } else {
             $count = 1;
         }
@@ -48,6 +52,14 @@ trait ApiResponses {
             if (env('QUERY_LOGGING_QUERIES_ENABLED', false)) {
                 $response['meta']['queries'] =  $queryLog;
             }
+        }
+
+        /**
+         * If the data is not a paginator, wrap it in a 'data' key.
+         * This ensures that the response structure remains consistent for the frontend.
+         */
+        if (!$isPaginator) {
+            $data = ['data' => $data];
         }
 
         $response['data'] = $data;
