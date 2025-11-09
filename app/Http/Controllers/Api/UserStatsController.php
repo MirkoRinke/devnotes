@@ -129,7 +129,7 @@ class UserStatsController extends Controller {
             $period = $validatedData['period'] ?? null;
             $type = $validatedData['type'];
 
-            $cacheKey = $this->generateSimpleCacheKey('userPostsInteractions_' . $id . '_' . md5($this->generateCacheKeyWithSuffix($request, [$type, $period])));
+            $cacheKey = $this->generateSimpleCacheKey('userPostsInteractions_' . $id . '_' . md5($this->generateCacheKeySuffix($request)));
             $cacheTTL = 150; // 2.5 minutes
 
             $total = $this->cacheData($cacheKey, $cacheTTL, function () use ($id, $period, $type) {
@@ -298,7 +298,7 @@ class UserStatsController extends Controller {
             $type = $validatedData['type'];
             $limit = $validatedData['setLimit'] ?? 10;
 
-            $cacheKey = $this->generateSimpleCacheKey('topUsersByInteractions_' .  md5($this->generateCacheKeyWithSuffix($request, [$type, $period, $limit])));
+            $cacheKey = $this->generateSimpleCacheKey('topUsersByInteractions_' .  md5($this->generateCacheKeySuffix($request)));
 
             $cacheTTL = match ($period) {
                 'subDay', 'startOfDay' => 3600,        // 1 hour
