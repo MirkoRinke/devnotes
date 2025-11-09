@@ -142,8 +142,7 @@ trait ApiSelectable {
                 return $this->countSelectGroupedByFilter($request, $query, $countSelect, $modelSchema);
             }
 
-            $suffixKey = $countSelect;
-            $cacheKey = $this->generateSimpleCacheKey('count_select_' .  md5($this->generateCacheKeyWithSuffix($request, $suffixKey)));
+            $cacheKey = $this->generateSimpleCacheKey('count_select_' .  md5($this->generateCacheKeySuffix($request)));
 
             /**
              * Clear the cache for the grouped count by filter for Testing
@@ -252,8 +251,7 @@ trait ApiSelectable {
              */
             $query->getQuery()->orders = null;
 
-            $suffixKey = $filterKey . '_' . implode('_', $filterValue);
-            $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . md5($this->generateCacheKeyWithSuffix($request, $suffixKey)));
+            $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . md5($this->generateCacheKeySuffix($request)));
 
             /**
              * Clear the cache for the grouped count by filter for Testing
@@ -320,8 +318,7 @@ trait ApiSelectable {
             return $this->errorResponse("Invalid relation field: $relationField", 'INVALID_RELATION_FIELD', 400);
         }
 
-        $suffixKey = $pivotTable . '_' . $relationField;
-        $cacheKey = $this->generateSimpleCacheKey('count_belongs_to_many_' . md5($this->generateCacheKeyWithSuffix($request, $suffixKey)));
+        $cacheKey = $this->generateSimpleCacheKey('count_belongs_to_many_' . md5($this->generateCacheKeySuffix($request)));
 
         /**
          * Clear the cache for the grouped count by filter for Testing
@@ -387,8 +384,7 @@ trait ApiSelectable {
             return $this->errorResponse("Invalid relation field: $relationField", 'INVALID_RELATION_FIELD', 400);
         }
 
-        $suffixKey = $mainTable . '_' . $relatedTable . '_' . $relationField;
-        $cacheKey = $this->generateSimpleCacheKey('count_belongs_to_' .  md5($this->generateCacheKeyWithSuffix($request, $suffixKey)));
+        $cacheKey = $this->generateSimpleCacheKey('count_belongs_to_' .  md5($this->generateCacheKeySuffix($request)));
 
         /**
          * Clear the cache for the grouped count by filter for Testing
