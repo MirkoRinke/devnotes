@@ -46,29 +46,16 @@ trait CacheHelper {
     }
 
 
-
     /**
-     * Generate a cache key suffix from an array or string.
-     * It also incorporates any 'filter' parameters from the request.
+     * Generate a cache key suffix based on the request path and query string.
      *
-     * @param array|string $suffix The suffix or array of suffixes to be included in the cache key.
+     * @param Request $request The current request instance.
      * @return string The generated cache key suffix.
      * 
-     * @example | $cacheKeySuffix = $this->generateCacheKeyWithSuffix(['value1', 'value2']);
+     * @example | $cacheKeySuffix = $this->generateCacheKeySuffix($request);
      */
-    protected function generateCacheKeyWithSuffix(Request $request, array|string $suffix) {
-        if ($request->has('filter')) {
-            $suffix = array_merge((array)$suffix, $request->input('filter'));
-        }
-
-        $cacheKeySuffix = "";
-
-        foreach ((array)$suffix as $key => $value) {
-            $value = str_replace(',', '_', $value);
-            $cacheKeySuffix .=  "_" . $value;
-        }
-
-        return $cacheKeySuffix;
+    protected function generateCacheKeySuffix(Request $request) {
+        return $request->getPathInfo() . $request->getQueryString();
     }
 
 
