@@ -100,6 +100,8 @@ trait ApiSelectable {
      * 
      * @example | $this->countSelect($request, $query, $select);
      * 
+     * TODO Adjust the Doku response example below
+     * 
      * Example URL: posts/?select=count:post_type
      * 
      * {
@@ -153,7 +155,7 @@ trait ApiSelectable {
                 return $query->count($countSelect);
             });
 
-            return $this->successResponse([$countSelect => $results], 'Count retrieved successfully');
+            return $this->successResponse([['name' => $countSelect, 'total_counts' => $results]], 'Count retrieved successfully');
         }
 
         return null;
@@ -216,6 +218,8 @@ trait ApiSelectable {
      *
      * Example URL: /posts/?select=count:post_type&filter[post_type]=snippet,tutorial
      *
+     * TODO Adjust the Doku response example below
+     * 
      * Example response:
      * {
      *   "status": "success",
@@ -261,10 +265,9 @@ trait ApiSelectable {
             $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $countSelect) {
                 return $query
                     ->whereIn($filterKey, $filterValue)
-                    ->select($filterKey, DB::raw('count(' . $countSelect . ') as total_counts'))
+                    ->select($filterKey . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'))
                     ->groupBy($filterKey)
                     ->get()
-                    ->pluck('total_counts', $filterKey)
                     ->toArray();
             });
 
@@ -289,6 +292,8 @@ trait ApiSelectable {
      *
      * @example | $this->countBelongsToMany($request, $relationInstance, $mainIds, $relationField);
      *
+     * TODO Adjust the Doku response example below
+     * 
      * Example URL: posts/?select=count:languages.name
      *
      * Example response:
@@ -329,9 +334,9 @@ trait ApiSelectable {
             return DB::table($pivotTable)
                 ->join($relatedTable, "$pivotTable.$relatedKey", '=', "$relatedTable.id")
                 ->whereIn("$pivotTable.$parentKey", $mainIds)
-                ->select("$relatedTable.$relationField as value", DB::raw("count(*) as total_counts"))
+                ->select("$relatedTable.$relationField as name", DB::raw("count(*) as total_counts"))
                 ->groupBy("$relatedTable.$relationField")
-                ->pluck('total_counts', 'value')
+                ->get()
                 ->toArray();
         });
 
@@ -355,6 +360,8 @@ trait ApiSelectable {
      * @example | $this->countBelongsTo($request, $relationInstance, $mainIds, $relationField, $query);
      * 
      * Example URL: /comments/?include=user&select=count:user.role
+     * 
+     * TODO Adjust the Doku response example below
      * 
      * Example response:
      * {
@@ -395,9 +402,9 @@ trait ApiSelectable {
             return DB::table($mainTable)
                 ->join($relatedTable, "$mainTable.$foreignKey", '=', "$relatedTable.$ownerKey")
                 ->whereIn("$mainTable.id", $mainIds)
-                ->select("$relatedTable.$relationField as value", DB::raw("count(*) as total_counts"))
+                ->select("$relatedTable.$relationField as name", DB::raw("count(*) as total_counts"))
                 ->groupBy("$relatedTable.$relationField")
-                ->pluck('total_counts', 'value')
+                ->get()
                 ->toArray();
         });
 
@@ -414,6 +421,8 @@ trait ApiSelectable {
      * @param array $select The select parameters from the request
      * @return JsonResponse|null Returns a JsonResponse with sum results or null if no sum columns are found
      * 
+     * TODO Adjust the Doku response example below
+     * 
      * @example | $this->sumSelect($query, $select);
      */
     private function sumSelect($query, $select): JsonResponse|null {
@@ -425,11 +434,17 @@ trait ApiSelectable {
         }
 
         if (!empty($sumSelect)) {
-            $result = [];
+            $results = [];
             foreach ($sumSelect as $column) {
-                $result[$column] = $query->sum($column);
+                $result[$column] = $query->clone()->sum($column);
+
+                $results[] = [
+                    'name' => $column,
+                    'sum' => (int) $result[$column]
+                ];
             }
-            return $this->successResponse($result, 'Sum retrieved successfully');
+
+            return $this->successResponse($results, 'Sum retrieved successfully');
         }
 
         return null;
