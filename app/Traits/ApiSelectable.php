@@ -155,7 +155,7 @@ trait ApiSelectable {
                 return $query->count($countSelect);
             });
 
-            return $this->successResponse([['name' => $countSelect, 'total_counts' => $results]], 'Count retrieved successfully');
+            return $this->successResponse([['name' => $countSelect, 'total_counts' => $results, 'entity' => $countSelect]], 'Count retrieved successfully');
         }
 
         return null;
@@ -265,7 +265,7 @@ trait ApiSelectable {
             $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $countSelect) {
                 return $query
                     ->whereIn($filterKey, $filterValue)
-                    ->select($filterKey . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'))
+                    ->select($filterKey . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'), DB::raw("'$filterKey' as entity"))
                     ->groupBy($filterKey)
                     ->get()
                     ->toArray();
@@ -318,6 +318,7 @@ trait ApiSelectable {
         $relatedKey = $relationInstance->getRelatedPivotKeyName();
         $relatedTable = $relationInstance->getRelated()->getTable();
 
+
         $relatedTableSchema = Schema::getColumnListing($relatedTable);
         if (!in_array($relationField, $relatedTableSchema)) {
             return $this->errorResponse("Invalid relation field: $relationField", 'INVALID_RELATION_FIELD', 400);
@@ -328,13 +329,13 @@ trait ApiSelectable {
         /**
          * Clear the cache for the grouped count by filter for Testing
          */
-        // Cache::forget($cacheKey);
+        // Cache::forget($cacheKey);       
 
         $results = $this->cacheData($cacheKey, 180, function () use ($pivotTable, $relatedTable, $parentKey, $relatedKey, $mainIds, $relationField) {
             return DB::table($pivotTable)
                 ->join($relatedTable, "$pivotTable.$relatedKey", '=', "$relatedTable.id")
                 ->whereIn("$pivotTable.$parentKey", $mainIds)
-                ->select("$relatedTable.$relationField as name", DB::raw("count(*) as total_counts"))
+                ->select("$relatedTable.$relationField as name", DB::raw("count(*) as total_counts"), DB::raw("SUBSTRING_INDEX('$pivotTable', '_', -1) as entity"))
                 ->groupBy("$relatedTable.$relationField")
                 ->get()
                 ->toArray();
@@ -402,7 +403,7 @@ trait ApiSelectable {
             return DB::table($mainTable)
                 ->join($relatedTable, "$mainTable.$foreignKey", '=', "$relatedTable.$ownerKey")
                 ->whereIn("$mainTable.id", $mainIds)
-                ->select("$relatedTable.$relationField as name", DB::raw("count(*) as total_counts"))
+                ->select("$relatedTable.$relationField as name", DB::raw("count(*) as total_counts"), DB::raw("'$relatedTable' as entity"))
                 ->groupBy("$relatedTable.$relationField")
                 ->get()
                 ->toArray();
