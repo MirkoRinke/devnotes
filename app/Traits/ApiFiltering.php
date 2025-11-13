@@ -90,7 +90,7 @@ trait ApiFiltering {
                  * If it is, ensure all values are properly formatted
                  */
                 foreach ($filterArray[$key] as $value) {
-                    if (!preg_match('/^[a-zA-Z0-9_,\.\-:@ ]+$/', $value)) { // allow alphanumeric, underscores, commas, periods, colons, dashes, at-signs (@) and spaces
+                    if (!preg_match('/^[a-zA-Z0-9_,\.\-:@# ]+$/', $value)) { // allow alphanumeric, underscores, commas, periods, colons, dashes, at-signs (@), spaces and hash (#) only
                         return $this->errorResponse('Invalid filter value format', 'INVALID_VALUE_FORMAT', 400);
                     }
                 }
