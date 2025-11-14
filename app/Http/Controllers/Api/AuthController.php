@@ -60,6 +60,7 @@ class AuthController extends Controller {
      *   "code": 200,
      *   "count": 1,
      *   "data": {
+     *     "user_id": 1,
      *     "accessToken": "1|IPlBeEcUSfTJsYLOD0GpUO0DvPKbt8kY2MpOwRez07b31185",
      *     "type": "Bearer"
      *   }
@@ -171,7 +172,7 @@ class AuthController extends Controller {
             $token->accessToken->device_fingerprint = $request->device_fingerprint;
             $token->accessToken->save();
 
-            return $this->successResponse(['accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
+            return $this->successResponse(["user_id" => $user->id, 'accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
