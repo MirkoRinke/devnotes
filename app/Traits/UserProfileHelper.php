@@ -117,6 +117,7 @@ trait UserProfileHelper {
      * @param array $favoriteLanguages Array of favorite language names
      * @return null|JsonResponse Returns null if no changes are needed, or a JsonResponse with an error if validation fails
      */
+    // TODO: Rename this method to syncTechStack to better reflect its purpose and change Relation name accordingly
     protected function syncFavoriteLanguages(UserProfile $userProfile, array $favoriteLanguages): null|JsonResponse {
         $current = $userProfile->favoriteLanguages()->pluck('post_allowed_value_id', 'name')->toArray();
         $names = array_keys($current);
@@ -124,7 +125,7 @@ trait UserProfileHelper {
         sort($favoriteLanguages);
 
         if ($names !== $favoriteLanguages) {
-            $allowedIds = PostAllowedValue::where('type', 'language')->whereIn('name', $favoriteLanguages)->pluck('id')->toArray();
+            $allowedIds = PostAllowedValue::whereIn('type', ['language', 'technology'])->whereIn('name', $favoriteLanguages)->pluck('id')->toArray();
             sort($allowedIds);
             sort($current);
 
