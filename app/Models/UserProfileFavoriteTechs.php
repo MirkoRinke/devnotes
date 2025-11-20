@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserProfileFavoriteLanguage extends Model {
+class UserProfileFavoriteTechs extends Model {
     use HasFactory;
 
     /**
@@ -32,7 +32,7 @@ class UserProfileFavoriteLanguage extends Model {
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function favoriteLanguage() {
-        return $this->belongsTo(PostAllowedValue::class, 'post_allowed_value_id')->where('type', 'language');
+    public function favoriteTech() {
+        return $this->belongsTo(PostAllowedValue::class, 'post_allowed_value_id')->whereIn('type', ['language', 'technology']);
     }
 }

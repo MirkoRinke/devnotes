@@ -9,7 +9,7 @@ return new class extends Migration {
      * Run the migrations.
      */
     public function up(): void {
-        Schema::create('user_profile_favorite_languages', function (Blueprint $table) {
+        Schema::create('user_profile_favorite_techs', function (Blueprint $table) {
             // Default
             $table->id();
 
@@ -27,6 +27,6 @@ return new class extends Migration {
      * Reverse the migrations.
      */
     public function down(): void {
-        Schema::dropIfExists('user_profile_favorite_languages');
+        Schema::dropIfExists('user_profile_favorite_techs');
     }
 };

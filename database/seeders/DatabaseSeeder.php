@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder {
             ApiKeySeeder::class,
             UserSeeder::class,
             PostAllowedValueSeeder::class,
-            UserProfileFavoriteLanguageSeeder::class,
+            UserProfileFavoriteTechsSeeder::class,
             PostSeeder::class,
             CommentSeeder::class,
             LikeSeeder::class,

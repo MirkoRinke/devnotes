@@ -32,7 +32,7 @@ trait UserProfileHelper {
 
         $query = $this->loadUserRelation($request, $query, 'user_id');
 
-        $query = $this->loadFavoriteLanguagesRelation($request, $query);
+        $query = $this->loadFavoriteTechsRelation($request, $query);
 
         $query = $this->$methods($request, $query, 'user_profile');
         if ($query instanceof JsonResponse) {
@@ -67,40 +67,40 @@ trait UserProfileHelper {
 
 
     /**
-     * Load the favorite_languages relation
+     * Load the favorite_techs relation
      * 
      * @param Request $request
      * @param mixed $query Builder|LengthAwarePaginator|Collection
      * @return mixed Builder|LengthAwarePaginator|Collection
      * 
-     * @example | $this->loadFavoriteLanguagesRelation($request, $query)
+     * @example | $this->loadFavoriteTechsRelation($request, $query)
      */
-    private function loadFavoriteLanguagesRelation(Request $request, $query): mixed {
+    private function loadFavoriteTechsRelation(Request $request, $query): mixed {
 
         /**
-         * If the request does not have the 'select' parameter or if 'favorite_languages' is selected,
-         * we will load the favorite_languages relation by default.
+         * If the request does not have the 'select' parameter or if 'favorite_techs' is selected,
+         * we will load the favorite_techs relation by default.
          */
-        if (!$request->has('select') || $this->isSelected($request, 'favorite_languages')) {
-            $this->removeFromSelect($request, ['favorite_languages']);
+        if (!$request->has('select') || $this->isSelected($request, 'favorite_techs')) {
+            $this->removeFromSelect($request, ['favorite_techs']);
 
             /**
-             * Load the favorite_languages relation by Default
+             * Load the favorite_techs relation by Default
              * 
              * Explicit table.column AS alias format is used for many-to-many relationships
              * This is to avoid ambiguity in the result set, especially when joining multiple tables.
              */
-            $tableName = $query->getModel()->favoriteLanguages()->getRelated()->getTable();
+            $tableName = $query->getModel()->favoriteTechs()->getRelated()->getTable();
 
             $defaultColumns = [
                 "$tableName.id as id",
                 "$tableName.name as name"
             ];
 
-            $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'favorite_languages');
+            $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'favorite_techs');
 
             $query = $this->loadRelations($request, $query, [
-                ['relation' => 'favoriteLanguages', 'foreignKey' => 'id', 'columns' => $selectedFields],
+                ['relation' => 'favoriteTechs', 'foreignKey' => 'id', 'columns' => $selectedFields],
             ]);
 
             return $query;
@@ -114,42 +114,42 @@ trait UserProfileHelper {
      * Sync favorite languages for the user profile
      * 
      * @param UserProfile $userProfile The user profile to update
-     * @param array $favoriteLanguages Array of favorite language names
+     * @param array $favoriteTechs Array of favorite technology names
      * @return null|JsonResponse Returns null if no changes are needed, or a JsonResponse with an error if validation fails
      */
     // TODO: Rename this method to syncTechStack to better reflect its purpose and change Relation name accordingly
-    protected function syncFavoriteLanguages(UserProfile $userProfile, array $favoriteLanguages): null|JsonResponse {
-        $current = $userProfile->favoriteLanguages()->pluck('post_allowed_value_id', 'name')->toArray();
+    protected function syncFavoriteTechs(UserProfile $userProfile, array $favoriteTechs): null|JsonResponse {
+        $current = $userProfile->favoriteTechs()->pluck('post_allowed_value_id', 'name')->toArray();
         $names = array_keys($current);
         sort($names);
-        sort($favoriteLanguages);
+        sort($favoriteTechs);
 
-        if ($names !== $favoriteLanguages) {
-            $allowedIds = PostAllowedValue::whereIn('type', ['language', 'technology'])->whereIn('name', $favoriteLanguages)->pluck('id')->toArray();
+        if ($names !== $favoriteTechs) {
+            $allowedIds = PostAllowedValue::whereIn('type', ['language', 'technology'])->whereIn('name', $favoriteTechs)->pluck('id')->toArray();
             sort($allowedIds);
             sort($current);
 
-            $removeLanguages = array_diff($current, $allowedIds);
-            $addLanguages = array_diff($allowedIds, $current);
+            $removeTechs = array_diff($current, $allowedIds);
+            $addTechs = array_diff($allowedIds, $current);
 
-            if (count($allowedIds) !== count($favoriteLanguages)) {
-                foreach ($favoriteLanguages as $langName) {
-                    if (!in_array($langName, $names)) {
-                        return $this->errorResponse("Language '$langName' is not allowed", 'FORBIDDEN_LANGUAGE', 422);
+            if (count($allowedIds) !== count($favoriteTechs)) {
+                foreach ($favoriteTechs as $techName) {
+                    if (!in_array($techName, $names)) {
+                        return $this->errorResponse("Technology '$techName' is not allowed", 'FORBIDDEN_TECHNOLOGY', 422);
                     }
                 }
             }
 
-            $pivotTable = $userProfile->favoriteLanguages()->getTable();
-            DB::table($pivotTable)->where('user_profile_id', $userProfile->id)->whereIn('post_allowed_value_id', $removeLanguages)->delete();
+            $pivotTable = $userProfile->favoriteTechs()->getTable();
+            DB::table($pivotTable)->where('user_profile_id', $userProfile->id)->whereIn('post_allowed_value_id', $removeTechs)->delete();
 
 
-            if (!empty($addLanguages)) {
+            if (!empty($addTechs)) {
                 $insertData = [];
-                foreach ($addLanguages as $langId) {
+                foreach ($addTechs as $techId) {
                     $insertData[] = [
                         'user_profile_id' => $userProfile->id,
-                        'post_allowed_value_id' => $langId,
+                        'post_allowed_value_id' => $techId,
                         'created_at' => now(),
                         'updated_at' => now()
                     ];

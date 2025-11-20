@@ -77,8 +77,8 @@ class UserProfileController extends Controller {
             'auto_load_external_images' => 'sometimes|required|boolean',
             'auto_load_external_videos' => 'sometimes|required|boolean',
             'auto_load_external_resources' => 'sometimes|required|boolean',
-            'favorite_languages' => 'sometimes|array',
-            'favorite_languages.*' =>  'sometimes|string',
+            'favorite_techs' => 'sometimes|array',
+            'favorite_techs.*' =>  'sometimes|string',
         ];
         return $validationRulesUpdate;
     }
@@ -92,11 +92,11 @@ class UserProfileController extends Controller {
      * Retrieves a list of user profiles. For regular users, only public profiles and their own profile are returned.
      * Administrators and moderators can see all profiles.
      *
-     * The relation `favorite_languages` is always included.  
+     * The relation `favorite_techs` is always included.  
      * The relation `user` can be included via the `include` parameter.
-     * You can use `user_fields` and `favorite_languages_fields` to specify which fields should be returned for these relations.
+     * You can use `user_fields` and `favorite_techs_fields` to specify which fields should be returned for these relations.
      *
-     * Example: `/user-profiles?include=user&user_fields=id,display_name&favorite_languages_fields=name`
+     * Example: `/user-profiles?include=user&user_fields=id,display_name&favorite_techs_fields=name`
      *
      * @group User Profiles
      *
@@ -112,7 +112,7 @@ class UserProfileController extends Controller {
      * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (only `user` is supported). Example: include=user
      * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (favorite_languages), specify fields to return. Example: favorite_languages_fields=name
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (favorite_techs), specify fields to return. Example: favorite_techs_fields=name
      * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
      *
      * @queryParam page     Pagination, see [ApiPagination](#apipagination). Example: page=1
@@ -166,10 +166,11 @@ class UserProfileController extends Controller {
      *       "reports_count": 0,                                        || Admin and Moderator only
      *       "created_at": "2025-07-09T17:26:42.000000Z",
      *       "updated_at": "2025-07-12T20:54:32.000000Z",
-     *       "favorite_languages": [
+     *       "favorite_techs": [
      *         { "id": 4, "name": "JavaScript" },
      *         { "id": 5, "name": "TypeScript" },
      *         { "id": 12, "name": "Go" }
+     *         { "id": 45, "name": "Docker" }
      *       ]
      *     }
      *   ]
@@ -267,11 +268,11 @@ class UserProfileController extends Controller {
      * Retrieves details for a specific user profile. Users can only access profiles that are 
      * either public or their own. Administrators and moderators can access any profile.
      *
-     * The relation `favorite_languages` is always included.  
+     * The relation `favorite_techs` is always included.  
      * The relation `user` can be included via the `include` parameter.
-     * You can use `user_fields` and `favorite_languages_fields` to specify which fields should be returned for these relations.
+     * You can use `user_fields` and `favorite_techs_fields` to specify which fields should be returned for these relations.
      *
-     * Example: `/user-profiles/1?include=user&user_fields=id,display_name&favorite_languages_fields=name`
+     * Example: `/user-profiles/1?include=user&user_fields=id,display_name&favorite_techs_fields=name`
      *
      * @group User Profiles
      *
@@ -283,7 +284,7 @@ class UserProfileController extends Controller {
      * @queryParam include  See [ApiInclude](#apiinclude) for relation inclusion details (only `user` is supported). Example: include=user
      * @see \App\Traits\ApiInclude::getRelationKeyFields()
      * 
-     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (favorite_languages), specify fields to return. Example: favorite_languages_fields=name
+     * @queryParam *_fields string See [ApiInclude](#apiinclude). When including a relation or for always-included relations (favorite_techs), specify fields to return. Example: favorite_techs_fields=name
      * @see \App\Traits\ApiInclude::getRelationFieldsFromRequest() for dynamic includes
      *
      * Example URL: /user-profiles/1
@@ -327,10 +328,11 @@ class UserProfileController extends Controller {
      *     "reports_count": 0,                                        || Admin and Moderator only
      *     "created_at": "2025-07-09T17:26:42.000000Z",
      *     "updated_at": "2025-07-12T20:54:32.000000Z",
-     *     "favorite_languages": [
+     *     "favorite_techs": [
      *       { "id": 4, "name": "JavaScript" },
      *       { "id": 5, "name": "TypeScript" },
      *       { "id": 12, "name": "Go" }
+     *       { "id": 45, "name": "Docker" }
      *     ]
      *   }
      * }
@@ -426,7 +428,7 @@ class UserProfileController extends Controller {
      * while administrators can update any profile.
      *
      * All fields are optional; at least one field must be provided.
-     * The relation `favorite_languages` is always included in the response.
+     * The relation `favorite_techs` is always included in the response.
      *
      * @group User Profiles
      *
@@ -446,7 +448,7 @@ class UserProfileController extends Controller {
      * @bodyParam auto_load_external_images boolean Whether to auto-load external images. Example: true
      * @bodyParam auto_load_external_videos boolean Whether to auto-load external videos. Example: true
      * @bodyParam auto_load_external_resources boolean Whether to auto-load external resources. Example: true
-     * @bodyParam favorite_languages array|null Array of language names. Example: ["JavaScript", "TypeScript", "Go"]
+     * @bodyParam favorite_techs array|null Array of technology names. Example: ["JavaScript", "TypeScript", "Go"]
      *
      * @bodyContent application/json Full Update {
      *   "display_name": "Admin",
@@ -468,7 +470,7 @@ class UserProfileController extends Controller {
      *   "auto_load_external_images": true,
      *   "auto_load_external_videos": true,
      *   "auto_load_external_resources": true,
-     *   "favorite_languages": ["JavaScript", "TypeScript", "Go"]
+     *   "favorite_techs": ["JavaScript", "TypeScript", "Go"]
      * }
      *
      * @bodyContent application/json Only E-Mail-Update {
@@ -517,10 +519,11 @@ class UserProfileController extends Controller {
      *     "external_resources_temp_until": null,
      *     "created_at": "2025-07-09T17:26:42.000000Z",
      *     "updated_at": "2025-07-12T20:54:32.000000Z",
-     *     "favorite_languages": [
+     *     "favorite_techs": [
      *       { "id": 4, "name": "JavaScript" },
      *       { "id": 5, "name": "TypeScript" },
-     *       { "id": 12, "name": "Go" }
+     *       { "id": 12, "name": "Go" },
+     *       { "id": 45, "name": "Docker" }
      *     ]
      *   }
      * }
@@ -584,9 +587,9 @@ class UserProfileController extends Controller {
                 return $this->errorResponse('At least one field must be provided for update', 'NO_FIELDS_PROVIDED', 422);
             }
 
-            if (isset($validatedData['favorite_languages']) && is_array($validatedData['favorite_languages'])) {
-                $result = $this->syncFavoriteLanguages($userProfile, $validatedData['favorite_languages']);
-                unset($validatedData['favorite_languages']);
+            if (isset($validatedData['favorite_techs']) && is_array($validatedData['favorite_techs'])) {
+                $result = $this->syncFavoriteTechs($userProfile, $validatedData['favorite_techs']);
+                unset($validatedData['favorite_techs']);
                 if ($result instanceof JsonResponse) {
                     return $result;
                 }
@@ -597,7 +600,7 @@ class UserProfileController extends Controller {
                 $userProfile->update($validatedData);
                 $this->userRelationService->updateProfileDisplayName($userProfile);
 
-                $userProfile->load(['favoriteLanguages:id,name']);
+                $userProfile->load(['favoriteTechs:id,name']);
 
                 return $userProfile;
             });

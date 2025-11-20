@@ -380,9 +380,9 @@ trait ApiResponses {
                     'type.in' => 'TYPE_INVALID_OPTION',
                     'type.string' => 'TYPE_MUST_BE_STRING',
 
-                    'favorite_languages.array' => 'FAVORITE_LANGUAGES_MUST_BE_ARRAY',
-                    'favorite_languages.min' => 'FAVORITE_LANGUAGES_MUST_CONTAIN_AT_LEAST_1_ITEM',
-                    'favorite_languages.*.string' => 'FAVORITE_LANGUAGE_MUST_BE_STRING',
+                    'favorite_techs.array' => 'FAVORITE_TECHS_MUST_BE_ARRAY',
+                    'favorite_techs.min' => 'FAVORITE_TECHS_MUST_CONTAIN_AT_LEAST_1_ITEM',
+                    'favorite_techs.*.string' => 'FAVORITE_TECH_MUST_BE_STRING',
                 ];
             case 'UserReport':
                 return [

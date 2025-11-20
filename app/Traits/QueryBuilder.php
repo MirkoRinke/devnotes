@@ -437,7 +437,7 @@ trait QueryBuilder {
                 ],
             ],
             'user_profile' => [
-                'favorite_languages' => [
+                'favorite_techs' => [
                     'id',
                     'name',
                 ],
