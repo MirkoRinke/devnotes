@@ -88,8 +88,9 @@ trait ApiSelectable {
      * Process count select operations from the query
      *
      * This method extracts columns with 'count:' prefix from the select parameter
-     * and returns a count of records based on those columns. It supports:
-     * - Basic counting of a single column across all records
+     * and returns a count of records grouped by all values of that column.
+     * It supports:
+     * - Basic counting of a single column across all records, grouped by value
      * - Delegating to filtered counting when filter parameters are present
      * - Counting by relation values using dot notation (e.g., 'count:languages.name')
      *
@@ -100,17 +101,47 @@ trait ApiSelectable {
      * 
      * @example | $this->countSelect($request, $query, $select);
      * 
-     * TODO Adjust the Doku response example below
-     * 
      * Example URL: posts/?select=count:post_type
      * 
+     * Example response:
      * {
      *   "status": "success",
      *   "message": "Count retrieved successfully",
      *   "code": 200,
      *   "count": 1,
      *   "data": {
-     *       "post_type": 500
+     *     "data": [
+     *       {
+     *         "name": "snippet",
+     *         "total_counts": 91,
+     *         "entity": "post_type"
+     *       },
+     *       {
+     *         "name": "resources",
+     *         "total_counts": 83,
+     *         "entity": "post_type"
+     *       },
+     *       {
+     *         "name": "feedback",
+     *         "total_counts": 76,
+     *         "entity": "post_type"
+     *       },
+     *       {
+     *         "name": "tutorial",
+     *         "total_counts": 99,
+     *         "entity": "post_type"
+     *       },
+     *       {
+     *         "name": "showcase",
+     *         "total_counts": 71,
+     *         "entity": "post_type"
+     *       },
+     *       {
+     *         "name": "question",
+     *         "total_counts": 80,
+     *         "entity": "post_type"
+     *       }
+     *     ]
      *   }
      * }
      */
@@ -151,11 +182,23 @@ trait ApiSelectable {
              */
             // Cache::forget($cacheKey);
 
-            $results = $this->cacheData($cacheKey, 180, function () use ($query, $countSelect) {
-                return $query->count($countSelect);
+            /**
+             * Remove any existing order by clauses that might cause SQL_FULL_GROUP_BY issues
+             */
+            $query->getQuery()->orders = null;
+
+            $filterValue = DB::table($query->getModel()->getTable())->distinct()->pluck($countSelect)->toArray();
+
+            $results = $this->cacheData($cacheKey, 180, function () use ($query, $countSelect, $filterValue) {
+                return $query
+                    ->whereIn($countSelect, $filterValue)
+                    ->select($countSelect . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'), DB::raw("'$countSelect' as entity"))
+                    ->groupBy($countSelect)
+                    ->get()
+                    ->toArray();
             });
 
-            return $this->successResponse([['name' => $countSelect, 'total_counts' => $results, 'entity' => $countSelect]], 'Count retrieved successfully');
+            return $this->successResponse($results, 'Count retrieved successfully');
         }
 
         return null;
@@ -218,20 +261,25 @@ trait ApiSelectable {
      *
      * Example URL: /posts/?select=count:post_type&filter[post_type]=snippet,tutorial
      *
-     * TODO Adjust the Doku response example below
-     * 
      * Example response:
      * {
      *   "status": "success",
      *   "message": "Count retrieved successfully by filter values",
      *   "code": 200,
      *   "count": 1,
-     *   "meta": {
-     *     "total_queries": 7
-     *   },
      *   "data": {
-     *     "snippet": 82,
-     *     "tutorial": 101
+     *     "data": [
+     *       {
+     *         "name": "snippet",
+     *         "total_counts": 91,
+     *         "entity": "post_type"
+     *       },
+     *       {
+     *         "name": "tutorial",
+     *         "total_counts": 99,
+     *         "entity": "post_type"
+     *       }
+     *     ]
      *   }
      * }
      */
