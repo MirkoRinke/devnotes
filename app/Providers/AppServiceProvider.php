@@ -67,7 +67,7 @@ class AppServiceProvider extends ServiceProvider {
             // The key is the user id or the IP address of the user    
             $key = 'api:' . ($request->user()?->id ?: $userIp);
 
-            $maxAttempts = 120;
+            $maxAttempts = 240;
 
             // $beforeAttempts = RateLimiter::attempts($key);
             // $beforeRemaining = RateLimiter::remaining($key, $maxAttempts);
