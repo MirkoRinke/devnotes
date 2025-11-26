@@ -54,6 +54,12 @@ trait ApiPagination {
             return $this->errorResponse('The per_page parameter must be a number greater than 0', ['per_page' => 'INVALID_PER_PAGE_NUMBER'], 400);
         }
 
-        return $query->paginate((int) $perPage);
+        $paginator = $query->paginate((int) $perPage, ['*'], 'page', (int) $page);
+
+        if ($page > $paginator->lastPage()) {
+            $paginator = $query->paginate((int) $perPage, ['*'], 'page', $paginator->lastPage());
+        }
+
+        return $paginator;
     }
 }
