@@ -29,11 +29,11 @@ class PostAllowedValueSeeder extends Seeder {
                 'cloud computing'
             ],
             'post_type' => [
-                'snippet',
-                'tutorial',
+                'snippets',
+                'tutorials',
                 'feedback',
                 'showcase',
-                'question',
+                'questions',
                 'resources'
             ],
             'status' => [
@@ -77,11 +77,8 @@ class PostAllowedValueSeeder extends Seeder {
                 'GitLab',
                 'Jenkins',
                 'Kubernetes',
-                'Travis CI',
-                'CircleCI',
                 'AWS',
                 'Azure',
-                'GCP',
                 'Firebase',
                 'Heroku',
                 'Netlify',
