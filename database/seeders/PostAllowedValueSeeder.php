@@ -65,7 +65,7 @@ class PostAllowedValueSeeder extends Seeder {
                 'Vue',
                 'Svelte',
                 'jQuery',
-                'Next.js',
+                'Next',
                 'Vite',
                 'Webpack',
                 'Flask',
