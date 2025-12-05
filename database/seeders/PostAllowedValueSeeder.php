@@ -108,10 +108,9 @@ class PostAllowedValueSeeder extends Seeder {
                 'React Native', // Framework for building native apps using React (Cross-Platform)
 
                 // --- Game Development ---
-                'Unity', // Cross-platform game engine
-                'Unreal Engine', // Game engine developed by Epic Games
-                'Godot', // Open-source game engine
                 'Lua', // Lightweight, high-level, multi-paradigm programming language (often used for scripting in games)
+                'GDScript', // High-level, dynamically typed programming language used to create content within the Godot Engine
+
             ],
             'technology' => [
                 // --- Design & Collaboration ---
@@ -191,6 +190,11 @@ class PostAllowedValueSeeder extends Seeder {
                 'Prometheus', // Open-source monitoring and alerting toolkit
                 'Grafana', // Analytics and interactive visualization web application
                 'Sentry', // Real-time crash reporting and error monitoring
+
+                // --- Game Development ---
+                'Unity', // Cross-platform game engine
+                'Unreal Engine', // Game engine developed by Epic Games
+                'Godot', // Open-source game engine
             ],
             'tag' => [
                 // General Concepts & Architecture
