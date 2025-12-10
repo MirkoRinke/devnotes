@@ -19,19 +19,30 @@ class PostAllowedValueSeeder extends Seeder {
     protected function getAllowedPostValues(): array {
         return [
             'category' => [
+                // Core Development Areas
                 'Frontend Development',
                 'Backend Development',
                 'Fullstack Development',
                 'Mobile Development',
                 'Game Development',
-                'DevOps und Cloud',
-                'Database und Storage',
-                'Testing und QA',
-                'Monitoring und Observability',
-                'Tooling und Build Systems',
-                'Data Science und AI',
+
+                // Infrastructure & Operations
+                'DevOps & Cloud',
+                'Database & Storage',
+                'Testing & QA',
+                'Monitoring & Observability',
+                'Tooling & Build Systems',
+
+                // Specialized Domains
+                'Data Science & AI',
                 'Cybersecurity',
-                'UI UX Design',
+                'Web3 & Blockchain',
+                'Graphics & 3D',
+                'IoT & Embedded',
+
+                // General & Conceptual
+                'UI/UX Design',
+                'Algorithms & Data Structures',
                 'Product Management',
                 'Career Advice',
                 'Open Source',
@@ -52,188 +63,478 @@ class PostAllowedValueSeeder extends Seeder {
                 'archived'
             ],
             'language' => [
-                // --- Web Frontend Development ---
-                // Languages / Stylesheets / Preprocessors
-                'HTML', // HTML is a markup language (Structure)
-                'CSS',  // CSS is a stylesheet language (Presentation)
-                'SCSS', // SCSS is a syntax of SASS, a CSS preprocessor
-                'JavaScript', // Core language for interactivity
-                'TypeScript', // JavaScript superset adding static types
+                //! A. JavaScript / TypeScript Ecosystem
 
-                // Frameworks / Libraries (Frontend)
-                'React', // JavaScript library for building user interfaces
-                'Vue.js', // Progressive JavaScript framework
-                'Svelte', // Radical new approach to building user interfaces
-                'Angular', // Platform for building mobile and desktop web applications
+                // Core Runtimes & Languages
+                'JavaScript',
+                'TypeScript',
+                'Node.js',
 
-                // --- Web Backend / Server-Side Development ---
-                // Runtimes / Languages
-                'Node.js', // Node.js is a JavaScript runtime (Server-Side JS)
-                'Python', // High-level, interpreted programming language (Backend often)
-                'PHP', // Popular general-purpose scripting language for web development
-                'Java', // High-level, class-based, object-oriented programming language
-                'Go', // Statically typed, compiled programming language (often for high-performance servers)
-                'C#', // Modern, object-oriented programming language by Microsoft (.NET)
-                'Ruby', // Dynamic, open source programming language
-                'Kotlin', // Modern, statically typed programming language that runs on the JVM 
-                'Perl', // High-level, general-purpose, interpreted programming language
+                // Frontend Frameworks
+                'React',
+                'Vue.js',
+                'Svelte',
+                'Angular',
+                'SolidJS',
+                'Qwik',
 
-                // Frameworks (Backend / Full-Stack)
-                'Next.js', // React framework for production (Full-Stack)
-                'Nuxt', // Framework for creating Vue.js applications (Full-Stack)
-                'Remix', // Full stack web framework
-                'Gatsby', // React-based framework for creating static sites/apps
-                'Express', // Minimal and flexible Node.js web application framework
-                'NestJS', // Progressive Node.js framework for scalable server-side applications
-                'Django', // High-level Python web framework
-                'Flask', // Lightweight WSGI web application framework in Python
-                'Laravel', // PHP web application framework
-                'Symfony', // PHP framework for web applications
-                'Ruby on Rails', // Server-side web application framework written in Ruby
-                'Spring', // Comprehensive framework for enterprise Java development
-                'Spring Boot', // Extension of the Spring framework
+                // Full-Stack Frameworks
+                'Next.js',
+                'Nuxt',
+                'Remix',
+                'Gatsby',
+                'Astro',
 
-                // --- System / Low-Level / Databases ---
-                // Languages
-                'C', // General-purpose, procedural programming language
-                'C++', // Extension of the C programming language
-                'Rust', // Systems programming language focused on safety and performance
-                'Shell', // Shell scripting languages (Automation/OS interaction)
-                'SQL', // Domain-specific language for managing relational databases
+                // Backend & API
+                'Express',
+                'NestJS',
+                'Fastify',
+                'TRPC',
+                'GraphQL',
 
-                // --- Native / Cross-Platform / App Development ---
-                'Swift', // Programming language for Apple's ecosystem (macOS, iOS, etc.)
-                'Dart', // Client-optimized programming language for multiple platforms (often with Flutter)
-                'Flutter', // Open-source UI software development toolkit (Cross-Platform)
-                'React Native', // Framework for building native apps using React (Cross-Platform)
+                // Libraries
+                'jQuery',
+                'RxJS',
+                'Axios',
+                'Lodash',
+                'Socket.io',
+                'Chart.js',
+                'D3.js',
+                'Three.js',
+                'Swiper',
 
-                // --- Game Development ---
-                'Lua', // Lightweight, high-level, multi-paradigm programming language (often used for scripting in games)
-                'GDScript', // High-level, dynamically typed programming language used to create content within the Godot Engine
+                // Authentication
+                'Passport',
 
+                // ORM/DB
+                'Prisma',
+                'Sequelize',
+                'Mongoose',
+
+                //! B. Python Ecosystem
+                // Core Language
+                'Python',
+
+                // Web Frameworks
+                'Django',
+                'Flask',
+                'FastAPI',
+
+                // Data Science & ML
+                'NumPy',
+                'Pandas',
+                'Tensorflow',
+                'Keras',
+                'PyTorch',
+                'Plotly',
+
+                // ORM & Tools
+                'SQLAlchemy',
+
+                //! C. Java / JVM Ecosystem
+                // Core Language
+                'Java',
+
+                // Frameworks
+                'Spring',
+                'SpringBoot',
+
+                // Libraries & Tools
+                'Hibernate',
+
+                //! D. PHP Ecosystem
+                // Core Language
+                'PHP',
+
+                // Frameworks
+                'Laravel',
+                'Symfony',
+                'Lumen',
+                'CodeIgniter',
+
+                // ORM
+                'Doctrine',
+
+                //! E. .NET / C# Ecosystem
+                'C#',
+                'Blazor',
+                'EF Core',
+
+                //! F. Other Languages & Frameworks
+                // Systems & Low-Level
+                'C',
+                'C++',
+                'Rust',
+                'Go',
+
+                // Mobile Native
+                'Swift',
+                'Kotlin',
+                'Dart',
+
+                // Other Languages
+                'Ruby',
+                'Lua',
+                'Elixir',
+                'Solidity',
+
+                // Cross-Platform Frameworks
+                'Ruby on Rails',
+                'Phoenix',
+                'Fiber',
+                'Flutter',
+                'React Native',
+                'Electron',
+                'Tauri',
+                'Inertia.js',
+
+                //! G. Gaming & Game Engines
+                // Game Engines & Frameworks
+                'Bevy Engine',
+                'GDScript',
+
+
+                //! H. Styling, Markup & Data Formats
+                // Core Markup & Styling
+                'HTML',
+                'CSS',
+                'SCSS',
+                'LESS',
+
+                // CSS Frameworks
+                'Bootstrap',
+                'Bulma',
+                'Foundation',
+                'Materialize',
+                'Tailwind',
+
+                // Markup & Data Formats
+                'XML',
+                'YAML',
+                'JSON',
+                'Markdown',
+
+                //! I. Database Query Languages
+                'SQL',
+
+                //! J. Scripting & Shell Languages
+                'Bash/Shell',
             ],
             'technology' => [
-                // --- Design & Collaboration ---
-                // Tools for UI/UX design and team communication
-                'Figma', // UI/UX design and prototyping tool
-                'Jira', // Project management and issue tracking
-                'Trello', // Collaboration tool using boards, lists, and cards
-                'Asana', // Project management platform
-                'ClickUp', // All-in-one productivity platform
-                'Notion', // Workspace for notes, docs, and project management
-                'Slack', // Team messaging and collaboration hub
+                //! A. Cloud Providers & PaaS
 
-                // --- Development & Local Tools (Building / Bundling / Testing) ---
-                // Bundlers / Transpilers / Dev Servers
-                'Vite', // Next-generation frontend tooling
-                'Webpack', // Module bundler for JavaScript applications
-                'ESBuild', // Extremely fast JavaScript bundler and minifier
-                'Rollup', // JavaScript module bundler for libraries
+                // Comprehensive Cloud Platforms
+                'AWS',
+                'Azure',
+                'Google Cloud',
 
-                // API & Debugging Tools
-                'Postman', // API platform for building and using APIs
+                // Deployment & PaaS (Platform as a Service)
+                'Vercel',
+                'Netlify',
+                'Cloudflare',
+                'DigitalOcean',
+                'Heroku',
 
-                // Testing Tools
-                'Jest', // JavaScript testing framework
-                'Mocha', // JavaScript test framework for Node.js
-                'Jasmine', // Behavior-driven development framework for testing JavaScript code
-                'Vitest', // Fast unit test framework powered by Vite
-                'Cypress', // End-to-end testing framework for web applications
-                'Playwright', // End-to-end testing framework for web apps
-                'Selenium', // Browser automation tool for web app testing
-                'PHPUnit', // Testing framework for PHP
-                'PyTest', // Testing framework for Python
-                'Unittest', // Built-in Python testing framework
-                'RSpec', // Testing tool for Ruby
-                'JUnit', // Unit testing framework for Java
+                // Backend-as-a-Service (BaaS)
+                'Firebase',
+                'Supabase',
 
-                // --- Version Control & CI/CD ---
-                'Git', // Distributed version control system
-                'GitHub', // Web-based hosting for Git repositories
-                'GitLab', // Complete DevOps platform
-                'Jenkins', // Open-source automation server for CI/CD
-                'GitHub Actions', // Widely used CI/CD and automation platform integrated into GitHub
-
-                // --- DevOps & Infrastructure (Deployment / Provisioning) ---
+                //! B. DevOps & Infrastructure (IaC, Orchestration)
                 // Containerization & Orchestration
-                'Docker', // Platform for developing, shipping, and running applications in containers
-                'Podman', // Daemonless container engine
-                'Kubernetes', // Container orchestration system
+                'Docker',
+                'Podman',
+                'Kubernetes',
+                'Helm',
+                'Portainer',
 
-                // --- Hosting & Infrastructure Providers ---
-                // Cloud Service Providers (CSPs)
-                'AWS', // Amazon Web Services
-                'Azure', // Microsoft Azure
-                'Google Cloud', // Google Cloud Platform
+                // Infrastructure as Code (IaC) & Automation
+                'Terraform',
+                'Packer',
+                'Ansible',
 
-                // Specialized / Focused Providers
-                'Firebase', // Google's platform for app development (Backend as a Service)
-                'Vercel', // Platform for frontend frameworks and static sites
-                'Netlify', // Platform for building, deploying, and scaling modern web projects
-                'Cloudflare', // Global cloud service for web performance and security
+                // Service Mesh & Discovery
+                'Traefik Proxy',
 
-                // Web Servers
-                'Nginx', // High-performance web server and reverse proxy
-                'Apache', // Widely used HTTP web server
+                // Virtualization & Hypervisors
+                'Proxmox',
 
-                // --- Data Storage & Databases ---
-                // Relational (SQL)
-                'MySQL', // Open-source relational database
-                'PostgreSQL', // Object-relational database system
-                'SQLite', // Serverless, file-based relational database
+                //! C. Web Servers & Proxies
+                'Nginx',
+                'Apache',
+                'Tomcat',
+                'uWSGI',
 
-                // Non-Relational (NoSQL)
-                'MongoDB', // Document database (NoSQL)
-                'Redis', // In-memory data structure store (used as database, cache, and message broker)
+                //! D. Databases & Storage
+                // Relational Databases (SQL)
+                'MySQL',
+                'PostgreSQL',
+                'SQLite',
+                'MS SQL Server',
+                'Oracle',
+                'Azure SQL',
 
-                // --- Monitoring & Observability ---
-                'Prometheus', // Open-source monitoring and alerting toolkit
-                'Grafana', // Analytics and interactive visualization web application
-                'Sentry', // Real-time crash reporting and error monitoring
+                // NoSQL & Document Databases
+                'MongoDB',
+                'DynamoDB',
+                'Neo4j',
+                'ClickHouse',
 
-                // --- Game Development ---
-                'Unity', // Cross-platform game engine
-                'Unreal Engine', // Game engine developed by Epic Games
-                'Godot', // Open-source game engine
+                // In-Memory & Caching
+                'Redis',
+                'Memcached',
+                'InfluxDB',
+
+                // Database Tools
+                'DBeaver',
+
+                //! E. Build Tools, Runtimes & Package Managers
+                // Build Tools & Bundlers
+                'Vite',
+                'Webpack',
+                'ESBuild',
+                'Rollup',
+                'Babel',
+                'PostCSS',
+
+                // Package Managers
+                'NPM',
+                'PNPM',
+                'Yarn',
+                'Composer',
+                'Homebrew',
+                'NuGet',
+                'Poetry',
+
+                // Runtimes & Task Runners
+                'Bun',
+                'DenoJS',
+                'V8',
+                'WASM',
+                'Gradle',
+                'Maven',
+
+                //! F. Testing & Quality Assurance & API Tools
+                // End-to-End (E2E) & Integration Testing
+                'Cypress',
+                'Playwright',
+                'Selenium',
+
+                // Unit Testing Frameworks
+                'Jest',
+                'Vitest',
+                'Mocha',
+                'Jasmine',
+                'PHPUnit',
+                'Pytest',
+                'Unittest',
+                'RSpec',
+                'JUnit',
+
+                // API Development & Testing
+                'Postman',
+                'Insomnia',
+                'Hoppscotch',
+                'OpenAPI',
+                'Swagger',
+                'gRPC',
+
+                // Quality & Coverage
+                'ESLint',
+                'SonarQube',
+                'Codecov',
+
+                //! G. Version Control & CI/CD
+                // Version Control Systems (VCS)
+                'Git',
+
+                // Hosting & Clients
+                'GitHub',
+                'GitLab',
+                'GitKraken',
+
+                // Continuous Integration/Continuous Deployment (CI/CD)
+                'GitHub Actions',
+                'Jenkins',
+                'Azure DevOps',
+                'Bamboo',
+                'CircleCI',
+
+                //! H. Design, UI/UX & Collaboration
+                // Design & Prototyping Tools
+                'Figma',
+                'Sketch',
+
+                // Project & Team Collaboration
+                'Jira',
+                'Trello',
+                'Notion',
+                'Slack',
+                'Asana',
+                'ClickUp',
+                'Confluence',
+
+                //! I. Monitoring & Observability
+                // Metric Collection & Visualization
+                'Prometheus',
+                'Grafana',
+                'OpenTelemetry',
+
+                // Error & APM (Application Performance Monitoring)
+                'Sentry',
+                'Datadog',
+                'New Relic',
+                'Jaeger Tracing',
+
+                // Log Management (ELK Stack Components)
+                'Elasticsearch',
+                'Kibana',
+                'Logstash',
+                'Beats',
+                'Splunk',
+
+                //! J. Game Engines (Tools)
+                'Unity',
+                'Unreal Engine',
+                'Godot',
+
+                //! K. Graphics & Media Tools
+                'Photoshop',
+                'Illustrator',
+                'Blender',
+                'GIMP',
+                'Inkscape',
+                'Canva',
+                'SVGO',
+
+                //! L. Data Science & Analytics Tools
+                'Jupyter',
+                'Kaggle',
+                'Scikit Learn',
+                'Streamlit',
+
+                //! M. IDEs & Code Editors
+                // General & Multi-Purpose IDEs
+                'Visual Studio',
+
+                // JetBrains IDEs
+                'CLion',
+                'GoLand',
+                'IntelliJ',
+                'PyCharm',
+                'Rider',
+                'WebStorm',
+
+                // Code Editors
+                'VS Code',
+                'VIM',
+                'XCode',
+                'Android Studio',
+                'GitHub Codespaces',
+                'Gitpod',
+                'StackBlitz',
+                'CodePen',
+
+                //! N. CMS & BaaS Platforms
+
+                // Content Management Systems (CMS)
+                'WordPress',
+                'WooCommerce',
+                'Typo3',
+                'Ghost',
+                'Shopware',
+
+                // Headless & Specific Platforms
+                'Sanity',
+                'Moodle',
+                'Appwrite',
+
+                //! O. Hardware, Robotics & IoT
+                'Arduino',
+                'Raspberry Pi',
+                'ROS',
+
+                //! P. Shell & Terminal Tools
+                'Bash',
+                'Zsh',
+                'Oh My Zsh',
+                'PowerShell',
+                'SSH',
+                'TMUX',
+
+                //! Q. Graphics & Low-Level APIs
+                'OpenGL',
+                'Vulkan',
+                'OpenCV',
+                'SDL',
+
+                //! R. Security & Identity
+                'Okta',
+                'Vault',
+
+                //! S. Messaging & Brokerage
+                'RabbitMQ',
+                'NATS',
+
+                //! U. Development Utilities
+                'Ngrok',
+                'PM2',
+                'Nodemon',
+                'Discord.js',
+                'cPanel',
+                'Mapbox',
+                'Salesforce',
             ],
             'tag' => [
-                // General Concepts & Architecture
+                //! A. General Concepts & Methodology
                 'best-practices',
                 'architecture',
-                'performance',
-                'security',
-                'authentication',
-                'state-management',
-                'monorepo',
-                'refactoring',
-                'clean-code',
                 'design-patterns',
-                'serverless',
+                'clean-code',
+                'refactoring',
+                'performance-optimization',
+                'security',
+                'accessibility-a11y',
+                'monorepo',
                 'microservices',
-                'design-system',
+                'serverless',
+                'functional-programming',
+                'object-oriented-programming',
+                'scalability',
 
-                // Specific Use Cases & Processes                
+                //! B. Development Process & Workflow
                 'local-development',
+                'dev-workflow',
+                'ci-pipeline',
                 'deployment',
                 'testing',
                 'e2e-testing',
                 'unit-testing',
-                'cicd',
+                'integration-testing',
                 'observability',
                 'logging',
                 'monitoring',
-                'career',
-                'interview-prep',
+                'dependency-management',
 
-                // Very Specific Tools / Libraries (that might not fit under 'technologies')                
+                //! C. Ecosystem & Stack Specific Details (Examples)
                 'react-hooks',
                 'nextjs-v14',
-                'vue-3',
-                'django-orm',
+                'webpack-config',
+                'docker-compose',
                 'kubernetes-ingress',
-                'mysql-performance',
-                'vite-plugin',
                 'aws-lambda',
+                'mysql-optimization',
+                'typescript-migration',
+                'real-time',
+                'web-workers',
+                'server-side-rendering',
+
+                //! D. Career & Community
+                'career-advice',
+                'interview-prep',
+                'open-source-contribution',
+                'productivity',
+                'learning-to-code',
+                'soft-skills',
             ],
         ];
     }
@@ -250,9 +551,9 @@ class PostAllowedValueSeeder extends Seeder {
         foreach ($allowedValues as $field => $values) {
 
             /**
-             * Ensure that the values are definitely lowercase for fields like 'category', 'post_type', and 'status'.
+             * Ensure that the values are definitely lowercase for fields like 'post_type', and 'status'.
              */
-            $convertToLower = in_array($field, ['category', 'post_type', 'status']);
+            $convertToLower = in_array($field, ['post_type', 'status']);
             if ($convertToLower) {
                 $values = array_map('strtolower', $values);
             }
