@@ -1173,10 +1173,10 @@ class PostController extends Controller {
                 return $this->successResponse($post, 'Post updated successfully', 200);
             }
 
+            $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->fill($validatedData);
             $post->is_updated = true;
             $post->updated_by_role = $user->role;
-            $post->history = $this->historyService->createPostHistory($post, $user->id);
             $post->external_source_previews = $this->generateExternalSourcePreviews($validatedData, $post);
 
             $user->last_post_updated_at = now();
