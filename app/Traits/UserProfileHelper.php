@@ -28,7 +28,7 @@ trait UserProfileHelper {
     protected function setupUserProfileQuery(Request $request, $query, $methods): mixed {
         $relationKeyFields = $this->getRelationKeyFields($request, ['user' => 'user_id']);
 
-        $this->modifyRequestSelect($request, [...['id'], ...$relationKeyFields]);
+        $this->modifyRequestSelect($request, [...['id', 'user_id'], ...$relationKeyFields]);
 
         $query = $this->loadUserRelation($request, $query, 'user_id');
 
