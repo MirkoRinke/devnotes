@@ -189,7 +189,7 @@ trait ApiSelectable {
 
             $filterValue = DB::table($query->getModel()->getTable())->distinct()->pluck($countSelect)->toArray();
 
-            $results = $this->cacheData($cacheKey, 180, function () use ($query, $countSelect, $filterValue) {
+            $results = $this->cacheData($cacheKey, 60, function () use ($query, $countSelect, $filterValue) {
                 return $query
                     ->whereIn($countSelect, $filterValue)
                     ->select($countSelect . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'), DB::raw("'$countSelect' as entity"))
