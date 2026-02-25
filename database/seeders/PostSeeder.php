@@ -15,7 +15,7 @@ class PostSeeder extends Seeder {
     public function run(): void {
         $this->command->info('Seeding posts...');
 
-        $multiplier = (int) 10;
+        $multiplier = (int) 20;
 
         $postsCount = (int) 50;
 
