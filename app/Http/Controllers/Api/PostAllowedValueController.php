@@ -341,6 +341,12 @@ class PostAllowedValueController extends Controller {
                 $validatedData['name'] = strtolower($validatedData['name']);
             }
 
+            $formatValueByType = in_array($validatedData['type'], ['language', 'technology', 'tag']);
+            if ($formatValueByType) {
+                $validatedData['name'] = $this->formatValueByType($validatedData['type'], $validatedData['name'], false);
+            }
+
+
             if ($existingPostAllowedValue) {
                 return $this->errorResponse('Post Allowed Value already exists', 'POST_ALLOWED_VALUE_EXISTS', 409);
             }
@@ -616,6 +622,11 @@ class PostAllowedValueController extends Controller {
             $convertToLower = in_array($validatedData['type'], ['category', 'post_type', 'status']);
             if ($convertToLower) {
                 $validatedData['name'] = strtolower($validatedData['name']);
+            }
+
+            $formatValueByType = in_array($validatedData['type'], ['language', 'technology', 'tag']);
+            if ($formatValueByType) {
+                $validatedData['name'] = $this->formatValueByType($validatedData['type'], $validatedData['name'], false);
             }
 
             if ($existingPostAllowedValue) {
