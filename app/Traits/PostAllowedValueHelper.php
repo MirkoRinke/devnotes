@@ -157,4 +157,39 @@ trait PostAllowedValueHelper {
             }
         }
     }
+
+
+    /**
+     * Format a value based on its type for consistent storage and comparison
+     * 
+     * Applies specific formatting rules based on the type of the value (e.g., tag, language, technology).
+     * For tags: replaces spaces with hyphens and converts to lowercase.
+     * 
+     * For languages and technologies: converts to PascalCase (e.g., "JavaScript" becomes "JavaScript", "Node js" becomes "NodeJs") to ensure consistent formatting.
+     * Optionally forces auto-formatting for languages and technologies to ensure consistent formatting.
+     * 
+     * @param string $type The type of the value (tag, language, technology)
+     * @param string $value The value to format
+     * @param bool $autoFormat Whether to force auto-formatting for languages and technologies (default: true)
+     * @return string The formatted value
+     */
+    protected function formatValueByType(string $type, string $value, bool $autoFormat = true): string {
+        if ($type === 'tag') {
+            $value = str_replace(' ', '-', $value);
+            return strtolower($value);
+        }
+
+        if ($type === 'language' || $type === 'technology') {
+            if ($autoFormat) {
+                $pascalCased = str_replace(' ', '', ucwords(strtolower($value)));
+                $parts = explode('-', $pascalCased);
+                $processedParts = array_map('ucfirst', $parts);
+                return implode('-', $processedParts);
+            } else {
+                return str_replace(' ', '', $value);
+            }
+        }
+
+        return $value;
+    }
 }
