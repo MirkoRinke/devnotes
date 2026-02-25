@@ -6,11 +6,15 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Post;
 use App\Models\PostAllowedValue;
 
+use App\Traits\PostAllowedValueHelper;
+
 /**
  * Trait for managing post attribute relationships (tags, languages, technologies)
  * Provides optimized batch operations for creating and synchronizing attribute relations.
  */
 trait PostAttributeRelationManager {
+
+    use PostAllowedValueHelper;
 
     /**
      * Synchronize multiple relations for a post in one optimized operation
@@ -156,16 +160,17 @@ trait PostAttributeRelationManager {
             $normalizedValues[$type] = [];
 
             foreach ($values as $value) {
-                $normalized = strtolower(trim($value));
+                $processedValue = $this->formatValueByType($type, $value);
+
+                $normalized = strtolower(trim($processedValue));
                 $normalizedValues[$type][] = $normalized;
 
-                $originalValueMap[$type][$normalized] = $value;
+                $originalValueMap[$type][$normalized] = $processedValue;
             }
         }
 
         return [$normalizedValues, $originalValueMap];
     }
-
 
     /**
      * Retrieve existing relations from the database for the given normalized values
