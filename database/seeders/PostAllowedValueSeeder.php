@@ -3,11 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\PostAllowedValue;
+use App\Traits\PostAllowedValueHelper;
+
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PostAllowedValueSeeder extends Seeder {
+
+    use PostAllowedValueHelper;
 
     /**
      * Get allowed values for post fields
@@ -559,6 +563,12 @@ class PostAllowedValueSeeder extends Seeder {
             }
 
             foreach ($values as $value) {
+
+                $formatValueByType = in_array($field, ['language', 'technology', 'tag']);
+                if ($formatValueByType) {
+                    $value = $this->formatValueByType($field, $value);
+                }
+
                 PostAllowedValue::firstOrCreate([
                     'name' => $value,
                     'type' => $field,
