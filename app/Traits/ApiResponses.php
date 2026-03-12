@@ -269,10 +269,12 @@ trait ApiResponses {
                     'resources.*.string' => 'RESOURCES_MUST_BE_STRING',
 
                     'languages.required' => 'LANGUAGE_FIELD_REQUIRED',
+                    'languages.required_without' => 'LANGUAGE_OR_TECHNOLOGY_FIELD_REQUIRED',
                     'languages.array' => 'LANGUAGE_MUST_BE_ARRAY',
                     'languages.*.string' => 'LANGUAGE_MUST_BE_STRING',
                     'languages.*.required' => 'LANGUAGE_FIELD_REQUIRED',
                     'languages.*.ValidPostValue' => 'LANGUAGE_INVALID_OPTION',
+
 
                     'category.required' => 'CATEGORY_FIELD_REQUIRED',
                     'category.string' => 'CATEGORY_MUST_BE_STRING',
@@ -282,8 +284,11 @@ trait ApiResponses {
                     'post_type.string' => 'POST_TYPE_MUST_BE_STRING',
                     'post_type.in' => 'POST_TYPE_INVALID_OPTION',
 
+                    'technologies.required' => 'TECHNOLOGY_FIELD_REQUIRED',
+                    'technologies.required_without' => 'LANGUAGE_OR_TECHNOLOGY_FIELD_REQUIRED',
                     'technologies.array' => 'TECHNOLOGY_MUST_BE_ARRAY',
                     'technologies.*.string' => 'TECHNOLOGY_MUST_BE_STRING',
+                    'technologies.*.required' => 'TECHNOLOGY_FIELD_REQUIRED',
                     'technologies.*.ValidPostValue' => 'TECHNOLOGY_INVALID_OPTION',
 
                     'tags.array' => 'TAGS_MUST_BE_ARRAY',
