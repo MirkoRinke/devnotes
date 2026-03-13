@@ -28,7 +28,7 @@ class PostAllowedValuePolicy {
      * @example | $this->authorize('viewAny', PostAllowedValue::class);
      */
     public function viewAny(User $user): bool {
-        return $this->hasModeratorPrivileges($user);
+        return true; // Allow all users to view any PostAllowedValue entries
     }
 
     /**

@@ -103,7 +103,8 @@ class PostAllowedValueController extends Controller {
      * 
      * Endpoint: GET /post-allowed-values
      *
-     * Only users with the roles **admin** or **moderator** can access this endpoint.
+     * Only users with the roles **admin** or **moderator** can access use Relations and see moderator fields. 
+     * Regular users can access the endpoint but will not see moderator fields or relations.
      *
      * Retrieves a list of allowed values that can be used in posts, with support for filtering, sorting, field selection, relation inclusion, and pagination.
      * **By default, results are paginated.**
@@ -240,9 +241,11 @@ class PostAllowedValueController extends Controller {
                 return $this->successResponse($query, 'No Post Allowed Values found', 200);
             }
 
-            $query = $this->moderationFieldsVisibilityRelation($request, $query);
+            $query = $this->moderationFieldsVisibility($request, $query, ['created_by_user_id', 'created_by_role']);
 
-            $query = $this->checkForIncludedRelations($request, $query);
+            if ($request->user()->role !== 'user') {
+                $query = $this->checkForIncludedRelations($request, $query);
+            }
 
             $query = $this->controlVisibleFields($request, $originalSelectFields, $query);
 
