@@ -189,11 +189,19 @@ trait ApiSelectable {
 
             $filterValue = DB::table($query->getModel()->getTable())->distinct()->pluck($countSelect)->toArray();
 
-            $results = $this->cacheData($cacheKey, 60, function () use ($query, $countSelect, $filterValue) {
+            $hasTypeColumn = in_array('type', $modelSchema);
+            $hasCountColumn = in_array('post_count', $modelSchema);
+
+            $entity = $hasTypeColumn ? 'type as entity' : DB::raw("'$countSelect' as entity");
+            $groupBy = $hasTypeColumn ? ['type', $countSelect] : [$countSelect];
+
+            $count = $hasCountColumn ? 'post_count as total_counts' : DB::raw('count(' . $countSelect . ') as total_counts');
+
+            $results = $this->cacheData($cacheKey, 60, function () use ($query, $countSelect, $filterValue, $entity, $groupBy, $count) {
                 return $query
                     ->whereIn($countSelect, $filterValue)
-                    ->select($countSelect . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'), DB::raw("'$countSelect' as entity"))
-                    ->groupBy($countSelect)
+                    ->select($countSelect . ' as name', $entity, $count)
+                    ->groupBy($groupBy)
                     ->get()
                     ->toArray();
             });
