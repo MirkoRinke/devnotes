@@ -112,7 +112,7 @@ trait ApiSelectable {
      *   "data": {
      *     "data": [
      *       {
-     *         "name": "snippet",
+     *         "name": "snippets",
      *         "total_counts": 91,
      *         "entity": "post_type"
      *       },
@@ -127,7 +127,7 @@ trait ApiSelectable {
      *         "entity": "post_type"
      *       },
      *       {
-     *         "name": "tutorial",
+     *         "name": "tutorials",
      *         "total_counts": 99,
      *         "entity": "post_type"
      *       },
@@ -137,7 +137,7 @@ trait ApiSelectable {
      *         "entity": "post_type"
      *       },
      *       {
-     *         "name": "question",
+     *         "name": "questions",
      *         "total_counts": 80,
      *         "entity": "post_type"
      *       }
@@ -206,6 +206,21 @@ trait ApiSelectable {
                     ->toArray();
             });
 
+            $entityMapping = [
+                'language'   => 'languages',
+                'technology' => 'technologies',
+                'tag'        => 'tags',
+            ];
+
+            if ($hasTypeColumn) {
+                $results = array_map(function ($item) use ($entityMapping) {
+                    if (isset($item['entity'])) {
+                        $item['entity'] = $entityMapping[$item['entity']] ?? $item['entity'];
+                    }
+                    return $item;
+                }, $results);
+            }
+
             return $this->successResponse($results, 'Count retrieved successfully');
         }
 
@@ -267,7 +282,7 @@ trait ApiSelectable {
      *
      * @example | $this->countSelectGroupedByFilter($request, $query, $countSelect, $modelSchema);
      *
-     * Example URL: /posts/?select=count:post_type&filter[post_type]=snippet,tutorial
+     * Example URL: /posts/?select=count:post_type&filter[post_type]=snippets,tutorials
      *
      * Example response:
      * {
@@ -278,12 +293,12 @@ trait ApiSelectable {
      *   "data": {
      *     "data": [
      *       {
-     *         "name": "snippet",
+     *         "name": "snippets",
      *         "total_counts": 91,
      *         "entity": "post_type"
      *       },
      *       {
-     *         "name": "tutorial",
+     *         "name": "tutorials",
      *         "total_counts": 99,
      *         "entity": "post_type"
      *       }
@@ -348,25 +363,39 @@ trait ApiSelectable {
      *
      * @example | $this->countBelongsToMany($request, $relationInstance, $mainIds, $relationField);
      *
-     * TODO Adjust the Doku response example below
-     * 
      * Example URL: posts/?select=count:languages.name
      *
      * Example response:
      * {
-     *   "status": "success",
-     *   "message": "Count retrieved successfully by relation values",
-     *   "code": 200,
-     *   "count": 1,
-     *   "data": {
-     *     "Java": 54,
-     *     "Laravel": 58,
-     *     "Webpack": 64,
-     *     "Shell": 69,
-     *     "Angular": 55,
-     *     "Vue": 66,
-     *   }
-     * }
+     *     "status": "success",
+     *     "message": "Count retrieved successfully by relation values",
+     *     "code": 200,
+     *     "count": 1,
+     *     "data": {
+     *         "data": [
+     *             {
+     *                 "name": "Flask",
+     *                 "total_counts": 33,
+     *                 "entity": "languages"
+     *             },
+     *             {
+     *                 "name": "C++",
+     *                 "total_counts": 29,
+     *                 "entity": "languages"
+     *             },
+     *             {
+     *                 "name": "Javascript",
+     *                 "total_counts": 33,
+     *                 "entity": "languages"
+     *             },
+     *             {
+     *                 "name": "Qwik",
+     *                 "total_counts": 35,
+     *                 "entity": "languages"
+     *             },
+     *         ]
+     *    }
+     *}
      */
     private function countBelongsToMany($request, $relationInstance, $mainIds, $relationField): JsonResponse {
         $pivotTable = $relationInstance->getTable();
