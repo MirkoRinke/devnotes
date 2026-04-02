@@ -206,21 +206,6 @@ trait ApiSelectable {
                     ->toArray();
             });
 
-            $entityMapping = [
-                'language'   => 'languages',
-                'technology' => 'technologies',
-                'tag'        => 'tags',
-            ];
-
-            if ($hasTypeColumn) {
-                $results = array_map(function ($item) use ($entityMapping) {
-                    if (isset($item['entity'])) {
-                        $item['entity'] = $entityMapping[$item['entity']] ?? $item['entity'];
-                    }
-                    return $item;
-                }, $results);
-            }
-
             return $this->successResponse($results, 'Count retrieved successfully');
         }
 
