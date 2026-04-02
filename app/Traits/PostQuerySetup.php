@@ -88,7 +88,8 @@ trait PostQuerySetup {
 
             $defaultColumns = [
                 "$tableName.id as id",
-                "$tableName.name as name"
+                "$tableName.name as name",
+                "$tableName.type as type"
             ];
 
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'tags');
@@ -133,7 +134,8 @@ trait PostQuerySetup {
 
             $defaultColumns = [
                 "$tableName.id as id",
-                "$tableName.name as name"
+                "$tableName.name as name",
+                "$tableName.type as type"
             ];
 
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'languages');
@@ -176,7 +178,8 @@ trait PostQuerySetup {
 
             $defaultColumns = [
                 "$tableName.id as id",
-                "$tableName.name as name"
+                "$tableName.name as name",
+                "$tableName.type as type"
             ];
 
             $selectedFields = $this->getSelectRelationFields($request, $tableName, $defaultColumns, 'technologies');
