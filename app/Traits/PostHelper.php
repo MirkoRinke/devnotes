@@ -29,10 +29,11 @@ trait PostHelper {
                 'resources' => $validatedData['resources'] ?? $existingPost?->resources ?? []
             ]);
 
-            return $externalSourcePreviews;
+
+            return $externalSourcePreviews ?? [];
         }
 
-        return $existingPost->external_source_previews ?? [];
+        return $existingPost?->external_source_previews ?? [];
     }
 
 
