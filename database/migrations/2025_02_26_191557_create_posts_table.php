@@ -25,6 +25,7 @@ return new class extends Migration {
             $table->string('category'); // category of the post (e.g., Frontend, Backend, etc.)
             $table->string('post_type'); // snippet, tutorial, feedback, showcase, question, etc.
             $table->string('status'); // status of the post (e.g., draft, private, published, archived)
+            $table->string('syntax_highlighting')->nullable(); // programming language for syntax highlighting (e.g., php, javascript, python, etc.)
 
             // Counts
             $table->integer('favorite_count')->default(0);

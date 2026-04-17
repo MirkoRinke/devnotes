@@ -298,6 +298,10 @@ trait ApiResponses {
                     'status.string' => 'STATUS_MUST_BE_STRING',
                     'status.in' => 'STATUS_INVALID_OPTION',
 
+                    'syntax_highlighting.string' => 'SYNTAX_HIGHLIGHTING_MUST_BE_STRING',
+                    'syntax_highlighting.required_with' => 'SYNTAX_HIGHLIGHTING_REQUIRED_WITH_LANGUAGES',
+                    'syntax_highlighting.ValidPostValue' => 'SYNTAX_HIGHLIGHTING_INVALID_OPTION',
+
                     'moderation_reason.required' => 'MODERATION_REASON_FIELD_REQUIRED',
                     'moderation_reason.string' => 'MODERATION_REASON_MUST_BE_STRING',
                     'moderation_reason.max' => 'MODERATION_REASON_FIELD_MAX_LENGTH',

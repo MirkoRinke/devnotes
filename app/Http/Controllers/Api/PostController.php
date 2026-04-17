@@ -95,6 +95,7 @@ class PostController extends Controller {
             'tags' => 'nullable|array',
             'tags.*' => ['string'],
             'status' => ['required', 'string', new ValidPostValue('status')],
+            'syntax_highlighting' => ['nullable', 'required_with:languages', 'string', new ValidPostValue('language')],
         ];
         return $validationRulesCreate;
     }
@@ -126,6 +127,7 @@ class PostController extends Controller {
             'tags' => 'sometimes|array',
             'tags.*' => ['sometimes', 'string'],
             'status' => ['sometimes', 'required', 'string', new ValidPostValue('status')],
+            'syntax_highlighting' => ['sometimes', 'nullable', 'required_with:languages', 'string', new ValidPostValue('language')],
         ];
         return $validationRulesUpdate;
     }

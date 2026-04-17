@@ -106,6 +106,7 @@ class PostFactory extends Factory {
             'category' => fake()->randomElement($categories),
             'post_type' => fake()->randomElement($postTypes),
             'status' => fake()->randomElement($statuses),
+            'syntax_highlighting' => null,
             'history' => [],
             'moderation_info' => [],
             'created_at' => $createdAt,
@@ -145,6 +146,11 @@ class PostFactory extends Factory {
                 'language' => $languageNames,
                 'technology' => $technologyNames
             ]);
+
+            if (!empty($languageNames)) {
+                $post->syntax_highlighting = $languageNames[0];
+                $post->save();
+            }
 
             $postAllowedValueMap = ["category", "post_type", "status", "tag", "language", "technology"];
 

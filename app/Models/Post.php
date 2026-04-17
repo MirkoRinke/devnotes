@@ -37,6 +37,7 @@ class Post extends Model {
         'category',
         'post_type',
         'status',
+        'syntax_highlighting',
         // 'external_source_previews',  || Generated in controller by ExternalSourceService
 
         // Counts
