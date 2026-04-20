@@ -78,8 +78,8 @@ class PostController extends Controller {
     public function getValidationRulesCreate(): array {
         $validationRulesCreate = [
             'title' => 'required|string|max:255',
-            'code' => 'nullable|string',
-            'description' => 'required|string',
+            'code' => 'nullable|string|max:65535',
+            'description' => 'required|string|max:65535',
             'images' => 'nullable|array',
             'images.*' => ['max:2048', new SafeUrl()],
             'videos' => 'nullable|array',
@@ -110,8 +110,8 @@ class PostController extends Controller {
     public function getValidationRulesUpdate(): array {
         $validationRulesUpdate = [
             'title' => 'sometimes|required|string|max:255',
-            'code' => 'sometimes|nullable|string',
-            'description' => 'sometimes|required|string',
+            'code' => 'sometimes|nullable|string|max:65535',
+            'description' => 'sometimes|required|string|max:65535',
             'images' => 'sometimes|nullable|array',
             'images.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'videos' => 'sometimes|nullable|array',

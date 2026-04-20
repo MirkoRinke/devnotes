@@ -16,8 +16,8 @@ return new class extends Migration {
             // Basic
             $table->foreignId('user_id')->nullable()->constrained('users', 'id');
             $table->string('title');
-            $table->text('code')->nullable();
-            $table->text('description');
+            $table->mediumText('code')->nullable(); // We using mediumText for Puffer to handle Emojis etc. max: 65535 characters
+            $table->mediumText('description');  // We using mediumText for Puffer to handle Emojis etc. max: 65535 characters
             $table->json('images')->nullable();
             $table->json('videos')->nullable();
             $table->json('resources')->nullable();
