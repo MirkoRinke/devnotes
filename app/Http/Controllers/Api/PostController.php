@@ -79,7 +79,7 @@ class PostController extends Controller {
         $validationRulesCreate = [
             'title' => 'required|string|max:255',
             'code' => 'nullable|string|max:65535',
-            'description' => 'required|string|max:65535',
+            'description' => 'required|string|min:15|max:65535',
             'images' => 'nullable|array',
             'images.*' => ['max:2048', new SafeUrl()],
             'videos' => 'nullable|array',
@@ -93,7 +93,7 @@ class PostController extends Controller {
             'technologies' => 'required_without:languages|array',
             'technologies.*' => ['required', new ValidPostValue('technology')],
             'tags' => 'nullable|array',
-            'tags.*' => ['string'],
+            'tags.*' => ['string', 'max:50'],
             'status' => ['required', 'string', new ValidPostValue('status')],
             'syntax_highlighting' => ['nullable', 'required_with:languages', 'string', new ValidPostValue('language')],
         ];
@@ -111,7 +111,7 @@ class PostController extends Controller {
         $validationRulesUpdate = [
             'title' => 'sometimes|required|string|max:255',
             'code' => 'sometimes|nullable|string|max:65535',
-            'description' => 'sometimes|required|string|max:65535',
+            'description' => 'sometimes|required|string|min:15|max:65535',
             'images' => 'sometimes|nullable|array',
             'images.*' => ['sometimes', 'max:2048', new SafeUrl()],
             'videos' => 'sometimes|nullable|array',
@@ -125,7 +125,7 @@ class PostController extends Controller {
             'technologies' => 'sometimes|required_without:languages|array',
             'technologies.*' => ['sometimes', 'required', new ValidPostValue('technology')],
             'tags' => 'sometimes|array',
-            'tags.*' => ['sometimes', 'string'],
+            'tags.*' => ['sometimes', 'string', 'max:50'],
             'status' => ['sometimes', 'required', 'string', new ValidPostValue('status')],
             'syntax_highlighting' => ['sometimes', 'nullable', 'required_with:languages', 'string', new ValidPostValue('language')],
         ];

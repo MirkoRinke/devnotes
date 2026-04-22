@@ -252,9 +252,12 @@ trait ApiResponses {
 
                     'code.required' => 'CODE_FIELD_REQUIRED',
                     'code.string' => 'CODE_MUST_BE_STRING',
+                    'code.max' => 'CODE_FIELD_MAX_LENGTH',
 
                     'description.required' => 'DESCRIPTION_FIELD_REQUIRED',
                     'description.string' => 'DESCRIPTION_MUST_BE_STRING',
+                    'description.min' => 'DESCRIPTION_FIELD_MIN_LENGTH',
+                    'description.max' => 'DESCRIPTION_FIELD_MAX_LENGTH',
 
                     'images.array' => 'IMAGES_MUST_BE_ARRAY',
                     'images.*.url' => 'IMAGES_MUST_BE_VALID_URLS',
@@ -293,6 +296,7 @@ trait ApiResponses {
 
                     'tags.array' => 'TAGS_MUST_BE_ARRAY',
                     'tags.*.string' => 'TAG_MUST_BE_STRING',
+                    'tags.*.max' => 'TAG_FIELD_MAX_LENGTH',
 
                     'status.required' => 'STATUS_FIELD_REQUIRED',
                     'status.string' => 'STATUS_MUST_BE_STRING',
