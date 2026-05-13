@@ -93,6 +93,7 @@ trait ApiSelectable {
      * - Basic counting of a single column across all records, grouped by value
      * - Delegating to filtered counting when filter parameters are present
      * - Counting by relation values using dot notation (e.g., 'count:languages.name')
+     * - The cache time-to-live (TTL) can be controlled via the `cacheTTL` query parameter.
      *
      * @param Request $request The HTTP request containing filter parameters
      * @param Builder $query The query builder instance
@@ -102,6 +103,7 @@ trait ApiSelectable {
      * @example | $this->countSelect($request, $query, $select);
      * 
      * Example URL: posts/?select=count:post_type
+     * Example URL with cache TTL: posts/?select=count:post_type&cacheTTL=120
      * 
      * Example response:
      * {
@@ -176,6 +178,8 @@ trait ApiSelectable {
             }
 
             $cacheKey = $this->generateSimpleCacheKey('count_select_' .  md5($this->generateCacheKeySuffix($request)));
+            $requestCacheTTL = (int) $request->input('cacheTTL', 60);
+            $cacheTTL = min(max($requestCacheTTL, 10), 3600);
 
             /**
              * Clear the cache for the grouped count by filter for Testing
@@ -197,7 +201,7 @@ trait ApiSelectable {
 
             $count = $hasCountColumn ? 'post_count as total_counts' : DB::raw('count(' . $countSelect . ') as total_counts');
 
-            $results = $this->cacheData($cacheKey, 60, function () use ($query, $countSelect, $filterValue, $entity, $groupBy, $count) {
+            $results = $this->cacheData($cacheKey, $cacheTTL, function () use ($query, $countSelect, $filterValue, $entity, $groupBy, $count) {
                 return $query
                     ->whereIn($countSelect, $filterValue)
                     ->select($countSelect . ' as name', $entity, $count)
@@ -268,6 +272,7 @@ trait ApiSelectable {
      * @example | $this->countSelectGroupedByFilter($request, $query, $countSelect, $modelSchema);
      *
      * Example URL: /posts/?select=count:post_type&filter[post_type]=snippets,tutorials
+     * Example URL with cache TTL: /posts/?select=count:post_type&filter[post_type]=snippets,tutorials&cacheTTL=120
      *
      * Example response:
      * {
@@ -312,13 +317,15 @@ trait ApiSelectable {
             $query->getQuery()->orders = null;
 
             $cacheKey = $this->generateSimpleCacheKey('count_select_grouped_by_filter_' . md5($this->generateCacheKeySuffix($request)));
+            $requestCacheTTL = (int) $request->input('cacheTTL', 60);
+            $cacheTTL = min(max($requestCacheTTL, 10), 3600);
 
             /**
              * Clear the cache for the grouped count by filter for Testing
              */
             // Cache::forget($cacheKey);
 
-            $results = $this->cacheData($cacheKey, 180, function () use ($query, $filterKey, $filterValue, $countSelect) {
+            $results = $this->cacheData($cacheKey, $cacheTTL, function () use ($query, $filterKey, $filterValue, $countSelect) {
                 return $query
                     ->whereIn($filterKey, $filterValue)
                     ->select($filterKey . ' as name', DB::raw('count(' . $countSelect . ') as total_counts'), DB::raw("'$filterKey' as entity"))
@@ -349,6 +356,7 @@ trait ApiSelectable {
      * @example | $this->countBelongsToMany($request, $relationInstance, $mainIds, $relationField);
      *
      * Example URL: posts/?select=count:languages.name
+     * Example URL with cache TTL: posts/?select=count:languages.name&cacheTTL=120
      *
      * Example response:
      * {
@@ -388,20 +396,21 @@ trait ApiSelectable {
         $relatedKey = $relationInstance->getRelatedPivotKeyName();
         $relatedTable = $relationInstance->getRelated()->getTable();
 
-
         $relatedTableSchema = Schema::getColumnListing($relatedTable);
         if (!in_array($relationField, $relatedTableSchema)) {
             return $this->errorResponse("Invalid relation field: $relationField", 'INVALID_RELATION_FIELD', 400);
         }
 
         $cacheKey = $this->generateSimpleCacheKey('count_belongs_to_many_' . md5($this->generateCacheKeySuffix($request)));
+        $requestCacheTTL = (int) $request->input('cacheTTL', 60);
+        $cacheTTL = min(max($requestCacheTTL, 10), 3600);
 
         /**
          * Clear the cache for the grouped count by filter for Testing
          */
-        // Cache::forget($cacheKey);       
+        // Cache::forget($cacheKey);
 
-        $results = $this->cacheData($cacheKey, 180, function () use ($pivotTable, $relatedTable, $parentKey, $relatedKey, $mainIds, $relationField) {
+        $results = $this->cacheData($cacheKey, $cacheTTL, function () use ($pivotTable, $relatedTable, $parentKey, $relatedKey, $mainIds, $relationField) {
             return DB::table($pivotTable)
                 ->join($relatedTable, "$pivotTable.$relatedKey", '=', "$relatedTable.id")
                 ->whereIn("$pivotTable.$parentKey", $mainIds)
@@ -431,6 +440,7 @@ trait ApiSelectable {
      * @example | $this->countBelongsTo($request, $relationInstance, $mainIds, $relationField, $query);
      * 
      * Example URL: /comments/?include=user&select=count:user.role
+     * Example URL with cache TTL: /comments/?include=user&select=count:user.role&cacheTTL=120
      * 
      * TODO Adjust the Doku response example below
      * 
@@ -463,13 +473,15 @@ trait ApiSelectable {
         }
 
         $cacheKey = $this->generateSimpleCacheKey('count_belongs_to_' .  md5($this->generateCacheKeySuffix($request)));
+        $requestCacheTTL = (int) $request->input('cacheTTL', 60);
+        $cacheTTL = min(max($requestCacheTTL, 10), 3600);
 
         /**
          * Clear the cache for the grouped count by filter for Testing
          */
         // Cache::forget($cacheKey);
 
-        $results = $this->cacheData($cacheKey, 180, function () use ($mainTable, $relatedTable, $foreignKey, $ownerKey, $mainIds, $relationField) {
+        $results = $this->cacheData($cacheKey, $cacheTTL, function () use ($mainTable, $relatedTable, $foreignKey, $ownerKey, $mainIds, $relationField) {
             return DB::table($mainTable)
                 ->join($relatedTable, "$mainTable.$foreignKey", '=', "$relatedTable.$ownerKey")
                 ->whereIn("$mainTable.id", $mainIds)
