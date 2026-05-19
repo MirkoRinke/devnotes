@@ -130,7 +130,8 @@ class UserStatsController extends Controller {
             $type = $validatedData['type'];
 
             $cacheKey = $this->generateSimpleCacheKey('userPostsInteractions_' . $id . '_' . md5($this->generateCacheKeySuffix($request)));
-            $cacheTTL = 150; // 2.5 minutes
+            $requestCacheTTL = (int) $request->input('cacheTTL', 150);
+            $cacheTTL = min(max($requestCacheTTL, 10), 3600);
 
             $total = $this->cacheData($cacheKey, $cacheTTL, function () use ($id, $period, $type) {
                 $query = Post::where('user_id', $id);
