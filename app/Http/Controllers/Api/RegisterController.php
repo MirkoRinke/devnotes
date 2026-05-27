@@ -49,7 +49,7 @@ class RegisterController extends Controller {
      */
     public function getValidationRules(): array {
         $validationRules = [
-            'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName()],
+            'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'not_regex:/@/'],
             'display_name' => ['required', 'unique:users,display_name', 'string', 'max:255', new NotForbiddenName()],
             'email' => 'required|string|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],

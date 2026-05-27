@@ -181,6 +181,7 @@ trait ApiResponses {
                     'name.string' => 'NAME_MUST_BE_STRING',
                     'name.min' => 'NAME_FIELD_MIN_LENGTH',
                     'name.max' => 'NAME_FIELD_MAX_LENGTH',
+                    'name.not_regex' => 'NAME_CANNOT_CONTAIN_AT_SYMBOL',
 
                     'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
                     'display_name.unique' => 'DISPLAY_NAME_ALREADY_IN_USE',
