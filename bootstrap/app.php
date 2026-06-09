@@ -13,6 +13,8 @@ use App\Http\Middleware\VerifyDeviceFingerprint;
 
 use Illuminate\Http\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Auth\AuthenticationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,16 +37,44 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         /**
-         * Handle exceptions for route not found
+         * Handle exceptions for a requested route that does not exist.
+         */
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Route not found',
+                    'code' => 404,
+                    'errors' => 'ROUTE_NOT_FOUND'
+                ], 404);
+            }
+        });
+
+        /**
+         * Handle exceptions for a named route that does not exist.
          */
         $exceptions->render(function (RouteNotFoundException $e, Request $request) {
-            if (!$request->expectsJson()) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Route name not found',
+                    'code' => 500,
+                    'errors' => 'ROUTE_NAME_NOT_FOUND'
+                ], 500);
+            }
+        });
+
+        /**
+         * Handle exceptions for unauthenticated access to protected routes.
+         */
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Unauthorized',
-                    'code' => 404,
+                    'code' => 401,
                     'errors' => 'UNAUTHORIZED'
-                ], 404);
+                ], 401);
             }
         });
     })
