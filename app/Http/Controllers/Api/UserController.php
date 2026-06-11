@@ -777,21 +777,21 @@ class UserController extends Controller {
      * }
      * @response status=401 scenario="Invalid Credentials" {
      *   "status": "error",
-     *   "message": "Invalid credentials provided.",
+     *   "message": "Account deletion failed due to invalid credentials.",
      *   "code": 401,
-     *   "errors": "INVALID_CREDENTIALS"
+     *   "errors": "ACCOUNT_DELETION_INVALID_CREDENTIALS"
      * }
      * @response status=403 scenario="Deletion not allowed" {
      *   "status": "error",
      *   "message": "This account 'guest' cannot be deleted.",
      *   "code": 403,
-     *   "errors": "FORBIDDEN"
+     *   "errors": "ACCOUNT_DELETION_FORBIDDEN"
      * }
      * @response status=404 scenario="User not found" {
      *   "status": "error",
-     *   "message": "User not found.",
+     *   "message": "Account deletion failed due to invalid credentials.",
      *   "code": 404,
-     *   "errors": "USER_NOT_FOUND"
+     *   "errors": "ACCOUNT_DELETION_USER_NOT_FOUND"
      * }
      */
     public function requestAccountDeletion(Request $request): JsonResponse {
@@ -817,7 +817,8 @@ class UserController extends Controller {
             }
 
             if (!Hash::check($validated['password'], $user->password)) {
-                return $this->errorResponse('Invalid credentials provided.', 'INVALID_CREDENTIALS', 401);
+                usleep(random_int(100000, 300000));
+                return $this->errorResponse('Account deletion failed due to invalid credentials.', 'ACCOUNT_DELETION_INVALID_CREDENTIALS', 401);
             }
 
             $userRole = $user->role;
@@ -827,7 +828,7 @@ class UserController extends Controller {
              *  If so, use the special handling for guest account deletion and recreation
              */
             if ($user->account_purpose === 'guest') {
-                return $this->errorResponse("This account '{$user->account_purpose}' cannot be deleted.", 'FORBIDDEN', 403);
+                return $this->errorResponse("This account '{$user->account_purpose}' cannot be deleted.", 'ACCOUNT_DELETION_FORBIDDEN', 403);
             }
 
             // Manually authorize the deletion.
@@ -860,11 +861,12 @@ class UserController extends Controller {
 
             return $this->successResponse(null, 'Your account has been successfully deleted.', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('User not found.', 'USER_NOT_FOUND', 404);
+            usleep(random_int(100000, 300000));
+            return $this->errorResponse('Account deletion failed due to invalid credentials.', 'ACCOUNT_DELETION_INVALID_CREDENTIALS', 401);
         } catch (AuthorizationException $e) {
-            return $this->errorResponse("This account '{$userRole}' cannot be deleted.", 'FORBIDDEN', 403);
+            return $this->errorResponse("This account '{$userRole}' cannot be deleted.", 'ACCOUNT_DELETION_FORBIDDEN', 403);
         } catch (ValidationException $e) {
-            return $this->errorResponse('Validation failed', $e->errors(), 422);
+            return $this->errorResponse('Account deletion failed due to validation errors.', 'ACCOUNT_DELETION_VALIDATION_FAILED', 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
         }
