@@ -79,6 +79,16 @@ trait ApiResponses {
      * @example | return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
      */
     protected function errorResponse($message, $errors = [], $code): JsonResponse {
+
+        // If the application is not in debug mode, replace detailed error information with a generic error code to avoid exposing sensitive information in production environments.
+        if (!config('app.debug', false)) {
+            $errors = match ($code) {
+                500     => 'SERVER_ERROR',
+                422     => 'VALIDATION_FAILED',
+                default => 'AN_UNEXPECTED_ERROR_OCCURRED',
+            };
+        }
+
         $response = [
             'status' => 'error',
             'message' => $message,
