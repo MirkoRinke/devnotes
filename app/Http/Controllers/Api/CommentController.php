@@ -453,6 +453,8 @@ class CommentController extends Controller {
                 $this->getValidationMessages('Comment')
             );
 
+            $parentId = $validatedData['parent_id'] ?? 'unknown';
+
             $parentComment = null;
 
             $depth = 0;
@@ -492,7 +494,7 @@ class CommentController extends Controller {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (ModelNotFoundException $e) {
             if (strpos($e->getMessage(), 'Comment') !== false) {
-                return $this->errorResponse("Parent comment with ID {$validatedData['parent_id']} does not exist", 'PARENT_COMMENT_NOT_FOUND', 404);
+                return $this->errorResponse("Parent comment with ID {$parentId} does not exist", 'PARENT_COMMENT_NOT_FOUND', 404);
             } else {
                 return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
             }
