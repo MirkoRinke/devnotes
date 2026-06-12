@@ -51,16 +51,16 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         /**
-         * Handle exceptions for a named route that does not exist.
+         * Handle exceptions for a requested route that exists but the user is not authorized to access it.
          */
         $exceptions->render(function (RouteNotFoundException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Route name not found',
-                    'code' => 500,
-                    'errors' => 'ROUTE_NAME_NOT_FOUND'
-                ], 500);
+                    'message' => 'Unauthorized',
+                    'code' => 401,
+                    'errors' => 'UNAUTHORIZED'
+                ], 401);
             }
         });
 
