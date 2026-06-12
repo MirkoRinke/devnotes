@@ -121,7 +121,7 @@ class CronjobController extends Controller {
 
             return $this->successResponse(null, 'Guest account reset successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 }

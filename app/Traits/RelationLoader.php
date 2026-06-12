@@ -5,6 +5,7 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use App\Traits\ApiInclude;
 
 use Exception;
 
@@ -14,6 +15,8 @@ use Exception;
  * loading relations when their foreign keys are included in the selection.
  */
 trait RelationLoader {
+
+    use ApiInclude;
 
     /**
      * Load the user relation
@@ -166,7 +169,7 @@ trait RelationLoader {
                     }
                 }
             } catch (Exception $e) {
-                return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+                return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
             }
         }
 

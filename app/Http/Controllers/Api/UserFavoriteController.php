@@ -141,7 +141,7 @@ class UserFavoriteController extends Controller {
 
             return $this->successResponse($query, 'Favorites retrieved successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -222,7 +222,7 @@ class UserFavoriteController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -289,7 +289,7 @@ class UserFavoriteController extends Controller {
 
             return $this->successResponse($favorite, $message, 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -357,7 +357,7 @@ class UserFavoriteController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Post not found', 'POST_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -595,7 +595,7 @@ class UserFavoriteController extends Controller {
 
             return $this->successResponse($posts, 'Favorited posts retrieved successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 }

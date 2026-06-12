@@ -249,7 +249,7 @@ class ForbiddenNameController extends Controller {
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -349,7 +349,7 @@ class ForbiddenNameController extends Controller {
         } catch (ValidationException $e) {
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -473,7 +473,7 @@ class ForbiddenNameController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Forbidden name not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -602,7 +602,7 @@ class ForbiddenNameController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Forbidden name not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -668,7 +668,7 @@ class ForbiddenNameController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('Forbidden name not found', 'NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 }

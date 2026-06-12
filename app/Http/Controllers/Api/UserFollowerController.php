@@ -202,7 +202,7 @@ class UserFollowerController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -349,7 +349,7 @@ class UserFollowerController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -443,7 +443,7 @@ class UserFollowerController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -506,7 +506,7 @@ class UserFollowerController extends Controller {
         } catch (ModelNotFoundException $e) {
             return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 }
