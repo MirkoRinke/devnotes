@@ -113,7 +113,6 @@ class RegisterController extends Controller {
      *   "errors": {
      *     "name": ["FORBIDDEN_NAME"],
      *     "display_name": ["FORBIDDEN_NAME"],
-     *     "email": ["EMAIL_ALREADY_IN_USE"],
      *     "display_name": ["DISPLAY_NAME_ALREADY_IN_USE"]
      *   }
      * }
@@ -181,11 +180,42 @@ class RegisterController extends Controller {
 
             return $this->successResponse($user, 'User created successfully', 201);
         } catch (ValidationException $e) {
+            usleep(random_int(100000, 300000));
+            $responseErrors = $this->allowedErrorResponse($e);
+            if (!empty($responseErrors)) {
+                return $this->errorResponse('Validation failed', $responseErrors, 422, true);
+            }
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
+
+
+    /**
+     * Filter validation errors to only include allowed error codes for specific fields.
+     */
+    public function allowedErrorResponse(ValidationException $e): array {
+        $errors = $e->errors();
+
+        $allowedErrorsMap = [
+            'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
+            'display_name' => ['DISPLAY_NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
+            'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED'],
+        ];
+
+        $responseErrors = [];
+        foreach ($allowedErrorsMap as $field => $allowedCodes) {
+            if (isset($errors[$field])) {
+                $matches = array_intersect($errors[$field], $allowedCodes);
+                if (!empty($matches)) {
+                    $responseErrors[$field] = array_values($matches);
+                }
+            }
+        }
+        return $responseErrors;
+    }
+
 
     /**
      * Send verification email to a specific user.
@@ -366,6 +396,8 @@ class RegisterController extends Controller {
                 $this->getValidationMessages('verifyEmail')
             );
 
+            usleep(random_int(100000, 300000));
+
             $user = User::findOrFail($validated['id']);
 
             if (!hash_equals((string) $validated['hash'], sha1($user->getEmailForVerification()))) {
@@ -382,8 +414,9 @@ class RegisterController extends Controller {
 
             return $this->successResponse(null, 'Email verified successfully', 200);
         } catch (ModelNotFoundException $e) {
-            return $this->errorResponse('User not found', 'USER_NOT_FOUND', 404);
+            return $this->errorResponse('Invalid verification link', 'INVALID_VERIFICATION_LINK', 400);
         } catch (ValidationException $e) {
+            usleep(random_int(100000, 300000));
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
