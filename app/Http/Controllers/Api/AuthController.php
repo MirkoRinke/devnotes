@@ -133,6 +133,7 @@ class AuthController extends Controller {
             }
 
             if (!$user || !Hash::check($request->password, $user->password)) {
+                usleep(random_int(100000, 300000));
                 return $this->errorResponse('The provided credentials are incorrect.', 'CREDENTIALS_INCORRECT', 401);
             }
 
@@ -174,9 +175,10 @@ class AuthController extends Controller {
 
             return $this->successResponse(["user_id" => $user->id, 'accessToken' => $token->plainTextToken, 'type' => 'Bearer'], 'Login successful', 200);
         } catch (ValidationException $e) {
+            usleep(random_int(100000, 300000));
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -222,7 +224,7 @@ class AuthController extends Controller {
             $token->delete();
             return $this->successResponse(null, 'Logout successful', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -310,7 +312,7 @@ class AuthController extends Controller {
 
             return $this->successResponse($query, 'Token list retrieved', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -385,7 +387,7 @@ class AuthController extends Controller {
 
             return $this->successResponse(null, 'Device logged out successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -436,7 +438,7 @@ class AuthController extends Controller {
 
             return $this->successResponse(null, 'All other devices logged out successfully', 200);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 
@@ -489,21 +491,19 @@ class AuthController extends Controller {
                 $this->getValidationMessages('ForgotPassword')
             );
 
-            $status = Password::sendResetLink(
-                $request->only('email')
-            );
+            usleep(random_int(100000, 300000));
 
-            if ($status === Password::RESET_LINK_SENT) {
-                return $this->successResponse(null, 'Password reset link sent', 200);
-            }
+            Password::sendResetLink($request->only('email'));
 
-            return $this->errorResponse('Password reset failed', 'PASSWORD_RESET_FAILED', 400);
+            return $this->successResponse(null, 'If this email address exists in our system, you will receive a password reset link shortly.', 200);
         } catch (ValidationException $e) {
+            usleep(random_int(100000, 300000));
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
+
 
     /**
      * Reset Password
@@ -570,6 +570,8 @@ class AuthController extends Controller {
                 $this->getValidationMessages('ResetPassword')
             );
 
+            usleep(random_int(100000, 300000));
+
             $status = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
                 function ($user, $password) {
@@ -591,9 +593,10 @@ class AuthController extends Controller {
 
             return $this->errorResponse('Password reset failed', 'PASSWORD_RESET_FAILED', 400);
         } catch (ValidationException $e) {
+            usleep(random_int(100000, 300000));
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
-            return $this->errorResponse('An unexpected error occurred', 'SERVER_ERROR', 500);
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
     }
 }
