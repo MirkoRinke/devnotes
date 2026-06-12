@@ -74,14 +74,15 @@ trait ApiResponses {
      * @param string $message Error message
      * @param mixed $errors Detailed error information or error code
      * @param int $code HTTP status code
+     * @param bool $passThrough If true, the provided error details will be used even in production mode. Use with caution to avoid exposing sensitive information.
      * @return \Illuminate\Http\JsonResponse
      * 
      * @example | return $this->errorResponse("User with ID $id does not exist", 'USER_NOT_FOUND', 404);
      */
-    protected function errorResponse($message, $errors = [], $code): JsonResponse {
+    protected function errorResponse($message, $errors = [], $code, $passThrough = false): JsonResponse {
 
         // If the application is not in debug mode, replace detailed error information with a generic error code to avoid exposing sensitive information in production environments.
-        if (!config('app.debug', false)) {
+        if (!config('app.debug', false) && !$passThrough) {
             $errors = match ($code) {
                 500     => 'SERVER_ERROR',
                 422     => 'VALIDATION_FAILED',
