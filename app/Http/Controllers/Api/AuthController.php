@@ -160,7 +160,8 @@ class AuthController extends Controller {
             }
 
             if ($user->is_banned && now()->lt($user->is_banned)) {
-                return $this->errorResponse('Your account has been suspended.', 'ACCOUNT_SUSPENDED', 403);
+                $days = (int) now()->diffInDays($user->is_banned);
+                return $this->errorResponse('Your account has been suspended for ' . $days . ' more day(s).', 'ACCOUNT_SUSPENDED', 403);
             }
 
             /**
