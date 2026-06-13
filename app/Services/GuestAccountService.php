@@ -47,15 +47,28 @@ class GuestAccountService {
      * @example | $this->createGuestAccount();
      */
     public function createGuestAccount() {
+        $guestAccountPassword = config('app.passwords.guest_account');
+
+
         $user = new User();
 
         $user->name = 'Guest';
         $user->display_name = 'Guest';
         $user->email = 'guest@system.local';
-        $user->password = Hash::make('sicheresPasswort123'); //!Todo Use a secure password
+        $user->password = Hash::make($guestAccountPassword);
         $user->role = 'user';
         $user->email_verified_at = now();
         $user->account_purpose = 'guest';
+        $user->avatar_items = [
+            'duck' => null,
+            'head_accessory' => null,
+            'eye_accessory' => null,
+            'ear_accessory' => null,
+            'neck_accessory' => null,
+            'chest_accessory' => null,
+            'background' => null,
+        ];
+        $user->moderation_info = [];
 
         $user->save();
 

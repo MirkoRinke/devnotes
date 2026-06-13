@@ -129,4 +129,8 @@ return [
         'email_verification' => env('EMAIL_VERIFICATION_ENABLED', true),
     ],
 
+    'passwords' => [
+        'guest_account' => env('GUEST_ACCOUNT_PASSWORD'),
+    ],
+
 ];
