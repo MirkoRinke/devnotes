@@ -13,6 +13,7 @@ use App\Rules\NotForbiddenName;
 use App\Traits\ApiResponses;
 
 use App\Services\UserRelationService;
+use App\Services\SecurityNotificationService;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -29,10 +30,16 @@ class RegisterController extends Controller {
     protected $userRelationService;
 
     /**
+     *  The security notification service
+     */
+    protected $securityNotificationService;
+
+    /**
      *  Constructor
      */
-    public function __construct(UserRelationService $userRelationService) {
+    public function __construct(UserRelationService $userRelationService, SecurityNotificationService $securityNotificationService) {
         $this->userRelationService = $userRelationService;
+        $this->securityNotificationService = $securityNotificationService;
     }
 
     /**
@@ -50,7 +57,7 @@ class RegisterController extends Controller {
     public function getValidationRules(): array {
         $validationRules = [
             'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'not_regex:/@/'],
-            'display_name' => ['required', 'unique:users,display_name', 'string', 'max:255', new NotForbiddenName()],
+            'display_name' => ['required', 'unique:users,display_name', 'string', 'min:2', 'max:255', new NotForbiddenName()],
             'email' => 'required|string|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'privacy_policy_accepted' => ['required', 'accepted'],
@@ -66,7 +73,7 @@ class RegisterController extends Controller {
      * 
      * Creates a new user account with the provided information. Upon successful registration,
      * a user profile is automatically generated (with user_id and display_name), and the user receives an email for verification.
-     * The fields name and display_name are checked against a blacklist (FORBIDDEN_NAME).
+     * The fields name and display_name are checked against a blacklist (FORBIDDEN_NAME and FORBIDDEN_DISPLAY_NAME).
      *
      * @group Authentication
      *
@@ -94,15 +101,7 @@ class RegisterController extends Controller {
      *   "code": 201,
      *   "count": 1,
      *   "data": {
-     *     "id": 10
-     *     "name": "John Doe",
-     *     "display_name": "johndoe", 
-     *     "email": "john@example.com",
-     *     "email_verified_at": "null", // or current timestamp if email verification is disabled
-     *     "privacy_policy_accepted_at": "2025-07-21T21:16:33.032980Z",
-     *     "terms_of_service_accepted_at": "2025-07-21T21:16:33.032980Z",
-     *     "updated_at": "2025-04-29T18:35:29.000000Z",
-     *     "created_at": "2025-04-29T18:35:29.000000Z",
+     *    "data": null
      *   }
      * }
      *
@@ -112,7 +111,7 @@ class RegisterController extends Controller {
      *   "code": 422,
      *   "errors": {
      *     "name": ["FORBIDDEN_NAME"],
-     *     "display_name": ["FORBIDDEN_NAME"],
+     *     "display_name": ["FORBIDDEN_DISPLAY_NAME"],
      *     "display_name": ["DISPLAY_NAME_ALREADY_IN_USE"]
      *   }
      * }
@@ -178,13 +177,19 @@ class RegisterController extends Controller {
                 return $user;
             });
 
-            return $this->successResponse($user, 'User created successfully', 201);
+            return $this->successResponse(null, 'User created successfully', 201);
         } catch (ValidationException $e) {
             usleep(random_int(100000, 300000));
             $responseErrors = $this->allowedErrorResponse($e);
             if (!empty($responseErrors)) {
                 return $this->errorResponse('Validation failed', $responseErrors, 422, true);
             }
+
+            $result = $this->securityNotificationService->handleEmailConflict($e->errors(), $request->input('email'));
+            if ($result instanceof \Illuminate\Http\JsonResponse) {
+                return $result;
+            }
+
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
@@ -200,7 +205,7 @@ class RegisterController extends Controller {
 
         $allowedErrorsMap = [
             'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
-            'display_name' => ['DISPLAY_NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
+            'display_name' => ['DISPLAY_NAME_ALREADY_IN_USE', 'FORBIDDEN_DISPLAY_NAME'],
             'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED'],
         ];
 
