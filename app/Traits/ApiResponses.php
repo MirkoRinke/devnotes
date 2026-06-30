@@ -197,6 +197,7 @@ trait ApiResponses {
                     'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
                     'display_name.unique' => 'DISPLAY_NAME_ALREADY_IN_USE',
                     'display_name.string' => 'DISPLAY_NAME_MUST_BE_STRING',
+                    'display_name.min' => 'DISPLAY_NAME_FIELD_MIN_LENGTH',
                     'display_name.max' => 'DISPLAY_NAME_FIELD_MAX_LENGTH',
 
                     'email.required' => 'EMAIL_FIELD_REQUIRED',
