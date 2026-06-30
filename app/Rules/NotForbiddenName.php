@@ -46,7 +46,7 @@ class NotForbiddenName implements ValidationRule {
         });
 
         if (in_array($value, $forbiddenNames)) {
-            $fail('FORBIDDEN_NAME');
+            $fail('FORBIDDEN_' . strtoupper($attribute));
             return;
         }
     }
