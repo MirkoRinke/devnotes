@@ -63,7 +63,7 @@ class UserProfileController extends Controller {
      */
     public function getValidationRulesUpdate($userProfile): array {
         $validationRulesUpdate = [
-            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName()],
+            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
             'public_email' => 'sometimes|nullable|email|max:255',
             'website' => ['sometimes', 'nullable', 'string', 'max:255', new SafeUrl()],
             'is_public' => 'sometimes|required|boolean',
@@ -434,7 +434,7 @@ class UserProfileController extends Controller {
      *
      * @urlParam id required The ID of the user profile to update. Example: 1
      *
-     * @bodyParam display_name string The display name of the user (2-255 characters). Example: "Admin"
+     * @bodyParam display_name string The display name of the user profile. Example: "Admin"
      * @bodyParam public_email string|null The publicly visible email address. Example: "contact@mirkorinke.dev"
      * @bodyParam website string|null User's website. Example: "https://mirkorinke.dev/"
      * @bodyParam is_public boolean Whether the profile is publicly visible. Example: true
