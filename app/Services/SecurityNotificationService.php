@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Traits\ApiResponses;
+
 class SecurityNotificationService {
+
+    use ApiResponses;
 
 
     public function handleEmailConflict(array $errors, string $email): \Illuminate\Http\JsonResponse | null {
@@ -10,17 +14,21 @@ class SecurityNotificationService {
             return null;
         }
 
-        if (isset($errors['email']) && $errors['email'] === ['EMAIL_ALREADY_IN_USE']) {
+        $hasOtherErrors = false;
+
+        foreach ($errors as $key => $messages) {
+            if ($key === 'email') {
+                if ($messages === ['EMAIL_ALREADY_IN_USE']) {
+                    continue;
+                }
+            }
+            $hasOtherErrors = true;
+            break;
+        }
+
+        if (!$hasOtherErrors && isset($errors['email']) && $errors['email'] === ['EMAIL_ALREADY_IN_USE']) {
             // TODO: Send security notification to the email owner to alert them of a registration attempt for their address. This acts as a security notice or a reminder that an account may already exist.
-            return response()->json([
-                'status' => 'success',
-                'message' => 'User created successfully',
-                'code' => 201,
-                'count' => 1,
-                'data' => [
-                    'data' => null
-                ]
-            ], 201);
+            return $this->successResponse(null, 'User created successfully', 201);
         }
         return null;
     }
