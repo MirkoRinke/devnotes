@@ -68,7 +68,7 @@ class UserController extends Controller {
      */
     public function getValidationRulesUpdate($user): array {
         $validationRules = [
-            'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'not_regex:/@/'],
+            'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
             'email' => 'sometimes|required|string|email|confirmed|unique:users,email,' . $user->id,
             'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'avatar_items' => 'sometimes|nullable|array',
@@ -471,7 +471,7 @@ class UserController extends Controller {
      * @bodyParam avatar_items.background string Path to the background avatar item. Must start with "/background/" and end with ".webp". Example: "/background/beach.webp"
      *
      * @bodyContent {
-     *   "name": "Max Mustermann99",                                || optional, string, min:2, max:255
+     *   "name": "Max Mustermann99",                                || optional, string, min:2, max:255 , forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
      *   "email": "max@example99.com",                              || optional, string, email, unique
      *   "password": "sicheresPasswort1234!",                       || optional, string, min:8, confirmed
      *   "password_confirmation": "sicheresPasswort1234!"           || required if password is set, string, must match password
