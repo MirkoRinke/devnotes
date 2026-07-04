@@ -56,8 +56,8 @@ class RegisterController extends Controller {
      */
     public function getValidationRules(): array {
         $validationRules = [
-            'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'not_regex:/@/'],
-            'display_name' => ['required', 'unique:users,display_name', 'string', 'min:2', 'max:255', new NotForbiddenName()],
+            'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
+            'display_name' => ['required', 'unique:users,display_name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
             'email' => 'required|string|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'privacy_policy_accepted' => ['required', 'accepted'],
@@ -86,8 +86,8 @@ class RegisterController extends Controller {
      * @bodyParam terms_of_service_accepted boolean required Must be true to proceed with registration. Example: true
      *
      * @bodyContent {
-     *   "name": "John Doe",                                || required, string, min:2, max:255, forbidden names not allowed
-     *   "display_name": "johndoe",                         || required, string, unique, min:2, max:255, forbidden names not allowed
+     *   "name": "John Doe",                                || required, string, min:2, max:255, forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
+     *   "display_name": "johndoe",                         || required, string, unique, min:2, max:255, forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
      *   "email": "john@example.com",                       || required, string, email, unique
      *   "password": "sicheresPasswort1234!",               || required, string, min:8, confirmed
      *   "password_confirmation": "sicheresPasswort1234!"   || required, string, must match password
