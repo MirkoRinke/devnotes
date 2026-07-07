@@ -72,6 +72,12 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      */
     Route::post('/register', [RegisterController::class, 'register']);
 
+
+    /**
+     * Route for Checking availability of username and display name
+     */
+    Route::post('/check-registration-availability', [RegisterController::class, 'checkRegistrationAvailability']);
+
     /**
      * Route for email verification
      */
