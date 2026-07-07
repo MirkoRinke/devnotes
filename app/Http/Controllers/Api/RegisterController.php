@@ -56,8 +56,8 @@ class RegisterController extends Controller {
      */
     public function getValidationRules(): array {
         $validationRules = [
-            'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
-            'display_name' => ['required', 'unique:users,display_name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
+            'name' => ['required', 'unique:users,name', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/',],
+            'display_name' => ['required', 'unique:users,display_name', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
             'email' => 'required|string|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'privacy_policy_accepted' => ['required', 'accepted'],
@@ -65,6 +65,24 @@ class RegisterController extends Controller {
         ];
         return $validationRules;
     }
+
+
+
+    /**
+     * The validation rules for checking availability of username and display name
+     * 
+     * @return array
+     * 
+     * @example | $this->getCheckAvailabilityValidationRules()
+     */
+    public function getCheckAvailabilityValidationRules(): array {
+        $validationRules = [
+            'name' => ['sometimes', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
+            'display_name' => ['sometimes', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
+        ];
+        return $validationRules;
+    }
+
 
     /**
      * Register a new user
@@ -77,8 +95,8 @@ class RegisterController extends Controller {
      *
      * @group Authentication
      *
-     * @bodyParam name string required The full name of the user (2-255 characters, forbidden names not allowed). Example: John Doe
-     * @bodyParam display_name string required A unique username for display (2-255 characters, forbidden names not allowed). Example: johndoe
+     * @bodyParam name string required The full name of the user (2-40 characters, forbidden names not allowed). Example: John Doe
+     * @bodyParam display_name string required A unique username for display (2-40 characters, forbidden names not allowed). Example: johndoe
      * @bodyParam email string required A valid, unique email address. Example: john@example.com
      * @bodyParam password string required Password (8-255 characters, must contain uppercase and lowercase letters, numbers, and symbols, and must not be found in data breaches). Example: sicheresPasswort1234!
      * @bodyParam password_confirmation string required Must match the password field. Example: sicheresPasswort1234!
@@ -86,8 +104,8 @@ class RegisterController extends Controller {
      * @bodyParam terms_of_service_accepted boolean required Must be true to proceed with registration. Example: true
      *
      * @bodyContent {
-     *   "name": "John Doe",                                || required, string, min:2, max:255, forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
-     *   "display_name": "johndoe",                         || required, string, unique, min:2, max:255, forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
+     *   "name": "John Doe",                                || required, string, min:2, max:40, forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
+     *   "display_name": "johndoe",                         || required, string, unique, min:2, max:40, forbidden names not allowed, regex:/^[a-zA-Z0-9._-]{2,}$/
      *   "email": "john@example.com",                       || required, string, email, unique
      *   "password": "sicheresPasswort1234!",               || required, string, min:8, confirmed
      *   "password_confirmation": "sicheresPasswort1234!"   || required, string, must match password
@@ -188,6 +206,55 @@ class RegisterController extends Controller {
             $result = $this->securityNotificationService->handleEmailConflict($e->errors(), $request->input('email'));
             if ($result instanceof \Illuminate\Http\JsonResponse) {
                 return $result;
+            }
+
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
+        }
+    }
+
+
+    /**
+     * Check the availability of a username and display name
+     * 
+     * Endpoint: POST /check-registration-availability
+     * 
+     * This endpoint checks if the provided username and display name are available for registration. It validates the input and returns a JSON response indicating the availability of each field.
+     * 
+     * @bodyParam name string The username to check for availability. Example: johndoe
+     * @bodyParam display_name string The display name to check for availability. Example: John Doe
+     * 
+     */
+    public function checkRegistrationAvailability(Request $request): JsonResponse {
+        try {
+            $validatedData = $request->validate(
+                $this->getCheckAvailabilityValidationRules(),
+                $this->getValidationMessages('User')
+            );
+
+            $availability = [];
+
+            if (isset($validatedData['name'])) {
+                $nameExists = User::where('name', $validatedData['name'])->exists();
+                $availability['name'] = $nameExists ? ['NAME_ALREADY_IN_USE'] : ['NAME_AVAILABLE'];
+            }
+
+            if (isset($validatedData['display_name'])) {
+                $displayNameExists = User::where('display_name', $validatedData['display_name'])->exists();
+                $availability['display_name'] = $displayNameExists ? ['DISPLAY_NAME_ALREADY_IN_USE'] : ['DISPLAY_NAME_AVAILABLE'];
+            }
+
+            if (!isset($validatedData['name']) && !isset($validatedData['display_name'])) {
+                return $this->errorResponse('At least one field (name or display_name) is required.', 'MISSING_REQUIRED_FIELDS', 422);
+            }
+
+            return $this->successResponse($availability, 'Availability checked successfully', 200);
+        } catch (ValidationException $e) {
+            usleep(random_int(100000, 300000));
+            $responseErrors = $this->allowedErrorResponse($e);
+            if (!empty($responseErrors)) {
+                return $this->errorResponse('Validation failed', $responseErrors, 422, true);
             }
 
             return $this->errorResponse('Validation failed', $e->errors(), 422);
