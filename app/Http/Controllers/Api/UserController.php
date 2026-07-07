@@ -68,7 +68,7 @@ class UserController extends Controller {
      */
     public function getValidationRulesUpdate($user): array {
         $validationRules = [
-            'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
+            'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
             'email' => 'sometimes|required|string|email|confirmed|unique:users,email,' . $user->id,
             'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'avatar_items' => 'sometimes|nullable|array',
