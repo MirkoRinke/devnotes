@@ -63,7 +63,7 @@ class UserProfileController extends Controller {
      */
     public function getValidationRulesUpdate($userProfile): array {
         $validationRulesUpdate = [
-            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:255', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._-]{2,}$/'],
+            'display_name' => ['sometimes', 'required', 'unique:user_profiles,display_name,' . $userProfile->id, 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
             'public_email' => 'sometimes|nullable|email|max:255',
             'website' => ['sometimes', 'nullable', 'string', 'max:255', new SafeUrl()],
             'is_public' => 'sometimes|required|boolean',
