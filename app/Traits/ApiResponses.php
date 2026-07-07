@@ -193,6 +193,7 @@ trait ApiResponses {
                     'name.min' => 'NAME_FIELD_MIN_LENGTH',
                     'name.max' => 'NAME_FIELD_MAX_LENGTH',
                     'name.regex' => 'NAME_MUST_BE_VALID_REGEX',
+                    'name.not_regex' => 'NAME_CONTAINS_CONSECUTIVE_SPACES',
 
                     'display_name.required' => 'DISPLAY_NAME_FIELD_REQUIRED',
                     'display_name.unique' => 'DISPLAY_NAME_ALREADY_IN_USE',
@@ -200,6 +201,7 @@ trait ApiResponses {
                     'display_name.min' => 'DISPLAY_NAME_FIELD_MIN_LENGTH',
                     'display_name.max' => 'DISPLAY_NAME_FIELD_MAX_LENGTH',
                     'display_name.regex' => 'DISPLAY_NAME_MUST_BE_VALID_REGEX',
+                    'display_name.not_regex' => 'DISPLAY_NAME_CONTAINS_CONSECUTIVE_SPACES',
 
                     'email.required' => 'EMAIL_FIELD_REQUIRED',
                     'email.string' => 'EMAIL_MUST_BE_STRING',
@@ -357,6 +359,7 @@ trait ApiResponses {
                     'display_name.min' => 'DISPLAY_NAME_FIELD_MIN_LENGTH',
                     'display_name.max' => 'DISPLAY_NAME_FIELD_MAX_LENGTH',
                     'display_name.regex' => 'DISPLAY_NAME_MUST_BE_VALID_REGEX',
+                    'display_name.not_regex' => 'DISPLAY_NAME_CONTAINS_CONSECUTIVE_SPACES',
 
                     'public_email.email' => 'PUBLIC_EMAIL_MUST_BE_VALID',
                     'public_email.max' => 'PUBLIC_EMAIL_FIELD_MAX_LENGTH',
