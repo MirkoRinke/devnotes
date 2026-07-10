@@ -251,7 +251,6 @@ class RegisterController extends Controller {
 
             return $this->successResponse($availability, 'Availability checked successfully', 200);
         } catch (ValidationException $e) {
-            usleep(random_int(100000, 300000));
             $responseErrors = $this->allowedErrorResponse($e);
             if (!empty($responseErrors)) {
                 return $this->errorResponse('Validation failed', $responseErrors, 422, true);
