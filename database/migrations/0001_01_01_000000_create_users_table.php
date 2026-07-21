@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->string('role')->default('user');
 
             // Avatar-System
+            $table->integer('avatar_mvp_id')->nullable();
             $table->json('avatar_items');
 
             // Ban info
