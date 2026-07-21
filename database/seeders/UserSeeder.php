@@ -43,6 +43,11 @@ class UserSeeder extends Seeder {
             $user->password = $data['password'];
             $user->display_name = $data['display_name'] ?? null;
             $user->role = $data['role'] ?? 'user';
+            /**
+             * Randomly assign a pre-MVP avatar ID between 1 and 20
+             * TODO: Set pre-MVP avatar ID null after MVP.
+             */
+            $user->avatar_mvp_id = $data['avatar_mvp_id'] ?? rand(1, 20);
             $user->avatar_items = [
                 'duck' => null,
                 'head_accessory' => null,
@@ -86,11 +91,11 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'admin',
             'email_verified_at' => now(),
+            'avatar_mvp_id' => 999,
         ]);
 
         $this->command->info('Admin user created successfully!');
 
-        // Create a system user for deleted accounts. It is important that this user receives exactly this ID.
         $this->createUserWithProfile([
             'id' => 2,
             'name' => 'System',
@@ -99,6 +104,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
+            'avatar_mvp_id' => 997,
         ]);
 
         $this->command->info('System user created successfully!');
@@ -112,6 +118,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
+            'avatar_mvp_id' => 997,
         ]);
 
         $this->command->info('System deleted user created successfully!');
@@ -137,6 +144,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'moderator',
             'email_verified_at' => now(),
+            'avatar_mvp_id' => 998,
         ]);
 
         $this->command->info('Moderator user created successfully!');
