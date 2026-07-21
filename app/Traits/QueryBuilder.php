@@ -49,7 +49,7 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                     // Basic
-                    ...['display_name', 'role'],
+                    ...['display_name', 'role', 'avatar_mvp_id'],
                     // Ban info
                     ...($hasModeratorPrivileges ? ['is_banned', 'was_ever_banned'] : []),
                     // Moderation info
@@ -59,7 +59,7 @@ trait QueryBuilder {
                     // Default
                     ...['id', 'name', 'created_at', 'updated_at', 'email', 'email_verified_at'],
                     // Basic
-                    ...['display_name', 'role', 'avatar_items'],
+                    ...['display_name', 'role', 'avatar_mvp_id', 'avatar_items'],
                     // Ban info
                     ...($hasModeratorPrivileges ? ['is_banned', 'was_ever_banned'] : []),
                     // Moderation info
