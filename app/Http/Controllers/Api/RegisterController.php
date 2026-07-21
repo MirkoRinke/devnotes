@@ -161,6 +161,10 @@ class RegisterController extends Controller {
                 $user->display_name = $validatedData['display_name'];
                 $user->email = $validatedData['email'];
                 $user->password = bcrypt($validatedData['password']);
+                /**
+                 * TODO: Set pre-MVP avatar ID null after MVP.
+                 */
+                $user->avatar_mvp_id = 1;
                 $user->avatar_items = [
                     'duck' => null,
                     'head_accessory' => null,
