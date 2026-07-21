@@ -28,6 +28,11 @@ class UserFactory extends Factory {
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'user',
+            /**
+             * Randomly assign a pre-MVP avatar ID between 1 and 20
+             * TODO: Set pre-MVP avatar ID null after MVP.
+             */
+            'avatar_mvp_id' => rand(1, 20),
             'avatar_items' => [
                 'duck' => null,
                 'head_accessory' => null,
