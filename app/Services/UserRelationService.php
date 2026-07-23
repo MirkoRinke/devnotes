@@ -20,6 +20,9 @@ use App\Models\UserReport;
  * and deleting user-related data.
  */
 class UserRelationService {
+    private $systemDeletedUserId = 3;
+
+
     /**
      * Create a user profile for a user
      * 
@@ -77,19 +80,19 @@ class UserRelationService {
      * Transfer all posts from a user to the system user
      * 
      * @param User $user
-     * @param int $systemUserId Default: 3
      * @return int Number of transferred posts
      * 
      * @example | $this->userRelationService->transferPosts($user);
      */
-    public function transferPosts(User $user, int $systemUserId = 3): int {
+    public function transferPosts(User $user): int {
         $totalTransferred = 0;
         Post::where('user_id', $user->id)
-            ->chunkById(100, function ($posts) use ($systemUserId, &$totalTransferred) {
+            ->where('status', 'published')
+            ->chunkById(100, function ($posts) use (&$totalTransferred) {
                 $ids = $posts->pluck('id')->toArray();
                 $updated = DB::table('posts')
                     ->whereIn('id', $ids)
-                    ->update(['user_id' => $systemUserId]);
+                    ->update(['user_id' => $this->systemDeletedUserId]);
                 $totalTransferred += $updated;
             });
 
@@ -97,22 +100,43 @@ class UserRelationService {
     }
 
     /**
+     * Delete all remaining posts from a user that are not published
+     * 
+     * @param User $user
+     * @return int Number of deleted posts
+     * 
+     * @example | $this->userRelationService->deleteRemainingPosts($user);
+     */
+    public function deleteRemainingPosts(User $user): int {
+        $totalDeleted = 0;
+        Post::where('user_id', $user->id)
+            ->where('status', '!=', 'published')
+            ->chunkById(100, function ($posts) use (&$totalDeleted) {
+                $ids = $posts->pluck('id')->toArray();
+                $deleted = DB::table('posts')->whereIn('id', $ids)->delete();
+                $totalDeleted += $deleted;
+            });
+
+        return $totalDeleted;
+    }
+
+
+    /**
      * Transfer all comments from a user to the system user
      * 
      * @param User $user
-     * @param int $systemUserId Default: 3
      * @return int Number of transferred comments
      * 
      * @example | $this->userRelationService->transferComments($user);
      */
-    public function transferComments(User $user, int $systemUserId = 3): int {
+    public function transferComments(User $user): int {
         $totalTransferred = 0;
         Comment::where('user_id', $user->id)
-            ->chunkById(100, function ($comments) use ($systemUserId, &$totalTransferred) {
+            ->chunkById(100, function ($comments) use (&$totalTransferred) {
                 $ids = $comments->pluck('id')->toArray();
                 $updated = DB::table('comments')
                     ->whereIn('id', $ids)
-                    ->update(['user_id' => $systemUserId]);
+                    ->update(['user_id' => $this->systemDeletedUserId]);
                 $totalTransferred += $updated;
             });
 
@@ -123,20 +147,19 @@ class UserRelationService {
      * Transfer all post allowed values from a user to the system user
      * 
      * @param User $user
-     * @param int $systemUserId Default: 3
      * @return int Number of transferred post allowed values
      * 
      * @example | $this->userRelationService->transferPostAllowedValues($user);
      */
-    public function transferPostAllowedValues(User $user, int $systemUserId = 3): int {
+    public function transferPostAllowedValues(User $user): int {
         $totalTransferred = 0;
         PostAllowedValue::where('created_by_user_id', $user->id)
-            ->chunkById(100, function ($values) use ($systemUserId, &$totalTransferred) {
+            ->chunkById(100, function ($values) use (&$totalTransferred) {
                 $ids = $values->pluck('id')->toArray();
                 $updated = DB::table('post_allowed_values')
                     ->whereIn('id', $ids)
                     ->update([
-                        'created_by_user_id' => $systemUserId,
+                        'created_by_user_id' => $this->systemDeletedUserId,
                         'created_by_role' => 'system'
                     ]);
                 $totalTransferred += $updated;
@@ -149,20 +172,19 @@ class UserRelationService {
      * Transfer all critical terms from a user to the system user
      *
      * @param User $user
-     * @param int $systemUserId Default: 2
      * @return int Number of transferred critical terms
      *
      * @example | $this->userRelationService->transferCriticalTerms($user);
      */
-    public function transferCriticalTerms(User $user, int $systemUserId = 2): int {
+    public function transferCriticalTerms(User $user): int {
         $totalTransferred = 0;
         CriticalTerm::where('created_by_user_id', $user->id)
-            ->chunkById(100, function ($terms) use ($systemUserId, &$totalTransferred) {
+            ->chunkById(100, function ($terms) use (&$totalTransferred) {
                 $ids = $terms->pluck('id')->toArray();
                 $updated = DB::table('critical_terms')
                     ->whereIn('id', $ids)
                     ->update([
-                        'created_by_user_id' => $systemUserId,
+                        'created_by_user_id' => $this->systemDeletedUserId,
                         'created_by_role' => 'system'
                     ]);
                 $totalTransferred += $updated;
@@ -175,20 +197,19 @@ class UserRelationService {
      * Transfer all forbidden names from a user to the system user
      *
      * @param User $user
-     * @param int $systemUserId Default: 2
      * @return int Number of transferred forbidden names
      *
      * @example | $this->userRelationService->transferForbiddenNames($user);
      */
-    public function transferForbiddenNames(User $user, int $systemUserId = 2): int {
+    public function transferForbiddenNames(User $user): int {
         $totalTransferred = 0;
         ForbiddenName::where('created_by_user_id', $user->id)
-            ->chunkById(100, function ($forbiddenNames) use ($systemUserId, &$totalTransferred) {
+            ->chunkById(100, function ($forbiddenNames) use (&$totalTransferred) {
                 $ids = $forbiddenNames->pluck('id')->toArray();
                 $updated = DB::table('forbidden_names')
                     ->whereIn('id', $ids)
                     ->update([
-                        'created_by_user_id' => $systemUserId,
+                        'created_by_user_id' => $this->systemDeletedUserId,
                         'created_by_role' => 'system'
                     ]);
                 $totalTransferred += $updated;
