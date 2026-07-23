@@ -714,6 +714,8 @@ class UserController extends Controller {
 
             DB::transaction(function () use ($user) {
                 $this->userRelationService->transferPosts($user);
+                $this->userRelationService->deleteRemainingPosts($user);
+
                 $this->userRelationService->transferComments($user);
                 $this->userRelationService->transferPostAllowedValues($user);
 
@@ -838,6 +840,8 @@ class UserController extends Controller {
 
             DB::transaction(function () use ($user) {
                 $this->userRelationService->transferPosts($user);
+                $this->userRelationService->deleteRemainingPosts($user);
+
                 $this->userRelationService->transferComments($user);
                 $this->userRelationService->transferPostAllowedValues($user);
 
