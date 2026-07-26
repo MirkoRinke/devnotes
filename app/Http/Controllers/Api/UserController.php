@@ -568,8 +568,8 @@ class UserController extends Controller {
             );
 
             //TODO: Is only for the MVP avatars, but we need to check if the user is allowed to set it. This is a temporary solution until we have a proper system for avatar items.
-            if ($user->role === 'admin' && in_array($validatedData['avatar_mvp_id'], [997, 998, 999])) {
-                return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+            if ($user->role === 'user' && $validatedData['avatar_mvp_id'] >= 1000) {
+                return $this->errorResponse('You are not allowed to set this avatar', 'AVATAR_NOT_ALLOWED', 403, true);
             }
 
             if (isset($validatedData['avatar_items'])) {

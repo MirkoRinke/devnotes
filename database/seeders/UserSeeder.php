@@ -91,7 +91,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'admin',
             'email_verified_at' => now(),
-            'avatar_mvp_id' => 999,
+            'avatar_mvp_id' => 1000,
         ]);
 
         $this->command->info('Admin user created successfully!');
@@ -104,7 +104,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
-            'avatar_mvp_id' => 997,
+            'avatar_mvp_id' => 1002,
         ]);
 
         $this->command->info('System user created successfully!');
@@ -118,7 +118,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'system',
             'email_verified_at' => now(),
-            'avatar_mvp_id' => 997,
+            'avatar_mvp_id' => 1002,
         ]);
 
         $this->command->info('System deleted user created successfully!');
@@ -144,7 +144,7 @@ class UserSeeder extends Seeder {
             'password' => Hash::make('sicheresPasswort1234!'),
             'role' => 'moderator',
             'email_verified_at' => now(),
-            'avatar_mvp_id' => 998,
+            'avatar_mvp_id' => 1001,
         ]);
 
         $this->command->info('Moderator user created successfully!');
