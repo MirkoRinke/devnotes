@@ -34,8 +34,8 @@ class User extends Authenticatable implements MustVerifyEmail {
         // 'created_at',                    || Laravel will automatically handle the 'created_at' field
 
         // Avatar-System
-        // 'avatar_mvp_id',             || Explicitly set in RegisterController
-        // 'avatar_type',                   || Explicitly set in UserController
+        'avatar_mvp_id',
+        'avatar_items',
 
         // Basic
         'display_name',

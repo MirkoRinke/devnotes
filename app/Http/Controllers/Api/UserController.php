@@ -71,6 +71,7 @@ class UserController extends Controller {
             'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
             'email' => 'sometimes|required|string|email|confirmed|unique:users,email,' . $user->id,
             'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
+            'avatar_mvp_id' => 'sometimes|integer',
             'avatar_items' => 'sometimes|nullable|array',
             'avatar_items.duck' => ['sometimes', 'nullable', 'string', 'starts_with:/ducks/', 'ends_with:.webp'], // The Duck the Character
             'avatar_items.head_accessory' => ['sometimes', 'nullable', 'string', 'starts_with:/head_accessory/', 'ends_with:.webp'], // Head e.g. Hats, Helmets, Headband
@@ -566,6 +567,11 @@ class UserController extends Controller {
                 $this->getValidationMessages('User')
             );
 
+            //TODO: Is only for the MVP avatars, but we need to check if the user is allowed to set it. This is a temporary solution until we have a proper system for avatar items.
+            if ($user->role === 'admin' && in_array($validatedData['avatar_mvp_id'], [997, 998, 999])) {
+                return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
+            }
+
             if (isset($validatedData['avatar_items'])) {
                 $currentAvatarItems = $user->avatar_items ?? [];
                 $user->avatar_items = array_merge($currentAvatarItems, $validatedData['avatar_items']);
@@ -590,6 +596,7 @@ class UserController extends Controller {
                 $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
                     'email' => $validatedData['email'] ?? $user->email,
+                    'avatar_mvp_id' => $validatedData['avatar_mvp_id'] ?? $user->avatar_mvp_id,
                 ]);
 
                 if (isset($validatedData['password']) && $user === $request->user()) {
