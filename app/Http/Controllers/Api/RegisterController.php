@@ -202,7 +202,13 @@ class RegisterController extends Controller {
             return $this->successResponse(null, 'User created successfully', 201);
         } catch (ValidationException $e) {
             usleep(random_int(100000, 300000));
-            $responseErrors = $this->allowedErrorResponse($e);
+            $allowedErrorsMap = [
+                'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
+                'display_name' => ['DISPLAY_NAME_ALREADY_IN_USE', 'FORBIDDEN_DISPLAY_NAME'],
+                'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED'],
+            ];
+
+            $responseErrors = $this->allowedErrorResponse($e, $allowedErrorsMap);
             if (!empty($responseErrors)) {
                 return $this->errorResponse('Validation failed', $responseErrors, 422, true);
             }
@@ -255,7 +261,12 @@ class RegisterController extends Controller {
 
             return $this->successResponse($availability, 'Availability checked successfully', 200);
         } catch (ValidationException $e) {
-            $responseErrors = $this->allowedErrorResponse($e);
+            $allowedErrorsMap = [
+                'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
+                'display_name' => ['DISPLAY_NAME_ALREADY_IN_USE', 'FORBIDDEN_DISPLAY_NAME'],
+            ];
+
+            $responseErrors = $this->allowedErrorResponse($e, $allowedErrorsMap);
             if (!empty($responseErrors)) {
                 return $this->errorResponse('Validation failed', $responseErrors, 422, true);
             }
@@ -264,31 +275,6 @@ class RegisterController extends Controller {
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
         }
-    }
-
-
-    /**
-     * Filter validation errors to only include allowed error codes for specific fields.
-     */
-    public function allowedErrorResponse(ValidationException $e): array {
-        $errors = $e->errors();
-
-        $allowedErrorsMap = [
-            'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
-            'display_name' => ['DISPLAY_NAME_ALREADY_IN_USE', 'FORBIDDEN_DISPLAY_NAME'],
-            'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED'],
-        ];
-
-        $responseErrors = [];
-        foreach ($allowedErrorsMap as $field => $allowedCodes) {
-            if (isset($errors[$field])) {
-                $matches = array_intersect($errors[$field], $allowedCodes);
-                if (!empty($matches)) {
-                    $responseErrors[$field] = array_values($matches);
-                }
-            }
-        }
-        return $responseErrors;
     }
 
 
