@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * This ApiResponses Trait provides methods for creating standardized API responses.
@@ -88,6 +89,11 @@ trait ApiResponses {
                 422     => 'VALIDATION_FAILED',
                 default => 'AN_UNEXPECTED_ERROR_OCCURRED',
             };
+            $message = match ($code) {
+                500     => 'An unexpected error occurred',
+                422     => 'Validation failed',
+                default => 'An unexpected error occurred',
+            };
         }
 
         $response = [
@@ -110,6 +116,31 @@ trait ApiResponses {
 
         return response()->json($response, $code);
     }
+
+
+    /**
+     * Filter validation errors based on allowedErrorsMap and return only the allowed errors.
+     * 
+     * @param \Illuminate\Validation\ValidationException $e The validation exception containing the errors
+     * @param array $allowedErrorsMap An associative array where keys are field names and values are arrays of allowed error codes for those fields
+     * @return array An array of filtered validation errors that match the allowed error codes specified in allowedErrorsMap
+     */
+    public function allowedErrorResponse(ValidationException $e, $allowedErrorsMap): array {
+        $errors = $e->errors();
+
+        $responseErrors = [];
+        foreach ($allowedErrorsMap as $field => $allowedCodes) {
+            if (isset($errors[$field])) {
+                $matches = array_intersect($errors[$field], $allowedCodes);
+                if (!empty($matches)) {
+                    $responseErrors[$field] = array_values($matches);
+                }
+            }
+        }
+        return $responseErrors;
+    }
+
+
 
     /**
      * Get validation error messages for a specific model
