@@ -68,9 +68,10 @@ class UserController extends Controller {
      */
     public function getValidationRulesUpdate($user): array {
         $validationRules = [
-            'name' => ['sometimes', 'required', 'unique:users,name', 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
+            'name' => ['sometimes', 'required', 'unique:users,name,' . $user->id, 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
             'email' => 'sometimes|required|string|email|confirmed|unique:users,email,' . $user->id,
             'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
+            'current_password' => 'sometimes|required|string',
             'avatar_mvp_id' => 'sometimes|integer',
             'avatar_items' => 'sometimes|nullable|array',
             'avatar_items.duck' => ['sometimes', 'nullable', 'string', 'starts_with:/ducks/', 'ends_with:.webp'], // The Duck the Character
@@ -567,8 +568,22 @@ class UserController extends Controller {
                 $this->getValidationMessages('User')
             );
 
+            $newEmail = isset($validatedData['email']) && $user->email !== $validatedData['email'];
+            $newName = isset($validatedData['name']) && $user->name !== $validatedData['name'];
+            $newPassword = isset($validatedData['password']);
+
+            if ($newEmail || $newName  || $newPassword) {
+                if (!isset($validatedData['current_password'])) {
+                    return $this->errorResponse('Current password is required', 'CURRENT_PASSWORD_REQUIRED', 422);
+                }
+                if (!Hash::check($validatedData['current_password'], $user->password)) {
+                    return $this->errorResponse('Current password is incorrect', 'INCORRECT_PASSWORD', 422);
+                }
+            }
+
+
             //TODO: Is only for the MVP avatars, but we need to check if the user is allowed to set it. This is a temporary solution until we have a proper system for avatar items.
-            if ($user->role === 'user' && $validatedData['avatar_mvp_id'] >= 1000) {
+            if ($user->role === 'user' && isset($validatedData['avatar_mvp_id']) && $validatedData['avatar_mvp_id'] >= 1000) {
                 return $this->errorResponse('You are not allowed to set this avatar', 'AVATAR_NOT_ALLOWED', 403, true);
             }
 
@@ -576,6 +591,7 @@ class UserController extends Controller {
                 $currentAvatarItems = $user->avatar_items ?? [];
                 $user->avatar_items = array_merge($currentAvatarItems, $validatedData['avatar_items']);
             }
+
 
             $user = DB::transaction(function () use ($user, $validatedData, $request) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
@@ -596,17 +612,11 @@ class UserController extends Controller {
                 $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
                     'email' => $validatedData['email'] ?? $user->email,
+                    'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
                     'avatar_mvp_id' => $validatedData['avatar_mvp_id'] ?? $user->avatar_mvp_id,
                 ]);
 
                 if (isset($validatedData['password']) && $user === $request->user()) {
-
-                    if ($user->email === null) {
-                        return $this->errorResponse('Valid email required to set password', 'VALID_EMAIL_REQUIRED', 422);
-                    }
-
-                    $user->password = bcrypt($validatedData['password']);
-
                     /**
                      * If the password is changed, delete all other tokens except the current one
                      */
@@ -630,6 +640,16 @@ class UserController extends Controller {
         } catch (AuthorizationException $e) {
             return $this->errorResponse('Unauthorized', 'UNAUTHORIZED', 403);
         } catch (ValidationException $e) {
+            $allowedErrorsMap = [
+                'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
+                'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED'],
+            ];
+
+            $responseErrors = $this->allowedErrorResponse($e, $allowedErrorsMap);
+            if (!empty($responseErrors)) {
+                return $this->errorResponse('Validation failed', $responseErrors, 422, true);
+            }
+
             return $this->errorResponse('Validation failed', $e->errors(), 422);
         } catch (Exception $e) {
             return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
