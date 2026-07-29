@@ -152,16 +152,21 @@ class AuthController extends Controller {
 
             $defaultDate = Carbon::now()->subDays(2)->format('Y-m-d H:i:s');
             if (!$user->privacy_policy_accepted_at || $user->privacy_policy_accepted_at < env('CURRENT_PRIVACY_POLICY_DATE', $defaultDate)) {
-                return $this->errorResponse('You must accept the latest privacy policy.', 'PRIVACY_POLICY_NOT_ACCEPTED', 403);
+                return $this->errorResponse('You must accept the latest privacy policy.', 'PRIVACY_POLICY_NOT_ACCEPTED', 403, true);
             }
 
             if (!$user->terms_of_service_accepted_at || $user->terms_of_service_accepted_at < env('CURRENT_TERMS_OF_SERVICE_DATE', $defaultDate)) {
-                return $this->errorResponse('You must accept the latest terms of service.', 'TERMS_OF_SERVICE_NOT_ACCEPTED', 403);
+                return $this->errorResponse('You must accept the latest terms of service.', 'TERMS_OF_SERVICE_NOT_ACCEPTED', 403, true);
             }
 
             if ($user->is_banned && now()->lt($user->is_banned)) {
                 $days = (int) now()->diffInDays($user->is_banned);
                 return $this->errorResponse('Your account has been suspended for ' . $days . ' more day(s).', 'ACCOUNT_SUSPENDED', 403);
+            }
+
+            if (!$user->hasVerifiedEmail()) {
+                $user->sendEmailVerificationNotification();
+                return $this->errorResponse('Your email address is not verified.', 'EMAIL_NOT_VERIFIED', 403, true);
             }
 
             /**
