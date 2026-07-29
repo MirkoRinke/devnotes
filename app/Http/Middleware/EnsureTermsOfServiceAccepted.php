@@ -26,7 +26,7 @@ class EnsureTermsOfServiceAccepted {
 
         if (!$user || !$user->terms_of_service_accepted_at ||  $user->terms_of_service_accepted_at < $termsOfServiceDate) {
             $token->delete();
-            return $this->errorResponse('You must accept the terms of service to continue.', 'TERMS_OF_SERVICE_NOT_ACCEPTED', 403);
+            return $this->errorResponse('You must accept the terms of service to continue.', 'TERMS_OF_SERVICE_NOT_ACCEPTED', 403, true);
         }
 
         return $next($request);
