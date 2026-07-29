@@ -26,7 +26,7 @@ class EnsurePrivacyPolicyAccepted {
 
         if (!$user || !$user->privacy_policy_accepted_at ||  $user->privacy_policy_accepted_at < $policyDate) {
             $token->delete();
-            return $this->errorResponse('You must accept the privacy policy to continue.', 'PRIVACY_POLICY_NOT_ACCEPTED', 403);
+            return $this->errorResponse('You must accept the privacy policy to continue.', 'PRIVACY_POLICY_NOT_ACCEPTED', 403, true);
         }
 
         return $next($request);
