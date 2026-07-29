@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 use app\Traits\ApiResponses;
+use SebastianBergmann\Type\TrueType;
 
 /**
  * Middleware to ensure the user's email is verified
@@ -46,7 +47,7 @@ class EnsureEmailIsVerifiedApi {
      */
     public function handle(Request $request, Closure $next): Response {
         if (!$request->user() || !$request->user()->hasVerifiedEmail()) {
-            return $this->errorResponse('Your email address is not verified.', 'EMAIL_NOT_VERIFIED', 403);
+            return $this->errorResponse('Your email address is not verified.', 'EMAIL_NOT_VERIFIED', 403, true);
         }
         return $next($request);
     }
