@@ -60,11 +60,11 @@ trait ReportHelper {
      */
     protected function reportValidationCheck($user, $reportableType, $reportable, $reportableId, $simpleType) {
         if ($reportableType === UserProfile::class && $reportable->user_id == $user->id) {
-            return $this->errorResponse('You cannot report yourself', 'CANNOT_REPORT_SELF', 403);
+            return $this->errorResponse('You cannot report yourself', 'CANNOT_REPORT_SELF', 403, true);
         } else if ($reportableType === Post::class && $reportable->user_id == $user->id) {
-            return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403);
+            return $this->errorResponse('You cannot report your own post', 'CANNOT_REPORT_OWN_POST', 403, true);
         } else if ($reportableType === Comment::class && $reportable->user_id == $user->id) {
-            return $this->errorResponse('You cannot report your own comment', 'CANNOT_REPORT_OWN_COMMENT', 403);
+            return $this->errorResponse('You cannot report your own comment', 'CANNOT_REPORT_OWN_COMMENT', 403, true);
         }
 
         $existingReport = UserReport::where([
@@ -74,7 +74,7 @@ trait ReportHelper {
         ])->first();
 
         if ($existingReport) {
-            return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409);
+            return $this->errorResponse('You have already reported this ' . $simpleType, 'ALREADY_REPORTED',  409, true);
         }
 
         return null;
