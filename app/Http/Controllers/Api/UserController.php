@@ -69,7 +69,7 @@ class UserController extends Controller {
     public function getValidationRulesUpdate($user): array {
         $validationRules = [
             'name' => ['sometimes', 'required', 'unique:users,name,' . $user->id, 'string', 'min:2', 'max:40', new NotForbiddenName(), 'regex:/^[a-zA-Z0-9._ -]{2,}$/', 'not_regex:/\s{2,}/'],
-            'email' => 'sometimes|required|string|email|confirmed|unique:users,email,' . $user->id,
+            'email' => 'sometimes|required|string|email|confirmed',
             'password' => ['sometimes', 'required', 'confirmed', Password::min(8)->max(255)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'current_password' => 'sometimes|required|string',
             'avatar_mvp_id' => 'sometimes|integer',
@@ -577,10 +577,14 @@ class UserController extends Controller {
                     return $this->errorResponse('Current password is required', 'CURRENT_PASSWORD_REQUIRED', 422);
                 }
                 if (!Hash::check($validatedData['current_password'], $user->password)) {
-                    return $this->errorResponse('Current password is incorrect', 'INCORRECT_PASSWORD', 422);
+                    return $this->errorResponse('Current password is incorrect', 'INCORRECT_PASSWORD', 422, true);
                 }
             }
 
+            // If the email is new and already exists for another user, revert it to the current user's email instead of updating it
+            if ($newEmail && User::where('email', $validatedData['email'])->where('id', '!=', $user->id)->exists()) {
+                $validatedData['email'] = $user->email;
+            }
 
             //TODO: Is only for the MVP avatars, but we need to check if the user is allowed to set it. This is a temporary solution until we have a proper system for avatar items.
             if ($user->role === 'user' && isset($validatedData['avatar_mvp_id']) && $validatedData['avatar_mvp_id'] >= 1000) {
@@ -595,23 +599,25 @@ class UserController extends Controller {
 
             $user = DB::transaction(function () use ($user, $validatedData, $request) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
+                $emailChanged = false;
 
                 if (isset($validatedData['email']) && $user->email !== $validatedData['email']) {
-                    $user->email_verified_at = null;
+                    /**
+                     * TODO: Send email verification and change the email after verification
+                     * Create a mechanism to handle email verification for the new email address here
+                     */
 
                     /**
-                     * Send email verification notification
+                     * Temporary solution: directly update the email and set email_verified_at to null if email verification is enabled
                      */
-                    if (config('app.features.email_verification', true)) {
-                        $user->sendEmailVerificationNotification();
-                    } else {
-                        $user->email_verified_at = now();
-                    }
+                    $user->email = $validatedData['email'];
+                    $user->email_verified_at = config('app.features.email_verification', true) ? null : now();
+                    $emailChanged = true;
                 }
 
                 $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
-                    'email' => $validatedData['email'] ?? $user->email,
+                    // 'email' => $validatedData['email'] ?? $user->email,
                     'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
                     'avatar_mvp_id' => $validatedData['avatar_mvp_id'] ?? $user->avatar_mvp_id,
                 ]);
@@ -625,6 +631,14 @@ class UserController extends Controller {
                 }
 
                 $user->save();
+
+                /**
+                 * TODO: Temporary solution until proper email verification is implemented
+                 * Send email verification notification
+                 */
+                if ($emailChanged && config('app.features.email_verification', true)) {
+                    $user->sendEmailVerificationNotification();
+                }
 
                 if ($nameChanged) {
                     $this->userRelationService->checkUsername($user);
@@ -642,7 +656,7 @@ class UserController extends Controller {
         } catch (ValidationException $e) {
             $allowedErrorsMap = [
                 'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
-                'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED'],
+                'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED']
             ];
 
             $responseErrors = $this->allowedErrorResponse($e, $allowedErrorsMap);
