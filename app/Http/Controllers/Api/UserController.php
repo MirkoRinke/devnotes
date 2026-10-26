@@ -617,7 +617,6 @@ class UserController extends Controller {
 
                 $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
-                    // 'email' => $validatedData['email'] ?? $user->email,
                     'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $user->password,
                     'avatar_mvp_id' => $validatedData['avatar_mvp_id'] ?? $user->avatar_mvp_id,
                 ]);
