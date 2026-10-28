@@ -21,6 +21,7 @@ use App\Traits\FieldManager;
 use App\Services\ModerationService;
 use App\Services\UserRelationService;
 use App\Services\GuestAccountService;
+use App\Services\UserEmailService;
 
 use Exception;
 use Illuminate\Validation\ValidationException;
@@ -44,6 +45,7 @@ class UserController extends Controller {
     protected $moderationService;
     protected $userRelationService;
     protected $guestAccountService;
+    protected $userEmailService;
 
     /**
      * Constructor to initialize the services
@@ -51,11 +53,13 @@ class UserController extends Controller {
     public function __construct(
         ModerationService $moderationService,
         UserRelationService $userRelationService,
-        GuestAccountService $guestAccountService
+        GuestAccountService $guestAccountService,
+        UserEmailService $userEmailService
     ) {
         $this->moderationService = $moderationService;
         $this->userRelationService = $userRelationService;
         $this->guestAccountService = $guestAccountService;
+        $this->userEmailService = $userEmailService;
     }
 
     /**
@@ -586,6 +590,13 @@ class UserController extends Controller {
                 $validatedData['email'] = $user->email;
             }
 
+            /**
+             * Handle pending email verification for new email addresses
+             */
+            if (isset($validatedData['email']) && $user->email !== $validatedData['email']) {
+                $pendingEmail = $validatedData['email'];
+            }
+
             //TODO: Is only for the MVP avatars, but we need to check if the user is allowed to set it. This is a temporary solution until we have a proper system for avatar items.
             if ($user->role === 'user' && isset($validatedData['avatar_mvp_id']) && $validatedData['avatar_mvp_id'] >= 1000) {
                 return $this->errorResponse('You are not allowed to set this avatar', 'AVATAR_NOT_ALLOWED', 403, true);
@@ -599,21 +610,6 @@ class UserController extends Controller {
 
             $user = DB::transaction(function () use ($user, $validatedData, $request) {
                 $nameChanged = isset($validatedData['name']) && $validatedData['name'] !== $user->name;
-                $emailChanged = false;
-
-                if (isset($validatedData['email']) && $user->email !== $validatedData['email']) {
-                    /**
-                     * TODO: Send email verification and change the email after verification
-                     * Create a mechanism to handle email verification for the new email address here
-                     */
-
-                    /**
-                     * Temporary solution: directly update the email and set email_verified_at to null if email verification is enabled
-                     */
-                    $user->email = $validatedData['email'];
-                    $user->email_verified_at = config('app.features.email_verification', true) ? null : now();
-                    $emailChanged = true;
-                }
 
                 $user->fill([
                     'name' => $validatedData['name'] ?? $user->name,
@@ -631,19 +627,24 @@ class UserController extends Controller {
 
                 $user->save();
 
-                /**
-                 * TODO: Temporary solution until proper email verification is implemented
-                 * Send email verification notification
-                 */
-                if ($emailChanged && config('app.features.email_verification', true)) {
-                    $user->sendEmailVerificationNotification();
-                }
-
                 if ($nameChanged) {
                     $this->userRelationService->checkUsername($user);
                 }
                 return $user;
             });
+
+            $rateLimitExceeded = $user->pending_email_expires_at && $user->pending_email_expires_at->isAfter(now()->addMinutes(55));
+
+            if ($rateLimitExceeded) {
+                return $this->errorResponse('Too many requests', 'EMAIL_CHANGE_RATE_LIMIT_EXCEEDED', 429, true);
+            }
+
+            /**
+             * Send pending email verification if a new email was provided
+             */
+            if (isset($pendingEmail)) {
+                $this->userEmailService->sendPendingEmailVerification($user, $pendingEmail);
+            }
 
             $user = $this->manageUsersFieldVisibility($request, $user);
 
@@ -656,6 +657,47 @@ class UserController extends Controller {
             $allowedErrorsMap = [
                 'name' => ['NAME_ALREADY_IN_USE', 'FORBIDDEN_NAME'],
                 'password' => ['PASSWORD_MUST_BE_UNCOMPROMISED']
+            ];
+
+            $responseErrors = $this->allowedErrorResponse($e, $allowedErrorsMap);
+            if (!empty($responseErrors)) {
+                return $this->errorResponse('Validation failed', $responseErrors, 422, true);
+            }
+
+            return $this->errorResponse('Validation failed', $e->errors(), 422);
+        } catch (Exception $e) {
+            return $this->errorResponse('An unexpected error occurred', $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * TODO Doku: Add proper documentation for the verifyPendingEmail endpoint
+     */
+    public function verifyPendingEmail(Request $request): JsonResponse {
+        try {
+            $validated = $request->validate(
+                [
+                    'id' => 'required|integer',
+                    'token' => 'required|string',
+                ],
+                $this->getValidationMessages('verifyPendingEmail')
+            );
+
+            usleep(random_int(100000, 300000));
+
+            $user = User::findOrFail($validated['id']);
+
+            if (!$this->userEmailService->confirmPendingEmail($user, $validated['token'])) {
+                return $this->errorResponse('Invalid verification link', 'INVALID_VERIFICATION_LINK', 400, true);
+            }
+
+            return $this->successResponse(null, 'Email changed successfully', 200);
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse('Invalid verification link', 'INVALID_VERIFICATION_LINK', 400, true);
+        } catch (ValidationException $e) {
+            $allowedErrorsMap = [
+                'id' => ['ID_FIELD_REQUIRED', 'ID_MUST_BE_INTEGER'],
+                'token' => ['TOKEN_FIELD_REQUIRED', 'TOKEN_MUST_BE_STRING']
             ];
 
             $responseErrors = $this->allowedErrorResponse($e, $allowedErrorsMap);
