@@ -216,6 +216,14 @@ trait ApiResponses {
                     'password.string' => 'PASSWORD_MUST_BE_STRING',
                     'password.min' => 'PASSWORD_TOO_SHORT',
                 ];
+            case 'verifyPendingEmail':
+                return [
+                    'id.required' => 'ID_FIELD_REQUIRED',
+                    'id.integer' => 'ID_MUST_BE_INTEGER',
+
+                    'token.required' => 'TOKEN_FIELD_REQUIRED',
+                    'token.string' => 'TOKEN_MUST_BE_STRING',
+                ];
             case 'User':
                 return [
                     'name.required' => 'NAME_FIELD_REQUIRED',
@@ -238,6 +246,7 @@ trait ApiResponses {
                     'email.string' => 'EMAIL_MUST_BE_STRING',
                     'email.email' => 'EMAIL_MUST_BE_VALID',
                     'email.unique' => 'EMAIL_ALREADY_IN_USE',
+                    'email.confirmed' => 'EMAIL_CONFIRMATION_MISMATCH',
 
                     'password.required' => 'PASSWORD_FIELD_REQUIRED',
                     'password.string' => 'PASSWORD_MUST_BE_STRING',
@@ -249,6 +258,9 @@ trait ApiResponses {
                     'password.numbers' => 'PASSWORD_MUST_HAVE_NUMBERS',
                     'password.symbols' => 'PASSWORD_MUST_HAVE_SYMBOLS',
                     'password.uncompromised' => 'PASSWORD_MUST_BE_UNCOMPROMISED',
+
+                    'current_password.required' => 'CURRENT_PASSWORD_FIELD_REQUIRED',
+                    'current_password.string' => 'CURRENT_PASSWORD_MUST_BE_STRING',
 
                     'avatar_items.array' => 'AVATAR_ITEMS_MUST_BE_ARRAY',
 
