@@ -83,6 +83,9 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
      */
     Route::post('/email/verify', [RegisterController::class, 'verifyEmail']);
 
+    /**
+     * Route for resending verification email
+     */
     Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint'])->group(function () {
         Route::post('/email/resend-verification-email', [RegisterController::class, 'resendVerificationEmail']);
     });
@@ -93,6 +96,11 @@ Route::middleware(['api-key', 'throttle:api'])->group(function () {
     Route::middleware(['auth:sanctum', 'privacy-policy-accepted', 'terms-of-service-accepted', 'device-fingerprint', 'email-verified'])->group(function () {
         Route::post('/email/admin-send-verification-email', [RegisterController::class, 'adminSendVerificationEmail']);
     });
+
+    /**
+     * Route for confirming a pending email change
+     */
+    Route::post('/email/verify-pending', [UserController::class, 'verifyPendingEmail']);
 
     /**
      * Route for login
