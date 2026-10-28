@@ -21,6 +21,11 @@ return new class extends Migration {
             $table->string('password');
             $table->rememberToken();
 
+            // Pending email verification
+            $table->string('pending_email')->nullable();
+            $table->string('pending_email_token')->nullable();
+            $table->timestamp('pending_email_expires_at')->nullable();
+
             // Basic
             $table->string('display_name')->unique();
             $table->string('role')->default('user');

@@ -72,6 +72,11 @@ class User extends Authenticatable implements MustVerifyEmail {
         'password',
         'remember_token',
 
+        // Pending email verification
+        'pending_email',
+        'pending_email_token',
+        'pending_email_expires_at',
+
         // Ban info
         'is_banned',
         'was_ever_banned',
@@ -94,6 +99,10 @@ class User extends Authenticatable implements MustVerifyEmail {
             // Default
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+
+            'pending_email' => 'string',
+            'pending_email_token' => 'string',
+            'pending_email_expires_at' => 'datetime',
 
             // Avatar-System
             'avatar_mvp_id' => 'integer',
